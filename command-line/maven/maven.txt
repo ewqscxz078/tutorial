@@ -1,0 +1,140 @@
+
+ 
+================================================================================ 
+========================= windows 安裝 =========================================
+================================================================================
+前提
+須設定
+	JAVA_HOME 環境變數至少1.7版
+
+1. linke to http://maven.apache.org/download.cgi
+
+2. download 最新 
+
+3. 下載本機解壓縮至某目錄
+	ex:
+		maven_path=\tools\apache-maven-x.x.x\
+
+4. 設定環境變數
+	M2_HOME=$maven_path
+	PATH append $maven_path 或者 %M2_HOME%\bin\ 
+	
+	
+================================================================================ 
+========================= 指令 ================================================= 
+================================================================================	
+
+ -am,--also-make                        If project list is specified, also
+                                        build projects required by the
+                                        list
+ -amd,--also-make-dependents            If project list is specified, also
+                                        build projects that depend on
+                                        projects on the list
+ -B,--batch-mode                        Run in non-interactive (batch)
+                                        mode (disables output color)
+ -b,--builder <arg>                     The id of the build strategy to
+                                        use
+ -C,--strict-checksums                  Fail the build if checksums don't
+                                        match
+ -c,--lax-checksums                     Warn if checksums don't match
+ -cpu,--check-plugin-updates            Ineffective, only kept for
+                                        backward compatibility
+ -D,--define <arg>                      Define a system property
+ -e,--errors                            Produce execution error messages
+ -emp,--encrypt-master-password <arg>   Encrypt master security password
+ -ep,--encrypt-password <arg>           Encrypt server password
+ -f,--file <arg>                        Force the use of an alternate POM
+                                        file (or directory with pom.xml)
+ -fae,--fail-at-end                     Only fail the build afterwards;
+                                        allow all non-impacted builds to
+                                        continue
+ -ff,--fail-fast                        Stop at first failure in
+                                        reactorized builds
+ -fn,--fail-never                       NEVER fail the build, regardless
+                                        of project result
+ -gs,--global-settings <arg>            Alternate path for the global
+                                        settings file
+ -gt,--global-toolchains <arg>          Alternate path for the global
+                                        toolchains file
+ -h,--help                              Display help information
+ -l,--log-file <arg>                    Log file where all build output
+                                        will go (disables output color)
+ -llr,--legacy-local-repository         Use Maven 2 Legacy Local
+                                        Repository behaviour, ie no use of
+                                        _remote.repositories. Can also be
+                                        activated by using
+                                        -Dmaven.legacyLocalRepo=true
+ -N,--non-recursive                     Do not recurse into sub-projects
+ -npr,--no-plugin-registry              Ineffective, only kept for
+                                        backward compatibility
+ -npu,--no-plugin-updates               Ineffective, only kept for
+                                        backward compatibility
+ -nsu,--no-snapshot-updates             Suppress SNAPSHOT updates
+ -ntp,--no-transfer-progress            Do not display transfer progress
+                                        when downloading or uploading
+ -o,--offline                           Work offline
+ -P,--activate-profiles <arg>           Comma-delimited list of profiles
+                                        to activate
+ -pl,--projects <arg>                   Comma-delimited list of specified
+                                        reactor projects to build instead
+                                        of all projects. A project can be
+                                        specified by [groupId]:artifactId
+                                        or by its relative path
+ -q,--quiet                             Quiet output - only show errors
+ -rf,--resume-from <arg>                Resume reactor from specified
+                                        project
+ -s,--settings <arg>                    Alternate path for the user
+                                        settings file
+ -t,--toolchains <arg>                  Alternate path for the user
+                                        toolchains file
+ -T,--threads <arg>                     Thread count, for instance 2.0C
+                                        where C is core multiplied
+ -U,--update-snapshots                  Forces a check for missing
+                                        releases and updated snapshots on
+                                        remote repositories
+ -up,--update-plugins                   Ineffective, only kept for
+                                        backward compatibility
+ -v,--version                           Display version information
+ -V,--show-version                      Display version information
+                                        WITHOUT stopping build
+ -X,--debug                             Produce execution debug output
+
+================================================================================ 
+========================= 基本 ================================================= 
+================================================================================
+
+1.顯示 maven 版本
+	mvn --version
+
+================================================================================ 
+========================= package ==============================================
+================================================================================
+	
+打包專案成 jar 檔	
+	mvn package
+		於有mavne 專案下
+			執行 mvn package
+				將會產生
+				maven-archiver folder
+				surefire-reports folder		// 單元測試報告
+				maven-status folder
+				xxxxxxx-SNAPSHOT.jar
+				
+			於有main 的java class 指定執行
+			ex: 
+				java -cp target/dynamic-file-0.0.1-SNAPSHOT.jar com.my.demo.MavenDemo
+	
+	mvn package -Dmaven.test.skip=true
+		略過單元測試編譯與單元測試執行 
+		將會產生
+			maven-archiver folder
+			maven-status folder
+			xxxxxxx-SNAPSHOT.jar
+	
+	mvn package -DskipTests
+		單元測試編譯 但會略過單元測試執行
+		將會產生
+			maven-archiver folder
+			maven-status folder
+			xxxxxxx-SNAPSHOT.jar
+		
