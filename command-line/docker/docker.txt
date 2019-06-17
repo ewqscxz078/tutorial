@@ -1,0 +1,47 @@
+=======================================================================
+======================= 原生 docker ===================================
+=======================================================================
+#顯示版本
+	docker --version
+
+#詳細安裝
+	docker info
+
+#列舉出可用 image
+	docker images
+	docker images|grep [imageFileName]
+
+#Docker 刪除 Image (rmi)
+	docker rmi [image-id]
+
+#Docker 刪除 container (rm)
+	docker rm [contain-id]
+
+#編譯 image
+	docker build -t [imageFileName] .
+
+#run in 前景
+	docker run -p 4000:80 [imageFileName]
+
+#run in 背景
+	docker run -d -p 4000:80 [imageFileName]
+
+#查詢正在執行的docker
+	docker ps
+
+#查詢正在執行或停止的docker
+	docker ps -a
+
+#停止某個docker
+	docker stop [id by docker ps]
+
+=======================================================================
+======================= docker file ===================================
+=======================================================================
+FROM
+USER
+WORKDIR
+COPY
+ARG
+ENV
+CMD

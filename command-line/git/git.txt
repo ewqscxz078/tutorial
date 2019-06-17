@@ -1,0 +1,241 @@
+eclipse
+
+[ 　\t]+$  // 找到行尾有tab或空白一個或多個
+
+==========================================================================================
+====================================基本操作==============================================
+==========================================================================================
+
+status -- 狀態確認
+	git status
+
+add -- 加入暫存區
+	指定單一支程式加入
+	git add xxxx [xxxx代表程式]
+
+	指定副檔名為java的都加入
+	git add *.java
+
+	全部檔案加入
+	git add --all
+
+commit	-- 紀錄到本機
+	git commit -m yyyy  [yyyy代表註解]
+	git commit --no-verify -m yyyy  [yyyy代表註解] [--no-verify代表不經過hook檢查]
+
+push	-- 紀錄到server
+	git push
+
+
+ git push origin HEAD:sris // commit 到遠端分支
+
+==========================================================================================
+====================================其他操作==============================================
+==========================================================================================
+
+查看 push 的所有狀況
+	git log
+	git log origin/sris // 查看遠端 log
+
+以較好看的方式，查看差異
+	git log -U1 --word-diff
+
+查看 所有branch
+	git branch -a  // 顯示白色是本地端 紅色是遠端server；互相對應
+	git branch -av // 列出每個分支最後的提交commitId
+
+查看 目前所屬的branch
+	git branch | grep \* | cut -d ' ' -f2
+
+查看圖像化 push log
+	// teamctl reset-to-log
+	git lg	// 有怪怪的
+	git lga
+
+查看本機或遠端檔案清單
+	git ls-tree -r --name-only [branch]
+
+==========================================================================================
+==========================================差異操作========================================
+==========================================================================================
+git diff => 工作目錄 vs 索引
+git diff HEAD => 工作目錄 vs HEAD
+git diff --cached HEAD => 索引 vs HEAD
+git diff --cached => 索引 vs HEAD
+git diff HEAD^ HEAD => HEAD^ vs HEAD
+
+比對branch diff
+	git diff <branchA>:<fileA> <branchB>:<fileB>,
+	or if you want to compare the same file git diff <branchA> <branchB> -- <file>
+		ex:  git diff issue/333 issue/342 -- ./RC/config/batchjob.xml
+	git diff <commid較舊> <commid新>
+
+與Head版本比對
+	git diff HEAD
+
+ex:
+	git diff master origin/master
+
+==========================================================================================
+==========================================branch操作======================================
+==========================================================================================
+git checkout [遠端/branchName]
+
+git branch 	[branchName] // 建立分支
+
+git branch -D [遠端/branchName]	// 刪除分支
+
+==========================================================================================
+==========================================還原操作========================================
+==========================================================================================
+tracked file
+	modify file 尚未 add 或 已 add 情形
+		git checkout -- <file> // 還原該 branch 的FILE
+		git checkout . // 還原該 branch 的所有FILE
+
+untracked file
+	尚未add 情形
+		git clean -f // 將所有untracked file 的 file 還原移除
+		git clean -f -d // 將所有untracked file 的 目錄和檔案 還原移除
+
+已 commit file
+	remove history log 模式
+		git reset <commId/tag:HEAD、master> --hard // 還原到 <commId/tag:HEAD、master> 並將目前節點到還原點 期間異動的程式移除清乾淨
+
+	add history log to remove 模式
+		git revert <commId/tag:HEAD、master>  // 增加節點回到環原點
+
+	移除其中一個commit
+		git revert --strategy resolve <sha-ish>
+			Given a git log of A--B--C--D--E you can remove commit C using:
+
+		git revert --strategy resolve <sha-of-C>
+			Which will produce:
+			A--B--C--D--E--REVERTC
+
+==========================================================================================
+==========================================暫存操作========================================
+==========================================================================================
+
+git status
+aOn branch issue/203
+Your branch is up to date with 'origin/issue/203'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+		modified:   REPORTS/SERVER/sris3-report-server-exec/src/test/java/tw/gov/moi/ae/reporting/server/cli/ReportingServerCLITest.java
+
+		顯示以上之類
+git stash // 放到暫存
+git stash save "my_stash" // 自訂名稱放到暫存
+git status
+git stash list // 列舉暫存
+git stash apply // 將最新暫存apply到當前branch
+git stash apply stash@{2} // 指定 stash apply 到當前branch
+git stash save "自訂 stash name" --include-untracked  // 包含 untracked file 都加入 stash
+
+git stash push -u -m "assign file 1 3" test1 test3// 指定檔案 存到stash
+
+
+git stash drop	stash@{?}  // 移除指定stash
+
+git stash show // To show files changed in the last stash only file
+git stash show -p // to view the content of the most recent stash
+git stash show -p stash@{1} // To view the content of an arbitrary stash
+
+Move your stashes from one repo to another
+  This was useful for me when we created a new branch for a new major release,
+but were still working on our current version as well.
+I cloned our repo again and kept the new project on our new branch, but also wanted to get my stashes there.
+
+Download your stashes
+	git stash show -p > [patchName]
+
+	git stash show -p stash@{?} > [patchName]
+
+  You'll have to specify your stash and name your file whatevery you want.
+Do this for as all your stashes, and you'll have patch files in your pwd.
+
+Apply your stashes
+cd /new/project/dir
+git apply /old/project/dir/[patchName]
+git stash
+
+==========================================================================================
+================================== merge =================================================
+==========================================================================================
+git merge [branchName] --no-edit --no-ff
+--no-ff // 代表不fastforward merge
+
+當 binary檔(doc pdf jar) merge 後有衝突
+可使用
+
+<<<<<<< HEAD
+chocolate
+=======
+boycott
+>>>>>>> upstream
+
+# merge 後再下以誰為準指令
+git checkout --ours word.txt    # => chocolate {<<<<<<< HEAD .... =======}
+git checkout --theirs word.txt  # => boycott {======= .... >>>>>>> upstream}
+
+==========================================================================================
+==================================查看檔案================================================
+==========================================================================================
+
+git show [遠端branch/branch]:[file]
+	ex:
+		git show origin/issue/125:MC/sris-mc-core/src/main/java/tw/gov/moi/mc/job/MC4700Job.java
+		git show issue/125:MC/sris-mc-core/src/main/java/tw/gov/moi/mc/job/MC4700Job.java
+
+git blame <file> #關於file的所有commitId記錄
+
+git show [commid] [file]
+
+==========================================================================================
+==================================常見操作問題============================================
+==========================================================================================
+操作常見錯誤 當push後出現
+https://dotblogs.com.tw/wasichris/2017/09/19/014354
+
+Q:當push後出現
+	error: failed to push some refs to 'https://sris.pj/git/greenc.git'
+	hint: Updates were rejected because the remote contains work that you do
+	hint: not have locally. This is usually caused by another repository pushing
+	hint: to the same ref. You may want to first integrate the remote changes
+	hint: (e.g., 'git pull ...') before pushing again.
+	hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+
+A:原因:代表push的時候有其他人commit遠端最新版，造成本機最新版與遠端最新版有差異
+	盡可能push記得先pull，避免要額外處理以下動作
+	若忘記先pull，則會有以下兩種方法
+		方法一
+			1.git pull
+			2.commit merge(遠端最新與本機最新)後再
+			3.gi push
+		方法二
+			1.git pull --rebase
+			2.gi push
+
+Q:當push 上去發現其他額外警告訊息
+	ex:
+		== sris-rs-app[issue/546]: push ==
+		....
+		remote: - sris-rs-app -
+		remote: warning: The last gc run reported the following. Please correct the root cause
+		remote: and remove gc.log.
+		remote: Automatic cleanup will not be performed until the file is removed.
+		remote:
+
+		remote: warning: There are too many unreachable loose objects; run 'git prune' to remove them.
+		remote:
+		To https://sris.pj/git/ris/sris-rs-app.git
+	   7e808aa64..9676653b0  issue/546 -> issue/546
+
+A:https://stackoverflow.com/questions/37732141/whole-team-gets-too-many-unreachable-loose-objects-messages
+  https://confluence.atlassian.com/bitbucketserverkb/pushing-to-bitbucket-server-reports-there-are-too-many-unreachable-loose-objects-825788622.html
+  https://stackoverflow.com/questions/41771089/trigger-git-prune-automatically-on-git-pull
+		git prune
+		git gc
