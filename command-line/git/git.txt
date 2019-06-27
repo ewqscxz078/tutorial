@@ -95,9 +95,12 @@ tracked file
 
 untracked file
 	尚未add 情形
-		git clean -f // 將所有untracked file 的 file 還原移除
-		git clean -f -d // 將所有untracked file 的 目錄和檔案 還原移除
+		git clean -f // 將所有untracked file 的 file 移除
+		git clean -f [file] // 指定 untracked file 的 file 移除
+		
+		git clean -f -d // 將所有untracked file 的 目錄和檔案 移除
 
+		
 已 commit file
 	remove history log 模式
 		git reset <commId/tag:HEAD、master> --hard // 還原到 <commId/tag:HEAD、master> 並將目前節點到還原點 期間異動的程式移除清乾淨
@@ -193,6 +196,19 @@ git show [遠端branch/branch]:[file]
 git blame <file> #關於file的所有commitId記錄
 
 git show [commid] [file]
+
+==========================================================================================
+================================== 清 cache ==============================================
+==========================================================================================
+$ git pull
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+Enumerating objects: 246601
+
+then
+	git gc
+	git prune
+就正常
 
 ==========================================================================================
 ==================================常見操作問題============================================
