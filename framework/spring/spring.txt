@@ -1,0 +1,21 @@
+@Configuration
+public class RS_TABLES {
+
+    private static final String RSDFZ = "rsdfz.+";
+    /** Z¿…. */
+    @Bean
+    public TableConversionRule RS_TABLES_RSDFZ() {
+        final AliasTableConversionRule rule = new AliasTableConversionRule();
+		....
+        return rule;
+    }
+}
+
+µ•©Û
+
+RS_TABLES.xml
+	<beans>
+		<bean id="RS_TABLES_RSDFZ" class="com.iisigroup.ude.tools.codegen.db.rule.TableConversionRule">
+			....
+		<bean/>
+	</beans>
