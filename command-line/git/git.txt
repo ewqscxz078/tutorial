@@ -171,6 +171,25 @@ cd /new/project/dir
 git apply /old/project/dir/[patchName]
 git stash
 
+使用 git stash apply [id] 也有可能衝突
+如內容出現
+	<<<<<<< Updated upstream
+					<mapping resource="tw/gov/moi/domain/Tcdf2102Type.hbm.xml" />
+					<mapping resource="tw/gov/moi/domain/Tcdf2103Type.hbm.xml" />
+					<mapping resource="tw/gov/moi/domain/Tcdf2200Type.hbm.xml" />
+					<mapping resource="tw/gov/moi/domain/Tcdfc2o3Type.hbm.xml" />
+	=======
+	>>>>>>> Stashed changes
+	
+Updated upstream 代表 上面的版本
+Stashed changes 代表 stash版本
+fix掉即可
+
+// 參考 https://wincent.com/wiki/Git_merge_conflict_cheatsheet
+
+// 含蓋 untracked-files to patch
+// https://stackoverflow.com/questions/22818155/git-stash-to-patch-with-untracked-files
+
 ==========================================================================================
 ================================== merge =================================================
 ==========================================================================================
