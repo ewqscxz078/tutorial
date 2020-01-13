@@ -1,0 +1,26 @@
+===================================================================
+========================= find ====================================
+===================================================================
+找出所有檔案有符合字串的檔案 // 常用
+	find . -type f -exec grep -l [key word] {} +
+
+找出字尾有space的檔案 // 透過正則表示法
+	find . -type f -exec egrep -l " +$" {} \;
+
+找出為檔案且檔名	
+	find . -type f -name [fileName]
+	
+找出檔名且不分大小寫	
+	find . -iname [fileName]	
+	
+找出為檔案且檔名[keyword] 有符合字串的檔案
+	find . -type f -name "*ReportJob.java" -exec egrep -nR --color "[A-Z]{2,}" {} +	
+	
+使用正則表示法找出檔名或目錄 // 注意目錄下有個文件"abar9"，如果你用"ab.*9"來match，將找不到結果，應使用".*ab.*9"或者".*/ab.*9"
+	find . -regex ".*/[0-9]*/.c" -print	
+	
+	若想用類似 egrep 則
+		find . -regextype "posix-egrep" -regex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
+	
+	不分大小寫
+		find . -regextype "posix-egrep" -iregex ".*/(RCDFZ609|RCDFZ608)\.csv" -print

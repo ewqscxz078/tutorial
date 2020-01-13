@@ -1,0 +1,27 @@
+===================================================================
+========================= ssh =====================================
+===================================================================
+登入遠端機器執行 shell
+	ex:
+	  ssh -o StrictHostKeyChecking=no [帳號]@[host] [sh]
+	
+https://spin.atomicobject.com/2017/08/24/start-stop-bash-background-process/	
+https://unix.stackexchange.com/questions/83806/how-to-kill-ssh-session-that-was-started-with-the-f-option-run-in-background	
+背景執行	  
+	ssh -o -f StrictHostKeyChecking=no [帳號]@[host] [sh]
+		
+https://www.linuxtechi.com/execute-linux-commands-remote-system-over-ssh/	
+https://wirelessr.gitbooks.io/working-life/content/expectmiao_yong_wu_qiong.html
+不需要輸入帳密方式	
+	1. install sshpass
+	2. install expect
+		redhat unix
+			sudo yum provides "*/expect"
+		aix unix
+			sudo apt-get install expect
+			expect -c ‘spawn ssh user@host ; expect assword ; send “password\n” ; expect “>” ; send “commands\n ls\n” ; interact’
+	3. ssh-keygen
+		1) Generate public-private key pair
+			ssh-keygen
+		2)  Add public key to ~/.ssh/authorized_keys file on remote host
+			ssh-copy-id -i ~/.ssh/id_rsa.pub [帳號]@[host/ip]

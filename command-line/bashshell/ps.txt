@@ -1,0 +1,23 @@
+===================================================================
+========================= ps ======================================
+===================================================================
+查看cpu mem 占最多的資源列舉
+	ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head
+	ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%cpu | head
+
+	ps aux | grep [key word] | awk '{ total += $6; } END { print total/1024"MB" }'
+	
+查看更進一步資訊	
+	ps aux | grep [key word]
+		ps aux | grep /etc/alternatives/java_sdk_
+		ps aux | grep java-1.8.0-ope
+	
+查pid占用資源	
+	ps aux | grep '程式名稱' # 找到 pid, 假設 pid 是 3790
+	cat /proc/3790/status # 由此就可以看到目前詳細得狀態.	 
+
+查pid內容	
+	ps -aef | grep 'pid'	
+	
+Thread statistics of the Java process.	// https://dzone.com/articles/java-memory-and-cpu-monitoring-tools-and-technique	
+	ps uH –p [pid]

@@ -19,3 +19,43 @@ RS_TABLES.xml
 			....
 		<bean/>
 	</beans>
+	
+==================================================================================================================
+========================================== spring init 四種方法
+========================================== http://www.zhongtiancai.com/post-149.html
+========================================== https://segmentfault.com/a/1190000014105687
+==================================================================================================================
+bean constructor
+bean method 宣告 @PostConstruct
+xml 宣告 init-method=[something method name]
+bean implements InitializingBean 
+
+優先順序
+Constructor > @PostConstruct > InitializingBean > init-method
+
+ex:
+	public class InitSequenceBean implements InitializingBean {   
+		
+		public InitSequenceBean() {   
+		   System.out.println("InitSequenceBean: constructor");   
+		}   
+		  
+		@PostConstruct  
+		public void postConstruct() {   
+		   System.out.println("InitSequenceBean: postConstruct");   
+		}   
+		  
+		public void initMethod() {   
+		   System.out.println("InitSequenceBean: init-method");   
+		}   
+		  
+		@Override  
+		public void afterPropertiesSet() throws Exception {   
+		   System.out.println("InitSequenceBean: afterPropertiesSet");   
+		}   
+	}  
+==================================================================================================================
+spring factory	
+==================================================================================================================
+spring BeanPostProcessor
+==================================================================================================================

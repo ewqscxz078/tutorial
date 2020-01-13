@@ -63,6 +63,10 @@ push	-- 紀錄到server
 	
 僅查看 merge的 log
 	git log --merges
+	
+查看 auth commit 的 log	
+	git log --author="[author name]"	
+	
 ==========================================================================================
 ==========================================差異操作========================================
 ==========================================================================================
@@ -88,6 +92,7 @@ git diff [branchName] --exit-code
 	#有差異回1
 	#無差異回0
 	
+git diff --name-status origin/master origin/issue/[redmineId]
 	
 ==========================================================================================
 ==========================================branch操作======================================
@@ -115,6 +120,10 @@ untracked file
 
 		
 已 commit file
+	如何將某個 指定的檔案 還原到 指定的 Commit 的狀態
+		git log
+		git checkout <commitId> <file>
+
 	remove history log 模式
 		git reset <commId/tag:HEAD、master> --hard // 還原到 <commId/tag:HEAD、master> 並將目前節點到還原點 期間異動的程式移除清乾淨
 
@@ -144,7 +153,7 @@ Changes not staged for commit:
 
 		顯示以上之類
 git stash // 放到暫存
-git stash save "my_stash" // 自訂名稱放到暫存
+git stash save "my_stash 自訂名稱放到暫存
 git status
 git stash list // 列舉暫存
 git stash apply // 將最新暫存apply到當前branch
@@ -156,7 +165,7 @@ git stash push -u -m "assign file 1 3" test1 test3// 指定檔案 存到stash
 
 git stash drop	stash@{?}  // 移除指定stash
 
-git stash show // To show files changed in the last stash only file
+	// To show files changed in the last stash only file
 git stash show -p // to view the content of the most recent stash
 git stash show -p stash@{1} // To view the content of an arbitrary stash
 
@@ -174,9 +183,9 @@ Download your stashes
 Do this for as all your stashes, and you'll have patch files in your pwd.
 
 Apply your stashes
-cd /new/project/dir
-git apply /old/project/dir/[patchName]
-git stash
+	cd /new/project/dir
+	git apply /old/project/dir/[patchName]
+	git stash
 
 使用 git stash apply [id] 也有可能衝突
 如內容出現
@@ -196,6 +205,11 @@ fix掉即可
 
 // 含蓋 untracked-files to patch
 // https://stackoverflow.com/questions/22818155/git-stash-to-patch-with-untracked-files
+
+誤刪 stash drop/pop 想還原
+則下 for ref in `git fsck --unreachable | grep commit | cut -d' ' -f3`; do git show --summary $ref; done | less
+找到 stash log 
+git stash apply {hash_id}
 
 ==========================================================================================
 ================================== merge =================================================
@@ -241,7 +255,15 @@ git show [commid] [file]
 # 取得當前branch 分支完整名稱與路徑	
 	git rev-parse --abbrev-ref --symbolic-full-name HEAD
 
-
+==========================================================================================
+================================== git url ===============================================
+==========================================================================================
+#取得git url
+	url=git remote -v	
+	
+#驗證 url 是否有效	
+	git ls-remote <url>	
+	
 ==========================================================================================
 ================================== 清 cache ==============================================
 ==========================================================================================
