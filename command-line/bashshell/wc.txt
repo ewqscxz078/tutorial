@@ -1,0 +1,17 @@
+顯示檔案行數、字數、字元數
+	wc [file]
+	
+可從標準輸入讀取資料：		
+	cat [file] | wc	
+	
+顯示檔案行數
+	wc -l [file]
+	
+顯示檔案字數
+	wc -w [file]
+
+顯示檔案字元數	
+	wc -c [file]
+
+計算最長行的長度
+	wc -L [file]
