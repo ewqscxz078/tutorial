@@ -1,0 +1,24 @@
+https://askubuntu.com/questions/57477/bring-nohup-job-to-foreground
+https://dragonspring.pixnet.net/blog/post/33257496
+https://blog.gtwang.org/linux/linux-nohup-command-tutorial/
+
+# 讓程式登出後可繼續執行
+	nohup /path/my_program &
+
+# 指定輸出檔案
+	nohup /path/my_program &> my_log.txt &
+	
+# 將正常的訊息與錯誤訊息分開，重新導向輸出
+	nohup /path/my_program > my.out 2> my.err &	
+
+# 降低執行優先權
+	因為使用 nohup 所執行的程式通常要跑很久，而且使用者登出後還是繼續跑，有時候為了避免長期佔用太多的系統資源，我沒會用 nice 指令讓程式以較低的優先權放在背景執行，盡量不要影響到其他正常的程式	
+	nohup nice /path/my_program &
+
+https://unix.stackexchange.com/questions/281244/how-to-pass-a-parameter-with-space-in-nohup	
+#How to pass a parameter with space in nohup? [duplicate]
+	user='Tim Toms'
+	jarfile=./app.jar
+	SC_CD='java -jar -Xms512m -Xmx2048m -DUSER='$user' $jarfile'
+	echo $SC_CD  > temp.sh
+	nohup bash temp.sh	

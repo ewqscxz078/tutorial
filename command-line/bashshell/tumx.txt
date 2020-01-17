@@ -1,0 +1,7 @@
+解說與使用screen熱鍵套用tmux
+	https://blog.longwin.com.tw/2011/04/tmux-learn-screen-config-2011/
+
+tmux 與 screen比較
+	https://josephj.com/entry.php?id=373
+	
+	

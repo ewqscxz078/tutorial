@@ -1,6 +1,13 @@
+http://max-linux-space.blogspot.com/2011/07/25ssh-commands.html
+https://www.poftut.com/run-shell-script-command-remote-ssh/
 ===================================================================
 ========================= ssh =====================================
 ===================================================================
+
+確認遠端開啟 ssh
+	https://www.golinuxcloud.com/list-check-active-ssh-connections-linux/
+	ss | grep -i ssh
+
 登入遠端機器執行 shell
 	ex:
 	  ssh -o StrictHostKeyChecking=no [帳號]@[host] [sh]
@@ -25,3 +32,19 @@ https://wirelessr.gitbooks.io/working-life/content/expectmiao_yong_wu_qiong.html
 			ssh-keygen
 		2)  Add public key to ~/.ssh/authorized_keys file on remote host
 			ssh-copy-id -i ~/.ssh/id_rsa.pub [帳號]@[host/ip]
+			
+執行單一指令
+	ssh username@remote_host 'ls -al'
+
+執行多列指令 
+	// 參數 -t 表示 Force pseudo-tty allocation，據參考資料有些指令不佳會出錯。 'ENDSSH'...ENDSSH為執行多列指令的區塊，第一個'ENDSSH'有單引號防止 bash 將之視為變數。 
+	ssh -t username@remote_host << 'ENDSSH'
+	pwd
+	ls
+	ENDSSH
+
+Run Script On Remote System	
+	ssh ismail@192.168.142.144 "/bin/bash /home/ismail/backup.sh"		
+	
+Run Local Script On Remote System	
+	ssh ismail@192.168.142.144 'bash -s' < cat script.sh	

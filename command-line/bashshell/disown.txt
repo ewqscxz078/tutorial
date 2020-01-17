@@ -1,0 +1,4 @@
+https://serverfault.com/questions/364689/how-do-i-get-ssh-to-run-in-the-background-without-using-f
+背景執行
+	ssh hostname 'command' &>/dev/null &
+	disown
