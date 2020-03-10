@@ -4,4 +4,36 @@
 tmux 與 screen比較
 	https://josephj.com/entry.php?id=373
 	
+開啟 多功終端機	
+	tmux
 	
+視窗開啟自訂 session-name	
+	tmux new -s session-name # ex: tmux new -s irc	
+
+重新命名 session-name
+	tmux rename-session [-t current-name] [new-name]
+	
+建立新的 terminal 在同一個畫面
+	Ctrl + a + c	
+
+切換同畫面下一個的 terminal
+    Ctrl + a + n
+	
+切換同畫面上一個的 terminal
+	Ctrl + a + p
+
+同畫面橫切
+	Ctrl + a s
+	
+同畫面直切
+	Ctrl + a v (或 C-a %)
+	
+關閉當前跟割的畫面
+	Ctrl + d
+	
+脫離
+	Ctrl + a + d
+	
+回來 tmux
+	tmux ls
+	tmux attach -t 0 # 參考 tmux ls 取得

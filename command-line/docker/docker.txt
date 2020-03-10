@@ -38,6 +38,13 @@
 #停止某個docker
 	docker stop [id by docker ps]
 
+#從docker 裡複製出檔案
+	1.找出 CONTAINER_ID
+		docker ps|grep docker name	
+		第一個欄位即為CONTAINER_ID
+	2.
+		docker cp [CONTAINER_ID]:/[filepath/filename] .
+		
 =======================================================================
 ======================= docker file ===================================
 =======================================================================

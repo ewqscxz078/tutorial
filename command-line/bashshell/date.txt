@@ -1,0 +1,4 @@
+https://www.cyberciti.biz/faq/linux-unix-formatting-dates-for-display/
+
+now=$(date +"%Y%m%d-%H%M%S")
+echo $now
