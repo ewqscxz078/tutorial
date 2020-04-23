@@ -1,6 +1,22 @@
+https://zh.wikipedia.org/wiki/Bash
 https://dywang.csie.cyut.edu.tw/dywang/linuxProgram/node12.html
+http://linux.vbird.org/linux_basic/0320bash.php
 
 bash shell
+
+===================================================================
+========================= history =================================
+===================================================================
+
+~/.bash_history 記錄的是前一次登入以前所執行過的指令， 而至於這一次登入所執行的指令都被暫存在記憶體中，
+當你成功的登出系統後，該指令記憶才會記錄到 .bash_history 當中
+
+===================================================================
+========================= tab =====================================
+===================================================================
+
+自動補齊
+
 ===================================================================
 ========================= 全域變數\區域變數 =======================
 ===================================================================
@@ -182,41 +198,41 @@ alias 列舉所有指令別名
 =================================================================== 
 https://blog.csdn.net/yinxusen/article/details/7450213		
 一、交集
-sort a.txt b.txt | uniq -d
+	sort a.txt b.txt | uniq -d
 
 二、并集
-sort a.txt b.txt | uniq 
+	sort a.txt b.txt | uniq 
 
 三、差集
-a.txt-b.txt:
+	a.txt - b.txt:
 
-sort a.txt b.txt b.txt | uniq -u
+	sort a.txt b.txt b.txt | uniq -u
 
-b.txt - a.txt:
+	b.txt - a.txt:
 
-sort b.txt a.txt a.txt | uniq -u
+	sort b.txt a.txt a.txt | uniq -u
 
 四、相关的解释
-使用sort可以将文件进行排序，可以使用sort后面的玲玲，例如 -n 按照数字格式排序，例如 -i 忽略大小写，例如使用-r 为逆序输出等
+	使用sort可以将文件进行排序，可以使用sort后面的玲玲，例如 -n 按照数字格式排序，例如 -i 忽略大小写，例如使用-r 为逆序输出等
 
-uniq为删除文件中重复的行，得到文件中唯一的行，后面的命令 -d 表示的是输出出现次数大于1的内容 -u表示的是输出出现次数为1的内容，那么对于上述的求交集并集差集的命令做如下的解释：
+	uniq为删除文件中重复的行，得到文件中唯一的行，后面的命令 -d 表示的是输出出现次数大于1的内容 -u表示的是输出出现次数为1的内容，那么对于上述的求交集并集差集的命令做如下的解释：
 
-sort a.txt b.txt | uniq -d：将a.txt b.txt文件进行排序，uniq使得两个文件中的内容为唯一的，使用-d输出两个文件中次数大于1的内容，即是得到交集
+	sort a.txt b.txt | uniq -d：将a.txt b.txt文件进行排序，uniq使得两个文件中的内容为唯一的，使用-d输出两个文件中次数大于1的内容，即是得到交集
 
-sort a.txt b.txt | uniq ：将a.txt b.txt文件进行排序，uniq使得两个文件中的内容为唯一的，即可得到两个文件的并集
+	sort a.txt b.txt | uniq ：将a.txt b.txt文件进行排序，uniq使得两个文件中的内容为唯一的，即可得到两个文件的并集
 
-sort a.txt b.txt b.txt | uniq -u：将两个文件排序，最后输出a.txt b.txt b.txt文件中只出现过一次的内容，因为有两个b.txt所以只会输出只在a.txt出现过一次的内容，即是a.txt-b.txt差集
+	sort a.txt b.txt b.txt | uniq -u：将两个文件排序，最后输出a.txt b.txt b.txt文件中只出现过一次的内容，因为有两个b.txt所以只会输出只在a.txt出现过一次的内容，即是a.txt-b.txt差集
 
-对于b.txt-a.txt为同理
+	对于b.txt-a.txt为同理
 		
-
-https://blog.csdn.net/matrix_google/article/details/76071330		
+	https://blog.csdn.net/matrix_google/article/details/76071330		
+	
 去交集
 1.求交集
-cat file1 file2 | sort | uniq -d > intersection.out
+	cat file1 file2 | sort | uniq -d > intersection.out
 
 2.从file1中去除交集
-cat file1 intersection.out | sort | uniq -u > file1-ineter.out	
+	cat file1 intersection.out | sort | uniq -u > file1-ineter.out	
 ===================================================================
 ========================= explorer ================================
 =================================================================== 

@@ -28,7 +28,10 @@ tmux 與 screen比較
 同畫面直切
 	Ctrl + a v (或 C-a %)
 	
-關閉當前跟割的畫面
+調整畫面
+	Ctrl + a alt + 方向鍵	
+	
+關閉當前分割的畫面
 	Ctrl + d
 	
 脫離

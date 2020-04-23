@@ -1,0 +1,3 @@
+
+big5 to utf8
+	iconv -f big5 -t utf8

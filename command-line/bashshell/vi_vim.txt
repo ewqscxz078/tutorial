@@ -18,7 +18,7 @@ copy
 search
 	next n
 	before N
-
+	
 跳到指定行數	
 	:n，代表跳?到第n行	
 	
@@ -32,3 +32,14 @@ search
 	:%s/{關鍵字}/{取代後的值}/g
 	ex 
 		:%s/\t/    /g
+		
+額外設定
+	顯示行數
+		:set number
+	隱藏行數
+		:set nonumber
+		
+	不分大小寫搜尋	
+		:set ignorecase
+	取消不分大小寫搜尋	
+		:set noignorecase		

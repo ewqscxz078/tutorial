@@ -99,6 +99,8 @@ git diff --name-status origin/master origin/issue/[redmineId]
 ==========================================================================================
 git checkout [遠端/branchName]
 
+git checkout [遠端/branchName] --track // 當名稱跑掉時
+
 git branch 	[branchName] // 建立分支
 
 git branch -D [遠端/branchName]	// 刪除分支
@@ -259,7 +261,7 @@ git show [commid] [file]
 ================================== git url ===============================================
 ==========================================================================================
 #取得git url
-	url=git remote -v	
+	git remote -v	// url=
 	
 #驗證 url 是否有效	
 	git ls-remote <url>	
