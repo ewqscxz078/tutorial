@@ -1,0 +1,8 @@
+# --reflink=auto 代表有使用到cow 的檔案系統 會加速 copy
+	cp -r --reflink=auto "$fromdir" "$todir"
+
+# copy 檔案
+	cp sourcefile targetfile
+
+# copy 目錄含相關子目錄
+	cp -r sourcefile targetfile

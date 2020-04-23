@@ -1,0 +1,10 @@
+ls -p | grep -v /  # 僅顯示file
+ls -d */  # 僅顯示folder
+
+ls -l  |grep "^-"|wc -l #計算檔案數
+ls -l  |grep "^d"|wc -l #計算目錄數
+
+
+ls -lah `find . -xdev -type f -name "*.java" -size +250k` # 列出超出250k的java程式
+ls -lah `find . -xdev -type f -name "*.pdf" -size +5M`
+ls -lah `find . -xdev -type f -name "*.pdf" -size +1G`
