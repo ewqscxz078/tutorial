@@ -1,0 +1,72 @@
+https://springframework.guru/spring-framework-annotations/
+
+Core Spring Framework Annotations
+
+	代表javaconfig，等於xml
+		@Configuration
+
+	限制掃package路徑
+		@ComponentScan
+
+	匯入其他javaconfig
+		@Import
+	
+	ioc 注入bean
+		@Bean
+
+	@Lazy
+
+	@Value
+
+	@Required
+
+	@Autowired
+
+	@Qualifier
+
+Spring Framework Stereotype Annotations
+	@Component
+	
+	@Controller
+	
+	@Service
+	
+	@Repository
+	
+Spring Boot Annotations
+
+	@EnableAutoConfiguration
+	
+	@SpringBootApplication
+	
+Spring MVC and REST Annotations
+	@Controller
+	
+	@RequestMapping
+	
+	@CookieValue
+	
+	@CrossOrigin
+	
+Composed @RequestMapping Variants
+	@GetMapping
+	@PostMapping
+	@PutMapping
+	@PatchMapping
+	@DeleteMapping
+	@ExceptionHandler
+	@InitBinder
+	@Mappings and @Mapping
+	@MatrixVariable
+	@PathVariable
+	@RequestAttribute
+	@RequestBody
+	@RequestHeader
+	@RequestParam
+	@RequestPart
+	@ResponseBody
+	@ResponseStatus
+	@ControllerAdvice
+	@RestController
+	....
+	

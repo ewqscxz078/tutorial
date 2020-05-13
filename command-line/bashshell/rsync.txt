@@ -1,0 +1,51 @@
+https://blog.gtwang.org/linux/rsync-local-remote-file-synchronization-commands/
+
+-v：verbose 模式，輸出比較詳細的訊息。
+-r：遞迴（recursive）備份所有子目錄下的目錄與檔案。
+-a：封裝備份模式，相當於 -rlptgoD，遞迴備份所有子目錄下的目錄與檔案，保留連結檔、檔案的擁有者、群組、權限以及時間戳記。
+-z：啟用壓縮。
+-h：將數字以比較容易閱讀的格式輸出。
+
+ex
+	同步檔案
+		rsync -avh myfile.gz /home/pi/tmp/
+		
+	同步資料夾
+		rsync -avh /path/to/myfolder /home/pi/tmp/
+	
+	本地至遠端
+		rsync -avzh /mypath/myfile.gz pi@192.168.1.12:/mybackup/
+	
+	遠端至本地
+		rsync -avzh pi@192.168.1.12:/mypath/myfile.gz /mybackup/
+	
+	限制頻寬
+		rsync -avzh --bwlimit=100K pi@192.168.1.12:/mypath/myfile.gz /mybackup/
+		
+	顯示傳輸進度	
+		rsync -avzh --progress pi@192.168.1.12:/mypath/myfile.gz /mybackup/
+		
+	同步刪除檔案	
+		rsync -avh --delete myfolder/ backup/
+		
+	排除備份特定檔案
+		rsync -avh --exclude '*.txt' myfolder/ backup/
+	
+	僅備份特定檔案
+		rsync -avh --include '*.c' --include '*/' --exclude '*' myfolder/ backup/
+		
+	限制備分大小
+		rsync -avh --min-size=1M myfolder/ backup/
+		rsync -avh --max-size=4K myfolder/ backup/
+		
+	自動刪除來源檔案	
+		rsync -avh --remove-source-files myfolder/ backup/
+		
+	測試 rsync 參數
+		rsync -avh --dry-run --remove-source-files myfolder/ backup/
+		
+	只更新既有檔案
+		rsync -avh --existing myfolder/ backup/
+		
+	顯示檔案變動資訊	
+		rsync -avhi myfolder/ backup/

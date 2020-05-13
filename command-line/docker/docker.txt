@@ -1,42 +1,130 @@
+https://docs.docker.com/engine/reference/run/#expose-incoming-ports
+
 =======================================================================
-======================= docker ===================================
+======================= 流程 ==========================================
 =======================================================================
-#顯示版本
+
+registres				官方 hub docker 或私建立 之 docker 來源
+	|					docker login
+	|					docker pull <id>/<REPOSITORY name>:<tag>
+Dockerfile				prepar Dockerfile
+	|					docker build [dockerfile] => image
+image(local list)		docker image ls -a
+	|					docker run [imagefile] => container
+	|					docker push <id>/<REPOSITORY name>:<tag> => registres
+container(local list)	docker ps -a 
+	|
+run container			
+=======================================================================
+======================= docker file ===================================
+=======================================================================
+一定要命名 Dockerfile
+
+# 從哪裡下載 dockerfile base
+	FROM [私有網域]/images:tag	
+		ex:
+			FROM ubuntu #下載最新版
+			FROM ubuntu:18.04
+			FROM demoyuw/nginx:v0.2
+
+# dockerfile 註解
+	LABEL <key>=<value>
+			
+# 環境變數
+	ENV <key>=<value>
+
+# 指定預設HOME目錄
+	WORKDIR 
+		ex: 
+			WORKDIR /app
+			
+# 複製檔案到容器內
+	COPY {local path file} {container path}
+		ex:
+			COPY test.war .
+			COPY /home/users/files .
+			
+# 複製檔案到容器內，順便解壓縮
+	ADD {local path file} {container path}
+		ex:
+			ADD cirros-0.3.4-x86_64-disk.img /
+			
+# 設定port container 內對外 port
+	EXPOSE <port> [<port>/<protocol>...]
+		ex:
+			EXPOSE 80:TCP
+		docker command
+			docker run -p 80:8080/tcp
+			
+# 硬碟空間設定，local端建立volume，並接到container內的 volume
+		ex:
+			VOLUME ["/volume1"]
+			VOLUME ["/volume1","/volume2" ....]
+ARG
+USER
+
+CMD
+
+=======================================================================
+======================= docker command=================================
+=======================================================================
+
+# 顯示版本
 	docker --version
 
-#詳細安裝
+# 詳細安裝
 	docker info
 
-#列舉出可用 image
+# 列舉出可用 image
 	docker images
 	docker images|grep [imageFileName]
-
-#Docker 刪除 Image (rmi)
+	docker image ls 
+	docker image ls -a
+	
+# Docker 刪除 Image (rmi)
 	docker rmi [image-id]
+	docker rmi --force [image-id] # if 有多個一樣image-id
 
-#Docker 刪除 container (rm)
-	docker rm [contain-id]
+# Docker 刪除 container (rm)
+	docker rm [contain-id]....
+		# Force the removal of a running container (uses SIGKILL) if 有多個一樣
+		docker rm -f [contain-id]....
 
-#編譯 image
+# 編譯 image
 	docker build -t [imageFileName] .
+	
+docker run	
+	# run in 前景
+		docker run -p 4000:80 [imageFileName]
 
-#run in 前景
-	docker run -p 4000:80 [imageFileName]
+	# run in 背景
+		docker run -d -p 4000:80 [imageFileName]
+		docker run -itd -p 4000:80 [imageFileName]
+		
+	# automatically clean up the container and remove the file system when the container exits	
+		docker run --rm -d -p 4000:80 [imageFileName]
+		
+	# Bind mount a volume(shared filesystems)
+		docker run --rm -d -p 4000:80 [imageFileName] -v:[host-src:]container-dest[:<options>]
 
-#run in 背景
-	docker run -d -p 4000:80 [imageFileName]
+go into running container
+	docker exec -it <container name> /bin/bash
+		
+docker ps
+	#查詢正在執行的docker
+		docker ps
 
-#查詢正在執行的docker
-	docker ps
-
-#查詢正在執行或停止的docker
-	docker ps -a
+	#查詢正在執行或停止的docker
+		docker ps -a
 
 #查詢某image 裡的內容 當不知道dockerfile 在哪時
 	docker inspect [imageName]
 	
-#停止某個docker
-	docker stop [id by docker ps]
+#停止docker
+	docker stop [container-id by docker ps -a]
+	
+#刪除ocker
+	docker rm [name by docker ps -a]
 
 #從docker 裡複製出檔案
 	1.找出 CONTAINER_ID
@@ -44,17 +132,6 @@
 		第一個欄位即為CONTAINER_ID
 	2.
 		docker cp [CONTAINER_ID]:/[filepath/filename] .
-		
-=======================================================================
-======================= docker file ===================================
-=======================================================================
-FROM
-USER
-WORKDIR
-COPY
-ARG
-ENV
-CMD
 
 =======================================================================
 ======================= docker 觀察 ===================================

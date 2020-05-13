@@ -1,62 +1,68 @@
 ===================================================================
 ========================= grep ====================================
 ===================================================================
-grep [-a ¡Vv ¡Vi ¡Vn ¡Vv ] '·j´Mªº¦r¦ê' filename
--a : §âbinary ÀÉ®×¥Î text ÀÉ®×ªº¤è¦¡·j´M¸ê®Æ
+grep [-a â€“v â€“i â€“n â€“v ] 'æœå°‹çš„å­—ä¸²' filename
+-a : æŠŠbinary æª”æ¡ˆç”¨ text æª”æ¡ˆçš„æ–¹å¼æœå°‹è³‡æ–™
 
--c : ­pºâ§ä¨ì '·j´M¦r¦ê' ªº¦¸¼Æ(count)
+-c : è¨ˆç®—æ‰¾åˆ° 'æœå°‹å­—ä¸²' çš„æ¬¡æ•¸(count)
 
--i : ©¿²¤¤j¤p¼gªº¤£¦P,¤]´N¬O¤j¤p¼g³£·|µø¬°¬Û¦P
+-i : å¿½ç•¥å¤§å°å¯«çš„ä¸åŒ,ä¹Ÿå°±æ˜¯å¤§å°å¯«éƒ½æœƒè¦–ç‚ºç›¸åŒ
 
--n : ¿é¥X¦æ¸¹,¦b¨C¦æªº«e­±¥[¤W¦æ¸¹ex: 1: 2: 3: (number)
+-n : è¼¸å‡ºè¡Œè™Ÿ,åœ¨æ¯è¡Œçš„å‰é¢åŠ ä¸Šè¡Œè™Ÿex: 1: 2: 3: (number)
 
--v : ¤Ï¦V¿ï¾Ü,¤]´N¬O»¡Åã¥Ü¥X¨S¦³ '·j´M¦r¦ê'¤º®eªº¨º¤@¦æ(--invert-match)
+-v : åå‘é¸æ“‡,ä¹Ÿå°±æ˜¯èªªé¡¯ç¤ºå‡ºæ²’æœ‰ 'æœå°‹å­—ä¸²'å…§å®¹çš„é‚£ä¸€è¡Œ(--invert-match)
 
--V : ¤j¼gªºV,Åã¥Ü¥X¨Ógrepªºª©¥»¸ò¬ÛÃöªº¸ê°T(version)
+-V : å¤§å¯«çš„V,é¡¯ç¤ºå‡ºä¾†grepçš„ç‰ˆæœ¬è·Ÿç›¸é—œçš„è³‡è¨Š(version)
 
--I : ¤£§t Binary file
+-I : ä¸å« Binary file
 
-±Æ°£ªşÀÉ¦W¥B²Å¦X¦r¦ê key word
+æ’é™¤é™„æª”åä¸”ç¬¦åˆå­—ä¸² key word
 	grep -r --exclude=*.{pdf,jpg,gif,png,ttf,keystore,jasper,xls} [key word]
 	
-ªşÀÉ¦W¬°«ü©w¥B²Å¦X¦r¦ê key word
+é™„æª”åç‚ºæŒ‡å®šä¸”ç¬¦åˆå­—ä¸² key word
 	grep -r --include=*.{java} [key word]
 
-±Æ°£«ü©w¥Ø¿ı¥B²Å¦X¦r¦ê key word	
+æ’é™¤æŒ‡å®šç›®éŒ„ä¸”ç¬¦åˆå­—ä¸² key word	
 	grep -iR "hibernate" --include=".java" --exclude-dir=".*" 
 	grep -iR "hibernate" --include=*.{java,xml,properties} --exclude-dir=".*" 
 	
-§ä¨ìwindow ´«¦æ²Å¸¹
+æ‰¾åˆ°window æ›è¡Œç¬¦è™Ÿ
 	grep -r --exclude=*.{pdf,jpg,gif,png,ttf,keystore,jasper,xls} $'\r' * >> checkM.txt	
 	
-¤j¤p¼g¤£¤À
+å¤§å°å¯«ä¸åˆ†
 	grep -i [key word] /d/SRIS_CODE/Greenc/.cache/issue.checkouted
 
-all match file name §¹¥ş§å°t
+all match file name å®Œå…¨æ‰¹é…
 	grep -iw [key word] /d/SRIS_CODE/Greenc/.cache/issue.checkouted
 
-´M§ä ÀÉ®×¦³ key word ªº ¦CÁ|
+å°‹æ‰¾ æª”æ¡ˆæœ‰ key word çš„ åˆ—èˆ‰
 	grep -R ".[key word]."
 
-¥[¤WÃC¦â
+åŠ ä¸Šé¡è‰²
 	grep -iR --color ".[key word]."
 	
-·j´Mµ²ªG±Æ°£	
+æœå°‹çµæœæ’é™¤	
 	https://www.codingfailure.com/linux-tutorial/grep-command/grep-not-include/
-	ex: ·j´M¨ìÃöÁä¦r [key word] ¦ı¤£§t¦³ * ªº
+	ex: æœå°‹åˆ°é—œéµå­— [key word] ä½†ä¸å«æœ‰ * çš„
 		grep -iR --color ".[key word]."	| grep -v "*"
 
-¨Ï¥Î¥i±Æ°£patternªº¤è¦¡
+ä½¿ç”¨å¯æ’é™¤patternçš„æ–¹å¼
 	https://unix.stackexchange.com/questions/96480/with-grep-how-can-i-match-a-pattern-and-invert-match-another-pattern
 	
-¦hÅã¥Ü¤W¤U¤å
-	ex: ¦hÅã¥Ü¤W¤U¤å5¦æªºkeyword
+å¤šé¡¯ç¤ºä¸Šä¸‹æ–‡
+	ex: å¤šé¡¯ç¤ºä¸Šä¸‹æ–‡5è¡Œçš„keyword
 		grep -A 5 -B 5 [key word]
 	
-±Æ°£ Binary file
+æ’é™¤ Binary file
 	ex: before
 		grep -inR "A"
 Binary file 1.open_DBSchemaEditor_NOSAVE.xlsm.gif matches
 		after
 		grep -IinR "A"
+		
+åˆ—å‡º match file list
+	grep -lR "sit\.ris\.sris\.dpl"
+	
+	é€²éš
+		grep -lR "sit\.ris\.sris\.dpl" | xargs sed -i 's/sit\.ris\.sris\.dpl/app\.ris\.sris\.dpl/g'
 	
