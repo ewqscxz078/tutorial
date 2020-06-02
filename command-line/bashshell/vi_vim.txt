@@ -42,4 +42,16 @@ search
 	不分大小寫搜尋	
 		:set ignorecase
 	取消不分大小寫搜尋	
-		:set noignorecase		
+		:set noignorecase
+
+檢視不可見特殊字元
+	:help digraph-table
+	
+顯示隱藏字元
+	:set list
+	
+不顯示隱藏字元
+	:set nolist
+	
+設定顯示哪些隱藏字元
+	:set listchars=eol:$,tab:>-,trail:~,extends:>,precedes:<
