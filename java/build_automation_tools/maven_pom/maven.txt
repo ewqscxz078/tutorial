@@ -1,0 +1,55 @@
+==================================================================================================
+============================== scope =============================================================
+==================================================================================================
+<dependency>
+	<groupId>javax.servlet</groupId>
+	<artifactId>javax.servlet-api</artifactId>
+	<version>${javax.servlet.version}</version>
+	<scope>provided</scope>
+</dependency>
+
+1.compile  (編譯)
+  此為預設值，表示此jar是所有階段需要的。 部署時將一起被打包到jar/war裡面。
+  
+2.test (測試)
+  表示此jar檔只有在測試時，才需要使用。如 junit jar 等。
+  部署時將不會打包到jar/war裡面。
+  
+3.runtime (運行)
+  表示此jar檔只有在運行時，才需要使用。如jdbc jar等。
+  
+4.provided (已提供)
+  當運行時，表示此jar檔期望由JDK、Tomcat及jboss等來提供。如 servlet.jar、jsp-api.jar 等。
+  部署時將不會打包到jar/war裡面。
+
+5.system (系統)
+  表示此jar檔有系統提供。跟provided 相似，這是以外部JAR檔的形式提供。
+  而在maven repository 是無法找到它的。
+  需指定位置，配合 systemPath 來使用
+
+==================================================================================================
+============================== properties ========================================================
+==================================================================================================
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+或是
+	<plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-compiler-plugin</artifactId>
+		<configuration>
+			<source>1.8</source>
+			<target>1.8</target>
+		</configuration>
+	</plugin>
+  
+常用設定  
+	1.build 編碼
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		
+	2.compiler 
+		<maven.compiler.source>1.8</maven.compiler.source>
+		
+		
