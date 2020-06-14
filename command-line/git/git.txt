@@ -97,13 +97,23 @@ git diff --name-status origin/master origin/issue/[redmineId]
 ==========================================================================================
 ==========================================branch操作======================================
 ==========================================================================================
-git checkout [遠端/branchName]
+切換branch
+	git checkout [遠端/branchName]
 
-git checkout [遠端/branchName] --track // 當名稱跑掉時
+	git checkout [遠端/branchName] --track // 當名稱跑掉時	
+	
+建立local分支
+	git branch 	[branchName]
+	
+建立local分支 base on 特定branch
+	git checkout [特定branch]
+	git checkout -b DEVELOP/greenc108
 
-git branch 	[branchName] // 建立分支
+刪除遠端分支
+	git push origin --delete [branchName]
 
-git branch -D [遠端/branchName]	// 刪除分支
+刪除local分支
+	git branch -D [branchName]
 
 ==========================================================================================
 ==========================================還原操作========================================

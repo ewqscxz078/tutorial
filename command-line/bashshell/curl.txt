@@ -28,4 +28,6 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 追蹤整個 curl 過程並將結果存入 指定檔案
 	curl --trace-ascii <filename> <url>
 	
+	curl -vk <url>	
+	
 	

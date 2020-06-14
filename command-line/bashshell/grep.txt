@@ -1,7 +1,7 @@
 ===================================================================
 ========================= grep ====================================
 ===================================================================
-grep [-a –v –i –n –v ] '搜尋的字串' filename
+grep [-a –v –i –n –v ] '搜尋的字串' [filename/dir]
 -a : 把binary 檔案用 text 檔案的方式搜尋資料
 
 -c : 計算找到 '搜尋字串' 的次數(count)
@@ -16,6 +16,12 @@ grep [-a –v –i –n –v ] '搜尋的字串' filename
 
 -I : 不含 Binary file
 
+指定目錄搜尋
+	grep [key word] /d/SRIS_CODE/Greenc/.cache/
+
+指定檔案搜尋
+	grep [key word] /d/SRIS_CODE/Greenc/.cache/issue.checkouted
+	
 排除附檔名且符合字串 key word
 	grep -r --exclude=*.{pdf,jpg,gif,png,ttf,keystore,jasper,xls} [key word]
 	

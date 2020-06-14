@@ -1,0 +1,8 @@
+mkdir [-pvm] [name_of_directory]
+
+-p: will also create all directories leading up to the given directory that do not exist already. If the given directory already exists, ignore the error.
+-v：顯示mkdir建立的每個目錄。通常與-p配合使用。
+-m：指定目錄的octal permissions。
+
+包含子目錄一起建立
+	mkdir -p [name_of_directory]

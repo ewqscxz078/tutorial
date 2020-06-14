@@ -1,0 +1,211 @@
+=================================================================================================================================================================
+======================================== Singleton Pattern ======================================================================================================
+=================================================================================================================================================================
+
+特徵
+	1.私有建構式	Private constructor to restrict instantiation of the class from other classes
+	2.私有靜態變數	Private static variable of the same class that is the only instance of the class.
+	3.公開靜態方法	Public static method that returns the instance of the class, this is the global access point for outer world to get the instance of the singleton class
+
+方式
+	1.Eager initialization
+	2.Static block initialization		
+		ex: 
+			File System, Database connections
+		缺點:
+			client未使用仍實例而浪費資源
+	3.Lazy Initialization
+	4.Thread Safe Singleton
+	5. Bill Pugh Singleton Implementation
+	6. Using Reflection to destroy Singleton Pattern
+	7. Enum Singleton
+	8. Serialization and Singleton
+	
+=================================================================================================================================================================
+======================================== NO Thread Safe Singleton ===============================================================================================
+=================================================================================================================================================================
+	
+1.Eager initialization
+	於私有靜態變數就實例化
+	public class EagerInitializedSingleton {
+		
+		private static final EagerInitializedSingleton instance = new EagerInitializedSingleton();
+		
+		//private constructor to avoid client applications to use constructor
+		private EagerInitializedSingleton(){}
+
+		public static EagerInitializedSingleton getInstance(){
+			return instance;
+		}
+	}			
+		
+2.Static block initialization	
+	於靜態建構時加入 option catch 實例化
+	public class StaticBlockSingleton {
+
+		private static StaticBlockSingleton instance;
+		
+		private StaticBlockSingleton(){}
+		
+		//static block initialization for exception handling
+		static{
+			try{
+				instance = new StaticBlockSingleton();
+			}catch(Exception e){
+				throw new RuntimeException("Exception occured in creating singleton instance");
+			}
+		}
+		
+		public static StaticBlockSingleton getInstance(){
+			return instance;
+		}
+	}		
+	實例時多 option exception
+	
+3.Lazy Initialization
+	公開靜態方法當為null時才實例化
+	public class LazyInitializedSingleton {
+
+		private static LazyInitializedSingleton instance;
+		
+		private LazyInitializedSingleton(){}
+		
+		public static LazyInitializedSingleton getInstance(){
+			if(instance == null){
+				instance = new LazyInitializedSingleton();
+			}
+			return instance;
+		}
+	}
+			
+=================================================================================================================================================================
+======================================== Thread Safe Singleton ==================================================================================================
+=================================================================================================================================================================			
+
+4.Thread Safe Singleton
+	公開靜態方法多宣告 synchronized
+	public class ThreadSafeSingleton {
+
+		private static ThreadSafeSingleton instance;
+		
+		private ThreadSafeSingleton(){}
+		
+		public static synchronized ThreadSafeSingleton getInstance(){
+			if(instance == null){
+				instance = new ThreadSafeSingleton();
+			}
+			return instance;
+		}
+		
+	}
+	
+	為了僅第一次 null 才實例化改良，double checked locking
+	public static ThreadSafeSingleton getInstanceUsingDoubleLocking(){
+		if(instance == null){
+			synchronized (ThreadSafeSingleton.class) {
+				if(instance == null){
+					instance = new ThreadSafeSingleton();
+				}
+			}
+		}
+		return instance;
+	}
+	
+5. Bill Pugh Singleton Implementation
+	在java 5以前上述方法可能會在奇怪的情境有問題，因此使用內部靜態方法實例化
+	加載singleton類時，不會將SingletonHelper類加載到內存中，只有當有人調用getInstance方法時，該類才會加載並創建Singleton類實例。
+	這是Singleton類使用最廣泛的方法，因為它不需要同步
+		
+	public class BillPughSingleton {
+
+		private BillPughSingleton(){}
+		
+		private static class SingletonHelper{
+			private static final BillPughSingleton INSTANCE = new BillPughSingleton();
+		}
+		
+		public static BillPughSingleton getInstance(){
+			return SingletonHelper.INSTANCE;
+		}
+	}
+
+6. Using Reflection to destroy Singleton Pattern
+	hashcode will different
+	public class ReflectionSingletonTest {
+
+		public static void main(String[] args) {
+			EagerInitializedSingleton instanceOne = EagerInitializedSingleton.getInstance();
+			EagerInitializedSingleton instanceTwo = null;
+			try {
+				Constructor[] constructors = EagerInitializedSingleton.class.getDeclaredConstructors();
+				for (Constructor constructor : constructors) {
+					//Below code will destroy the singleton pattern
+					constructor.setAccessible(true);
+					instanceTwo = (EagerInitializedSingleton) constructor.newInstance();
+					break;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			System.out.println(instanceOne.hashCode());
+			System.out.println(instanceTwo.hashCode());
+		}
+
+	}
+7. Enum Singleton	
+	為克服 Reflection 問題，可採用 enum 方式，缺點不支援 Lazy Initialization
+	public enum EnumSingleton {
+
+		INSTANCE;
+		
+		public static void doSomething(){
+			//do something
+		}
+	}	
+	
+8. Serialization and Singleton	
+
+	public class SerializedSingleton implements Serializable{
+
+		private static final long serialVersionUID = -7604766932017737115L;
+
+		private SerializedSingleton(){}
+		
+		private static class SingletonHelper{
+			private static final SerializedSingleton instance = new SerializedSingleton();
+		}
+		
+		public static SerializedSingleton getInstance(){
+			return SingletonHelper.instance;
+		}		
+		
+	}
+	
+	// hashcode will different
+	public class SingletonSerializedTest {
+
+		public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
+			SerializedSingleton instanceOne = SerializedSingleton.getInstance();
+			ObjectOutput out = new ObjectOutputStream(new FileOutputStream(
+					"filename.ser"));
+			out.writeObject(instanceOne);
+			out.close();
+			
+			//deserailize from file to object
+			ObjectInput in = new ObjectInputStream(new FileInputStream(
+					"filename.ser"));
+			SerializedSingleton instanceTwo = (SerializedSingleton) in.readObject();
+			in.close();
+			
+			System.out.println("instanceOne hashCode="+instanceOne.hashCode());
+			System.out.println("instanceTwo hashCode="+instanceTwo.hashCode());
+			
+		}
+	}	
+	
+	SerializedSingleton 新增可克服
+	protected Object readResolve() {
+		return getInstance();
+	}	
+=================================================================================================================================================================	
+	

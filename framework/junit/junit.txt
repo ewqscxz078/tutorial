@@ -1,0 +1,6 @@
+
+@BeforeClass	// public static void 執行前，執行一次
+@AfterClass		// public static void 執行後，執行一次
+@Before			// 每個 @Test 前執行一次
+@Test			// 單元測試
+@After			// 每個 @Test 後執行一次

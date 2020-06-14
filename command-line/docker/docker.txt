@@ -14,7 +14,8 @@ image(local list)		docker image ls -a
 	|					docker push <id>/<REPOSITORY name>:<tag> => registres
 container(local list)	docker ps -a 
 	|
-run container			
+run container
+
 =======================================================================
 ======================= docker file ===================================
 =======================================================================
@@ -66,7 +67,7 @@ USER
 CMD
 
 =======================================================================
-======================= docker command=================================
+======================= docker command ================================
 =======================================================================
 
 # 顯示版本
@@ -92,7 +93,9 @@ CMD
 
 # 編譯 image
 	docker build -t [imageFileName] .
-	
+		ex:
+			docker build -t sris-base/wildfly-sris [filePath/Dockerfile]
+		
 docker run	
 	# run in 前景
 		docker run -p 4000:80 [imageFileName]
@@ -123,7 +126,7 @@ docker ps
 #停止docker
 	docker stop [container-id by docker ps -a]
 	
-#刪除ocker
+#刪除docker
 	docker rm [name by docker ps -a]
 
 #從docker 裡複製出檔案
@@ -138,3 +141,6 @@ docker ps
 =======================================================================
 #查看vm下 docker cpu memory disk
 	docker stats
+
+#僅顯示一次	
+	docker stats --no-stream
