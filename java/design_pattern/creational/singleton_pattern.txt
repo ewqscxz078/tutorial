@@ -203,7 +203,7 @@
 		}
 	}	
 	
-	SerializedSingleton 新增可克服
+	SerializedSingleton 新增可克服上述問題
 	protected Object readResolve() {
 		return getInstance();
 	}	
