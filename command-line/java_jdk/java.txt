@@ -1,31 +1,47 @@
-https://stackoverflow.com/questions/12797560/command-line-tool-to-find-java-heap-size-and-memory-used-linux
+https://codertw.com/%E4%BC%BA%E6%9C%8D%E5%99%A8/130922/
+https://www.itread01.com/content/1546875738.html
 
-jps
-	jps |grep -v Jps | awk '{ print $1}'
+java
 
-
-jcmd
-	https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr006.html
-		jcmd [jps-pid] help
-	
-		sum of, total and used memory from the output.
-			jcmd [jps-pid] GC.heap_info
-			jcmd `jps |grep -v Jps | awk '{ print $1}'` GC.heap_info
-
-jstat		
-	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html
-	https://kknews.cc/zh-tw/code/a3krrlx.html
-	will present the utilization of each generation as a percentage of its capacity. Useful to get an at a glance view of usage.	
-		jstat -gcutil [jps-pid]
-
-	find statistics of the behavior of the garbage collected heap.	
-		jstat -gc [jps-pid]
+java_jvm
+	1.堆大小設定
+		整個 JVM 記憶體大小=年輕代大小 + 年老代大小 +  持久代大小
+		當出現 java.lang.OutOfMemoryError: Java heap space	與下列設定有關
+			配置: 常見設定一樣，避免在每次GC 後調整堆的大小
+			用途: heap memory for 開發人員使用
+				-Xms[1-9]+(m|g)		// 初始堆大小，預設是實體記憶體的1/64，預設空餘堆記憶體小於40%時,JVM就會增大堆直到-Xmx的最大限制
+				-Xmx[1-9]+(m|g)		// 最大堆大小，預設是實體記憶體的1/4，空餘堆記憶體大於70%時,JVM會減少堆直到-Xms的最小限制
+				
+					-Xmn			年輕代大小(Java Heap Young區大小)，官方推薦配置為整個堆的3/8(為1/4的-Xmx值)，持久代一般固定大小為64m
+					-Xss			每個執行緒的Stack大小，JDK5.0以後每個線程堆棧大小為1M
+					-XX:NewSize		設定JVM堆的‘新生代’的預設大小；
+					-XX:MaxNewSize	設定JVM堆的‘新生代’的最大大小；
 		
-	will present information about memory pool generation and space capabilities.
-		jstat -gccapacity [jps-pid]
+		當出現 java.lang.OutOfMemoryError: PermGen space 與下列設定有關
+			用途: non-heap memory for JVM留給自己用 ，如載入class
+			-XX:PermSize=[1-9]+(m|g) 	// 非堆記憶體初始值，預設是實體記憶體的1/64
+			-XX:MaxPermSize=[1-9]+(m|g)	// 最大非堆記憶體的大小，預設是實體記憶體的1/4
+			
+		
+	2.回收器選擇
+		序列收集器、並行收集器、併發收集器
+		
+		如果你有一個雙核的CPU
+			-XX:+UseParallelGC	// 讓GC可以更快的執行
+		
+	3.輔助資訊	
+	
+經驗之談：
+	Java Heap分為3個區：
+	1.Young 2.Old 3.Permanent。Young儲存剛例項化的物件。當該區被填滿時，GC會將物件移到Old區。Permanent區則負責儲存反射物件。
+	JVM有2個GC執行緒：
+		第一個執行緒負責回收Heap的Young區；
+		第二個執行緒在Heap不足時，遍歷Heap，將Young 區升級為Older區，
+					Older區的大小等於-Xmx減去-Xmn，不能將-Xms的值設的過大，因為第二個執行緒被迫執行會降低JVM的效能。
 
-
-jstack
-	jstack [pid] -l
-
-
+	如果你發現每次GC後，Heap的剩餘空間會是總空間的50%，這表示你的Heap處於健康狀態許多Server端的Java程式每次GC後最好能有65%的剩餘空間。
+	1．Server端JVM最好將-Xms和-Xmx設為相同值。為了優化GC，最好讓-Xmn值約等於-Xmx的1/3。
+	2．一個GUI程式最好是每10到20秒間執行一次GC，每次在半秒之內完成。
+	注意：
+	1．增加Heap的大小雖然會降低GC的頻率，但也增加了每次GC的時間。並且GC執行時，所有的使用者執行緒將暫停，也就是GC期間，Java應用程式不做任何工作。
+	2．Heap大小並不決定程序的記憶體使用量。程序的記憶體使用量要大於-Xmx定義的值，因為Java為其他任務分配記憶體，例如每個執行緒的Stack等。	
