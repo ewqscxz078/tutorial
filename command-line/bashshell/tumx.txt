@@ -13,7 +13,7 @@ tmux 與 screen比較
 	tmux
 	
 視窗開啟自訂 session-name	
-	tmux new -s session-name # ex: tmux new -s irc	
+	tmux new -s <session-name> # ex: tmux new -s irc	
 
 重新命名 session-name
 	tmux rename-session [-t current-name] [new-name]
