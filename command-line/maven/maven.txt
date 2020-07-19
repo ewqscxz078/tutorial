@@ -1,4 +1,6 @@
-
+https://maven.apache.org/index.html
+https://www.journaldev.com/33645/maven-commands-options-cheat-sheet
+https://kentyeh.github.io/mavenStartup/index.html
 
 ================================================================================
 ========================= windows 安裝 =========================================
@@ -23,6 +25,7 @@
 ================================================================================
 ========================= 指令 =================================================
 ================================================================================
+mvn -h
 
  -am,--also-make                        If project list is specified, also
                                         build projects required by the
@@ -104,8 +107,94 @@
 ================================================================================
 
 1.顯示 maven 版本
-	mvn --version
+	mvn -v --version
 
+================================================================================
+========================= 建立 maven project ===================================
+================================================================================
+
+互動式
+	mvn archetype:generate
+		Choose version
+		定義groupId
+		定義artifactId
+		定義version
+		定義package
+
+直接式
+	mvn archetype:create -DgroupId=idv.kentyeh.software -DartifactId=firstmaven \
+		  -DpackageName=idv.kentyeh.software -DarchetypeArtifactId:maven-archetype-quickstart \
+		  -Dversion=1.0-SNAPSHOT
+
+================================================================================
+========================= 常用指令 =============================================
+================================================================================
+
+刪除 project/target
+	mvn clean
+
+This command compiles the java source classes of the maven project.
+	mvn compiler:compile
+
+This command compiles the test classes of the maven project.
+	mvn compiler:testCompile
+
+This command builds the maven project and packages them into a JAR, WAR, etc.	// 會多執行 compile testCompile test
+	mvn package
+
+This command builds the maven project and installs the project files (JAR, WAR, pom.xml, etc) to the local repository.
+	mvn install
+
+This command is used to deploy the artifact to the remote repository
+	mvn deploy
+
+This command validates the maven project that everything is correct and all the necessary information is available.
+	mvn validate
+
+This command generates the dependency tree of the maven project.
+	mvn dependency:tree
+
+This command analyzes the maven project to identify the unused declared and used undeclared dependencies.
+It’s useful in reducing the build size by identifying the unused dependencies and then remove it from the pom.xml file.
+	mvn dependency:analyze
+
+This command generates a site for the project. You will notice a “site” directory in the target after executing this command. There will be multiple HTML files inside the site directory that provides information related to the project.
+	mvn site:site
+
+This command is used to run the test cases of the project using the maven-surefire-plugin.
+	mvn test
+
+It’s used to compile the source Java classes of the project.
+	mvn compile
+
+This command build the project, runs all the test cases and run any checks on the results of the integration tests to ensure quality criteria are met.
+	mvn verify
+
+
+[options]
+	This command is used to build a project from a different location. We are providing the pom.xml file location to build the project. It’s useful when you have to run a maven build from a script.
+		mvn -f maven-example-jar/pom.xml package
+
+	This command is used to run the maven build in the offline mode. It’s useful when we have all the required JARs download in the local repository and we don’t want Maven to look for any JARs in the remote repository.
+		mvn -o package
+
+	Runs the maven build in the quiet mode, only the test cases results and errors are displayed.
+		mvn -q package
+
+	Prints the maven version and runs the build in the debug mode. It’s opposite of the quiet mode and you will see a lot of debug messages in the console.
+		mvn -X package
+
+	Used to display the maven version information.
+		mvn -v
+
+	This command prints the maven version and then continue with the build. It’s equivalent to the commands mvn -v;mvn package
+		mvn -V package
+
+	The skipTests system property is used to skip the unit test cases from the build cycle. We can also use -Dmaven.test.skip=true to skip the test cases execution.
+		mvn -DskipTests package
+
+	This command tells maven to run parallel builds using the specified thread count. It’s useful in multiple module projects where modules can be built in parallel. It can reduce the build time of the project.
+		mvn -T 4 package
 ================================================================================
 ========================= package ==============================================
 ================================================================================

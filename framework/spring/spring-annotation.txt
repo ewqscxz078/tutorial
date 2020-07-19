@@ -10,7 +10,7 @@ Core Spring Framework Annotations
 
 	匯入其他javaconfig
 		@Import
-	
+
 	ioc 注入bean
 		@Bean
 
@@ -26,28 +26,28 @@ Core Spring Framework Annotations
 
 Spring Framework Stereotype Annotations
 	@Component
-	
+
 	@Controller
-	
+
 	@Service
-	
+
 	@Repository
-	
+
 Spring Boot Annotations
 
 	@EnableAutoConfiguration
-	
+
 	@SpringBootApplication
-	
+
 Spring MVC and REST Annotations
 	@Controller
-	
+
 	@RequestMapping
-	
+
 	@CookieValue
-	
+
 	@CrossOrigin
-	
+
 Composed @RequestMapping Variants
 	@GetMapping
 	@PostMapping
@@ -69,4 +69,23 @@ Composed @RequestMapping Variants
 	@ControllerAdvice
 	@RestController
 	....
-	
+
+
+	@Transactional
+		REQUIRED
+			業務方法需要在一個事務中執行,如果方法執行時,已處在一個事務中,那麼就加入該事務,否則自己建立一個新的事務.這是spring預設的傳播行為.。
+		SUPPORTS
+			如果業務方法在某個事務範圍內被呼叫,則方法成為該事務的一部分,如果業務方法在事務範圍外被呼叫,則方法在沒有事務的環境下執行。
+		MANDATORY
+			只能在一個已存在事務中執行,業務方法不能發起自己的事務,如果業務方法在沒有事務的環境下呼叫,就拋異常
+		REQUIRES_NEW
+			業務方法總是會為自己發起一個新的事務,如果方法已執行在一個事務中,則原有事務被掛起,新的事務被建立,直到方法結束,新事務才結束,原先的事務才會恢復執行.
+		NOT_SUPPORTED
+			宣告方法需要事務,如果方法沒有關聯到一個事務,容器不會為它開啟事務.如果方法在一個事務中被呼叫,該事務會被掛起,在方法呼叫結束後,原先的事務便會恢復執行.
+		NEVER
+			宣告方法絕對不能在事務範圍內執行,如果方法在某個事務範圍內執行,容器就拋異常.只有沒關聯到事務,才正常執行.
+		NESTED
+			如果一個活動的事務存在,則執行在一個巢狀的事務中.如果沒有活動的事務,則按REQUIRED屬性執行.它使用了一個單獨的事務, 這個事務擁有多個可以回滾的保證點.內部事務回滾不會對外部事務造成影響, 它只對DataSourceTransactionManager 事務管理器起效.
+
+		REQUIRES_NEW、NESTED
+			兩者都是事務巢狀，不同之處在於，內外事務之間是否存在彼此之間的影響；NESTED之間會受到影響，而產生部分回滾，而REQUIRED_NEW則是獨立的。
