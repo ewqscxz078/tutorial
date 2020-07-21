@@ -1,16 +1,16 @@
 http 404 ±Æ°£
 	½T»{ tomcat ªA°È¬O§_¥¿±`»Plogs¬O§_¥¿±`
-	ºô§}¬O§_¥´¹ï	
+	ºô§}¬O§_¥´¹ï
 
 
 ping
 	1. ping 127.0.0.1
 	2. ping LOCAL IP
 	3. ping gateway
-	4. ping remote ip	
+	4. ping remote ip
 	5. ping HOSTNAME/FQDN
 	6. telnet remote TCP PORT
-	
+
 Ping: You can test if a network connection exists by pinging the other computer.
 	Open a command prompt
 	Type “ping <Remote Machine Name or IP address>” and press enter.
@@ -20,5 +20,5 @@ Open a command prompt
 	Type in "telnet <IP ADDRESS OF SERVER PC> <PORT>" and press enter.
 	For example, we would type “telnet 192.168.1.100 21379”
 	If a blank screen appears then the port is open, and the test is successful.
-	If you receive a connecting... message or an error message then something is blocking that port.  
-	It could be the Windows firewall, a third party firewall like Norton's or a hardware firewall between the PCs.	
+	If you receive a connecting... message or an error message then something is blocking that port.
+	It could be the Windows firewall, a third party firewall like Norton's or a hardware firewall between the PCs.

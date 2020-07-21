@@ -16,18 +16,18 @@ stat：狀態列，主要的狀態含有：
 	FIN_WAIT1：該插槽服務(socket)已中斷，該連線正在斷線當中；
 	FIN_WAIT2：該連線已掛斷，但正在等待對方主機回應斷線確認的封包；
 	TIME_WAIT：該連線已掛斷，但 socket 還在網路上等待結束；
-	LISTEN：通常用在服務的監聽 port ！可使用『 -l 』參數查閱。	
+	LISTEN：通常用在服務的監聽 port ！可使用『 -l 』參數查閱。
 
 ex:
 	netstat -nat
-	
+
 ===================================================================
 ========================= unix ss  ================================
 ===================================================================
 ss 是 socket statistics 之意
 
 https://wangchujiang.com/linux-command/c/ss.html
-unix like 下也有 netstat，但效能極差，當大量壓測或忙碌時會waiting很久，應使用 ss 
+unix like 下也有 netstat，但效能極差，當大量壓測或忙碌時會waiting很久，應使用 ss
 ss 語法基本上同 netstat
 
 找到 CLOSE_WAIT 個數
@@ -46,16 +46,16 @@ stat：狀態列，主要的狀態含有：
 	FIN_WAIT1：該插槽服務(socket)已中斷，該連線正在斷線當中；
 	FIN_WAIT2：該連線已掛斷，但正在等待對方主機回應斷線確認的封包；
 	TIME_WAIT：該連線已掛斷，但 socket 還在網路上等待結束；
-	LISTEN：通常用在服務的監聽 port ！可使用『 -l 』參數查閱。	
+	LISTEN：通常用在服務的監聽 port ！可使用『 -l 』參數查閱。
 
 ex:
-	ss -nat	
-	
+	ss -nat
+
 查看連線的時間
 	ss -nat -o
-	
+
 查看哪些process在連線中
 	ss -p
-	
+
 socket狀況的統計
 	ss -s

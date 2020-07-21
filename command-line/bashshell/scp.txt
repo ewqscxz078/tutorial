@@ -5,10 +5,10 @@ https://www.simplified.guide/ssh/copy-file
 
 2.Copy single file from remote to local.
 	scp remoteuser@remoteserver:/remote/folder/myfile.txt  myfile.txt
-	
+
 3.Copy multiple files from local to remote.
 	scp myfile.txt myfile2.txt remoteuser@remoteserver:/remote/folder/
-	
+
 4.Copy all files from local to remote.
 	scp * remoteuser@remoteserver:/remote/folder/
 

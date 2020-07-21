@@ -15,8 +15,8 @@ Options:
 
  -h, --help     display this help and exit
  -v, --version  output version information and exit
- 
- 
+
+
 -n：更新間隔時間，時間精細度可支援到 0.1 秒。
 -d：每次畫面更新時，將產生差異的部分輸出反白顯示。
 	watch -n <seconds> -d <shell>

@@ -25,20 +25,20 @@ grep [-a –v –i –n –v ] '搜尋的字串' [filename/dir]
 
 指定檔案搜尋
 	grep [key word] /d/SRIS_CODE/Greenc/.cache/issue.checkouted
-	
+
 排除附檔名且符合字串 key word
 	grep -r --exclude=*.{pdf,jpg,gif,png,ttf,keystore,jasper,xls} [key word]
-	
+
 附檔名為指定且符合字串 key word
 	grep -r --include=*.{java} [key word]
 
-排除指定目錄且符合字串 key word	
-	grep -iR "hibernate" --include=".java" --exclude-dir=".*" 
-	grep -iR "hibernate" --include=*.{java,xml,properties} --exclude-dir=".*" 
-	
+排除指定目錄且符合字串 key word
+	grep -iR "hibernate" --include=".java" --exclude-dir=".*"
+	grep -iR "hibernate" --include=*.{java,xml,properties} --exclude-dir=".*"
+
 找到window 換行符號
-	grep -r --exclude=*.{pdf,jpg,gif,png,ttf,keystore,jasper,xls} $'\r' * >> checkM.txt	
-	
+	grep -r --exclude=*.{pdf,jpg,gif,png,ttf,keystore,jasper,xls} $'\r' * >> checkM.txt
+
 大小寫不分
 	grep -i [key word] /d/SRIS_CODE/Greenc/.cache/issue.checkouted
 
@@ -50,29 +50,28 @@ all match file name 完全批配
 
 加上顏色
 	grep -iR --color ".[key word]."
-	
-搜尋結果排除	
+
+搜尋結果排除
 	https://www.codingfailure.com/linux-tutorial/grep-command/grep-not-include/
 	ex: 搜尋到關鍵字 [key word] 但不含有 * 的
 		grep -iR --color ".[key word]."	| grep -v "*"
 
 使用可排除pattern的方式
 	https://unix.stackexchange.com/questions/96480/with-grep-how-can-i-match-a-pattern-and-invert-match-another-pattern
-	
+
 多顯示上下文
 	ex: 多顯示上下文5行的keyword
 		grep -A 5 -B 5 [key word]
-	
+
 排除 Binary file
 	ex: before
 		grep -inR "A"
 Binary file 1.open_DBSchemaEditor_NOSAVE.xlsm.gif matches
 		after
 		grep -IinR "A"
-		
+
 列出 match file list
 	grep -lR "sit\.ris\.sris\.dpl"
-	
+
 	進階
 		grep -lR "sit\.ris\.sris\.dpl" | xargs sed -i 's/sit\.ris\.sris\.dpl/app\.ris\.sris\.dpl/g'
-	

@@ -18,40 +18,40 @@ copy
 search
 	next n
 	before N
-	
-跳到指定行數	
-	:n，代表跳?到第n行	
-	
+
+跳到指定行數
+	:n，代表跳?到第n行
+
 還原上一步
 	u
 
-查詢 tab 符號	
+查詢 tab 符號
 	/\t
 
-取代	
+取代
 	:%s/{關鍵字}/{取代後的值}/g
-	ex 
+	ex
 		:%s/\t/    /g
-		
+
 額外設定
 	顯示行數
 		:set number
 	隱藏行數
 		:set nonumber
-		
-	不分大小寫搜尋	
+
+	不分大小寫搜尋
 		:set ignorecase
-	取消不分大小寫搜尋	
+	取消不分大小寫搜尋
 		:set noignorecase
 
 檢視不可見特殊字元
 	:help digraph-table
-	
+
 顯示隱藏字元
 	:set list
-	
+
 不顯示隱藏字元
 	:set nolist
-	
+
 設定顯示哪些隱藏字元
 	:set listchars=eol:$,tab:>-,trail:~,extends:>,precedes:<

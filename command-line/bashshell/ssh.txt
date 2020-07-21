@@ -11,15 +11,15 @@ https://www.poftut.com/run-shell-script-command-remote-ssh/
 登入遠端機器執行 shell
 	ex:
 	  ssh -o StrictHostKeyChecking=no [帳號]@[host] [sh]
-	
-https://spin.atomicobject.com/2017/08/24/start-stop-bash-background-process/	
-https://unix.stackexchange.com/questions/83806/how-to-kill-ssh-session-that-was-started-with-the-f-option-run-in-background	
-背景執行	  
+
+https://spin.atomicobject.com/2017/08/24/start-stop-bash-background-process/
+https://unix.stackexchange.com/questions/83806/how-to-kill-ssh-session-that-was-started-with-the-f-option-run-in-background
+背景執行
 	ssh -o -f StrictHostKeyChecking=no [帳號]@[host] [sh]
-		
-https://www.linuxtechi.com/execute-linux-commands-remote-system-over-ssh/	
+
+https://www.linuxtechi.com/execute-linux-commands-remote-system-over-ssh/
 https://wirelessr.gitbooks.io/working-life/content/expectmiao_yong_wu_qiong.html
-不需要輸入帳密方式	
+不需要輸入帳密方式
 	1. install sshpass
 	2. install expect
 		redhat unix
@@ -32,19 +32,19 @@ https://wirelessr.gitbooks.io/working-life/content/expectmiao_yong_wu_qiong.html
 			ssh-keygen
 		2)  Add public key to ~/.ssh/authorized_keys file on remote host
 			ssh-copy-id -i ~/.ssh/id_rsa.pub [帳號]@[host/ip]
-			
+
 執行單一指令
 	ssh username@remote_host 'ls -al'
 
-執行多列指令 
-	// 參數 -t 表示 Force pseudo-tty allocation，據參考資料有些指令不佳會出錯。 'ENDSSH'...ENDSSH為執行多列指令的區塊，第一個'ENDSSH'有單引號防止 bash 將之視為變數。 
+執行多列指令
+	// 參數 -t 表示 Force pseudo-tty allocation，據參考資料有些指令不佳會出錯。 'ENDSSH'...ENDSSH為執行多列指令的區塊，第一個'ENDSSH'有單引號防止 bash 將之視為變數。
 	ssh -t username@remote_host << 'ENDSSH'
 	pwd
 	ls
 	ENDSSH
 
-Run Script On Remote System	
-	ssh ismail@192.168.142.144 "/bin/bash /home/ismail/backup.sh"		
-	
-Run Local Script On Remote System	
-	ssh ismail@192.168.142.144 'bash -s' < cat script.sh	
+Run Script On Remote System
+	ssh ismail@192.168.142.144 "/bin/bash /home/ismail/backup.sh"
+
+Run Local Script On Remote System
+	ssh ismail@192.168.142.144 'bash -s' < cat script.sh

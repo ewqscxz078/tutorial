@@ -6,7 +6,7 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 -X/--request [GET|POST|PUT|DELETE|PATCH]  使用指定的 http method 來發出 http request
 -H/--header                           設定 request 裡所攜帶的 header
 -i/--include                          在 output 顯示 response 的 header
--d/--data                             攜帶 HTTP POST Data 
+-d/--data                             攜帶 HTTP POST Data
 -v/--verbose                          輸出更多的訊息方便 debug
 -u/--user                             攜帶使用者帳號、密碼
 -b/--cookie                           攜帶 cookie（可以是參數或是檔案位置）
@@ -15,19 +15,18 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 
 下載檔案
 	curl -o <下載後的檔名> <url>
-	
-以下載網址的檔案檔名來命名下載	
+
+以下載網址的檔案檔名來命名下載
 	curl -O  <url>
-	
+
 有可能在下載過程中被中斷，若是想要從中斷的地方繼續的話
 	curl -C - -O <url>
-	
-隨著網址  redirect	
+
+隨著網址  redirect
 	curl -L <url>
-	
+
 追蹤整個 curl 過程並將結果存入 指定檔案
 	curl --trace-ascii <filename> <url>
-	
-	curl -vk <url>	
-	
-	
+
+	curl -vk <url>
+

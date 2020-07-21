@@ -1,10 +1,10 @@
-http://linux.vbird.org/linux_basic/0320bash/csh/no3-8-13.html  
+http://linux.vbird.org/linux_basic/0320bash/csh/no3-8-13.html
 
 pushd
-	pushd 
+	pushd
 
 popd
 
 dirs
 
-	dirs -v 
+	dirs -v
