@@ -24,3 +24,10 @@
 
 	不分大小寫
 		find . -regextype "posix-egrep" -iregex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
+
+取代 \t 變四個空白
+	find . -iname '*.js' -type f -exec sed -i 's/\t/    /g' {} +
+	find . -iname '*.css' -type f -exec sed -i 's/\t/    /g' {} +
+	find . -iname '*.xhtml' -type f -exec sed -i 's/\t/    /g' {} +
+	find . -iname '*.jsp' -type f -exec sed -i 's/\t/    /g' {} +
+	find . -iname '*.properties' -type f -exec sed -i 's/\t/    /g' {} +
