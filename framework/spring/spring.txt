@@ -79,3 +79,34 @@ public class HelloWorldConfig {
 </beans>
 
 ==================================================================================================================
+======================================= PropertyPlaceholderConfigurer 
+======================================= 使用 properties 當佔位符
+==================================================================================================================
+beans-config.xml
+	<beans>  
+		<bean id="configBean" 
+	 class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"> 
+			<property name="location"> 
+				<value>hello.properties</value> 
+			</property> 
+		</bean> 
+
+		<bean id="helloBean" class="onlyfun.caterpillar.HelloBean"> 
+			<property name="helloWord"> 
+				<value>${onlyfun.caterpillar.helloWord}</value> 
+			</property> 
+		</bean>
+	</beans>
+	
+hello.properties
+	onlyfun.caterpillar.helloWord=Welcome!
+	
+==================================================================================================================
+======================================= PropertyPlaceholderConfigurer tag xml 模式
+======================================= 使用 properties 當佔位符
+==================================================================================================================
+<util:properties id="envProperties" location="env.properties"/>
+<util:properties id="properties" location="#{envProperties.getProperty('env.app.type')}.properties"/>
+
+<context:property-placeholder properties-ref="envProperties" ignore-unresolvable="true" ignore-resource-not-found="true"/>
+<context:property-placeholder properties-ref="properties" ignore-unresolvable="true"/>	
