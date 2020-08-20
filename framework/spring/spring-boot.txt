@@ -1,0 +1,60 @@
+==================================================================================================================
+========================================= spring boot 打包為war
+==================================================================================================================
+ref 
+	https://coffee0127.github.io/blog/2017/04/26/convert-spring-boot-jar-to-war/
+	https://www.baeldung.com/spring-boot-war-tomcat-deploy
+	https://www.baeldung.com/spring-boot-servlet-initializer
+	https://www.tutorialspoint.com/spring_boot/spring_boot_tomcat_deployment.htm
+使 SpringBoot 專案能打包為可執行的 jar 檔或 war 檔
+pom.xml
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>1.5.3.RELEASE</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+	
+若 maven 專案繼承自 spring-boot-starter-parent
+pom.xml
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+	
+packaging 改為 war
+spring-boot-starter-tomcat scope 更改為 “provided”
+    <packaging>war</packaging>
+	
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+	
+修改原本的 SpringBootApplication
+	將原本標註 @SpringBootApplication 的主程式繼承 SpringBootServletInitializer
+	而 SpringBootServletInitializer 又繼承了 WebApplicationInitializer
+	WebApplicationInitializer 是 Spring 3.1 新增介面，實作此介面的類別，不需額外宣告，會自動被 SpringServletContainerInitializer 偵測、自動呼叫註冊所需的相關方法	
+
+覆寫 configure 方法，加入 java configuration (也就是 MainApplication 啦!)	
