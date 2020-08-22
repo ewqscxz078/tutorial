@@ -1,43 +1,91 @@
 http://max-linux-space.blogspot.com/2011/07/25ssh-commands.html
 https://www.poftut.com/run-shell-script-command-remote-ssh/
 ===================================================================
-========================= ssh =====================================
+========================= ssh 參數 ================================
+===================================================================
+-g | 允許遠端主機連接本地轉發的端口.
+-N | 不執行遠端指令, 僅做封包重新導向.
+-f | 連線認證後, 在背景執行.
+-L port:host:hostport | 建立加密連線通道, 從本機的 port, 連到 host (主機)的 host port.
+-R port:host:hostport | 設定本機的 port, 連到 host (主機)的 host port.
+
+-F 設定檔 | 指定 ssh 的設定檔, 預設是跟目錄下的 .ssh/config
+
+-v | 顯示完整執行過程，除錯模式
+
+===================================================================
+========================= ssh 登入遠端 ============================
 ===================================================================
 
-�T�{���ݶ}�� ssh
+登入遠端
+	ssh 帳號@主機
+
+===================================================================
+========================= ssh 金鑰生成與同步 ======================
+===================================================================	
+
+金鑰生成
+	ssh-keygen
+		預設會在.ssh 目錄下產生公鑰 id_rsa.pub以及私鑰id_rsa
+
+複製公鑰到欲登入 server	
+	ssh-copy-id -i ~/.ssh/id_rsa.pub <USER>@<HOST>
+		-i 為可以指定要使用哪一把公鑰，公鑰會被複製到欲登入 server的 ~/.ssh/authorized_keys 檔案中。
+
+===================================================================
+========================= ssh Tunnel ==============================
+===================================================================
+https://pohsienshih.github.io/2019/SSH-Tunnel-Introduction/
+
+1.本地端連線至遠端主機
+	ssh -NL <local port>:localhost:<remote port> <remote host>
+	
+2.本地端連線至遠端主機後方的另外一台主機	
+	ssh -NL <local port>:myhost2.gtwang.org:5678 myhost.gtwang.org
+	
+3.遠端連線至本地端
+	ssh -NR 1234:localhost:5678 myhost.gtwang.org
+	
+4.從遠端連線至本地端內部的另外一台主機
+	ssh -NR 1234:internalhost:5678 myhost.gtwang.org
+===================================================================
+========================= ssh 執行遠端方式 ========================
+===================================================================
+
+確認遠端開啟 ssh
 	https://www.golinuxcloud.com/list-check-active-ssh-connections-linux/
 	ss | grep -i ssh
 
-�n�J���ݾ������� shell
+登入遠端機器執行 shell
 	ex:
-	  ssh -o StrictHostKeyChecking=no [�b��]@[host] [sh]
+	  ssh -o StrictHostKeyChecking=no [帳號]@[host] [sh]
 
 https://spin.atomicobject.com/2017/08/24/start-stop-bash-background-process/
 https://unix.stackexchange.com/questions/83806/how-to-kill-ssh-session-that-was-started-with-the-f-option-run-in-background
-�I������
-	ssh -o -f StrictHostKeyChecking=no [�b��]@[host] [sh]
+背景執行
+	ssh -o -f StrictHostKeyChecking=no [帳號]@[host] [sh]
 
 https://www.linuxtechi.com/execute-linux-commands-remote-system-over-ssh/
 https://wirelessr.gitbooks.io/working-life/content/expectmiao_yong_wu_qiong.html
-���ݭn��J�b�K�覡
+不需要輸入帳密方式
 	1. install sshpass
 	2. install expect
 		redhat unix
 			sudo yum provides "*/expect"
 		aix unix
 			sudo apt-get install expect
-			expect -c ��spawn ssh user@host ; expect assword ; send ��password\n�� ; expect ��>�� ; send ��commands\n ls\n�� ; interact��
+			expect -c ‘spawn ssh user@host ; expect assword ; send “password\n” ; expect “>” ; send “commands\n ls\n” ; interact’
 	3. ssh-keygen
 		1) Generate public-private key pair
 			ssh-keygen
 		2)  Add public key to ~/.ssh/authorized_keys file on remote host
-			ssh-copy-id -i ~/.ssh/id_rsa.pub [�b��]@[host/ip]
+			ssh-copy-id -i ~/.ssh/id_rsa.pub [帳號]@[host/ip]
 
-�����@���O
+執行單一指令
 	ssh username@remote_host 'ls -al'
 
-����h�C���O
-	// �Ѽ� -t ���� Force pseudo-tty allocation�A�ڰѦҸ�Ʀ��ǫ��O���η|�X���C 'ENDSSH'...ENDSSH������h�C���O���϶��A�Ĥ@��'ENDSSH'����޸����� bash �N�������ܼơC
+執行多列指令
+	// 參數 -t 表示 Force pseudo-tty allocation，據參考資料有些指令不佳會出錯。 'ENDSSH'...ENDSSH為執行多列指令的區塊，第一個'ENDSSH'有單引號防止 bash 將之視為變數。
 	ssh -t username@remote_host << 'ENDSSH'
 	pwd
 	ls
