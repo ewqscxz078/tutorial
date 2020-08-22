@@ -1,0 +1,5 @@
+nmap
+
+nmap <ip/hostname>
+
+nmap -p <port> <ip/hostname>
