@@ -22,13 +22,13 @@ https://www.poftut.com/run-shell-script-command-remote-ssh/
 
 ===================================================================
 ========================= ssh 金鑰生成與同步 ======================
-===================================================================	
+===================================================================
 
 金鑰生成
 	ssh-keygen
 		預設會在.ssh 目錄下產生公鑰 id_rsa.pub以及私鑰id_rsa
 
-複製公鑰到欲登入 server	
+複製公鑰到欲登入 server
 	ssh-copy-id -i ~/.ssh/id_rsa.pub <USER>@<HOST>
 		-i 為可以指定要使用哪一把公鑰，公鑰會被複製到欲登入 server的 ~/.ssh/authorized_keys 檔案中。
 
@@ -39,13 +39,13 @@ https://pohsienshih.github.io/2019/SSH-Tunnel-Introduction/
 
 1.本地端連線至遠端主機
 	ssh -NL <local port>:localhost:<remote port> <remote host>
-	
-2.本地端連線至遠端主機後方的另外一台主機	
+
+2.本地端連線至遠端主機後方的另外一台主機
 	ssh -NL <local port>:myhost2.gtwang.org:5678 myhost.gtwang.org
-	
+
 3.遠端連線至本地端
 	ssh -NR 1234:localhost:5678 myhost.gtwang.org
-	
+
 4.從遠端連線至本地端內部的另外一台主機
 	ssh -NR 1234:internalhost:5678 myhost.gtwang.org
 ===================================================================

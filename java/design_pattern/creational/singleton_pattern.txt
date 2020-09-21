@@ -2,51 +2,51 @@
 ======================================== Singleton Pattern ======================================================================================================
 =================================================================================================================================================================
 
-¯S¼x
-	1.¨p¦³«Øºc¦¡	Private constructor to restrict instantiation of the class from other classes
-	2.¨p¦³ÀRºAÅÜ¼Æ	Private static variable of the same class that is the only instance of the class.
-	3.¤½¶}ÀRºA¤èªk	Public static method that returns the instance of the class, this is the global access point for outer world to get the instance of the singleton class
+ç‰¹å¾µ
+	1.ç§æœ‰å»ºæ§‹å¼	Private constructor to restrict instantiation of the class from other classes
+	2.ç§æœ‰éœæ…‹è®Šæ•¸	Private static variable of the same class that is the only instance of the class.
+	3.å…¬é–‹éœæ…‹æ–¹æ³•	Public static method that returns the instance of the class, this is the global access point for outer world to get the instance of the singleton class
 
-¤è¦¡
+æ–¹å¼
 	1.Eager initialization
-	2.Static block initialization		
-		ex: 
+	2.Static block initialization
+		ex:
 			File System, Database connections
-		¯ÊÂI:
-			client¥¼¨Ï¥Î¤´¹ê¨Ò¦Ó®ö¶O¸ê·½
+		ç¼ºé»:
+			clientæœªä½¿ç”¨ä»å¯¦ä¾‹è€Œæµªè²»è³‡æº
 	3.Lazy Initialization
 	4.Thread Safe Singleton
 	5. Bill Pugh Singleton Implementation
 	6. Using Reflection to destroy Singleton Pattern
 	7. Enum Singleton
 	8. Serialization and Singleton
-	
+
 =================================================================================================================================================================
 ======================================== NO Thread Safe Singleton ===============================================================================================
 =================================================================================================================================================================
-	
+
 1.Eager initialization
-	©ó¨p¦³ÀRºAÅÜ¼Æ´N¹ê¨Ò¤Æ
+	æ–¼ç§æœ‰éœæ…‹è®Šæ•¸å°±å¯¦ä¾‹åŒ–
 	public class EagerInitializedSingleton {
-		
+
 		private static final EagerInitializedSingleton instance = new EagerInitializedSingleton();
-		
+
 		//private constructor to avoid client applications to use constructor
 		private EagerInitializedSingleton(){}
 
 		public static EagerInitializedSingleton getInstance(){
 			return instance;
 		}
-	}			
-		
-2.Static block initialization	
-	©óÀRºA«Øºc®É¥[¤J option catch ¹ê¨Ò¤Æ
+	}
+
+2.Static block initialization
+	æ–¼éœæ…‹å»ºæ§‹æ™‚åŠ å…¥ option catch å¯¦ä¾‹åŒ–
 	public class StaticBlockSingleton {
 
 		private static StaticBlockSingleton instance;
-		
+
 		private StaticBlockSingleton(){}
-		
+
 		//static block initialization for exception handling
 		static{
 			try{
@@ -55,21 +55,21 @@
 				throw new RuntimeException("Exception occured in creating singleton instance");
 			}
 		}
-		
+
 		public static StaticBlockSingleton getInstance(){
 			return instance;
 		}
-	}		
-	¹ê¨Ò®É¦h option exception
-	
+	}
+	å¯¦ä¾‹æ™‚å¤š option exception
+
 3.Lazy Initialization
-	¤½¶}ÀRºA¤èªk·í¬°null®É¤~¹ê¨Ò¤Æ
+	å…¬é–‹éœæ…‹æ–¹æ³•ç•¶ç‚ºnullæ™‚æ‰å¯¦ä¾‹åŒ–
 	public class LazyInitializedSingleton {
 
 		private static LazyInitializedSingleton instance;
-		
+
 		private LazyInitializedSingleton(){}
-		
+
 		public static LazyInitializedSingleton getInstance(){
 			if(instance == null){
 				instance = new LazyInitializedSingleton();
@@ -77,29 +77,29 @@
 			return instance;
 		}
 	}
-			
+
 =================================================================================================================================================================
 ======================================== Thread Safe Singleton ==================================================================================================
-=================================================================================================================================================================			
+=================================================================================================================================================================
 
 4.Thread Safe Singleton
-	¤½¶}ÀRºA¤èªk¦h«Å§i synchronized
+	å…¬é–‹éœæ…‹æ–¹æ³•å¤šå®£å‘Š synchronized
 	public class ThreadSafeSingleton {
 
 		private static ThreadSafeSingleton instance;
-		
+
 		private ThreadSafeSingleton(){}
-		
+
 		public static synchronized ThreadSafeSingleton getInstance(){
 			if(instance == null){
 				instance = new ThreadSafeSingleton();
 			}
 			return instance;
 		}
-		
+
 	}
-	
-	¬°¤F¶È²Ä¤@¦¸ null ¤~¹ê¨Ò¤Æ§ï¨}¡Adouble checked locking
+
+	ç‚ºäº†åƒ…ç¬¬ä¸€æ¬¡ null æ‰å¯¦ä¾‹åŒ–æ”¹è‰¯ï¼Œdouble checked locking
 	public static ThreadSafeSingleton getInstanceUsingDoubleLocking(){
 		if(instance == null){
 			synchronized (ThreadSafeSingleton.class) {
@@ -110,20 +110,20 @@
 		}
 		return instance;
 	}
-	
+
 5. Bill Pugh Singleton Implementation
-	¦bjava 5¥H«e¤W­z¤èªk¥i¯à·|¦b©_©Çªº±¡¹Ò¦³°İÃD¡A¦]¦¹¨Ï¥Î¤º³¡ÀRºA¤èªk¹ê¨Ò¤Æ
-	¥[¸üsingletonÃş®É¡A¤£·|±NSingletonHelperÃş¥[¸ü¨ì¤º¦s¤¤¡A¥u¦³·í¦³¤H½Õ¥ÎgetInstance¤èªk®É¡A¸ÓÃş¤~·|¥[¸ü¨Ã³Ğ«ØSingletonÃş¹ê¨Ò¡C
-	³o¬OSingletonÃş¨Ï¥Î³Ì¼sªxªº¤èªk¡A¦]¬°¥¦¤£»İ­n¦P¨B
-		
+	åœ¨java 5ä»¥å‰ä¸Šè¿°æ–¹æ³•å¯èƒ½æœƒåœ¨å¥‡æ€ªçš„æƒ…å¢ƒæœ‰å•é¡Œï¼Œå› æ­¤ä½¿ç”¨å…§éƒ¨éœæ…‹æ–¹æ³•å¯¦ä¾‹åŒ–
+	åŠ è¼‰singletoné¡æ™‚ï¼Œä¸æœƒå°‡SingletonHelperé¡åŠ è¼‰åˆ°å…§å­˜ä¸­ï¼Œåªæœ‰ç•¶æœ‰äººèª¿ç”¨getInstanceæ–¹æ³•æ™‚ï¼Œè©²é¡æ‰æœƒåŠ è¼‰ä¸¦å‰µå»ºSingletoné¡å¯¦ä¾‹ã€‚
+	é€™æ˜¯Singletoné¡ä½¿ç”¨æœ€å»£æ³›çš„æ–¹æ³•ï¼Œå› ç‚ºå®ƒä¸éœ€è¦åŒæ­¥
+
 	public class BillPughSingleton {
 
 		private BillPughSingleton(){}
-		
+
 		private static class SingletonHelper{
 			private static final BillPughSingleton INSTANCE = new BillPughSingleton();
 		}
-		
+
 		public static BillPughSingleton getInstance(){
 			return SingletonHelper.INSTANCE;
 		}
@@ -152,35 +152,35 @@
 		}
 
 	}
-7. Enum Singleton	
-	¬°§JªA Reflection °İÃD¡A¥i±Ä¥Î enum ¤è¦¡¡A¯ÊÂI¤£¤ä´© Lazy Initialization
+7. Enum Singleton
+	ç‚ºå…‹æœ Reflection å•é¡Œï¼Œå¯æ¡ç”¨ enum æ–¹å¼ï¼Œç¼ºé»ä¸æ”¯æ´ Lazy Initialization
 	public enum EnumSingleton {
 
 		INSTANCE;
-		
+
 		public static void doSomething(){
 			//do something
 		}
-	}	
-	
-8. Serialization and Singleton	
+	}
+
+8. Serialization and Singleton
 
 	public class SerializedSingleton implements Serializable{
 
 		private static final long serialVersionUID = -7604766932017737115L;
 
 		private SerializedSingleton(){}
-		
+
 		private static class SingletonHelper{
 			private static final SerializedSingleton instance = new SerializedSingleton();
 		}
-		
+
 		public static SerializedSingleton getInstance(){
 			return SingletonHelper.instance;
-		}		
-		
+		}
+
 	}
-	
+
 	// hashcode will different
 	public class SingletonSerializedTest {
 
@@ -190,22 +190,21 @@
 					"filename.ser"));
 			out.writeObject(instanceOne);
 			out.close();
-			
+
 			//deserailize from file to object
 			ObjectInput in = new ObjectInputStream(new FileInputStream(
 					"filename.ser"));
 			SerializedSingleton instanceTwo = (SerializedSingleton) in.readObject();
 			in.close();
-			
+
 			System.out.println("instanceOne hashCode="+instanceOne.hashCode());
 			System.out.println("instanceTwo hashCode="+instanceTwo.hashCode());
-			
+
 		}
-	}	
-	
-	SerializedSingleton ·s¼W¥i§JªA¤W­z°İÃD
+	}
+
+	SerializedSingleton æ–°å¢å¯å…‹æœä¸Šè¿°å•é¡Œ
 	protected Object readResolve() {
 		return getInstance();
-	}	
-=================================================================================================================================================================	
-	
+	}
+=================================================================================================================================================================

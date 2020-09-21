@@ -40,7 +40,7 @@ sourceSets {
 
 buildDir = 'out'
 
-repositories {     
+repositories {
      maven { url "http://repo.maven.apache.org/maven2" }
      mavenCentral()
 }
@@ -48,7 +48,7 @@ repositories {
 configurations.all {
     exclude group: 'org.freemarker', module: 'freemarker'
     exclude group: 'org.apache.ant', module: 'ant'
-    
+
     resolutionStrategy {
         force group: 'org.apache.ant', name: 'ant', version: '1.10.1'
     }
@@ -58,20 +58,20 @@ dependencies {
     def tomcatVersion = '9.0.0.M22'
     def springVersion = '4.3.10.RELEASE'
     def springBootVersion = '1.5.4.RELEASE'
-    
+
     compile fileTree(dir: 'library', include: ['*.jar'])
-    
+
     testCompile group: 'junit', name: 'junit', version: '4.+'
-    
+
     //javax
     compile group: 'javax.inject', name: 'javax.inject', version: '1'
-    
+
     //spring framework
     compile group: 'org.springframework', name: 'spring-context', version: "$springVersion"
 
     //spring boot
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: "${springBootVersion}"
-    
+
     //Others
     compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.7.0'
 }

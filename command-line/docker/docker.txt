@@ -12,7 +12,7 @@ Dockerfile				prepar Dockerfile
 image(local list)		docker image ls -a
 	|					docker run [imagefile] => container
 	|					docker push <id>/<REPOSITORY name>:<tag> => registres
-container(local list)	docker ps -a 
+container(local list)	docker ps -a
 	|
 run container
 
@@ -22,7 +22,7 @@ run container
 一定要命名 Dockerfile
 
 # 從哪裡下載 dockerfile base
-	FROM [私有網域]/images:tag	
+	FROM [私有網域]/images:tag
 		ex:
 			FROM ubuntu #下載最新版
 			FROM ubuntu:18.04
@@ -30,41 +30,51 @@ run container
 
 # dockerfile 註解
 	LABEL <key>=<value>
-			
-# 環境變數
+
+# 內部環境變數
 	ENV <key>=<value>
 
 # 指定預設HOME目錄
-	WORKDIR 
-		ex: 
+	WORKDIR
+		ex:
 			WORKDIR /app
-			
+
 # 複製檔案到容器內
 	COPY {local path file} {container path}
 		ex:
 			COPY test.war .
 			COPY /home/users/files .
-			
+
 # 複製檔案到容器內，順便解壓縮
 	ADD {local path file} {container path}
 		ex:
 			ADD cirros-0.3.4-x86_64-disk.img /
-			
+
 # 設定port container 內對外 port
 	EXPOSE <port> [<port>/<protocol>...]
 		ex:
-			EXPOSE 80:TCP
+			EXPOSE 80/TCP
 		docker command
 			docker run -p 80:8080/tcp
-			
+
 # 硬碟空間設定，local端建立volume，並接到container內的 volume
 		ex:
 			VOLUME ["/volume1"]
 			VOLUME ["/volume1","/volume2" ....]
-ARG
-USER
+
+# 外部可覆蓋的環境變數(in docker build)
+	ARG MAIN_TAG=latest
+	docker build --build-arg MAIN_TAG=XXXX .
+
+# 指名該指令下面相關操作的權限
+	USER <user>[:<group>]
+		ex:
+			USER root
 
 CMD
+
+# 告知docker 進入的可執行的入口要做哪些事情
+	ENTRYPOINT
 
 =======================================================================
 ======================= docker command ================================
@@ -79,11 +89,11 @@ CMD
 # 列舉出可用 image
 	docker images
 	docker images|grep [imageFileName]
-	docker image ls 
+	docker image ls
 	docker image ls -a
-	
+
 # Docker 刪除 Image (rmi)
-	docker rmi [image-id]
+	docker rmi [image-id] ...
 	docker rmi --force [image-id] # if 有多個一樣image-id
 
 # Docker 刪除 container (rm)
@@ -95,24 +105,27 @@ CMD
 	docker build -t [imageFileName] .
 		ex:
 			docker build -t sris-base/wildfly-sris [filePath/Dockerfile]
-		
-docker run	
+
+docker run
 	# run in 前景
 		docker run -p 4000:80 [imageFileName]
 
 	# run in 背景
 		docker run -d -p 4000:80 [imageFileName]
 		docker run -itd -p 4000:80 [imageFileName]
-		
-	# automatically clean up the container and remove the file system when the container exits	
+
+	# automatically clean up the container and remove the file system when the container exits
 		docker run --rm -d -p 4000:80 [imageFileName]
-		
+
 	# Bind mount a volume(shared filesystems)
 		docker run --rm -d -p 4000:80 [imageFileName] -v:[host-src:]container-dest[:<options>]
 
 go into running container
 	docker exec -it <container name> /bin/bash
-		
+
+go into running container as root
+	docker exec -it -u 0 <container name/id> /bin/bash
+
 docker ps
 	#查詢正在執行的docker
 		docker ps
@@ -122,16 +135,16 @@ docker ps
 
 #查詢某image 裡的內容 當不知道dockerfile 在哪時
 	docker inspect [imageName]
-	
+
 #停止docker
 	docker stop [container-id by docker ps -a]
-	
+
 #刪除docker
 	docker rm [name by docker ps -a]
 
 #從docker 裡複製出檔案
 	1.找出 CONTAINER_ID
-		docker ps|grep docker name	
+		docker ps|grep docker name
 		第一個欄位即為CONTAINER_ID
 	2.
 		docker cp [CONTAINER_ID]:/[filepath/filename] .
@@ -142,10 +155,25 @@ docker ps
 #查看vm下 docker cpu memory disk
 	docker stats
 
-#僅顯示一次	
+#僅顯示一次
 	docker stats --no-stream
 
 =======================================================================
 ======================= docker 資源 ===================================
 =======================================================================
 docker system df
+
+=======================================================================
+======================= docker 確認遠端 registry ======================
+=======================================================================
+當出現 ​|Error response from daemon: manifest for registry:5000/sris-main/file-mq:sit not found: manifest unknown: manifest unknown
+代表遠端的 registry 找不到存在 images tag 之類
+透過rest api
+	curl -XGET http://[ip/host:port]/v2/[scope]/[images_name]/tags/list
+		ex:
+			curl -XGET http://registry:5000/v2/sris-main/file-mq/tags/list
+
+=======================================================================
+======================= docker 限制 記憶體 ============================
+=======================================================================
+docker update -memory 5g --memory-swap -1 <contain id>

@@ -2,7 +2,6 @@
 public class RS_TABLES {
 
     private static final String RSDFZ = "rsdfz.+";
-    /** Z郎. */
     @Bean
     public TableConversionRule RS_TABLES_RSDFZ() {
         final AliasTableConversionRule rule = new AliasTableConversionRule();
@@ -11,7 +10,7 @@ public class RS_TABLES {
     }
 }
 
-单
+鍗曨爠
 
 RS_TABLES.xml
 	<beans>
@@ -19,43 +18,43 @@ RS_TABLES.xml
 			....
 		<bean/>
 	</beans>
-	
+
 ==================================================================================================================
-========================================== spring init 贺よ猭
+========================================== spring init
 ========================================== http://www.zhongtiancai.com/post-149.html
 ========================================== https://segmentfault.com/a/1190000014105687
 ==================================================================================================================
 bean constructor
-bean method  @PostConstruct
-xml  init-method=[something method name]
-bean implements InitializingBean 
+bean method 顐傤湳 @PostConstruct
+xml 顐傤湳 init-method=[something method name]
+bean implements InitializingBean
 
-纔抖
+绾旑瀮鎶栴灔
 Constructor > @PostConstruct > InitializingBean > init-method
 
 ex:
-	public class InitSequenceBean implements InitializingBean {   
-		
-		public InitSequenceBean() {   
-		   System.out.println("InitSequenceBean: constructor");   
-		}   
-		  
-		@PostConstruct  
-		public void postConstruct() {   
-		   System.out.println("InitSequenceBean: postConstruct");   
-		}   
-		  
-		public void initMethod() {   
-		   System.out.println("InitSequenceBean: init-method");   
-		}   
-		  
-		@Override  
-		public void afterPropertiesSet() throws Exception {   
-		   System.out.println("InitSequenceBean: afterPropertiesSet");   
-		}   
-	}  
+	public class InitSequenceBean implements InitializingBean {
+
+		public InitSequenceBean() {
+		   System.out.println("InitSequenceBean: constructor");
+		}
+
+		@PostConstruct
+		public void postConstruct() {
+		   System.out.println("InitSequenceBean: postConstruct");
+		}
+
+		public void initMethod() {
+		   System.out.println("InitSequenceBean: init-method");
+		}
+
+		@Override
+		public void afterPropertiesSet() throws Exception {
+		   System.out.println("InitSequenceBean: afterPropertiesSet");
+		}
+	}
 ==================================================================================================================
-spring factory	
+spring factory
 ==================================================================================================================
 spring BeanPostProcessor
 ==================================================================================================================
@@ -67,46 +66,46 @@ https://www.tutorialspoint.com/spring/spring_java_based_configuration.htm
 
 @Configuration
 public class HelloWorldConfig {
-   @Bean 
+   @Bean
    public HelloWorld helloWorld(){
       return new HelloWorld();
    }
 }
-单 
+鍗曨爠
 
 <beans>
    <bean id = "helloWorld" class = "com.tutorialspoint.HelloWorld" />
 </beans>
 
 ==================================================================================================================
-======================================= PropertyPlaceholderConfigurer 
-======================================= ㄏノ properties 讽才
+======================================= PropertyPlaceholderConfigurer
+======================================= properties
 ==================================================================================================================
 beans-config.xml
-	<beans>  
-		<bean id="configBean" 
-	 class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"> 
-			<property name="location"> 
-				<value>hello.properties</value> 
-			</property> 
-		</bean> 
+	<beans>
+		<bean id="configBean"
+	 class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+			<property name="location">
+				<value>hello.properties</value>
+			</property>
+		</bean>
 
-		<bean id="helloBean" class="onlyfun.caterpillar.HelloBean"> 
-			<property name="helloWord"> 
-				<value>${onlyfun.caterpillar.helloWord}</value> 
-			</property> 
+		<bean id="helloBean" class="onlyfun.caterpillar.HelloBean">
+			<property name="helloWord">
+				<value>${onlyfun.caterpillar.helloWord}</value>
+			</property>
 		</bean>
 	</beans>
-	
+
 hello.properties
 	onlyfun.caterpillar.helloWord=Welcome!
-	
+
 ==================================================================================================================
-======================================= PropertyPlaceholderConfigurer tag xml 家Α
-======================================= ㄏノ properties 讽才
+======================================= PropertyPlaceholderConfigurer tag xml
+======================================= properties
 ==================================================================================================================
 <util:properties id="envProperties" location="env.properties"/>
 <util:properties id="properties" location="#{envProperties.getProperty('env.app.type')}.properties"/>
 
 <context:property-placeholder properties-ref="envProperties" ignore-unresolvable="true" ignore-resource-not-found="true"/>
-<context:property-placeholder properties-ref="properties" ignore-unresolvable="true"/>	
+<context:property-placeholder properties-ref="properties" ignore-unresolvable="true"/>

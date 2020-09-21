@@ -1,11 +1,11 @@
 https://stackoverflow.com/questions/35777391/fortify-how-to-start-analysis-through-command
 
-lifecycle 
+lifecycle
 	Clean
 	Build
 	Analyze
 	Report
-	
+
 sourceanalyzer -show-build-ids
 
 Clean
@@ -17,12 +17,12 @@ Clean
 Build
 	sourceanalyzer -64 -b "ExampleProject" -source "1.6" "/path/to/project/source/code/"
 	nohup ./sourceanalyzer -b 9999 -verbose -64 -Xmx8000M -Xss24M -XX:MaxPermSize=128M -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC  -XX:+UseParallelGC -Dcom.fortify.sca.ProjectRoot=/local/proj/9999/ -Dcom.fortify.WorkingDirectory=/local/proj/9999/working  -logfile /local/proj/9999/sca.log -source 1.5 -classpath '/local/proj/9999/source/WEB-INF/lib/*.jar:/local/proj/9999/source/jars/**/*.jar:/local/proj/9999/source/classes/**/*.class'  -extdirs '/local/proj/9999/source/wars/*.war'  '/local/proj/9999/source/src/**/*'  &
-		
-		
+
+
 Analyze
 	sourceanalyzer -64 -b "ExampleProject" -format "fpr" -f "/path/to/report/ExampleProject.fpr" -scan
 	nohup ./sourceanalyzer -b 9999  -64 -Xmx8000M -Dcom.fortify.sca.ProjectRoot=/local/proj/9999 -Dcom.fortify.WorkingDirectory=/local/proj/9999/working -logfile /local/ssap/proj/9999/working/sca.log **-scan** -filter '/local/other/filter.txt' -rules '/local/other/custom/*.xml -f '/local/proj/9999.fpr' &
-		
+
 Report
 	ReportGenerator -template "DeveloperWorkbook.xml" -format "pdf" -f "/path/to/report/ExampleProject.pdf" -source  "/path/to/report/ExampleProject.fpr"
 	./ReportGenerator -format pdf -f '/local/proj/9999.pdf' -source '/local/proj/9999.fpr'

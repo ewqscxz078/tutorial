@@ -59,17 +59,17 @@ push	-- 紀錄到server
 查看本機或遠端檔案清單
 	git ls-tree -r --name-only [branch]
 
-查看歷史log 檔案差異	
-	git log -p	
+查看歷史log 檔案差異
+	git log -p
 	限制僅輸出最近幾次更新
 	git log -2
-	
+
 僅查看 merge的 log
 	git log --merges
-	
-查看 auth commit 的 log	
-	git log --author='[author name]'	
-	
+
+查看 auth commit 的 log
+	git log --author='[author name]'
+
 ==========================================================================================
 ==========================================差異操作========================================
 ==========================================================================================
@@ -94,20 +94,20 @@ ex:
 git diff [branchName] --exit-code
 	#有差異回1
 	#無差異回0
-	
+
 git diff --name-status origin/master origin/issue/[redmineId]
-	
+
 ==========================================================================================
 ==========================================branch操作======================================
 ==========================================================================================
 切換branch
 	git checkout [遠端/branchName]
 
-	git checkout [遠端/branchName] --track // 當名稱跑掉時	
-	
+	git checkout [遠端/branchName] --track // 當名稱跑掉時
+
 建立local分支
 	git branch 	[branchName]
-	
+
 建立local分支 base on 特定branch
 	git checkout [特定branch]
 	git checkout -b DEVELOP/greenc108
@@ -130,10 +130,10 @@ untracked file
 	尚未add 情形
 		git clean -f // 將所有untracked file 的 file 移除
 		git clean -f [file] // 指定 untracked file 的 file 移除
-		
+
 		git clean -f -d // 將所有untracked file 的 目錄和檔案 移除
 
-		
+
 已 commit file
 	如何將某個 指定的檔案 還原到 指定的 Commit 的狀態
 		git log
@@ -141,7 +141,7 @@ untracked file
 
 	綠色字變紅字
 		git reset <commitId>
-		
+
 	remove history log 模式
 		git reset <commId/tag:HEAD、master> --hard // 還原到 <commId/tag:HEAD、master> 並將目前節點到還原點 期間異動的程式移除清乾淨
 
@@ -214,7 +214,7 @@ Apply your stashes
 					<mapping resource='tw/gov/moi/domain/Tcdfc2o3Type.hbm.xml' />
 	=======
 	>>>>>>> Stashed changes
-	
+
 Updated upstream 代表 上面的版本
 Stashed changes 代表 stash版本
 fix掉即可
@@ -226,15 +226,15 @@ fix掉即可
 
 誤刪 stash drop/pop 想還原
 則下 for ref in `git fsck --unreachable | grep commit | cut -d' ' -f3`; do git show --summary $ref; done | less
-找到 stash log 
+找到 stash log
 git stash apply {hash_id}
 
 將當前 git status untracked file 壓縮成檔案
 	git stash show -p stash@{?} > /d/git-stash-backup/greenc108-rs-greenc-xxxx
 
 	git ls-files --others --exclude-standard -z | xargs -0 tar rvf /d/git-stash-backup/greenc108-rs-greenc-難字輪廓測試-untracked.tar
-	
-	
+
+
 ==========================================================================================
 ================================== merge =================================================
 ==========================================================================================
@@ -291,8 +291,8 @@ git show [commid] [file]
 
 # 取得當前branch 分支名稱
 	git rev-parse --abbrev-ref HEAD
-	
-# 取得當前branch 分支完整名稱與路徑	
+
+# 取得當前branch 分支完整名稱與路徑
 	git rev-parse --abbrev-ref --symbolic-full-name HEAD
 
 ==========================================================================================
@@ -300,10 +300,10 @@ git show [commid] [file]
 ==========================================================================================
 #取得git url
 	git remote -v	// url=
-	
-#驗證 url 是否有效	
-	git ls-remote <url>	
-	
+
+#驗證 url 是否有效
+	git ls-remote <url>
+
 ==========================================================================================
 ================================== 清 cache ==============================================
 ==========================================================================================
@@ -322,10 +322,10 @@ then
 ==========================================================================================
 列舉已設定
 	git config --list
-	
+
 檢視部分key 內容
 	git config <key>
-	
+
 ==========================================================================================
 ==================================常見操作問題============================================
 ==========================================================================================

@@ -8,8 +8,8 @@
     <scope>test</scope>
 </dependency>
 
-Logger, 
-Appender, 
+Logger,
+Appender,
 Layout.
 ========================================================================================================================
 ==================================== auto reload =======================================================================
@@ -42,7 +42,7 @@ Layout.
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
- 
+
   <root level="debug">
     <appender-ref ref="STDOUT" />
   </root>
@@ -60,10 +60,10 @@ Layout.
             <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
         </encoder>
     </appender>
-	<logger name="com.baeldung.logback.tests" level="WARN"> 
-        <appender-ref ref="FILE" /> 
-    </logger> 
- 
+	<logger name="com.baeldung.logback.tests" level="WARN">
+        <appender-ref ref="FILE" />
+    </logger>
+
 ========================================================================================================================
 ================================= RollingFileAppender ==================================================================
 ========================================================================================================================
@@ -74,7 +74,7 @@ Layout.
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
         <!-- daily rollover -->
         <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.gz</fileNamePattern>
- 
+
         <!-- keep 30 days' worth of history capped at 3GB total size -->
         <maxHistory>30</maxHistory>
         <totalSizeCap>3GB</totalSizeCap>

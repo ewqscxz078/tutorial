@@ -10,14 +10,14 @@
 
 1.compile  (編譯)
   此為預設值，表示此jar是所有階段需要的。 部署時將一起被打包到jar/war裡面。
-  
+
 2.test (測試)
   表示此jar檔只有在測試時，才需要使用。如 junit jar 等。
   部署時將不會打包到jar/war裡面。
-  
+
 3.runtime (運行)
   表示此jar檔只有在運行時，才需要使用。如jdbc jar等。
-  
+
 4.provided (已提供)
   當運行時，表示此jar檔期望由JDK、Tomcat及jboss等來提供。如 servlet.jar、jsp-api.jar 等。
   部署時將不會打包到jar/war裡面。
@@ -44,12 +44,11 @@
 			<target>1.8</target>
 		</configuration>
 	</plugin>
-  
-常用設定  
+
+常用設定
 	1.build 編碼
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		
-	2.compiler 
+
+	2.compiler
 		<maven.compiler.source>1.8</maven.compiler.source>
-		
-		
+

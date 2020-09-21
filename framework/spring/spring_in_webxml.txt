@@ -1,7 +1,7 @@
 web.xml中配置Spring中applicationContext.xml的方式
-使用web.xml方式加载Spring时，获取Spring applicationContext.xml的方式
+使用web.xml方式加載Spring時，獲取Spring applicationContext.xml的方式
 
-1、servlet方式加载：
+1、servlet方式加載：
 
 【web.xml】
 
@@ -14,35 +14,35 @@ web.xml中配置Spring中applicationContext.xml的方式
     </init-param>
 </servlet>
 
- 
 
-2、listener方式加载：
+
+2、listener方式加載：
 
 【web.xml】
 
-在web.xml里配置Listener
+在web.xml裡配置Listener
 
 <listener>
 <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 </listener>
 
-如果在web.xml里给该Listener指定要加载的xml,如：
+如果在web.xml裡給該Listener指定要加載的xml,如：
 
 <context-param>
     <param-name>contextConfigLocation</param-name>
     <param-value>classpath:applicationContext.xml</param-value>
 </context-param>
 
-则会去加载相应的xml,而不会去加载/WEB-INF/下的applicationContext.xml。
+則會去加載相應的xml,而不會去加載/WEB-INF/下的applicationContext.xml。
 
-但是，如果没有指定的话，默认会去/WEB-INF/下加载applicationContext.xml。
+但是，如果沒有指定的話，默認會去/WEB-INF/下加載applicationContext.xml。
 
-注意：红色部分是固定的不能改变。contextConfigLocation就是用来加载applicationContext.xml的固定名，不能改变。
+注意：紅色部分是固定的不能改變。 contextConfigLocation就是用來加載applicationContext.xml的固定名，不能改變。
 
-加载src下的xml文件
+加載src下的xml文件
 
 classpath:applicationContext.xml
 
-加载/WEB-INF/下的xml文件
+加載/WEB-INF/下的xml文件
 
 /WEB-INF/applicationContext.xml

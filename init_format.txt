@@ -1,0 +1,6 @@
+window 換行 dos2unix
+	find -type f | xargs dos2unix
+
+replace tail space or tab
+	by cli，執行前請確認檔案皆已有換成unix格式才會正常
+		egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/[[:blank:]]*$//"
