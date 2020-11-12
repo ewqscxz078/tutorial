@@ -29,7 +29,7 @@ bean method  @PostConstruct
 xml  init-method=[something method name]
 bean implements InitializingBean
 
-纔抖
+初始化順序
 Constructor > @PostConstruct > InitializingBean > init-method
 
 ex:

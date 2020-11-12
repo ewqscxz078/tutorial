@@ -133,21 +133,44 @@ docker ps
 	#查詢正在執行或停止的docker
 		docker ps -a
 
-#查詢某image 裡的內容 當不知道dockerfile 在哪時
+#查詢某 image 裡的內容 當不知道 dockerfile 在哪時
 	docker inspect [imageName]
 
-#停止docker
+#停止 docker
 	docker stop [container-id by docker ps -a]
 
-#刪除docker
+#刪除 docker
 	docker rm [name by docker ps -a]
 
-#從docker 裡複製出檔案
+#從 docker 裡複製出檔案
 	1.找出 CONTAINER_ID
 		docker ps|grep docker name
 		第一個欄位即為CONTAINER_ID
 	2.
 		docker cp [CONTAINER_ID]:/[filepath/filename] .
+
+=======================================================================
+=========================== docker images tag =========================
+=======================================================================
+docker tag [sourceimage] [targetimage:tag]
+
+=======================================================================
+================== docker images container 備份匯出匯入================
+=======================================================================
+image 匯出匯入
+	匯出
+		docker save -o [壓縮名稱.tar] [image name:tag]
+			ex:
+				docker save -o mytomcat.tar mytomcat:sit
+	匯入
+		docker load -i [壓縮名稱.tar]
+			ex:
+				docker load -i mytomcat.tar
+container 匯出匯入
+	匯出
+		docker export
+	匯入
+		docker import
 
 =======================================================================
 ======================= docker 觀察 ===================================

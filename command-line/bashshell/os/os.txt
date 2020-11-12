@@ -1,0 +1,2 @@
+馬上關機
+	sudo shutdown now
