@@ -155,6 +155,15 @@ docker ps
 docker tag [sourceimage] [targetimage:tag]
 
 =======================================================================
+=========================== docker logs ===============================
+=======================================================================
+docker logs [container-id] // 從下面位置取出
+	該 log 會抓 stdout 和stderr
+	/var/lib/docker/containers/[container-id]/[container-id]-json.log
+
+參考 https://sematext.com/blog/docker-logs-location/
+
+=======================================================================
 ================== docker images container 備份匯出匯入================
 =======================================================================
 image 匯出匯入
