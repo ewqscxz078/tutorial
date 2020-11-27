@@ -9,8 +9,11 @@ name、					傳輸層、	序列化協議、IO形式、運行方式、	格式		�
 rest(webservice)  		http      					  	HTTP		json/xml	較不安全	可穿防火牆
 soap(webservice)		http      	soap							xml						可穿防火牆、較安全
 JMI,   					tcp		  	java				  						僅限java	快速
-Thrift,					tcp			二進位													跨語言快速
+Thrift,					tcp			thrift二進位											跨語言快速
 Protobuf				tcp			二進位
+
+四種 常見 rpc框架
+	Dubbo/Motan/Thrift/Grpc
 
 根據第一點，RPC陣營如下：
 	1. Web Service採用HTTP協議做傳輸層協議，採用SOAP做應用層協議
