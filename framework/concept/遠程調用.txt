@@ -12,7 +12,7 @@ JMI,   					tcp		  	java				  						僅限java	快速
 Thrift,					tcp			thrift二進位											跨語言快速
 Protobuf				tcp			二進位
 
-四種 常見 rpc框架
+四種 常見 tcp rpc框架
 	Dubbo/Motan/Thrift/Grpc
 
 根據第一點，RPC陣營如下：
