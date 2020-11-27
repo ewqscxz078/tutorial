@@ -1,0 +1,53 @@
+原文網址：https://kknews.cc/code/42p4g3q.html
+
+1. 採用什麼傳輸協議，TCP, HTTP，還是其他
+2. 採用什麼序列化協議(也叫CodeC,編解碼，Marshalling)，比如基於文本的XML（自定義XML，或者SOAP），基於二進位流（Java序列化，或者自定義序列化協議，比如Thrift, Protobuf, JBoss Marshalling）
+3. 採用什麼IO形式，阻塞IO，非阻塞同步IO(select / poll / epoll)，非阻塞異步IO
+4. 採用什麼方式運行，運行在HTTP伺服器上，還是以單獨進程運行
+	
+name、					傳輸層、	序列化協議、IO形式、運行方式、	格式		缺點		優點
+rest(webservice)  		http      					  	HTTP		json/xml	較不安全	可穿防火牆
+soap(webservice)		http      	soap							xml						可穿防火牆、較安全
+JMI,   					tcp		  	java				  						僅限java	快速
+Thrift,					tcp			二進位													跨語言快速
+Protobuf				tcp			二進位
+
+根據第一點，RPC陣營如下：
+	1. Web Service採用HTTP協議做傳輸層協議，採用SOAP做應用層協議
+	2. XML-RPC，採用HTTP協議做傳輸層協議，使用自定義XML做應用層協議
+	3. JMI, Thrift, Protobuf等都使用TCP做傳輸協議，使用自定義應用層協議
+	4. REST直接使用HTTP做應用層協議，使用URL表示資源，使用HTTP動詞表示動作
+
+根據第二點，RPC陣營如下：
+	1. Web Service和XML-RPC採用基於文本的XML進行序列化
+	2. RMI基於Java序列化協議
+	3. Thrfit, Protobuf等採用了基於二進位流的序列化協議，比如就是採用消息頭消息體的方式傳輸，通過消息頭來定義長度，從而保證能夠正確讀寫數據
+
+根據第三點
+	隨著NIO的廣泛應用，越來越多的伺服器端支持非阻塞IO，客戶端可以採用同步IO，也可以採用非阻塞IO。
+	關於阻塞，非阻塞，同步，異步的概念，看這篇http://blog.csdn.net/iter_zc/article/details/39291647
+
+關於第四點
+	Web Service和REST都運行在HTTP伺服器上，Thrift這樣的都是以單獨進程運行
+
+Web Service採用HTTP層做傳輸協議，採用文本格式的SOAP做應用層協議，相比於基於二進位流的RPC協議。
+	好處是：基於HTTP傳輸，採用文本方式，可以穿越防火牆，適合組織內向組織外提供服務
+	壞處是：基於文本的序列化效率低下，傳輸層基於HTTP，相比於TCP，多了一層協議，性能也有影響，不適合對性能要求高的場景
+
+REST近年來有取代Web Service的趨勢，主要是Web Service的優點它都有，而且更輕量級，採用JSON來序列化數據性能也還可以，編程模型更加簡單，適合組織內向組織外發布服務。
+
+組織內部對性能要求高的場景可以使用Thrift這種的RPC技術，基於二進位流的序列化協議，基於NIO的傳輸協議，性能較高，適合高並發的場景。
+
+名詞定義
+	RPC：所謂的遠端過程呼叫 (面向方法)
+	SOA：所謂的面向服務的架構(面向訊息)
+	REST：所謂的 Representational state transfer (面向資源)
+
+	RPC 即遠端過程呼叫, 很簡單的概念, 像呼叫本地服務(方法)一樣呼叫伺服器的服務(方法).
+	通常的實現有 XML-RPC , JSON-RPC , 通訊方式基本相同, 所不同的只是傳輸資料的格式.
+
+	REST 的三個要素是 唯一的資源標識, 簡單的方法 (此處的方法是個抽象的概念),一定的表達方式. 重要的特性：無狀態
+	
+soa/rpc
+	rest
+	soap
