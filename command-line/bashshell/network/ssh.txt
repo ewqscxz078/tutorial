@@ -26,7 +26,7 @@ https://www.poftut.com/run-shell-script-command-remote-ssh/
 
 金鑰生成
 	ssh-keygen
-		預設會在.ssh 目錄下產生公鑰 id_rsa.pub以及私鑰id_rsa
+		預設會在.ssh 目錄下產生公鑰 id_rsa.pub以及私鑰 id_rsa
 
 複製公鑰到欲登入 server
 	ssh-copy-id -i ~/.ssh/id_rsa.pub <USER>@<HOST>

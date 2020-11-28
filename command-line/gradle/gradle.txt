@@ -1,0 +1,5 @@
+default load jar location
+	~/.gradle/caches/modules-2/files-2.1
+	
+all project setting
+	~/.gradle/caches/init.d/init.gradle

@@ -163,6 +163,9 @@ docker logs [container-id] // 從下面位置取出
 
 參考 https://sematext.com/blog/docker-logs-location/
 
+docker run --log-opt max-size=每個檔案大小上限
+docker run --log-opt max-file=最多幾個log file 數量上限
+
 =======================================================================
 ================== docker images container 備份匯出匯入================
 =======================================================================

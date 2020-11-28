@@ -1,2 +1,3 @@
-°¨¤WÃö¾÷
+é¦¬ä¸Šé—œæ©Ÿ
 	sudo shutdown now
+	sudo reboot
