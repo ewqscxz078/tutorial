@@ -1,0 +1,23 @@
+修改權限
+
+假設檔案的權限字元為：『-rwxrwxrwx』
+
+-代表檔案
+第一組rwx owner
+第二組rwx group
+第三組rwx others
+
+r:4
+w:2
+x:1
+
+若權限為： [-rwxrwx---]
+	代表
+		owner = rwx = 4+2+1 = 7
+		group = rwx = 4+2+1 = 7
+		others= --- = 0+0+0 = 0
+
+增加可執行權限
+	chmod +x [file]
+	
+	chmod 755 [file]
