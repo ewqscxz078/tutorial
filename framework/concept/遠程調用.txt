@@ -4,7 +4,7 @@
 2. 採用什麼序列化協議(也叫CodeC,編解碼，Marshalling)，比如基於文本的XML（自定義XML，或者SOAP），基於二進位流（Java序列化，或者自定義序列化協議，比如Thrift, Protobuf, JBoss Marshalling）
 3. 採用什麼IO形式，阻塞IO，非阻塞同步IO(select / poll / epoll)，非阻塞異步IO
 4. 採用什麼方式運行，運行在HTTP伺服器上，還是以單獨進程運行
-	
+
 name、					傳輸層、	序列化協議、IO形式、運行方式、	格式		缺點		優點
 rest(webservice)  		http      					  	HTTP		json/xml	較不安全	可穿防火牆
 soap(webservice)		http      	soap							xml						可穿防火牆、較安全
@@ -50,7 +50,7 @@ REST近年來有取代Web Service的趨勢，主要是Web Service的優點它都
 	通常的實現有 XML-RPC , JSON-RPC , 通訊方式基本相同, 所不同的只是傳輸資料的格式.
 
 	REST 的三個要素是 唯一的資源標識, 簡單的方法 (此處的方法是個抽象的概念),一定的表達方式. 重要的特性：無狀態
-	
+
 soa/rpc
 	rest
 	soap

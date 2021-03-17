@@ -126,13 +126,6 @@ go into running container
 go into running container as root
 	docker exec -it -u 0 <container name/id> /bin/bash
 
-docker ps
-	#查詢正在執行的docker
-		docker ps
-
-	#查詢正在執行或停止的docker
-		docker ps -a
-
 #查詢某 image 裡的內容 當不知道 dockerfile 在哪時
 	docker inspect [imageName]
 
@@ -148,6 +141,21 @@ docker ps
 		第一個欄位即為CONTAINER_ID
 	2.
 		docker cp [CONTAINER_ID]:/[filepath/filename] .
+=======================================================================
+============================== 其他常用 ===============================
+=======================================================================
+#查詢 container 狀態
+	#執行中 docker container
+		docker ps
+
+	#執行中或停止的docker container
+		docker ps -a
+
+	#停止的docker container
+		docker ps -f "status=exited"
+		// created restarting running removing paused exited dead
+			docker container ls -f 'status=exited'
+			docker container ls -f 'status=exited' -f 'status=dead' -f 'status=created'
 
 =======================================================================
 =========================== docker images tag =========================
@@ -204,9 +212,14 @@ docker system df
 當出現 ​|Error response from daemon: manifest for registry:5000/sris-main/file-mq:sit not found: manifest unknown: manifest unknown
 代表遠端的 registry 找不到存在 images tag 之類
 透過rest api
+	查找 docker registry 特定 docker images
 	curl -XGET http://[ip/host:port]/v2/[scope]/[images_name]/tags/list
 		ex:
 			curl -XGET http://registry:5000/v2/sris-main/file-mq/tags/list
+
+	list docker registry
+		curl -i http://registry:5000/v2/_catalog
+
 
 =======================================================================
 ======================= docker 限制 記憶體 ============================

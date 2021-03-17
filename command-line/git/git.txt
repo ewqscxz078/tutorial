@@ -6,6 +6,9 @@ eclipse
 ====================================基本操作==============================================
 ==========================================================================================
 
+window 更新git version
+	git update-git-for-windows
+
 初始 git
 	git init
 
@@ -69,6 +72,9 @@ push	-- 紀錄到server
 
 查看 auth commit 的 log
 	git log --author='[author name]'
+
+簡化顯示
+	git log --oneline
 
 ==========================================================================================
 ==========================================差異操作========================================
@@ -254,6 +260,11 @@ boycott
 git checkout --ours word.txt    # => chocolate {<<<<<<< HEAD .... =======}
 git checkout --theirs word.txt  # => boycott {======= .... >>>>>>> upstream}
 
+merge 常例
+	both modified
+	both add
+	deleted by them(一邊修改，一邊刪除)
+		https://stackoverflow.com/questions/1380670/how-do-i-fix-a-merge-conflict-due-to-removal-of-a-file-in-a-branch
 
 ==========================================================================================
 ================================= git config =============================================

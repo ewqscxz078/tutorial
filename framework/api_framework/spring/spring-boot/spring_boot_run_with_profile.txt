@@ -1,0 +1,33 @@
+spring boot profile
+	1.eclipse run profile
+		1.1.java main
+			1.1.1.with spring boot 外掛 select profiles
+			1.1.2.with jvm opt
+				-Dspring.profiles.active=local
+			1.1.3.in java
+				System.setProperty("spring.profiles.active", "local");	// 不建議使用，若要使用僅限local使用，因為會影響程式碼
+
+			1.1.4.with maven ?
+				mvn spring-boot:run -Drun.arguments="--spring.profiles.active=local" ?
+
+		1.2.wildfly ap server
+			1.2.1.with jvm opt
+				-Dspring.profiles.active=local
+
+	2.maven run profile	?
+		mvn spring-boot:run -Drun.arguments="--spring.profiles.active=local" ?
+
+	3.外部 wildfly ap server run profile
+		3.1.${WILDFLY_HOME}/bin/standalone.conf.bat
+			set "JAVA_OPTS=%JAVA_OPTS% -DBASEDIR=D:\SRIS_CODE\new-eid\neid-sa-app\CONFIG"
+			set "JAVA_OPTS=%JAVA_OPTS% -Dspring.profiles.active=local"
+
+		3.2.${WILDFLY_HOME}\standalone\deployments
+			放入${project}.war
+
+		3.3.執行 ${WILDFLY_HOME}/bin/standalone.bat
+
+	4.docker run with
+		docker run .... -e JAVA_OPTS="-Dspring.profiles.active=sit" ....
+		docker run .... -e JAVA_OPTS="-Dspring.profiles.active=uat" ....
+		docker run .... -e JAVA_OPTS="-Dspring.profiles.active=prod" ....

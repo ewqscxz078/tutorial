@@ -1,0 +1,48 @@
+常見網路 port 排除步驟
+
+1.在服務本機 telnet 自己 port
+2.若有在往外找本機防火牆
+3.再外往找網路防火牆
+
+同網段的 Vm 若不通 就 100% 是本機防火牆或服務沒啟動的問題
+不同網段才有網路防火牆 + 本機房防火牆 + 服務沒啟動 三種可能
+
+  245  ls
+  246  cd /etc/firewalld/zones/
+  247  ls
+  248  vi public.xml
+  249  cat docker.xml
+  250  rm docker.xml
+  251  ls -l
+  252  firewall-cmd --reload
+  253  docker ps -a
+  254  telnet localhost 2376
+  255  yum install telnetd
+  256  yum install telnet
+  257  ls -l
+  258* cd /etc/systemd/system/docker.se
+  259  mkdir /etc/systemd/system/docker.service.d/
+  260  cd /etc/systemd/system/docker.service.d/
+  261  ls
+  262  vi 00-sris.conf
+  263  systemctl restart docker
+  264  systemctl daemon-reload
+  265  systemctl restart docker
+  266  journalctl -xe
+  267  sftp root@10.190.68.1
+  268  sftp chtebgadm@10.190.68.1
+  269  ls -l
+  270  mv *.pem /etc/docker/
+  271  cd /etc/docker/
+  272  mkdir daemon-cert
+  273  mv *.pem daemon-cert/
+  274  ls -l
+  275  cd daemon-cert/
+  276  ls
+  277  cd ..
+  278  systemctl restart docker
+  279  docker ps -a
+  280  history
+
+vi /etc/firewalld/zones/public.xml
+firewall-cmd --reload

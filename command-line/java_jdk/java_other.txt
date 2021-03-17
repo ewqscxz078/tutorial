@@ -26,6 +26,6 @@ jstat
 
 
 jstack
-	jstack [pid] -l
-
+	jstack -l [pid]
+	jstack -l `jps |grep -v Jps | awk '{ print $1}'`  |less
 
