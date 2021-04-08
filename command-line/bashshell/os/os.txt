@@ -1,3 +1,11 @@
 馬上關機
 	sudo shutdown now
 	sudo reboot
+
+看 hosts
+	vi /etc/hosts
+看有多少帳號
+	vi /etc/passwd
+
+看有多少群組
+	vi /etc/group

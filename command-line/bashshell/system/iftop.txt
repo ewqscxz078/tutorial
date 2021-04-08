@@ -1,0 +1,33 @@
+分析流量被誰用掉
+	https://www.itread01.com/p/209624.html
+// help
+	h
+============================================================================================
+指令說明
+Host display:                          General:
+ n - toggle DNS host resolution         P - pause display
+ s - toggle show source host            h - toggle this help display
+ d - toggle show destination host       b - toggle bar graph display
+ t - cycle line display mode            B - cycle bar graph average
+                                        T - toggle cumulative line totals
+Port display:                           j/k - scroll display
+ N - toggle service resolution          f - edit filter code
+ S - toggle show source port            l - set screen filter
+ D - toggle show destination port       L - lin/log scales
+ p - toggle port display                ! - shell command
+                                        q - quit
+Sorting:
+ 1/2/3 - sort by 1st/2nd/3rd column
+ < - sort by source name
+ > - sort by dest name
+ o - freeze current order
+
+iftop, version 1.0pre4
+============================================================================================
+BAR
+	預設兩秒，這樣子很難抓出吃流量的兇手，此時利用【B】來切換BAR的顯示，建議可以切換到40秒
+
+排序
+	【1】【2】【3】分別代表使用2秒、10秒與40秒來排序，搭配上述40秒平均的BAR，選擇3來排序較好釐清，另外【T】可顯示總流量
+
+

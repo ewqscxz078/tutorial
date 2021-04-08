@@ -40,13 +40,6 @@ push	-- 紀錄到server
 ====================================其他操作==============================================
 ==========================================================================================
 
-查看 push 的所有狀況
-	git log
-	git log origin/sris // 查看遠端 log
-
-以較好看的方式，查看差異
-	git log -U1 --word-diff
-
 查看 所有branch
 	git branch -a  // 顯示白色是本地端 紅色是遠端server；互相對應
 	git branch -av // 列出每個分支最後的提交commitId
@@ -54,13 +47,24 @@ push	-- 紀錄到server
 查看 目前所屬的branch
 	git branch | grep \* | cut -d ' ' -f2
 
+查看本機或遠端檔案清單
+	git ls-tree -r --name-only [branch]
+
+==========================================================================================
+==================================== git log =============================================
+==========================================================================================
+
+查看 push 的所有狀況
+	git log
+	git log origin/sris // 查看遠端 log
+
+以較好看的方式，查看差異
+	git log -U1 --word-diff
+
 查看圖像化 push log
 	// teamctl reset-to-log
 	git lg	// 有怪怪的
 	git lga
-
-查看本機或遠端檔案清單
-	git ls-tree -r --name-only [branch]
 
 查看歷史log 檔案差異
 	git log -p
@@ -75,6 +79,23 @@ push	-- 紀錄到server
 
 簡化顯示
 	git log --oneline
+
+查看兩個commit或tags之間
+	https://stackoverflow.com/questions/5863426/get-commit-list-between-tags-in-git/5863452#
+	可能比較好看的格式
+		--pretty=format:"%h%x09%an%x09%ad%x09%s"	// 含 commit id 作者 修改時間 branchid commit_message
+		--pretty=format:"%s" //only commit message
+
+	only file
+		git log --name-only --no-merges --pretty=format:"%h%x09%an%x09%ad%x09%s" release/2021-03-26-R...release/2020-12-11-A
+		git log --name-only --no-merges --pretty=format: release/2021-03-26-R...release/2020-12-11-A
+
+	含修改檔案的模式
+		git log --name-status --no-merges --pretty=format: release/2021-03-26-R...release/2020-12-11-A
+		git log --name-status --no-merges --pretty=format:"%h%x09%an%x09%ad%x09%s" release/2021-03-26-R...release/2020-12-11-A
+
+	統計差異
+		git log --stat --no-merges --pretty=format: release/2021-03-26-R...release/2020-12-11-A
 
 ==========================================================================================
 ==========================================差異操作========================================
