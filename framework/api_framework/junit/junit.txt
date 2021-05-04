@@ -1,6 +1,8 @@
+@BeforeClass	// public static void åŸ·è¡Œå‰ï¼ŒåŸ·è¡Œä¸€æ¬¡
+@AfterClass		// public static void åŸ·è¡Œå¾Œï¼ŒåŸ·è¡Œä¸€æ¬¡
+@Before			// æ¯å€‹ @Test å‰åŸ·è¡Œä¸€æ¬¡
+@Test			// å–®å…ƒæ¸¬è©¦
+@After			// æ¯å€‹ @Test å¾ŒåŸ·è¡Œä¸€æ¬¡
 
-@BeforeClass	// public static void °õ¦æ«e¡A°õ¦æ¤@¦¸
-@AfterClass		// public static void °õ¦æ«á¡A°õ¦æ¤@¦¸
-@Before			// ¨C­Ó @Test «e°õ¦æ¤@¦¸
-@Test			// ³æ¤¸´ú¸Õ
-@After			// ¨C­Ó @Test «á°õ¦æ¤@¦¸
+å»ºç«‹æš«å­˜æª”æ¡ˆ
+	Files.createTempFile(prefix, suffix)

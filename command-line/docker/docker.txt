@@ -86,6 +86,10 @@ CMD
 # 詳細安裝
 	docker info
 
+=======================================================================
+======================= docker command image===========================
+=======================================================================
+
 # 列舉出可用 image
 	docker images
 	docker images|grep [imageFileName]
@@ -95,11 +99,6 @@ CMD
 # Docker 刪除 Image (rmi)
 	docker rmi [image-id] ...
 	docker rmi --force [image-id] # if 有多個一樣image-id
-
-# Docker 刪除 container (rm)
-	docker rm [contain-id]....
-		# Force the removal of a running container (uses SIGKILL) if 有多個一樣
-		docker rm -f [contain-id]....
 
 # 編譯 image
 	docker build -t [imageFileName] .
@@ -120,22 +119,33 @@ docker run
 	# Bind mount a volume(shared filesystems)
 		docker run --rm -d -p 4000:80 [imageFileName] -v:[host-src:]container-dest[:<options>]
 
-go into running container
-	docker exec -it <container name> /bin/bash
-
-go into running container as root
-	docker exec -it -u 0 <container name/id> /bin/bash
-
 #查詢某 image 裡的內容 當不知道 dockerfile 在哪時
 	docker inspect [imageName]
 
-#停止 docker
+=======================================================================
+======================= docker command container=======================
+=======================================================================
+# Docker 刪除 container (rm)
+	docker rm [contain-id]....
+		# Force the removal of a running container (uses SIGKILL) if 有多個一樣
+		docker rm -f [contain-id]....
+
+# go into running container
+	docker exec -it <container name> /bin/bash
+
+# go into running container as root
+	docker exec -it -u 0 <container name/id> /bin/bash
+
+# 啟動 docker by container
+	docker start [container-id by docker ps -a]
+
+# 停止 docker by container
 	docker stop [container-id by docker ps -a]
 
-#刪除 docker
+# 刪除 docker by container
 	docker rm [name by docker ps -a]
 
-#從 docker 裡複製出檔案
+# 從 docker 裡複製出檔案
 	1.找出 CONTAINER_ID
 		docker ps|grep docker name
 		第一個欄位即為CONTAINER_ID
