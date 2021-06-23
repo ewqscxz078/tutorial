@@ -1,0 +1,68 @@
+# 查看自己的 crontab
+crontab -l
+
+# 查看指定使用者的 crontab
+sudo crontab -u gtwang -l
+
+# 編輯 crontab 內容
+crontab -e
+
+# 編輯指定使用者的 crontab
+crontab -u gtwang -e
+
+# 刪除目前所有的 crontab，可以使用 -r 參數
+crontab -r
+
+# ┌───────────── 分鐘   (0 - 59)
+# │ ┌─────────── 小時   (0 - 23)
+# │ │ ┌───────── 日     (1 - 31)
+# │ │ │ ┌─────── 月     (1 - 12)
+# │ │ │ │ ┌───── 星期幾 (0 - 7，0 是週日，6 是週六，7 也是週日)
+# │ │ │ │ │
+# * * * * * /path/to/command
+
+sample
+	每分鐘 執行一次
+	* * * * * /home/gtwang/script.sh --your --parameter
+
+	每三十秒 執行一次
+	https://www.opencli.com/linux/crontab-auto-run-seconds
+	* * * * * /home/gtwang/script.sh --your --parameter
+	* * * * * sleep 30; /home/gtwang/script.sh --your --parameter
+	
+	# 每天早上 8 點 30 分執行
+	30 08 * * * /home/gtwang/script.sh --your --parameter
+	
+	# 每週日下午 6 點 30 分執行
+	30 18 * * 0 /home/gtwang/script.sh --your --parameter
+
+	# 每週日下午 6 點 30 分執行
+	30 18 * * Sun /home/gtwang/script.sh --your --parameter
+	
+	# 每年 6 月 10 日早上 8 點 30 分執行
+	30 08 10 06 * /home/gtwang/script.sh --your --parameter
+	
+	# 每月 1 日、15 日、29 日晚上 9 點 30 分各執行一次
+	30 21 1,15,29 * * /home/gtwang/script.sh --your --parameter
+
+	# 每隔 10 分鐘執行一次
+	*/10 * * * * /home/gtwang/script.sh --your --parameter
+	
+	# 從早上 9 點到下午 6 點，凡遇到整點就執行
+	00 09-18 * * * /home/gtwang/script.sh --your --parameter
+
+	# 每小時以 gtwang 帳號權限執行一次
+	0 * * * * gtwang /home/gtwang/script.sh --your --parameter	
+
+慣例特殊(特殊排程規則)	
+	排程規則	說明
+	@reboot	每次重新開機之後，執行一次。
+	@yearly	每年執行一次，亦即 0 0 1 1 *。
+	@annually	每年執行一次，亦即 0 0 1 1 *。
+	@monthly	每月執行一次，亦即 0 0 1 * *。
+	@weekly	每週執行一次，亦即 0 0 * * 0。
+	@daily	每天執行一次，亦即 0 0 * * *。
+	@hourly	每小時執行一次，亦即 0 * * * *。
+
+由於系統安全性的考量，我們可能會希望限制只有特定的使用者可以使用 crontab，
+這時候就可以透過系統的 /etc/cron.allow 或 /etc/cron.deny 兩個檔案來設定。

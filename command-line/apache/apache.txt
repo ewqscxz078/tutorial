@@ -1,0 +1,14 @@
+https://teckadmin.wordpress.com/2013/10/23/difference-between-graceful-restart-and-normal-restart/
+http://blogger.gtwang.org/2013/05/apache-2-reload-httpd-config-file-unix-linux-command.html
+
+/usr/sbin/apachectl其實是個腳本；
+/usr/sbin/httpd才是真正的程序；
+
+Normal restart(中斷現用的已經開啟的連線，影響線上正在跑的會被kill調，也就是中斷)
+	apachectl -k stop
+	apachectl -k start
+	apachectl -k restart
+
+Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead config，不影響線上正在跑的)
+	apachectl -k graceful
+	httpd -k graceful

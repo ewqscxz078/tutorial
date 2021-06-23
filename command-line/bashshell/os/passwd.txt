@@ -1,6 +1,22 @@
+https://blog.gtwang.org/linux/linux-passwd-command-examples/
+
 變更自己密碼
 	passwd
-	
-root 管理者的話，可以變更任何使用者的密碼：
 
-	sudo passwd [帳號]
+root 管理者
+	變更 root 密碼
+		sudo pawwd
+
+	變更任何使用者的密碼：
+		sudo passwd [帳號]
+
+	看帳號狀態
+		passwd -S [帳號]
+			ex: iisi-david.chiu PS 2021-03-22 60 90 7 -1 (密碼已設定，SHA512 加密法。)
+			1.帳號名稱。
+			2.密碼狀態，狀態包含鎖定密碼（L）、無密碼（NP）與可用密碼（P）。
+			3.上次修改密碼的時間。
+			4.密碼最短使用期限（minimum password age），單位為天。
+			5.密碼最長使用期限（maximum password age），單位為天。
+			6.密碼過期前警告期間（password warning period），單位為天。
+			7.密碼過期後可使用的期間（password inactivity period），單位為天。

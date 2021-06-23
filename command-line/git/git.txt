@@ -257,10 +257,17 @@ fix掉即可
 	git stash apply {hash_id}
 
 將當前 git status untracked file 壓縮成檔案
-	git stash show -p stash@{?} > /d/git-stash-backup/greenc108-rs-greenc-xxxx
-	git ls-files --others --exclude-standard -z | xargs -0 tar rvf /d/git-stash-backup/greenc108-rs-greenc-難字輪廓測試-untracked.tar
 
-	git apply /d/git-stash-backup/greenc108-rs-greenc-xxxx
+stash track and untrack to patch
+	https://stackoverflow.com/questions/22818155/git-stash-to-patch-with-untracked-files
+
+	// track stash
+	git stash show -p stash@{?} > patch
+	// untrack stash
+	git diff 4b825dc642cb6eb9a060e54bf8d69288fbee4904 stash^3 >> patch
+
+	cd /new/project/dir
+	git apply /old/project/dir/[patchName]
 
 ==========================================================================================
 ================================== merge =================================================

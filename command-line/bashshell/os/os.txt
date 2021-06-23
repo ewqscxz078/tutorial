@@ -1,3 +1,11 @@
+看unix os version
+	uname -a
+
+	cat /etc/os-release
+
+	Linux kernel version
+		uname -r
+
 馬上關機
 	sudo shutdown now
 	sudo reboot
@@ -9,3 +17,10 @@
 
 看有多少群組
 	vi /etc/group
+
+看最近重新開機時間
+	last reboot
+
+看開機多久
+	uptime
+	top #第一行資訊為 HH:mm:ss(現在時間) up mm:ss(開機多久時間)
