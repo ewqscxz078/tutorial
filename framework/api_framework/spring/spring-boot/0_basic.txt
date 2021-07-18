@@ -1,0 +1,102 @@
+https://docs.spring.io/spring-boot/docs/current/reference/html/
+
+==================================================================================================================
+========================================= spring boot basic
+==================================================================================================================
+https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features
+
+SpringApplication
+	@SpringBootApplication
+	public class MyApplication {
+		public static void main(String[] args) {
+			SpringApplication.run(MyApplication.class, args);
+		}
+	}
+
+Lazy Initialization
+	spring.main.lazy-initialization=true
+
+Customizing the Banner
+	${application.version}
+	${application.formatted-version}
+	${spring-boot.version}
+	${spring-boot.formatted-version}
+	${Ansi.NAME} (or ${AnsiColor.NAME}, ${AnsiBackground.NAME}
+	${AnsiStyle.NAME})
+	${application.title}
+	
+Customizing SpringApplication
+	SpringApplication application = new SpringApplication(MyApplication.class);
+	application.setBannerMode(Banner.Mode.OFF);	
+	
+Fluent Builder API	
+	new SpringApplicationBuilder()
+        .sources(Parent.class)
+        .child(Application.class)
+        .bannerMode(Banner.Mode.OFF)
+        .run(args);
+	
+
+Application Availability
+	Liveness State
+	Readiness State
+	Managing the Application Availability State	
+	
+Application Events and Listeners
+
+Web Environment
+
+Using the ApplicationRunner or CommandLineRunner
+
+Application Exit
+Admin Features
+Application Startup tracking
+
+Externalized Configuration
+	1.Default properties (specified by setting SpringApplication.setDefaultProperties).
+	2.@PropertySource annotations on your @Configuration classes. Please note that such property sources are not added to the Environment until the application context is being refreshed. This is too late to configure certain properties such as logging.* and spring.main.* which are read before refresh begins.
+	3.Config data (such as application.properties files)
+	4.A RandomValuePropertySource that has properties only in random.*.
+	5.OS environment variables.
+	6.Java System properties (System.getProperties()).
+	7.JNDI attributes from java:comp/env.
+	8.ServletContext init parameters.
+	9.ServletConfig init parameters.
+	10.Properties from SPRING_APPLICATION_JSON (inline JSON embedded in an environment variable or system property).
+	11.Command line arguments.
+	12.properties attribute on your tests. Available on @SpringBootTest and the test annotations for testing a particular slice of your application.
+	13.@TestPropertySource annotations on your tests.
+	14.Devtools global settings properties in the $HOME/.config/spring-boot directory when devtools is active.
+	
+Accessing Command Line Properties	
+
+External Application Properties
+	From the classpath
+		The classpath root
+		The classpath /config package
+
+	From the current directory
+		The current directory
+		The /config subdirectory in the current directory
+		Immediate child directories of the /config subdirectory
+		
+	Property Placeholders
+		app.name=MyApp
+		app.description=${app.name} is a Spring Boot application
+	Working with Multi-Document Files	
+		For example, the following file has two logical documents:
+
+		spring.application.name: MyApp
+		---
+		spring.config.activate.on-cloud-platform: kubernetes
+		spring.application.name: MyCloudApp
+
+		For application.properties files a special #--- comment is used to mark the document splits:
+
+		spring.application.name=MyApp
+		#---
+		spring.config.activate.on-cloud-platform=kubernetes
+		spring.application.name=MyCloudApp
+		
+	Activation Properties
+	Encrypting Properties
