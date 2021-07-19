@@ -24,24 +24,24 @@ Customizing the Banner
 	${Ansi.NAME} (or ${AnsiColor.NAME}, ${AnsiBackground.NAME}
 	${AnsiStyle.NAME})
 	${application.title}
-	
+
 Customizing SpringApplication
 	SpringApplication application = new SpringApplication(MyApplication.class);
-	application.setBannerMode(Banner.Mode.OFF);	
-	
-Fluent Builder API	
+	application.setBannerMode(Banner.Mode.OFF);
+
+Fluent Builder API
 	new SpringApplicationBuilder()
         .sources(Parent.class)
         .child(Application.class)
         .bannerMode(Banner.Mode.OFF)
         .run(args);
-	
+
 
 Application Availability
 	Liveness State
 	Readiness State
-	Managing the Application Availability State	
-	
+	Managing the Application Availability State
+
 Application Events and Listeners
 
 Web Environment
@@ -67,8 +67,8 @@ Externalized Configuration
 	12.properties attribute on your tests. Available on @SpringBootTest and the test annotations for testing a particular slice of your application.
 	13.@TestPropertySource annotations on your tests.
 	14.Devtools global settings properties in the $HOME/.config/spring-boot directory when devtools is active.
-	
-Accessing Command Line Properties	
+
+Accessing Command Line Properties
 
 External Application Properties
 	From the classpath
@@ -79,11 +79,11 @@ External Application Properties
 		The current directory
 		The /config subdirectory in the current directory
 		Immediate child directories of the /config subdirectory
-		
+
 	Property Placeholders
 		app.name=MyApp
 		app.description=${app.name} is a Spring Boot application
-	Working with Multi-Document Files	
+	Working with Multi-Document Files
 		For example, the following file has two logical documents:
 
 		spring.application.name: MyApp
@@ -97,6 +97,6 @@ External Application Properties
 		#---
 		spring.config.activate.on-cloud-platform=kubernetes
 		spring.application.name=MyCloudApp
-		
+
 	Activation Properties
 	Encrypting Properties

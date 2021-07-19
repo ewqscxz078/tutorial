@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cnt=0
+while ((cnt<60)); do
+  sleep 1
+  echo "test Liagent $cnt"
+  if timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/2020'; then
+    echo "LIAgent start success."
+    break;
+  fi
+  ((cnt++))
+done
+((cnt<60)) || { echo start LIAgent fail. Exit.; exit; }
