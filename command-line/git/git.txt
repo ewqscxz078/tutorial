@@ -365,6 +365,22 @@ then
 檢視部分key 內容
 	git config <key>
 
+編輯全域設定
+	git config --global --edit
+
+vi edit
+	Checkout Windows-style, commit Unix-style
+		core.autocrlf true
+	Checkout as-is, commit Unix-style
+		core.autocrlf input
+	Checkout as-is, commit as-is
+		core.autocrlf false
+
+cmd edit
+	git config --global core.autocrlf true
+	git config --global core.autocrlf input
+	git config --global core.autocrlf false
+
 ==========================================================================================
 ==================================常見操作問題============================================
 ==========================================================================================
