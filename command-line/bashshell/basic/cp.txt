@@ -1,8 +1,8 @@
-# --reflink=auto ¥Nªí¦³¨Ï¥Î¨ìcow ªºÀÉ®×¨t²Î ·|¥[³t copy
+# --reflink=auto ä»£è¡¨æœ‰ä½¿ç”¨åˆ°cow çš„æª”æ¡ˆç³»çµ± æœƒåŠ é€Ÿ copy
 	cp -r --reflink=auto "$fromdir" "$todir"
 
-# copy ÀÉ®×
+# copy æª”æ¡ˆ
 	cp sourcefile targetfile
 
-# copy ¥Ø¿ı§t¬ÛÃö¤l¥Ø¿ı
+# copy ç›®éŒ„å«ç›¸é—œå­ç›®éŒ„
 	cp -r sourcefile targetfile
