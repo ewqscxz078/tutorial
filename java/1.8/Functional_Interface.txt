@@ -2,7 +2,7 @@
 
 Consumer
 	通常設計再自我函數裡提供，不然就是要inner new object to accept it
-	
+
 	接受一個引數，處理後不傳回值
 		Iterable上的forEach方法：
 		default void forEach(Consumer<? super T> action) {
@@ -10,14 +10,14 @@ Consumer
 			for (T t : this) {
 				action.accept(t);
 			}
-		}	
-	
+		}
+
 Function
 	接受一個引數，以該引數進行計算後傳回結果
 Predicate
 	接受一個引數，然後只傳回boolean值
 	long count = Stream.of(fileNames)
 					   .filter(name -> name.endsWith("txt"))
-					   .count();	
+					   .count();
 Supplier
 	不接受任何引數，然後傳回值

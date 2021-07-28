@@ -122,6 +122,12 @@ docker run
 #查詢某 image 裡的內容 當不知道 dockerfile 在哪時
 	docker inspect [imageName]
 
+#查看 images 階層指令
+	docker images history [imageName:tag]
+
+#查看 image 每個階層指令與完整指令，與了解是哪層加大最多空間
+	docker image history --no-trunc [imageName:tag]
+
 =======================================================================
 ======================= docker command container=======================
 =======================================================================
