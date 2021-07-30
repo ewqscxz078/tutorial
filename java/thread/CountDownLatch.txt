@@ -1,0 +1,24 @@
+當需要等待其他thread 完成後才執行當前thread
+  public static void main(String args[]) {
+    ExecutorService es = Executors.newFixedThreadPool(5);
+    try {
+      CountDownLatch cdt = new CountDownLatch(5);
+
+      for (int i = 0; i < 5; i++) {
+        es.execute(new CountDownThreadExample(cdt));
+      }
+      cdt.await();
+      System.out.println("thread running finish");
+    } catch(Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      es.shutdown();
+    }
+  }
+
+current Thread:pool-1-thread-1
+current Thread:pool-1-thread-2
+current Thread:pool-1-thread-4
+current Thread:pool-1-thread-3
+current Thread:pool-1-thread-5
+thread running finish
