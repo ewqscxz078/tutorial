@@ -1,0 +1,36 @@
+FTP
+	其他的通訊協定例如 HTTP、SMTP、POP3...都只需要一條連線、一個通訊埠，
+	然而 FTP 卻需要兩條連線、兩個通訊埠。
+		預設 21 command port 20 data port
+
+	ftp tunnel
+		https://unix.stackexchange.com/questions/251486/why-doesnt-ftp-work-through-my-ssh-tunnel
+
+	https://phorum.com.tw/ShowPost/5609.aspx
+	https://matis.pixnet.net/blog/post/22918494
+	https://blog.gtwang.org/linux/centos-7-firewalld-command-setup-tutorial/
+	其中 data port，分兩種傳輸(PORT、PASV)
+		主動模式:PORT
+			用戶端的防火牆。由於用戶端程式並不是自行建立資料連線，
+			而是自己開啟一個通訊埠，要求伺服器連線進來，
+			這對用戶端的防火牆來說是一個危險的安全警訊，大部分的網路環境，都不允許防火牆外部的系統連線到內部的用戶端電腦。
+			缺點:
+				伺服器安全但客戶端不安全，客戶端主動暴露
+
+		被動模式:PASV
+			使用被動模式雖然解決了用戶端的問題，卻也為伺服器帶來了一些問題，
+			最大的問題在於伺服器必須開啟一定範圍的通訊埠供用戶端連線，
+			好在目前絕大部分的 FTP 伺服器軟體，皆可以由管理者決定開啟哪些範圍的通訊埠。
+
+	ftp data port 不管主被動模式，會有一端為浮動port(大於1023port)，會因此被一端的防火牆擋住，所以無法 ftp over ssh tunnel
+	https://www.ibm.com/docs/en/zos/2.4.0?topic=security-traversing-firewalls-ssltls-secure-ftp
+	https://arstechnica.com/civis/viewtopic.php?t=697519
+		Nope, you can't use ftp-data port 20.
+
+		Active FTP (PORT)
+		client opens a control connection to server port 21.
+		server opens data connections from port 20 to some high port on the client (>= 1024).
+
+		Passive FTP (PASV)
+		client opens a control connection to server port 21.
+		client opens data connections to some high port on the server (>= 1024)

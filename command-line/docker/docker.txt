@@ -1,13 +1,18 @@
 https://docs.docker.com/engine/reference/run/#expose-incoming-ports
+https://joshhu.gitbooks.io/dockercommands/content/Containers/DockerRunMore.html
 
 =======================================================================
 ======================= 流程 ==========================================
 =======================================================================
 
-registres				官方 hub docker 或私建立 之 docker 來源
+remote registres		官方 hub docker 或私建立 之 docker 來源
 	|					docker login
 	|					docker pull <id>/<REPOSITORY name>:<tag>
-Dockerfile				prepar Dockerfile
+	v
+local image				官方或 私建立 之 docker 的 image
+	|
+	v
+local Dockerfile		在包裝 一次 ，prepar Dockerfile
 	|					docker build [dockerfile] => image
 image(local list)		docker image ls -a
 	|					docker run [imagefile] => container
@@ -106,6 +111,15 @@ CMD
 			docker build -t sris-base/wildfly-sris [filePath/Dockerfile]
 
 docker run
+	docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
+
+	-t：attach時Container的螢幕會接到原來的螢幕上。
+	-i：attach時鍵盤輸入會被Container接手
+		-it 需要跟 container 的 process 互動，也就要進去container 通常會下該指令
+	-d 在背景（ Detached ）執行
+	–name  container 的名稱
+	–-rm exit container 時，會移除 container( incompatible with -d )
+
 	# run in 前景
 		docker run -p 4000:80 [imageFileName]
 
@@ -176,7 +190,8 @@ docker run
 =======================================================================
 =========================== docker images tag =========================
 =======================================================================
-docker tag [sourceimage] [targetimage:tag]
+將 image tag 到遠端
+docker tag sourceimage[:tag] targetimage[:tag]
 
 =======================================================================
 =========================== docker logs ===============================

@@ -1,0 +1,9 @@
+SSL
+	全名是 Secure Sockets Layer，確保兩系統間通訊是安全的加密模式
+
+TSL
+	(Transport Layer Security，傳輸層安全性) 是更新、更安全的 SSL 版本
+
+HTTPS
+	(Hyper Text Transfer Protocol Secure，超級文字傳輸協議安全) 會在網站受到 SSL 憑證保護時在網址中出現。
+	該憑證的詳細資料包括發行機構與網站擁有人的企業名稱

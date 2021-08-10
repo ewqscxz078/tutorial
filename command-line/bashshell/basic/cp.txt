@@ -4,5 +4,12 @@
 # copy 檔案
 	cp sourcefile targetfile
 
-# copy 目錄含相關子目錄
+# copy 目錄含相關子目錄 -R or -r
 	cp -r sourcefile targetfile
+
+# allows a file's directory structure to be copied to another directory:
+	https://unix.stackexchange.com/questions/97131/is-there-a-parents-option-for-mv-like-for-cp
+	cp --parents <source> <target>
+
+# 保留原始檔案權限狀態, 主要是 -p 的參數
+

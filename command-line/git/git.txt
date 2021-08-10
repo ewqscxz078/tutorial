@@ -139,6 +139,9 @@ git diff --name-status origin/master origin/issue/[redmineId]
 	git checkout [特定branch]
 	git checkout -b DEVELOP/greenc108
 
+建立 branch by tag
+	git checkout -b <branchname> <tagname>
+
 刪除遠端分支
 	git push origin --delete [branchName]
 
@@ -146,7 +149,34 @@ git diff --name-status origin/master origin/issue/[redmineId]
 	git branch -D [branchName]
 
 ==========================================================================================
-==========================================還原操作========================================
+========================================== tag操作 =======================================
+==========================================================================================
+所有標籤
+	git tag
+
+列出全部的tag清單 to get tag_name
+	git tag -l [option_tag_filter]
+
+於當前 local branch tag
+	git tag [tag_name]
+
+於當前 local branch tag 註解的標籤
+	git tag -a <tag_name> -m "your message"
+
+顯示標籤所在的提交資訊
+	git show <tag_name>
+
+到某個commit 補標籤
+	git tag -a <tag_name> <commit_id>
+
+分享 local 指定標籤到遠端
+	git push origin <tag_name>
+
+分享 local 所有標籤不存在遠端的到遠端
+	git push origin --tags
+
+==========================================================================================
+========================================= 還原操作 =======================================
 ==========================================================================================
 tracked file
 	modify file 尚未 add 或 已 add 情形

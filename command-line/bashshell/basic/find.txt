@@ -1,10 +1,10 @@
 ===================================================================
 ========================= find ====================================
 ===================================================================
-找出所有檔案有符合字串的檔案 // 常用
+find and grep 找出所有檔案有符合字串的檔案 // 常用
 	find . -type f -exec grep -l [key word] {}
 
-找出字尾有space的檔案 // 透過正則表示法
+find and egrep 找出字尾有space的檔案 // 透過正則表示法
 	find . -type f -exec egrep -l " +$" {} \;
 
 找出為檔案且檔名
@@ -25,7 +25,7 @@
 	不分大小寫
 		find . -regextype "posix-egrep" -iregex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
 
-取代 \t 變四個空白
+find and replace 取代 \t 變四個空白
 	find . -iname '*.js' -type f -exec sed -i 's/\t/    /g' {} +
 	find . -iname '*.css' -type f -exec sed -i 's/\t/    /g' {} +
 	find . -iname '*.xhtml' -type f -exec sed -i 's/\t/    /g' {} +
@@ -51,3 +51,6 @@
 
 在 7 天以前有修改過的檔案，例如今天是6/10，則7天6/4 以前的檔案都列出
 	$ find ./ -mtime +7
+
+當天
+	$ find ./ -mtime 0
