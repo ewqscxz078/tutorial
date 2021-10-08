@@ -1,7 +1,12 @@
 只有一個抽象方法的Interface
+	把它想像成傳函數的意思，只是依據有無傳入參數與回傳值的差別分三種
+	相對於泛行傳參數型態
 
 Consumer
-	通常設計再自我函數裡提供，不然就是要inner new object to accept it
+	1.通常設計在自我函數裡提供，
+	2.或是inner new object to accept it
+	3.不然就是要傳 參數T t 與對應的Consumer<T> consumer
+		consumer.accept(t)
 
 	接受一個引數，處理後不傳回值
 		Iterable上的forEach方法：

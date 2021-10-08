@@ -1,0 +1,8 @@
+排序檔案
+	sort <file>
+	
+排序檔案且去除重複
+	sort -u <file>
+
+排序檔案且去除重複並輸出到指定檔案
+	sort -u <file> -o <file>

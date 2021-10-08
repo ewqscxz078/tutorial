@@ -1,0 +1,30 @@
+full-screen window manager
+
+list all screen
+	screen -ls
+		attatch 回screen_id (resume screen)
+			screen -dr <screen_id>
+
+attatch only one screen
+	screen -dr
+	
+rename screen
+	screen -S <old_session_name_with_name> -X sessionname <new_name>
+		ex:
+			screen -S 8890.foo -X sessionname bar
+
+detach
+	ctrl+a & d
+	
+Ctrl a+c
+	開啟新分頁
+Ctrl a+a
+	回到上一個分頁
+Ctrl a+[數字]
+	切到第幾個分頁
+Ctrl a+p
+	切換到上一個分頁
+Ctrl a+C
+	清除目前分頁視窗的內容
+Ctrl a+?
+	熱鍵查詢

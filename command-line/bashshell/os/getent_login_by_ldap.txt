@@ -1,0 +1,6 @@
+https://unix.stackexchange.com/questions/411021/how-can-i-get-the-list-of-ldap-users-without-being-sudo
+
+getent
+
+list of ldap user
+	getent passwd {0..65535}

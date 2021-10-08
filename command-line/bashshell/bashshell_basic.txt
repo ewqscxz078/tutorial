@@ -421,3 +421,14 @@ test EXPRESSION
 	if [[ -f "$FILE" ]]; then
 		echo "$FILE exists."
 	fi
+
+===================================================================
+======================== dirname、basename ========================
+===================================================================
+取得檔案路徑的目錄(不含檔名)
+	例如 $file_source = "/$path/$dir/$file" => get /$path/$dir
+	source_dir=$(dirname $file_source)
+
+取得檔案路徑的上層目錄(不含檔名)
+	例如 $source_dir = "/$path/$dir" => get $dir
+	dir_name=$(basename $source_dir)

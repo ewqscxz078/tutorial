@@ -1,0 +1,6 @@
+https://documentation.suse.com/zh-tw/sles/12-SP5/html/SLES-all/cha-journalctl.html
+
+journalctl -xn
+
+查看最近log
+	journalctl -f

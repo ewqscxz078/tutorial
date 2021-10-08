@@ -1,3 +1,6 @@
+https://www.baeldung.com/gradle-dependency-management
+https://blog.elliot.tw/?p=427
+
 default load jar location
 	~/.gradle/caches/modules-2/files-2.1
 	

@@ -1,14 +1,38 @@
 https://teckadmin.wordpress.com/2013/10/23/difference-between-graceful-restart-and-normal-restart/
 http://blogger.gtwang.org/2013/05/apache-2-reload-httpd-config-file-unix-linux-command.html
 
-/usr/sbin/apachectl¨ä¹ê¬O­Ó¸}¥»¡F
-/usr/sbin/httpd¤~¬O¯u¥¿ªºµ{§Ç¡F
+/usr/sbin/apachectlå…¶å¯¦æ˜¯å€‹è…³æœ¬ï¼›
+/usr/sbin/httpdæ‰æ˜¯çœŸæ­£çš„ç¨‹åºï¼›
 
-Normal restart(¤¤Â_²{¥Îªº¤w¸g¶}±Òªº³s½u¡A¼vÅT½u¤W¥¿¦b¶]ªº·|³Qkill½Õ¡A¤]´N¬O¤¤Â_)
+Normal restart(ä¸­æ–·ç¾ç”¨çš„å·²ç¶“é–‹å•Ÿçš„é€£ç·šï¼Œå½±éŸ¿ç·šä¸Šæ­£åœ¨è·‘çš„æœƒè¢«killèª¿ï¼Œä¹Ÿå°±æ˜¯ä¸­æ–·)
 	apachectl -k stop
 	apachectl -k start
 	apachectl -k restart
 
-Graceful Restart(¤£·|¤¤Â_²{¥Îªº¤w¸g¶}±Òªº³s½u¡A­Y¶]§¹«hreRead config¡A¤£¼vÅT½u¤W¥¿¦b¶]ªº)
+Graceful Restart(ä¸æœƒä¸­æ–·ç¾ç”¨çš„å·²ç¶“é–‹å•Ÿçš„é€£ç·šï¼Œè‹¥è·‘å®Œå‰‡reRead configï¼Œä¸å½±éŸ¿ç·šä¸Šæ­£åœ¨è·‘çš„)
 	apachectl -k graceful
 	httpd -k graceful
+
+ç¢ºèªç‰ˆæœ¬
+	httpd -v
+
+https://dywang.csie.cyut.edu.tw/dywang/rhel7/node41.html
+å­˜å–é™åˆ¶
+	é™åˆ¶æ‰€æœ‰å­˜å–
+		Require all denied
+	å…è¨±æ‰€æœ‰å­˜å–
+		Require all granted
+	å…è¨±æ‰€æœ‰åœ¨ deyu.wang ç¶²åŸŸçš„ä¸»æ©Ÿå­˜å–
+		Require host deyu.wang
+
+	ä»¥ ip é™åˆ¶å­˜å–
+		å®Œæ•´ ip
+			Require ip 192.168.1.140 192.168.1.141
+		éƒ¨åˆ† ipï¼Œå…è¨±æŒ‡å®šç¶²æ®µ
+			Require ip 10 172.20 192.168.2
+		ç¶²æ®µ/é®ç½©ï¼Œå…è¨±æŒ‡å®šç¶²æ®µ
+			Require ip 10.1.0.0/255.255.0.0
+		ç¶²æ®µ/é®ç½©æ•¸å­—ï¼Œå…è¨±æŒ‡å®šç¶²æ®µã€‚
+			Require ip 10.1.0.0/16
+	ä»¥ host é™åˆ¶å­˜å–
+		Require host 192.168.*

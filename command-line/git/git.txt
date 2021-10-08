@@ -17,14 +17,17 @@ status -- 狀態確認
 
 add -- 加入暫存區
 	指定單一支程式加入
-	git add xxxx [xxxx代表程式]
+		git add xxxx [xxxx代表程式]
+
+	指定sh 有執行權限
+		git update-index --add --chmod=+x <shell name>.sh
 
 	指定副檔名為java的都加入
-	git add *.java
+		git add *.java
 
 	全部檔案加入
-	git add .
-	git add --all
+		git add .
+		git add --all
 
 commit	-- 紀錄到本機
 	git commit -m yyyy  [yyyy代表註解]
@@ -49,6 +52,9 @@ push	-- 紀錄到server
 
 查看本機或遠端檔案清單
 	git ls-tree -r --name-only [branch]
+
+查看那些 branch 含該 commid
+	git branch --contain <commid>
 
 ==========================================================================================
 ==================================== git log =============================================
@@ -348,7 +354,7 @@ git show [遠端branch/branch]:[file]
 		git show origin/issue/125:MC/sris-mc-core/src/main/java/tw/gov/moi/mc/job/MC4700Job.java
 		git show issue/125:MC/sris-mc-core/src/main/java/tw/gov/moi/mc/job/MC4700Job.java
 
-git blame <file> #關於file的所有commitId記錄
+git blame <file> #關於file每行的所有commitId記錄的所有commitId記錄
 
 git show [commid] [file]
 

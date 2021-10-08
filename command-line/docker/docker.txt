@@ -106,7 +106,7 @@ CMD
 	docker rmi --force [image-id] # if 有多個一樣image-id
 
 # 編譯 image
-	docker build -t [imageFileName] .
+	docker build -t [變成的imageFileName] .
 		ex:
 			docker build -t sris-base/wildfly-sris [filePath/Dockerfile]
 
@@ -133,11 +133,17 @@ docker run
 	# Bind mount a volume(shared filesystems)
 		docker run --rm -d -p 4000:80 [imageFileName] -v:[host-src:]container-dest[:<options>]
 
+	# 慣用手法執行完畢後離開自動刪除該容器(一次性)
+		docker run --rm -it [imageFileName] /bin/bash
+
 #查詢某 image 裡的內容 當不知道 dockerfile 在哪時
 	docker inspect [imageName]
 
+#查詢某 container 從哪個image來的
+	docker inspect [containerName] |gerp Image
+
 #查看 images 階層指令
-	docker images history [imageName:tag]
+	docker image history [imageName:tag]
 
 #查看 image 每個階層指令與完整指令，與了解是哪層加大最多空間
 	docker image history --no-trunc [imageName:tag]
@@ -161,6 +167,12 @@ docker run
 
 # 停止 docker by container
 	docker stop [container-id by docker ps -a]
+
+# 關閉所有 	container
+	docker stop $(docker ps -aq)
+
+# 開啟所有 	container
+	docker start $(docker ps -aq)
 
 # 刪除 docker by container
 	docker rm [name by docker ps -a]
@@ -191,7 +203,7 @@ docker run
 =========================== docker images tag =========================
 =======================================================================
 將 image tag 到遠端
-docker tag sourceimage[:tag] targetimage[:tag]
+docker tag sourceimage[:orgTag] sourceimage[:newTag]
 
 =======================================================================
 =========================== docker logs ===============================

@@ -1,0 +1,24 @@
+unbuntu firewall
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-18-04
+
+狀態確認
+	ufw status
+app確認
+	ufw app list
+
+確認規則序號
+	ufw status numbered
+
+刪除規則
+	ufw delete [by ufw status numbered]
+
+新增規則
+	單一
+		ufw allow 2376/tcp
+	範圍
+		ufw allow 6000:6007/tcp
+
+	service
+		cat /etc/service |grep "keyword"
+		ufw allow http
+		ufw allow https
