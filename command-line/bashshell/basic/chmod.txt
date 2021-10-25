@@ -19,5 +19,5 @@ x:1
 
 增加可執行權限
 	chmod +x [file]
-	
+
 	chmod 755 [file]

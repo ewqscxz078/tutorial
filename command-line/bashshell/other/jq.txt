@@ -1,0 +1,10 @@
+https://stackoverflow.com/questions/53967693/how-to-run-jq-from-gitbash-in-windows
+
+	cd 到某個目錄
+	curl -L -o jq.exe https://github.com/stedolan/jq/releases/latest/download/jq-win64.exe
+
+	下載到最新版 for windows
+
+	手動複製到 C:\Program Files\Git\usr\bin 下，因為有權限問題
+
+jq --version

@@ -1,0 +1,8 @@
+https://ithelp.ithome.com.tw/articles/10236105
+
+看該檔案尾部 (預設為 10 行)
+	tail 001.log
+顯示最後 N 行的訊息 (N 為數字)： -n 30
+	tail -n 001.log
+持續讀取檔案，直到按 Ctrl + c 為止 (可觀察檔案持續更新的內容)： -f
+	tail -f 001.log

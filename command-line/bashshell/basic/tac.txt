@@ -1,0 +1,5 @@
+https://ithelp.ithome.com.tw/articles/10236105
+
+內容反向印在終端機上(相對於cat)
+	git log --oneline --all --graph | tac
+	tac 001.log

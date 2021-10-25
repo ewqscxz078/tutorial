@@ -1,0 +1,8 @@
+https://ithelp.ithome.com.tw/articles/10236105
+
+看該檔案頭部 (預設為 10 行)
+	head 001.log
+顯示前 N 行的訊息 (N 為數字)： -n 30
+	head -n 30 001.log
+顯示前 N bytes 的字元 (N 為數字)： -c 25
+	head -c 25 001.log

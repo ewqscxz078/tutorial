@@ -75,3 +75,9 @@ Binary file 1.open_DBSchemaEditor_NOSAVE.xlsm.gif matches
 
 	進階
 		grep -lR "sit\.ris\.sris\.dpl" | xargs sed -i 's/sit\.ris\.sris\.dpl/app\.ris\.sris\.dpl/g'
+
+grep 結果放在 loop
+	https://stackoverflow.com/questions/16317961/how-to-process-each-output-line-in-a-loop
+	grep xyz abc.txt | while read -r line ; do
+		echo "Processing $line"
+	done
