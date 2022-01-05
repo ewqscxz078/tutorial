@@ -32,6 +32,12 @@ find and replace 取代 \t 變四個空白
 	find . -iname '*.jsp' -type f -exec sed -i 's/\t/    /g' {} +
 	find . -iname '*.properties' -type f -exec sed -i 's/\t/    /g' {} +
 
+取得完整路徑
+	find ~+ -type f -name [fileName]
+
+找指定目錄下的前十大檔案
+	find . -type f -name "*.[你想確認的附檔名]" -print0 | xargs -0 du -h | sort -rh | head -n 10
+
 ===================================================================
 ========================= find 與時間有關方式======================
 ===================================================================

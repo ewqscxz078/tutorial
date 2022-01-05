@@ -81,6 +81,10 @@ CMD
 # 告知docker 進入的可執行的入口要做哪些事情
 	ENTRYPOINT
 
+# 告訴 dockerfile 預設使用哪個 default shell 預設 /bin/sh，可透過 docker image history [imageid] 確認
+	https://github.com/moby/moby/issues/7281
+	SHELL ["/bin/bash", "-c"]
+
 =======================================================================
 ======================= docker command ================================
 =======================================================================
@@ -268,3 +272,31 @@ docker system df
 ======================= docker 限制 記憶體 ============================
 =======================================================================
 docker update -memory 5g --memory-swap -1 <contain id>
+
+
+=======================================================================
+======================= 常見問題 ======================================
+=======================================================================
+Q1: docker pull [images]
+	pull access denied for "aaaaa" repository does not exist or may require 'docker login'
+A1:
+	https://stackoverflow.com/questions/56949783/pull-access-denied-for-aaaaa-repository-does-not-exist-or-may-require-docker
+	create the file if not exist
+
+	/etc/docker/daemon.json
+	Add the following
+
+	{ "insecure-registries":["registries:5000"] }
+	Then you are good to go
+
+	   docker login registries:5000
+	   user:srisadm
+	   password: [我的帳號之密碼]
+
+Q1: docker pull [images]
+	unexpected EOF
+A1:
+	https://blog.csdn.net/HarretLee/article/details/107545893
+		https://ningyu1.github.io/site/post/83-docker-pull-error/
+		https://stackoverflow.com/questions/53677592/docker-pull-unexpected-eof
+	把私有倉刪除重新push一遍即可

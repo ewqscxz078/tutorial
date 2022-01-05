@@ -1,0 +1,3 @@
+https://stackoverflow.com/questions/189094/how-to-scan-a-folder-in-java
+https://docs.oracle.com/javase/tutorial/essential/io/walk.html
+https://jakubstas.com/paths_in_nio_2/#.Yag_UNBBw5v

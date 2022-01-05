@@ -1,0 +1,19 @@
+https://noootown.com/awk-useful-usage/
+
+一般用法
+	awk '{print $1 $2 $3}' <file>
+
+指定分割符號
+	awk -F <split_符號> '{print $1 $2 $3}' <file>
+
+指定分割符號且不抓第一行 header
+	awk -F : 'NR!=1{
+	  print $1
+	}' <file>
+
+https://stackoverflow.com/questions/19075671/how-do-i-use-shell-variables-in-an-awk-script
+with var
+	variable="line one\nline two"
+	awk -v var="$variable" 'BEGIN {print var}'
+	line one
+	line two

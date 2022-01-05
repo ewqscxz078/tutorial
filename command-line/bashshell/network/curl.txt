@@ -30,3 +30,5 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 
 	curl -vk <url>
 
+只回傳status_code
+	curl -s -o /dev/null -w "%{http_code}" https://www.google.com

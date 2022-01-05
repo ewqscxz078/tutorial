@@ -3,6 +3,32 @@ eclipse
 [ 　\t]+$  // 找到行尾有tab或空白一個或多個
 
 ==========================================================================================
+====================================debug git ============================================
+==========================================================================================
+https://stackoverflow.com/questions/6178401/how-can-i-debug-git-git-shell-related-problems
+https://git-scm.com/book/en/v2/Git-Internals-Environment-Variables#Debugging
+set -x; GIT_TRACE=2 GIT_CURL_VERBOSE=2 GIT_TRACE_PERFORMANCE=2 GIT_TRACE_PACK_ACCESS=2 GIT_TRACE_PACKET=2 GIT_TRACE_PACKFILE=2 GIT_TRACE_SETUP=2 GIT_TRACE_SHALLOW=2 git pull origin master -v -v; set +x
+
+	Git has a fairly complete set of traces embedded which you can use to debug your git problems.
+	To turn them on, you can define the following variables:
+
+	GIT_TRACE for general traces,
+	GIT_TRACE_PACK_ACCESS for tracing of packfile access,
+	GIT_TRACE_PACKET for packet-level tracing for network operations,
+	GIT_TRACE_PERFORMANCE for logging the performance data,
+	GIT_TRACE_SETUP for information about discovering the repository and environment it’s interacting with,
+	GIT_MERGE_VERBOSITY for debugging recursive merge strategy (values: 0-5),
+	GIT_CURL_VERBOSE for logging all curl messages (equivalent to curl -v),
+	GIT_TRACE_SHALLOW for debugging fetching/cloning of shallow repositories.
+	Possible values can include:
+
+	true, 1 or 2 to write to stderr,
+	an absolute path starting with / to trace output to the specified file
+
+一般使用方式
+	GIT_CURL_VERBOSE=1 GIT_TRACE=1 git [操作]
+
+==========================================================================================
 ====================================基本操作==============================================
 ==========================================================================================
 

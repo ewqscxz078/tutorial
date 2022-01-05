@@ -14,6 +14,7 @@ Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead
 	httpd -k graceful
 
 確認版本
+	apache2ctl -V // detail
 	httpd -v
 
 https://dywang.csie.cyut.edu.tw/dywang/rhel7/node41.html
@@ -36,3 +37,7 @@ https://dywang.csie.cyut.edu.tw/dywang/rhel7/node41.html
 			Require ip 10.1.0.0/16
 	以 host 限制存取
 		Require host 192.168.*
+
+確認apache服務
+	For Ubuntu:
+		service apache2 status

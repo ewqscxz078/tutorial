@@ -1,0 +1,9 @@
+
+擷取螢幕畫面
+	WIN鍵+PrtScn鍵
+
+選擇任意區域的截圖後另存新檔
+	Win+Shift+S
+	
+windows附屬應用程式\剪取工具
+	

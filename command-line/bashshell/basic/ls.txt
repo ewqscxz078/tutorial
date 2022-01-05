@@ -1,10 +1,20 @@
-ls -p | grep -v /  # 僅顯示file
-ls -d */  # 僅顯示folder
 
-ls -l  |grep "^-"|wc -l #計算檔案數
-ls -l  |grep "^d"|wc -l #計算目錄數
+# 僅顯示file
+	ls -p | grep -v /
+# 僅顯示folder
+	ls -d */
 
+#計算檔案數
+	ls -l  |grep "^-"|wc -l
+#計算目錄數
+	ls -l  |grep "^d"|wc -l
 
-ls -lah `find . -xdev -type f -name "*.java" -size +250k` # 列出超出250k的java程式
-ls -lah `find . -xdev -type f -name "*.pdf" -size +5M`
-ls -lah `find . -xdev -type f -name "*.pdf" -size +1G`
+# 列出超出 ?k的java程式
+	ls -lah `find . -xdev -type f -name "*.java" -size +250k` # 列出超出250k的java程式
+	ls -lah `find . -xdev -type f -name "*.pdf" -size +5M`
+	ls -lah `find . -xdev -type f -name "*.pdf" -size +1G`
+
+# Regular Expression usage with ls
+https://stackoverflow.com/questions/15345936/regular-expression-usage-with-ls
+	ls | egrep [pattern]
+		ex: ls -lt | egrep "*.[j|w]ar"

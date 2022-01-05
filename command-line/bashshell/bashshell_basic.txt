@@ -312,7 +312,7 @@ find -inum 檔案編號(數字) -exec rm -rf {} \;
 source file
 
 ===================================================================
-============================ array ==================================
+============================ array ================================
 ===================================================================
 
 初始
@@ -332,8 +332,10 @@ source file
 
 注意變數存取範圍
 	https://stackoverflow.com/questions/7612320/bash-weird-variable-scope-when-populating-array-with-results
+	https://www.azureunali.com/linuxshell-linux%E4%B8%ADshell%E7%9A%84%E9%80%B2%E7%A8%8B%E6%9B%BF%E6%8F%9Bprocess-substitution%E5%92%8C%E5%91%BD%E4%BB%A4%E6%9B%BF%E6%8F%9Bcommand-substitution/
 	#when use | in while
 	#Use process substitution instead:
+
 ===================================================================
 ============================ map ==================================
 ===================================================================
@@ -476,3 +478,42 @@ test EXPRESSION
 https://stackoverflow.com/questions/525872/echo-tab-characters-in-bash-script
 輸出 tab
 	echo -e "\t 輸出tab"
+
+===================================================================
+======================== read file to var =========================
+===================================================================
+https://stackoverflow.com/questions/7427262/how-to-read-a-file-into-a-variable-in-shell
+by cat
+	value=`cat config.txt`
+	echo "$value"
+
+by <
+	value=$(<config.txt)
+	echo "$value"
+
+===================================================================
+======================== string 相加減 ============================
+===================================================================
+https://stackoverflow.com/questions/11268437/how-to-convert-string-to-integer-in-unix
+	echo $(( d1 - d2 ))
+
+===================================================================
+======================== string 相加減 ============================
+===================================================================
+https://unix.stackexchange.com/questions/444946/how-can-we-run-a-command-stored-in-a-variable
+
+1.Using a function
+	myls() {
+		ls -l "/tmp/test/my dir"
+	}
+	myls
+
+2.Using an array
+	mycmd=(ls -l "/tmp/test/my dir")
+	"${mycmd[@]}"
+
+3.Using "$@"
+
+4.Using eval (be careful here!)
+	cmd='ls -l "/tmp/test/my dir"'
+	eval "$cmd"

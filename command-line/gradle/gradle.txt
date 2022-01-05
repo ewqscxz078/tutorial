@@ -3,6 +3,24 @@ https://blog.elliot.tw/?p=427
 
 default load jar location
 	~/.gradle/caches/modules-2/files-2.1
-	
+
 all project setting
 	~/.gradle/caches/init.d/init.gradle
+
+
+依賴分類
+	直接依賴 --> 在專案中直接匯入的依賴，就是直接依賴
+		implementation 'androidx.core:core-ktx:1.3.2'
+
+
+compileClasspath --> 編譯時能使用的程式碼、類。當一個元件參與編譯時，Gradle 就會將其放在 compileClasspath 中
+runtimeClasspath --> 執行時能使用的程式碼、類。當一個元件參與打包時，Gradle 就會將其放在 runtimeClasspath 中
+
+
+https://discuss.gradle.org/t/i-want-to-copy-the-output-from-gradlew-dependencies-into-a-file-at-build-time/21981
+in build.gradle 增加以下內容，將會指定編譯類型輸出成一個檔案
+	task dependencyReportFile(type: DependencyReportTask) {
+		outputFile = file('dependencies.txt')
+		Set configs = [project.configurations.compileClasspath]
+		setConfigurations(configs)
+	}

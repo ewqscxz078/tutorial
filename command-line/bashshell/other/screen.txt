@@ -1,5 +1,8 @@
 full-screen window manager
 
+Starting Named Session
+	screen -S session_name
+
 list all screen
 	screen -ls
 		attatch ¦^screen_id (resume screen)

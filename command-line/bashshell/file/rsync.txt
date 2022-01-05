@@ -49,3 +49,7 @@ ex
 		
 	顯示檔案變動資訊	
 		rsync -avhi myfolder/ backup/
+
+斷點續傳
+	rsync -P -e ssh <source> <target>
+	rsync --partial --progress --rsh=ssh  <source> <target>
