@@ -11,6 +11,8 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 -u/--user                             攜帶使用者帳號、密碼
 -b/--cookie                           攜帶 cookie（可以是參數或是檔案位置）
 
+-s/--silent							  silent mode
+-f/--fail							  fail silently (no output at all) on HTTP errors
 ==========================================================================================================================================================================================
 
 下載檔案

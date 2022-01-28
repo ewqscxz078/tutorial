@@ -85,6 +85,19 @@ CMD
 	https://github.com/moby/moby/issues/7281
 	SHELL ["/bin/bash", "-c"]
 
+# dockefile HEALTHCHECK 健康检查
+	注意 HEALTHCHECK --的參數值無法吃 ENV ARG 參數
+	HEALTHCHECK
+		--interval=<間隔>：兩次健康檢查的間隔，默認為 30 秒；
+		--timeout=<時長>：健康檢查命令運行超時時間，如果超過這個時間，本次健康檢查就被視為失敗，默認 30 秒；
+		--retries=<次數>：當連續失敗指定次數後，則將容器狀態視為 unhealthy，默認 3 次。
+		--start-period - DURATION (default: 0s) specifies the number of seconds the container needs to start; health check will wait for that time to start.
+	HEALTHCHECK --interval=5s --timeout=3s \
+	  CMD curl -fs http://localhost/ || exit 1
+
+	  debug 確認方式
+		docker inspect <docker name> | less
+			Health: { .... } 可看到 log
 =======================================================================
 ======================= docker command ================================
 =======================================================================

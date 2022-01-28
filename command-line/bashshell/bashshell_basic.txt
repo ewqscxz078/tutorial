@@ -95,6 +95,7 @@ https://www.cyberciti.biz/tips/bash-shell-parameter-substitution-2.html
 	${變數//舊字串/新字串}	若變數內容符合『舊字串』則『全部的舊字串會被新字串取代』
 
 變數的測試與內容替換
+	https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_06_02
 	測試 str 若不存在，則將 var 內容設定為 root，str 仍為不存在的變數值
 		var=${str-root}
 	測試 str 不存在或為空字串，則將 var 內容設定為 root，str 仍為不存在的變數值

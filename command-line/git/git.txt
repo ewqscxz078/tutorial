@@ -210,6 +210,13 @@ git diff --name-status origin/master origin/issue/[redmineId]
 ==========================================================================================
 ========================================= 還原操作 =======================================
 ==========================================================================================
+https://stackoverflow.com/questions/1628088/reset-local-repository-branch-to-be-just-like-remote-repository-head
+還原到遠端結果，會將已commit的未push移除，local尚未add的會留存
+	git fetch origin
+	git reset --hard origin/{targetBranch}
+	並且清除本機尚未add
+		git clean -fd
+
 tracked file
 	modify file 尚未 add 或 已 add 情形
 		git checkout -- <file> // 還原該 branch 的FILE

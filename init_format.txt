@@ -4,7 +4,7 @@ window 換行 dos2unix
 check enocde
         for f in `find . -type f -name "*.txt"`; do echo "$f" ' -- ' `file -bi "$f"` ; done > encode.list
 
-replace tail space or tab
+replace tail space or tab // todo fix tail x tab no replace
 	by cli，執行前請確認檔案皆已有換成unix格式才會正常
 		egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/[[:blank:]]*$//"
 
