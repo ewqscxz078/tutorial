@@ -1,0 +1,16 @@
+==================================================================================================
+======================== remove the first xxxx bytes =============================================
+==================================================================================================
+https://stackoverflow.com/questions/7479720/removing-the-first-16-bytes-from-a-byte-array
+
+	remove the first 16 bytes do
+		Arrays.copyOfRange(original, 16, original.length);
+
+==================================================================================================
+======================== concatenate two byte arrays =============================================
+==================================================================================================
+https://stackoverflow.com/questions/7479720/removing-the-first-16-bytes-from-a-byte-array
+
+	byte[] c = new byte[a.length + b.length];
+	System.arraycopy(a, 0, c, 0, a.length);
+	System.arraycopy(b, 0, c, a.length, b.length);

@@ -1,0 +1,49 @@
+https://blog.gtwang.org/linux/linux-basic-systemctl-systemd-service-unit-tutorial-examples/
+
+啟動服務
+	systemctl start <service_name>
+
+顯示服務狀態
+	systemctl status <service_name>
+
+停止服務
+	systemctl stop <service_name>
+	
+開機自動啟動服務
+	systemctl enable <service_name>
+
+取消開機自動啟動服務
+	systemctl disable <service_name>
+	
+是否服務正在運行
+	systemctl is-active <service_name>
+	
+是否設定開機自動啟動
+	systemctl is-enabled <service_name>
+
+是否服務啟動失敗
+	systemctl is-failed <service_name>
+	
+列舉已啟動服務
+	systemctl list-units
+	systemctl
+
+列舉所有已啟動未啟動服務
+	systemctl list-units --all
+
+列舉未啟動服務
+	systemctl list-units --all --state=inactive
+
+僅列舉系統上所有 service 類型的服務
+	systemctl list-units --type=service
+
+查看服務內部設定檔
+	systemctl cat <service_name>
+
+查看特定服務的相依服務
+	systemctl list-dependencies
+
+查看特定服務的底層設定值
+	systemctl show sshd.service
+
+	systemctl show sshd.service -p <特定設定值名稱>

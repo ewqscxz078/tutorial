@@ -463,6 +463,18 @@ test EXPRESSION
 	fi
 
 ===================================================================
+======================== 變數是否存在 =============================
+===================================================================
+https://tldp.org/LDP/abs/html/comparison-ops.html
+
+-z
+	string is null, that is, has zero length
+	[ -z "$String" ] && echo "\$String is null" || echo "\$String is NOT null."
+
+-n
+	string is not null.
+
+===================================================================
 ======================== dirname、basename ========================
 ===================================================================
 取得檔案路徑的目錄(不含檔名)
@@ -518,3 +530,27 @@ https://unix.stackexchange.com/questions/444946/how-can-we-run-a-command-stored-
 4.Using eval (be careful here!)
 	cmd='ls -l "/tmp/test/my dir"'
 	eval "$cmd"
+
+===================================================================
+======================== while read line 與 for迴圈的區別 =========
+===================================================================
+https://www.itread01.com/content/1550612709.html
+	https://unix.stackexchange.com/questions/253696/while-read-line-in-shell-script-how-to-stop-the-loop
+	while read line 是一次性將檔案資訊讀入並賦值給變數line ，
+	while中使用重定向機制,檔案中的所有資訊都被讀入並重定向給了整個while 語句中的line 變數。
+	for是每次讀取檔案中一個以空格為分割符的字串。
+ex:
+	cat /data/data/1.txt | while read LINE; do
+	  adb shell gsr -m -p /data/data/$LINE 10000
+	done
+
+==================================================================================================
+======================== Override a shell function, keep a reference to the original one =========
+==================================================================================================
+https://stackoverflow.com/questions/16774538/override-a-shell-function-keep-a-reference-to-the-original-one
+
+	eval "`declare -f f | sed '1s/.*/_&/'`" #backup old f to _f
+	f(){
+		echo wrapper
+		_f # pass "$@" to it if required.
+	}

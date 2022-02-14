@@ -66,3 +66,25 @@ https://superuser.com/questions/913390/how-to-search-for-a-file-in-war-ear-and-j
 
 當天
 	$ find ./ -mtime 0
+
+===================================================================
+========================= 換行議題 ================================
+===================================================================
+https://www.itread01.com/p/192065.html
+	find 每輸出一個檔名, 後面都會接著輸出一個換行符 ('n'), 因此我們看到的 find 的輸出都是一行一行
+
+	xargs 預設是以空白字元 (空格, TAB, 換行符) 來分割記錄
+
+	[bash-4.1.5] find -name '*.log'
+	./file 1.log
+	./file 2.log
+		find -name '*.log' | xargs rm
+		rm: cannot remove `./file': No such file or directory
+
+	為了解決此類問題, 讓 find 在打印出一個檔名之後接著輸出一個 NULL 字元 ('')
+	而不是換行符, 然後再告訴 xargs 也用 NULL 字元來作為記錄的分隔符.
+	這就是 find 的 -print0 和 xargs 的 -0 的來歷吧.
+
+	find -name '*.log' -print0 | xargs -0 rm
+
+	-print 在每一個輸出後會新增一個回車換行符,而-print0則不會。
