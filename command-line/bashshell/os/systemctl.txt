@@ -8,22 +8,22 @@ https://blog.gtwang.org/linux/linux-basic-systemctl-systemd-service-unit-tutoria
 
 停止服務
 	systemctl stop <service_name>
-	
+
 開機自動啟動服務
 	systemctl enable <service_name>
 
 取消開機自動啟動服務
 	systemctl disable <service_name>
-	
+
 是否服務正在運行
 	systemctl is-active <service_name>
-	
+
 是否設定開機自動啟動
 	systemctl is-enabled <service_name>
 
 是否服務啟動失敗
 	systemctl is-failed <service_name>
-	
+
 列舉已啟動服務
 	systemctl list-units --type=service
 	systemctl --type=service

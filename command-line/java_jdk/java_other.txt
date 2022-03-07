@@ -7,20 +7,20 @@ jps
 jcmd
 	https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr006.html
 		jcmd [jps-pid] help
-	
+
 		sum of, total and used memory from the output.
 			jcmd [jps-pid] GC.heap_info
 			jcmd `jps |grep -v Jps | awk '{ print $1}'` GC.heap_info
 
-jstat		
+jstat
 	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html
 	https://kknews.cc/zh-tw/code/a3krrlx.html
-	will present the utilization of each generation as a percentage of its capacity. Useful to get an at a glance view of usage.	
+	will present the utilization of each generation as a percentage of its capacity. Useful to get an at a glance view of usage.
 		jstat -gcutil [jps-pid]
 
-	find statistics of the behavior of the garbage collected heap.	
+	find statistics of the behavior of the garbage collected heap.
 		jstat -gc [jps-pid]
-		
+
 	will present information about memory pool generation and space capabilities.
 		jstat -gccapacity [jps-pid]
 

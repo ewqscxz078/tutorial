@@ -1,6 +1,6 @@
 排序檔案
 	sort <file>
-	
+
 排序檔案且去除重複
 	sort -u <file>
 

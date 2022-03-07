@@ -11,26 +11,26 @@ java_jvm
 			用途: heap memory for 開發人員使用
 				-Xms[1-9]+(m|g)		// 初始堆大小，預設是實體記憶體的1/64，預設空餘堆記憶體小於40%時,JVM就會增大堆直到-Xmx的最大限制
 				-Xmx[1-9]+(m|g)		// 最大堆大小，預設是實體記憶體的1/4，空餘堆記憶體大於70%時,JVM會減少堆直到-Xms的最小限制
-				
+
 					-Xmn			年輕代大小(Java Heap Young區大小)，官方推薦配置為整個堆的3/8(為1/4的-Xmx值)，持久代一般固定大小為64m
 					-Xss			每個執行緒的Stack大小，JDK5.0以後每個線程堆棧大小為1M
 					-XX:NewSize		設定JVM堆的‘新生代’的預設大小；
 					-XX:MaxNewSize	設定JVM堆的‘新生代’的最大大小；
-		
+
 		當出現 java.lang.OutOfMemoryError: PermGen space 與下列設定有關
 			用途: non-heap memory for JVM留給自己用 ，如載入class
 			-XX:PermSize=[1-9]+(m|g) 	// 非堆記憶體初始值，預設是實體記憶體的1/64
 			-XX:MaxPermSize=[1-9]+(m|g)	// 最大非堆記憶體的大小，預設是實體記憶體的1/4
-			
-		
+
+
 	2.回收器選擇
 		序列收集器、並行收集器、併發收集器
-		
+
 		如果你有一個雙核的CPU
 			-XX:+UseParallelGC	// 讓GC可以更快的執行
-		
-	3.輔助資訊	
-	
+
+	3.輔助資訊
+
 經驗之談：
 	Java Heap分為3個區：
 	1.Young 2.Old 3.Permanent。Young儲存剛例項化的物件。當該區被填滿時，GC會將物件移到Old區。Permanent區則負責儲存反射物件。
@@ -50,6 +50,6 @@ java_jvm
 從 jar 擷取class
 	jar xf sris-ae-core-2.5.0-SRIS-SNAPSHOT-shaded.jar org/bouncycastle/asn1/ASN1Primitive.class
 	jar xf sris-ae-core-2.5.0-SRIS-SNAPSHOT-shaded.jar org/bouncycastle/asn1/ASN1Object.class
-	
+
 反組譯class
 	javap org/bouncycastle/asn1/ASN1Primitive.class

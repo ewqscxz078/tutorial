@@ -1,9 +1,9 @@
 excel function
 	How to extract text before a specific character
 		LEFT(cell, SEARCH("char", cell)-1)
-		
+
 	How to extract text between two instances of a character
 		MID(cell, SEARCH("char", cell)+1, SEARCH ("char", cell, SEARCH ("char", cell)+1) - SEARCH ("char", cell)-1)
-		
+
 	How to extract text after character
 		RIGHT(cell,LEN(cell)-SEARCH("char", cell))

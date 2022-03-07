@@ -380,7 +380,13 @@ merge 常例
     git config --global user.email you@example.com
 
 改變預設 branch(master)
-	git config --global init.defaultBranch main
+	git config --global ${your setting name} ${your setting value}
+		ex:	git config --global init.defaultBranch main
+
+移除設定
+	git config --global --unset ${your setting name}
+	or edit online
+		git config --global --edit
 ==========================================================================================
 ==================================查看檔案================================================
 ==========================================================================================

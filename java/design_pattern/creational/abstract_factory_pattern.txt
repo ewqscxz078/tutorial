@@ -7,24 +7,24 @@
 
 優點
 	由 client 決定使用哪個 Sub Classes factory，解決 Factory Class if else
-	
+
 
 	Factory Design Pattern Super Class 同 factory_pattern
 	Factory Design Pattern Sub Classes 同 factory_pattern
-	
+
 	Factory Class for Each subclass
 	public interface ComputerAbstractFactory {
 
 		public Computer createComputer();
 
 	}
-	
+
 	public class PCFactory implements ComputerAbstractFactory {
 
 		private String ram;
 		private String hdd;
 		private String cpu;
-		
+
 		public PCFactory(String ram, String hdd, String cpu){
 			this.ram=ram;
 			this.hdd=hdd;
@@ -35,33 +35,33 @@
 			return new PC(ram,hdd,cpu);
 		}
 
-	}	
-	
+	}
+
 	public class ServerFactory implements ComputerAbstractFactory {
 
 		private String ram;
 		private String hdd;
 		private String cpu;
-	
+
 		public ServerFactory(String ram, String hdd, String cpu){
 			this.ram=ram;
 			this.hdd=hdd;
 			this.cpu=cpu;
 		}
-	
+
 		@Override
 		public Computer createComputer() {
 			return new Server(ram,hdd,cpu);
 		}
 	}
-	
+
 	public class ComputerFactory {
 
 		public static Computer getComputer(ComputerAbstractFactory factory){
 			return factory.createComputer();
 		}
 	}
-	
+
 	public class TestDesignPatterns {
 
 		public static void main(String[] args) {
@@ -74,6 +74,6 @@
 			System.out.println("AbstractFactory PC Config::"+pc);
 			System.out.println("AbstractFactory Server Config::"+server);
 		}
-	}	
-	
+	}
+
 }

@@ -10,7 +10,7 @@ list all screen
 
 attatch only one screen
 	screen -dr
-	
+
 rename screen
 	screen -S <old_session_name_with_name> -X sessionname <new_name>
 		ex:
@@ -18,7 +18,7 @@ rename screen
 
 detach
 	ctrl+a & d
-	
+
 Ctrl a+c
 	¶}±Ò·s¤À­¶
 Ctrl a+a

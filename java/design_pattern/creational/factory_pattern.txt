@@ -8,27 +8,27 @@
 
 缺點
 	1.Factory Class use if else to decide who to instance
-	
+
 	Factory Design Pattern Super Class
 	public abstract class Computer {
-		
+
 		public abstract String getRAM();
 		public abstract String getHDD();
 		public abstract String getCPU();
-		
+
 		@Override
 		public String toString(){
 			return "RAM= "+this.getRAM()+", HDD="+this.getHDD()+", CPU="+this.getCPU();
 		}
 	}
-	
+
 	Factory Design Pattern Sub Classes
 	public class PC extends Computer {
 
 		private String ram;
 		private String hdd;
 		private String cpu;
-		
+
 		public PC(String ram, String hdd, String cpu){
 			this.ram=ram;
 			this.hdd=hdd;
@@ -50,14 +50,14 @@
 		}
 
 	}
-	
+
 	Factory Design Pattern Sub Classes
 	public class Server extends Computer {
 
 	private String ram;
 	private String hdd;
 	private String cpu;
-	
+
 	public Server(String ram, String hdd, String cpu){
 		this.ram=ram;
 		this.hdd=hdd;
@@ -84,10 +84,10 @@
 		public static Computer getComputer(String type, String ram, String hdd, String cpu){
 			if("PC".equalsIgnoreCase(type)) return new PC(ram, hdd, cpu);
 			else if("Server".equalsIgnoreCase(type)) return new Server(ram, hdd, cpu);
-			
+
 			return null;
 		}
 	}
 
-	
+
 }

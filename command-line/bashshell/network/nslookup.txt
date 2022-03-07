@@ -1,4 +1,3 @@
 linux check dns like windows
 	nslookup
 	server
-	
