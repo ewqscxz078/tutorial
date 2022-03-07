@@ -41,6 +41,9 @@ window 更新git version
 status -- 狀態確認
 	git status
 
+list add file when status too many
+	git diff --name-only --cached
+
 add -- 加入暫存區
 	指定單一支程式加入
 		git add xxxx [xxxx代表程式]

@@ -44,4 +44,12 @@ java_jvm
 	2．一個GUI程式最好是每10到20秒間執行一次GC，每次在半秒之內完成。
 	注意：
 	1．增加Heap的大小雖然會降低GC的頻率，但也增加了每次GC的時間。並且GC執行時，所有的使用者執行緒將暫停，也就是GC期間，Java應用程式不做任何工作。
-	2．Heap大小並不決定程序的記憶體使用量。程序的記憶體使用量要大於-Xmx定義的值，因為Java為其他任務分配記憶體，例如每個執行緒的Stack等。	
+	2．Heap大小並不決定程序的記憶體使用量。程序的記憶體使用量要大於-Xmx定義的值，因為Java為其他任務分配記憶體，例如每個執行緒的Stack等。
+
+
+從 jar 擷取class
+	jar xf sris-ae-core-2.5.0-SRIS-SNAPSHOT-shaded.jar org/bouncycastle/asn1/ASN1Primitive.class
+	jar xf sris-ae-core-2.5.0-SRIS-SNAPSHOT-shaded.jar org/bouncycastle/asn1/ASN1Object.class
+	
+反組譯class
+	javap org/bouncycastle/asn1/ASN1Primitive.class

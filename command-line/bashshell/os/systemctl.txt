@@ -25,8 +25,8 @@ https://blog.gtwang.org/linux/linux-basic-systemctl-systemd-service-unit-tutoria
 	systemctl is-failed <service_name>
 	
 列舉已啟動服務
-	systemctl list-units
-	systemctl
+	systemctl list-units --type=service
+	systemctl --type=service
 
 列舉所有已啟動未啟動服務
 	systemctl list-units --all

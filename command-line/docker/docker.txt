@@ -76,10 +76,16 @@ run container
 		ex:
 			USER root
 
-CMD
+https://myapollo.com.tw/zh-tw/docker-cmd-vs-entrypoint/
+https://medium.com/@xyz030206/dockerfile-%E4%B8%AD%E7%9A%84-entrypoint-9653c3b2d2f8
+CMD v.s. ENTRYPOINT
 
 # 告知docker 進入的可執行的入口要做哪些事情
 	ENTRYPOINT
+
+	ENTRYPOINT ["curl"]
+	CMD ["http://dummy-url.com/"]
+		=> `curl http://dummy-url.com/`
 
 # 告訴 dockerfile 預設使用哪個 default shell 預設 /bin/sh，可透過 docker image history [imageid] 確認
 	https://github.com/moby/moby/issues/7281

@@ -1,2 +1,0 @@
-查看帳號過期機訊
-	chage -l [username]

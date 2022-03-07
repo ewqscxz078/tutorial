@@ -3,3 +3,9 @@ gentoo
 
 centos
 	yum
+
+ubuntu
+	https://www.cyberciti.biz/faq/apt-get-list-packages-are-installed-on-ubuntu-linux/
+	apt
+		列舉安裝清單
+		apt list --installed

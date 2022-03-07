@@ -34,3 +34,9 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 
 只回傳status_code
 	curl -s -o /dev/null -w "%{http_code}" https://www.google.com
+
+打什麼就傳什麼
+	預設會把非標準格式濾掉，跟 Path Traversal attack 有關，所以要測試攻擊的話要多下該參數
+		https://stackoverflow.com/questions/32441862/dot-dot-removed-from-url-by-firefox
+		https://www.rfc-editor.org/rfc/rfc3986#section-5.2.4
+	curl --path-as-is "https://www.google.com/aa/bb/../../"

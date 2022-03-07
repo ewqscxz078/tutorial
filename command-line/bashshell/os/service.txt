@@ -1,0 +1,6 @@
+https://www.configserverfirewall.com/ubuntu-linux/ubuntu-list-services-command/
+
+相較於 systemctl 較低階一點
+
+列舉已啟動服務
+	service  --status-all
