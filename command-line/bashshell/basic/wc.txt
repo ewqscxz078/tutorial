@@ -1,17 +1,17 @@
-����ɮצ�ơB�r�ơB�r����
+顯示檔案行數、字數、字元數
 	wc [file]
-	
-�i�q�зǿ�JŪ����ơG		
-	cat [file] | wc	
-	
-����ɮצ��
+
+可從標準輸入讀取資料：
+	cat [file] | wc
+
+顯示檔案行數
 	wc -l [file]
-	
-����ɮצr��
+
+顯示檔案字數
 	wc -w [file]
 
-����ɮצr����	
+顯示檔案字元數
 	wc -c [file]
 
-�p��̪��檺����
+計算最長行的長度
 	wc -L [file]
