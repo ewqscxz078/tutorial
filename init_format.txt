@@ -10,7 +10,7 @@ replace tail space or tab // todo fix tail x tab no replace
 
 確認檔案是否有結尾 tab
 	egrep -InR $'\t'+$
-	
+
 	replace tail tab
 		egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/\t\+$//g"
 git 中文路徑fix (once)
