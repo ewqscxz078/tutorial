@@ -1,0 +1,21 @@
+@SpringBootConfiguration:SpringBoot的配置類:
+	標註在某個類上，表示是一個Spring Boot的配置類;
+	@Configuration:配置類上來標註這個註解;
+		配置類 ---- 配置文件;配置類也是容器的一個組件;@Component
+
+@EnableAutoConfiguration:開啟自動配置功能;
+	以前我們需要配置的東西，SpringBoot幫我們自動配置;
+	@AutoConfigurationPackage:自動配置包
+		@Import(AutoConfigurationPackages.Registrar.class)
+		Spring底層註記@Import，給容器引入一個組件
+
+	將主配置類(@SpringBootConfiguration標註的類)的所在包及下面所有子包裡面的所有組件掃描到Spring容器
+
+	@Import(EnableAutoConfigurationImportSelector.class)
+		給容器中導入選擇器組件
+			將所有需要導入的的組件以陣列字串的方式返回，導入名為xxxxAutoConfiguration的自動配置類
+			就是給容器導入各個常用場景需要的所有組件，並配置好這個組件
+			AopAutoConfiguration、BatchAutoConfiguration ....
+
+		SpringFactoriesLoader.loadFactoryNames(EnableAutoConfiguration.class,classLoader); // spring-boot-autoconfigure jar
+		Spring boot 在啟動的時候從類路徑下的 META-INF/spring.factories 中獲取 EnableAutoConfiguration指定的值

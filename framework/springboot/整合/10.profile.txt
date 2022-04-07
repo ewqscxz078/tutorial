@@ -1,0 +1,40 @@
+
+profile 是 spring 依據不同環境提供不同配置的支援，依據執行時導入對應的環境profile檔案
+
+1. 多profile 文件形式
+	預設一定使用 application.properties
+	格式 : application-{profile}.properties
+		ex :
+			application-dev.properties
+			application-prod.properties
+
+2. yml 多 profile 整合單一文件模式 ---
+	spring.profiles:
+	  active: prod #激活指定profile
+	---
+	spring.profiles:
+	  active: prod #激活指定profile
+	server:
+	  port: 80
+	---
+	spring.profiles:
+	  active: default #表示未指定默認配置
+	server:
+	  port: 8080
+
+	案例 application.yml
+		server.port: 8080
+		spring.profiles.active: prod #激活指定profile
+		---
+		server.port: 8082
+		spring.profiles: dev
+
+		---
+		server.port: 8083
+		spring.profiles: prod
+
+3. 激活方式
+	配置文件 spring.profiles.active=dev
+	命令模式 --spring.profiles.active=dev
+		java -jar your.jar --spring.profiles.active=dev
+	jvm參數 -Dspring.profiles.active=dev

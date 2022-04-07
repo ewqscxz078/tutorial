@@ -1,0 +1,39 @@
+
+
+@RandomValudePropertySource:配置文件中可以使用隨機值
+	${random.value}
+	${random.int}
+	${random.long}
+	${random.int(10)}
+	${random.int[1024,65535]}
+
+屬性配置佔位符
+	app.name=MyApp
+	app.description=${app.name} is a spring boot application
+
+	配置文件中可以引用前面配置過的屬性
+	${app.name:預設值} 來指定找不到屬性時的預設值
+
+application.properties
+	person.last-name=張三${random.uuid}
+	person.age=18${random.int}
+	person.boss=false
+	person.birth=2017/12/12
+	person.maps.k1=v1
+	person.maps.k2=12
+	person.lists=a,b,c
+	person.dog.name=${person.hello:hello}_小狗
+	person.dog.age=12
+
+javaBeanTest
+	@RunWith(SpringRunner.class)
+	@SpringBootTest
+	public class SpringBootConfigApplicationTest {
+		@Autowired
+		Person person;
+
+		@Test
+		public void testPerson(){
+			System.out.prinln(person);
+		}
+	}

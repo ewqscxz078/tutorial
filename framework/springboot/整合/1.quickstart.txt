@@ -1,0 +1,47 @@
+https://spring.io/quickstart
+
+1.Use start.spring.io to create a “web” project
+	https://start.spring.io/
+2. create main java
+	package com.example.demo;
+	import org.springframework.boot.SpringApplication;
+	import org.springframework.boot.autoconfigure.SpringBootApplication;
+	import org.springframework.web.bind.annotation.GetMapping;
+	import org.springframework.web.bind.annotation.RequestParam;
+	import org.springframework.web.bind.annotation.RestController;
+
+	@SpringBootApplication
+	@RestController
+	public class DemoApplication {
+
+
+	  public static void main(String[] args) {
+		SpringApplication.run(DemoApplication.class, args);
+	  }
+
+	  @GetMapping("/hello")
+	  public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+		return String.format("Hello %s!", name);
+	  }
+
+	}
+
+3.Try it
+	MacOS/Linux:
+		./mvnw spring-boot:run
+	Windows:
+		mvnw spring-boot:run
+
+4. browser type
+	http://localhost:8080/hello
+
+
+5. To create an executable jar, we need to add the spring-boot-maven-plugin to our pom.xml. To do so, insert the following lines just below the dependencies section:
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>

@@ -1,0 +1,8 @@
+Controller
+
+	// 這個類的所有方法返回的結果直接寫給瀏覽器(如果結果是物件則轉為json)
+	/* @ResponseBody + @Controller */
+	@RestController
+
+	// 瀏覽器 path 對應
+	@RequestMapping("/hello")

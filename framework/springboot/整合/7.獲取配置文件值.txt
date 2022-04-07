@@ -1,0 +1,108 @@
+獲取配置文件值注入
+
+application.yml
+	person:
+	  lastName: hello
+	  age: 18
+	  boss: false
+	  birth: 2017/12/12
+	  maps: {k1: v1,k2: 12}
+	  lists:
+	    - lisi
+		- zhaoliu
+	  dog:
+	    name: 小狗
+		age: 12
+
+application.properties
+	person.last-name=張三
+	person.age=18
+	person.boss=false
+	person.birth=2017/12/12
+	person.maps.k1=v1
+	person.maps.k2=12
+	person.lists=a,b,c
+	person.dog.name=小狗
+	person.dog.age=12
+
+
+javaBean
+	/** 將配置文件中配置的每個屬性值對應到組件中
+	* @ConfigurationProperties 告訴springboot 將本類中的所有屬性與配置文件 person 綁定
+	* 只有這個組件是容器的組件，容器才能提供 ConfigurationProperties 功能
+	*/
+	@Component
+	@ConfigurationProperties(prefix = "person")
+	public class Person {
+		private String lastName;
+		private Integer age;
+		private Booblean boss;
+		private Date birth;
+		private Map<String,Object> maps;
+		private List<Object> lists;
+		private Dog dog;
+
+		getter...
+		setter...
+	}
+
+	@Component
+	public class Person {
+
+		/**
+		* <bean class="Person">
+		*	<property name="lastName" valuee="常數/${key}從環境變數、配置文件中獲取值/${SpEL}"
+		* </bean>
+		*/
+		@Value("person.last-name")
+		private String lastName;
+		@Value("#{11*2}")
+		private Integer age;
+		@Value("true")
+		private Booblean boss;
+		private Date birth;
+		private Map<String,Object> maps;
+		private List<Object> lists;
+		private Dog dog;
+
+		getter...
+		setter...
+	}
+
+pom.xml
+	引入配置文件處理器，配置文件進行綁定會有提示
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-configuration-processor</artifactId>
+		<optional>true</optional>
+	</dependency>
+
+	也就是 application.yml 裡輸入部分值時會有提示
+
+
+
+@Value與@ConfigurationProperties差異
+	@ConfigurationProperties 全局配置，缺點是太多設定檔在一起
+		1.批量注入文件屬性
+		2.鬆散綁定
+			person.firstName: 使用標準方式
+			person.first-name: 大寫用-
+			person.first_name: 大寫用_
+			PERSON_FIRST_NAME: 推薦系統屬性使用該寫法
+		3. SpEL evaluation : 不支援
+		4. JSR303 配置文件值檢驗:支援
+			@Validated
+				@Email
+				@NotNull
+				@Valid
+		5.複雜類型封裝:支援 map、list、object
+	@Value
+		1.一個一個綁定
+		2.嚴僅綁定(all match)
+		3.SpEL evaluation : 支援
+		4.JSR303 配置文件值檢驗:不支援
+		5.複雜類型封裝:不支援 map、list、object
+
+	yml、properties都能會取到值
+		如果說只是在某些業務邏輯中獲取一下配置文件值，使用@valuee
+		如果說專門寫了一個javaBean來和配置文件對應，使用@ConfigurationProperties

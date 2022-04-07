@@ -1,0 +1,99 @@
+
+@PropertySource 加載指定的配置文件
+	通常是與 springboot 無關的配置、與環境差異無關
+
+	resources
+		create person.properties
+			person.last-name=張三
+			person.age=18
+			person.boss=false
+			person.birth=2017/12/12
+			person.maps.k1=v1
+			person.maps.k2=12
+			person.lists=a,b,c
+			person.dog.name=小狗
+			person.dog.age=12
+
+	javaBean
+
+		/** 將配置文件中配置的每個屬性值對應到組件中
+		* 只有這個組件是容器的組件
+		*/
+		@PropertySource(value = {"classpath:person.properties"})
+		@Component
+		@ConfigurationProperties(prefix = "person")
+		public class Person {
+			private String lastName;
+			private Integer age;
+			private Booblean boss;
+			private Date birth;
+			private Map<String,Object> maps;
+			private List<Object> lists;
+			private Dog dog;
+
+			getter...
+			setter...
+		}
+
+@ImportResource 引入 spring 配置文件並生效
+	resources
+		create beans.xml
+			....
+			<bean id=hellService class="package.path.className"/>
+			....
+
+	javaBean
+		@ImportResource(locatoins = {"classpath:beans.xml"})
+		@SpringBootApplication
+		public class SpringBootConfigApplication {
+			public static void main(String[] args){
+				SpringBootApplication.run(SpringBootConfigApplication.class);
+			}
+		}
+
+	javaBeanTest
+		@RunWith(SpringRunner.class)
+		@SpringBootTest
+		public class SpringBootConfigApplicationTest {
+			@Autowired
+			ApplicationContext ioc;
+
+			@Test
+			public void testHelloService(){
+				boolean isExistBean = ioc.containBean( name: "helloService");
+				AssertTure(isExistBean);
+			}
+		}
+
+以前 Spring framework 使用 xml config 方式
+SpringBoot 推薦給容器增加容器的方式
+	1.配置類 java config方式
+		java/path/create config dir
+			javaBean
+
+				/**
+				*
+				* @Configuration 代表當前類適配置類，代替以前的xml配置
+				*/
+				@Configuration
+				public class MyConfig {
+
+					// 將方法返回容器中; 容器中這個元件默認ID就是方法名稱，也就是該例子的 helloService
+					@Bean
+					public HelloServcie helloService(){
+						return new HelloServcie();
+					}
+				}
+		javaBeanTest
+			@RunWith(SpringRunner.class)
+			@SpringBootTest
+			public class SpringBootConfigApplicationTest {
+				@Autowired
+				ApplicationContext ioc;
+
+				@Test
+				public void testHelloService(){
+					boolean isExistBean = ioc.containBean( name: "helloService");
+					AssertTure(isExistBean);
+				}
+			}

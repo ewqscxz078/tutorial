@@ -1,0 +1,13 @@
+使用Spring Initializer快速創建Spring boot專案
+
+	IDE都支持使用 Spring 專案創建嚮導快速創建一個Spring Boot專案
+
+	選擇需要的模組(starter)；嚮導會連到 spring Initializer 官網創建Spring Boot專案
+
+	默認生成的 Spring Boot 專案;
+	1.主程序已經升成了，我們只需要寫我們自己的邏輯
+	2.resources文件夾中目錄結構
+		static：保存所有的靜態資源；js、css、images
+		templates：保存所有的模板頁面;(SpringBoot默認jar包使用嵌入式的tomcat,默認不支持jsp);
+			可以使用模板引擎(freemarker、thymeleaf)
+		application.properties：SpringBoot的應用配置
