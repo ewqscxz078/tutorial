@@ -1,0 +1,26 @@
+@Conditional springboot 延伸註解(spring底層 @Conditional)
+	作用:
+		必須 @Conditional 指定的條件成立，才給容器加入組件，配置類裡所有的內容才會生效
+
+
+	org.springframework.boot.autoconfigure.condition package 下
+
+	@ConditionalOnJava				系統java 版本是否符合要求
+	@ConditionalOnBean				容器中存在指定Bean
+	@ConditionalOnMissingBean		容器中不存在指定Bean
+	@ConditionalOnExpression		滿足SpEL表達式指定
+	@ConditionalOnClass				系統中有指定的類
+	@ConditionalOnMissingClass		系統中沒有指定的類
+	@ConditionalOnSingleCandidate	容器中只有一個指定的類，或著這個bean是首選Bean
+	@ConditionalOnProperty			系統中指定的屬性是否有指定的值
+	@ConditionalOnResource			類路徑下是否存在指定資源文件
+	@ConditionalOnWebApplication	當前是web環境
+	@ConditionalOnNotWebApplication	當前不是web環境
+	@ConditionalOnjndi				JNDI存在指定項
+
+自動配置類需要在一定的條件下才會生效
+
+application.properties
+	debug=true
+
+console 會顯示那些自動配置類生效

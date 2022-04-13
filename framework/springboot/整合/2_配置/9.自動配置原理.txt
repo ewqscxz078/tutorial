@@ -1,0 +1,50 @@
+有哪些可以配置在 application.properties/yml
+	https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html
+
+自動配置原理
+	1.springboot 時加載主設定檔@SpringBootApplication，裡面設定了自動配置功能@EnableAutoConfiguration
+	2.@EnableAutoConfiguration 設定了@Import(EnableAutoConfigrationImportSelector.class)
+		-.掃描各個jar 下的META-INF/spring.factories
+		-.將spring.factories裡的 EnableAutoConfiguration名稱 的所有值每行當url 載入到properties物件
+		-.properties物件加入容器中
+	3.每一個自動配置類進行自動配置功能
+	4.以 HttpEncodingAutoConfiguration 為例解釋自動配置原理
+		@Configuration // 表示配置類，給容器配置組件
+		@EnableConfigurationProperties(HttpEncodingProperties.class) // 啟用指定類 #從配置文件中獲取值與bean的屬性綁定
+		@ConditionOnWebApplication // spring底層@Condition註解，依據條件生效
+		@ConditionOnClass(CharacterEncodingFilter.class) // 是否當前JAR 有無 指定CLASS
+		@ConditionOnProperty(prefix = "spring.http.encoding", value = "enabled", matchIfMissing = "true") // 是否配置文件是否存在某個配置，不存在也生效，即使配置文件不存在 spring.http.encoding= enabled，也是默認生效
+		public class HttpEncodingAutoConfiguration {
+
+			// 已跟springboot 綁定映射好
+			private final HttpEncodingProperties properties;
+
+			// 只有在一個有參數的建構函數，才能自動綁釘起來
+			public HttpEncodingAutoConfiguration(HttpEncodingProperties properties){
+				this.properties = properties;
+			}
+
+			@Bean // 給容器添加組件，該組建的某些值從properties中取得
+			@ConditionOnMissingBean(CharacterEncodingFilter.class)
+			public CharacterEncodingFilter characterEncodingFilter(){
+				CharacterEncodingFilter filter = new OrderCharacterEncodingFilter();
+				filter.setEncoding(this.properties.getCharset().name());
+				....
+			}
+		}
+
+		根據不同條件判斷，決定該配置類是否生效?
+		一旦生效，這個配置類就會給容器中添加組件，組件屬性對應properties類中獲取，properties類與配置文件對應映射設定
+
+	5.所有配置文件中能配置的屬性都是在xxxxProperties類中封裝著;配置文件能配置什麼就可以參照某個功能對應的這個屬性類
+
+
+精隨
+	1.springboot 啟動會加載大量的自動配置類
+	2.查看需要的功能有無 springboot 默認寫的自動配置類
+	3.查看自動配置類配置了那些組件(若有我們就不需要再配置)
+	4.給容器中自動配置類添加組件的時候，會從 properties類中獲取屬性值，我們就可以從配置文件覆蓋這些值
+
+xxxxAutoConfiguration: 自動配置類
+	給容器添加組件
+xxxxProperties: 封裝配置文件中所有屬性

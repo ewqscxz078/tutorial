@@ -1,0 +1,17 @@
+https://www.slf4j.org/legacy.html
+
+a系統
+	slf4j+logback
+		spring(common-logging)
+		Hibernate(jboss-logging)
+		MyBatis
+		xxx
+
+統一日誌紀錄，即使是別的框架，調成統一使用slf4j
+
+	1.將系統中其他日誌框架排除
+	2.用中間包轉換原有的日誌框架；
+		jcl-over-slf4j.jar replace common-logging.jar
+		log4j-over-slf4j.jar replace log4j.jar
+		jul-to-slftj.jar.jar replace jara.util.logging
+	3.再導入slf4j實現

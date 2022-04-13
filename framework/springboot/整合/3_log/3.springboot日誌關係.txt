@@ -1,0 +1,28 @@
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-logging</artifactId>
+  </dependency>
+
+1.springboot底層也是slf4j+logback方式進行日誌紀錄
+
+2.springboot也是把其他日誌都替換成了slf4j
+
+3.中間替換包
+	jcl-over-slf4j.jar replace common-logging.jar
+	log4j-over-slf4j.jar replace log4j.jar
+	jul-to-slftj.jar.jar replace jara.util.logging
+
+4.如果我們引入其他框架? 一定要把這個框架默認日誌依賴移除掉?
+	spring框架用的是commons-logging
+	  <dependency>
+		<groupId>org.springframework</groupId>
+		<artifactId>spring-core</artifactId>
+		<exclusions>
+			<exclusion>
+				<groupId>commons-logging</groupId>
+				<artifactId>commons-logging</artifactId>
+			</exclusion>
+		</exclusions>
+	  </dependency>
+
+springboot 能自動適配所有日誌，底層使用slf4j+logback方式記錄，引入其他日誌框架的時候只需要把框架依賴的日誌框架排除掉即可

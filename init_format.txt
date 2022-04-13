@@ -1,3 +1,6 @@
+git 中文路徑fix (once)
+	git config --global core.quotepath false
+	
 window 換行 dos2unix
 	find -type f -name "*.txt" | xargs dos2unix
 
@@ -13,5 +16,3 @@ replace tail space or tab // todo fix tail x tab no replace
 
 	replace tail tab
 		egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/\t\+$//g"
-git 中文路徑fix (once)
-	git config --global core.quotepath false

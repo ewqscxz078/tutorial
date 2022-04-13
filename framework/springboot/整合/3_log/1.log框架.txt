@@ -1,0 +1,37 @@
+市面上常用的框架
+	JUL、JCL、Jboss-logging、logback、log4j、log4j2、slf4j
+
+	抽象層
+		JCL ( Jakarta Commons Logging ) 最近更新 2014
+		SLF4J( Simple Logging Facade for java )
+		Jboss-logging 非一般工程師使用
+	實現層
+		Log4j
+		JUL(java.util.logging)
+		Log4j2
+		Logback
+
+	作者
+		原作者(https://www.slf4j.org/manual.html)
+			SLF4J	-> Log4j
+					-> Logback
+		JAVA ORACLE
+						JUL
+		apache 開源
+						Log4j2
+
+	SpringBoot : 底層是Spring框架，默認使用 JCL
+		選用SLF4J 和 logback
+
+	日誌紀錄方法的呼叫，不應該直接調用日誌的實現類，而是呼叫抽象層的方法
+		import org.slf4j.Logger;
+		import org.slf4j.LoggerFactory;
+
+		public class HelloWorld {
+		  public static void main(String[] args) {
+			Logger logger = LoggerFactory.getLogger(HelloWorld.class);
+			logger.info("Hello World");
+		  }
+		}
+
+	每個日誌框架都有自己的配置文件，使用slf4j後，配置文件還是日誌實現框架的配置文件

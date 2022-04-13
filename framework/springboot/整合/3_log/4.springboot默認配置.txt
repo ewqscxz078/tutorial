@@ -1,0 +1,60 @@
+預設是 level : info
+
+	javaBeanTest
+
+		import org.slf4j.Logger;
+		import org.slf4j.LoggerFactory;
+
+		@RunWith(SpringRunner.class)
+		@SpringBootTest
+		public class SpringBootConfigApplicationTest {
+
+			Logger logger = LoggerFactory.getLogger(HelloWorld.class);
+
+			@Test
+			public void testHelloService(){
+
+				// log level
+				// 低到高 trace < debug < info < warn < error
+				// 調整log level 只會在該級別與以後的 level 生效
+				logger.trace("is trace log");
+				logger.debug("is debug log");
+
+				// springboot 默認使用info級別，沒有指定level 的就用SprintBoot 默認級別: root級別
+				logger.info("is info log");
+
+				logger.warn("is warn log");
+				logger.error("is error log");
+			}
+		}
+
+	application.properties
+		logging.level.<packagepath>=[trace|debug|info|warn|error]
+
+		# 不指定路徑當前專案下生成 log file，
+		logging.file=springboot.log
+		# 指定路徑生成log file
+		logging.file=G:/springboot.log
+
+		logging.path=/var/log
+
+		#控制台輸出格式
+		logging.pattern.console=%d{yyyy-MM-dd} [%thread] %-5level %logger{50} - %msg%n
+		#指定文件中的日誌輸出格式
+		logging.pattern.console=%d{yyyy-MM-dd} === [%thread] === %-5level === %logger{50} === %msg%n
+
+	logging.file	logging.path	example				description
+	none			none			none				只在console輸出
+	指定文件名		none			springboot.log		輸出日誌到 springboot.log
+	none			指定目錄		/var/log			輸出日誌到指定目錄的spring.log文件中
+
+
+	logging.file 與 logging.path 其實是互斥設定
+
+	日誌輸出格式說明
+		%d 表示日期時間
+		%thread 表示執行緒名稱
+		%-5level 級別從左顯示5個字符寬度
+		%logger{50} 表示logger名字最長50字符，否則按照句點分割
+		%msg 日誌消息
+		%n 換行

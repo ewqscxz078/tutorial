@@ -1,0 +1,24 @@
+給路徑下放上日誌框架對應的配置文件；SpringBoot就不使用默認配置了
+https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.logging
+
+	Logging System					Customization
+	Logback							logback-spring.xml, logback-spring.groovy, logback.xml, or logback.groovy
+
+	Log4j2							log4j2-spring.xml or log4j2.xml
+
+	JDK (Java Util Logging)			logging.properties
+
+
+	logback.xml: 直接被日誌框架識別
+	logback-spring.xml: 由springboot解析日誌配置，可以使用springboot 高級 profile功能
+		<springProfile name="staging">
+			<!-- configuration to be enabled when the "staging" profile is active -->
+		</springProfile>
+
+		<springProfile name="dev | staging">
+			<!-- configuration to be enabled when the "dev" or "staging" profiles are active -->
+		</springProfile>
+
+		<springProfile name="!production">
+			<!-- configuration to be enabled when the "production" profile is not active -->
+		</springProfile>
