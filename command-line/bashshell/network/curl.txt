@@ -40,3 +40,5 @@ https://blog.techbridge.cc/2019/02/01/linux-curl-command-tutorial/
 		https://stackoverflow.com/questions/32441862/dot-dot-removed-from-url-by-firefox
 		https://www.rfc-editor.org/rfc/rfc3986#section-5.2.4
 	curl --path-as-is "https://www.google.com/aa/bb/../../"
+
+POST

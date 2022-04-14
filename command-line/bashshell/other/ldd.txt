@@ -1,0 +1,5 @@
+ldd
+	List Dynamic Dependencies，意譯為列出動態庫依賴關係）
+	是一款在類Unix系統的實用工具，負責在命令行內輸出程序或共享庫所依賴的函數庫
+
+ldd /usr/sbin/${cmd}

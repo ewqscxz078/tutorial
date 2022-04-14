@@ -1,7 +1,8 @@
 登入
 	lftp -u <帳號>[:密碼] [ftp/ftps]://<host_name>[:port]
 		lftp -u srisFTP:replace_Me ftp://192.168.10.46:10022
-
+		lftp -u user,'pas$w#' host:port
+		lftp user:'pas$w#'@host:port
 debug mode
 	lftp -d -u <帳號>[:密碼] [ftp/ftps]://<host_name>[:port]
 		lftp -d -u srisFTP:replace_Me ftp://192.168.10.46:10022

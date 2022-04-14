@@ -48,7 +48,7 @@ add -- 加入暫存區
 	指定單一支程式加入
 		git add xxxx [xxxx代表程式]
 
-	指定sh 有執行權限
+	指定 sh 有執行權限
 		git update-index --add --chmod=+x <shell name>.sh
 
 	指定副檔名為java的都加入
@@ -68,6 +68,12 @@ push	-- 紀錄到server
 
  git push origin HEAD:sris // commit 到遠端分支
 
+only local branch
+	git branch
+local and remote branch
+	git branch -a
+local update origin branch 資訊
+	git remote update origin --prune
 ==========================================================================================
 ====================================其他操作==============================================
 ==========================================================================================
@@ -504,3 +510,19 @@ A:https://stackoverflow.com/questions/37732141/whole-team-gets-too-many-unreacha
   https://stackoverflow.com/questions/41771089/trigger-git-prune-automatically-on-git-pull
 		git prune
 		git gc
+
+Q: git clone git pull 出現 fatal: remote error: upload-pack: not our ref
+	大概是傳輸到遠端git時中斷，遠端git 紀錄一半
+	https://stackoverflow.com/questions/4111728/how-do-i-deal-with-corrupted-git-object-files
+	於遠端git
+		find . -size 0 -type f | grep objects | xargs ls -a
+		會發現 0k 的 object/xx/yyyyyy 的檔案
+
+		https://mirrors.edge.kernel.org/pub/software/scm/git/docs/user-manual.html#recovering-from-repository-corruption
+		check 是否有異常
+			git fsck --full --no-dangling
+			發現是 jenkins merge issue DEVELOP/main ref 空的
+A: cd 遠端 git
+	rm -rf refs/heads/DEVELOP/main
+	git pull
+	git remote update origin --prune

@@ -1,6 +1,11 @@
-git 中文路徑fix (once)
+git status 中文路徑fix (once)
 	git config --global core.quotepath false
-	
+
+git bash 執行 java 或 keytools 指令後出現亂碼 (once)
+	window 環境變數增加
+		JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
+	重開 git bash
+
 window 換行 dos2unix
 	find -type f -name "*.txt" | xargs dos2unix
 

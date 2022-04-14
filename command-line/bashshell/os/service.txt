@@ -3,4 +3,13 @@ https://www.configserverfirewall.com/ubuntu-linux/ubuntu-list-services-command/
 相較於 systemctl 較低階一點
 
 列舉已啟動服務
-	service  --status-all
+	service --status-all
+
+啟動服務
+	service <service_name> start
+
+顯示服務狀態
+	service <service_name> status
+
+停止服務
+	service <service_name> stop

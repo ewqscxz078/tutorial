@@ -1,0 +1,7 @@
+===================================================================
+========================= test port  ==============================
+===================================================================
+https://serverfault.com/questions/35218/in-windows-using-the-command-line-how-do-you-check-if-a-remote-port-is-open
+
+Test-NetConnection <domain> -Port <port>
+	Test-NetConnection fcm.googleapis.com -Port 443
