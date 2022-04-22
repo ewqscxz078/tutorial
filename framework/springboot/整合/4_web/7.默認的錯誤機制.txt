@@ -1,0 +1,95 @@
+
+默認
+	1.瀏覽器，返回一個默認的錯誤葉面
+		Whitelabel Error Page
+			status code 4-4
+		No message available
+
+		瀏覽器請求頭:
+			network/..
+				Accept:text/html
+	2.如果是其他客戶端,默認回應一個json錯誤
+		....
+		status:404
+		message:No message available
+		....
+
+		postMan
+
+				Accept:*/*
+
+原理
+	可以參照 ErrorMvcAutoConfiguration，錯誤處理的自動配置
+	給容器增加了
+		1.DefaultErrorAttributes : 幫我們在頁面共享訊息
+		2.BasicErrorController : 默認處理/error請求
+			@Controller
+			@RequestMapping("${server.error.path:${error.path:/error}}")
+			public class BasicErrorController extends AbstractErrorController {
+				@RequestMapping(produces = "text/html") // 產生 html類型的數據
+				public ModelAndView errorHtml(HttpServletRequest request, HttpServletReponse reponse){
+					Httpstatus status = getStatus(request);
+					Map<String,Object> model = Collections.unmodifiableMap(getErrorAttributes(request, isIncludeStraceTrace(request,MediaType.TEXT_HTML)));
+					response.setStatus(status.value());
+
+					// 去哪個頁面作為錯誤頁密面，包含頁面地址和頁面內容
+					ModelAndView modelAndView = resolveErrorView(request,response,status,model);
+					return (modelAndView == null ? new ModelAndView("error",model) : modelAndView);
+				}
+
+				@RequestMapping
+				@ResponseBody	// 產生 json 數據，其他請求類型
+				public ResponseEntity<Map<String,Object>> error(HttpServletRequest request){
+					Map<String, Object> body = getErrorAttributes(request, isIncludeStraceTrace(request,MediaType.ALL));
+					Httpstatus status = getStatus(request);
+					return new ResponseEntity<Map<String,Object>>(body,status)
+				}
+
+		3.ErrorPageCustomlizer
+			@Value("${error.path:/error}")
+			private String path ="/error"; 系統出現錯誤以後來到error請求進行處理; (web.xml註冊的錯誤頁面)
+
+		4.DefaultErrorViewResolver
+			// 怎麼找到錯誤頁面的處理
+
+	步驟
+		1.一旦系統出現4xx、5xx之類的錯誤，ErrorPageCustomlizer就會生效(訂製錯誤的回應規則)
+		2.就會來到/error請求，就會被 BasicErrorController 處理
+			2.1.回應html頁面; 去哪個頁面是由 DefaultErrorViewResolver
+				protectd ModelAndView resolveErrorView(HttpServletRequest request,HttpServletReponse response,Httpstatus status,Map<String,Object> model){
+					//
+					for(ErrorViewResolver resolver : this.errorVeiwResolvers){
+						ModelAndView modelAndView = resolver.resolveErrorView(request,status,model);
+						if(modelAndView != null){
+							return modelAndView;
+						}
+					}
+					return null;
+				}
+
+1.
+	如何自訂錯誤頁面
+		1.有模板引擎情況下，error/狀態碼; 將錯誤頁面命名 錯誤狀態碼.html 放在模板引擎文件夾下的error,當發生此狀態碼錯誤就會來到對應頁面
+			resources/templates/error
+				404.html
+			  我們可以用 4xx 和5xx 作為錯誤頁面來 match 各類型的錯誤，精確優先(優先尋找精確的狀態碼.html)
+
+			  頁面能獲取的訊息
+				timestamp:時間戳
+				status:狀態碼
+				error:提示
+				exception:異常對象
+				message : 異常消息
+				errors : JSR303 資料校驗的錯誤都在這裡
+
+			resources/templates/error
+				4xx.html
+					<h1>status:[[$status]]</h1>
+					<h2>timestamp:[[$timestamp]]</h2>
+		2.沒有模板引擎下(模板引擎找不到這個錯誤頁面)，靜態資源文件下找
+			resources/static/error
+				404.html
+				4xx.html
+		3.以上都沒有，就是默認的springBoot 錯誤頁面
+	如何自訂錯誤json頁面
+

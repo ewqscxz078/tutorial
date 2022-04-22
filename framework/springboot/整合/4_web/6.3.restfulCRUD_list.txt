@@ -1,0 +1,169 @@
+CRUD 員工列表
+
+實驗要求
+	1.RestfulCRUD 滿足rest風格
+	URI: /資源名稱/資源標籤 HTTP 請求方式區分對資源CRUD操作
+
+				普通CRUD(uri來區分操作)			RestfulCRUD
+	查詢		getEmp							emp--GET
+	新增		addEmp?xxx						emp--POST
+	修改		updateEmp?id=xxx&xxx=xxx		emp/{id}--PUT
+	刪除		deleteEmp?id=1					emp/{id}--DELETE
+
+	2.實驗請求架構
+												請求URI							請求方式
+		查詢所有員工							emps							GET
+		查詢某個員工							emp/{id}						GET
+		來到添加頁面							emp								GET
+		添加員工								emp								POST
+		來到修改頁面(查出員工進行訊息回顯)		emp/{id}						GET
+		修改員工								emp								PUT
+		修改員工								emp/1							DELETE
+
+	3.員工列表
+
+		src/main/java/
+			controller/EmployeeController.java
+				@Controller
+				public class EmployeeController {
+
+					@Autowired
+					EmployeeDao employeeDao
+
+					@GetMapping("/emps")
+					public String list(Mode model){
+
+						Collection<Employee> employees = employeeDao.getAll();
+						// 放在請求域中
+						model.addAttribute( attributeName:"emps", employees);
+
+						// 返回到 resources/templates/emp/list.html
+						return "/emp/list";
+					}
+				}
+
+		thymeleaf公共頁面元素抽取
+			resources/templates
+				dashboard.html
+					<nav th:fragmet="topbar"></nav>
+
+					<nav id="sidebar">
+						....
+						<a href="#" th:href="@{/emps}">員工管理</a>
+					</nav>
+
+				emp/list.html
+					// 引入公共片段
+					<!-- 模板名會使用 thymeleaf的前後綴配置規則進行解析 -->
+					<div th:replace="dashboard::topbar"></div>
+
+					<!-- 引入側邊攔 -->
+					<nav th:replace="dashboard::#sidebar"></nav>
+
+			1.抽取公共片段
+				<div th:fragmet="copy">
+					&Copy; 2011 The Good Thymes Virtual Grocery
+				</div>
+			2.引入公共片段
+				<div th:insert="~{footer :: copy}"></div>
+				// ~{templatename::selector} 模板名:選擇器
+				// ~{templatename::fragmetname} 模板名:片段名
+			3.默認效果
+				insert的功能片段在div標籤
+				如果使用th:insert等屬性進行引入,可以不用寫~{}
+				行內寫法[[~{}]]、[(~{})]
+
+
+			三種引入功能片段的th屬性
+				th:insert：將整個公共片段插入到元素中
+				th:replace：將聲明引入的元素替換成公共片段
+				th:include：將被引入的片段內容包含進這個標籤中
+
+				<footer th:fragment="copy">
+					&copy; 2011 The Good Thymes Virtual Grocery
+				</footer>
+
+				<body>
+					...
+					<div th:insert="footer :: copy"></div>
+					<div th:replace="footer :: copy"></div>
+					<div th:include="footer :: copy"></div>
+				</body>
+
+				<body>
+					...
+					<div>
+						<footer>
+							&copy; 2011 The Good Thymes Virtual Grocery
+						</footer>
+					</div>
+
+					<footer>
+						&copy; 2011 The Good Thymes Virtual Grocery
+					</footer>
+
+					<div>
+						&copy; 2011 The Good Thymes Virtual Grocery
+					</div>
+				</body>
+
+	4. 鏈結標亮 & 列表完成
+		引入片段的參數傳入
+
+			resources/templates
+				commons/bar.html
+					<!-- topbar -->
+					<nav th:fragmet="topbar">
+						....
+					</nav>
+
+					<!-- sidebar -->
+					<nav id="sidebar">
+						<a class="nav-link active"
+							th:class="${activeUri=='main.html' ? 'nav-link active' : 'nav-link' }"
+							href="#" th:href="@{main.html}">Dashboard</a>
+						....
+						<a class="nav-link"
+							th:class="${activeUri=='emps' ? 'nav-link active' : 'nav-link' }"
+							href="#" th:href="@{/emps}">員工管理</a>
+					</nav>
+
+				dashboard.html
+					<div th:replace="commons/bar::topbar" ></div>
+
+					<div th:replace="commons/bar::#sidebar(activeUri='main.html')" ></div>
+
+				list.html
+					<div th:replace="commons/bar::topbar" ></div>
+					<div th:replace="commons/bar::#sidebar(activeUri='emps')" ></div>
+
+					<div>
+						<h2><button>員工添加</button><h2>
+						<table>
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>lastName</th>
+									<th>email</th>
+									<th>gender</th>
+									<th>department</th>
+									<th>birth</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="emp:$emps">
+									<td th:text="${emp.id}"></td>
+									<td>[[${emp.lastName}]]<td>
+									<td th:text="${emp.email}"></td>
+									<td th:text="${emp.gender}==0?'女':'男'"></td>
+									<td th:text="${emp.department.departmentName}"></td>
+									<td th:text="${#dates.format(emp.birth, 'yyyy-MM-dd HH:mm')}"></td>
+									<td>
+										<button>編輯</button>
+										<button>刪除</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>

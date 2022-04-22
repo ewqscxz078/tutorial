@@ -1,0 +1,9 @@
+1.創建springboot，選擇需要的模塊
+2.springboot 默認已經配置好了，只需要在配置文件指定少量配置文件就可運行起來
+3.自己編寫業務代碼
+
+自動配置原理
+	springboot 幫我們配置了什麼?能不能修改?能修改那些配置?能不能擴展?
+
+	xxxxAutoConfiguration: 幫我們給容器自動配置組件
+	xxxxProperties: 配置類來封裝配置文件

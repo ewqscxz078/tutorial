@@ -1,0 +1,175 @@
+
+官網下載使用方式pdf
+	https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.pdf
+
+ThymeleafAutoConfiguration
+	@ConfigurationProperties(prefix = "spring.thymeleaf")
+	public class ThymeleafProperties {
+		private static final
+		private static final
+		private static final String DEFALUT_PREFIX = "classpath:/templates/";
+		private static final String DEFALUT_SUFFIX = ".html";
+
+		//只要我們把頁面 classpath:/templates/， Thymeleaf就能自動渲染
+		....
+	}
+
+@Controller
+public class HelloController {
+
+	@RequestMapping("/success")
+	public String success(){
+		// classpath:/templates/success.html
+		return "success"
+	}
+
+	// 查資料後放入頁面顯示
+	@RequestMapping("/success")
+	public String success(Map<String,Object> map){
+		// classpath:/templates/success.html
+		map.put("hello","你好")
+		return "success"
+	}
+}
+
+classpath:/templates/success.html
+	<!-- 引入提供提示-->
+	<html xmlns:th="http://www.thymeleaf.org">
+		<body>
+			<h1>成功<h1>
+			<div id="div01" class="myDiv" th:id="${hello}" th:class="${hello}" th:text="${hello}">歡迎</div>
+			<!-- 經過模板引擎後將輸出 : 你好、id="你好"、class="你好" -->
+			<!-- 未經過模板引擎後將輸出 : 歡迎、id="div01" class="myDiv" -->
+		</body>
+	</html>
+
+
+1.引入 thymeleaf 名稱空間
+	<html xmlns:th="http://www.thymeleaf.org">
+2.使用語法 thymeleaf
+	2.1. th:text 改變當前元素裡面的內容
+		th: 任意html屬性；來替換原生屬性的值
+
+	2.2. 表達式
+		Simple expressions:
+			Variable Expressions: ${...}
+				1.獲取物件的屬性、函數
+				2.可使用內建物件
+					#ctx : the context object.
+					#vars: the context variables.
+					#locale : the context locale.
+					#request : (only in Web Contexts) the HttpServletRequest object.
+					#response : (only in Web Contexts) the HttpServletResponse object.
+					#session : (only in Web Contexts) the HttpSession object.
+					#servletContext : (only in Web Contexts) the ServletContext object
+				3.內建的工具物件
+					#execInfo : information about the template being processed.
+					#messages : methods for obtaining externalized messages inside variables expressions, in the same way as they
+					would be obtained using #{…} syntax.
+					#uris : methods for escaping parts of URLs/URIs
+					#conversions : methods for executing the configured conversion service (if any).
+					#dates : methods for java.util.Date objects: formatting, component extraction, etc.
+					#calendars : analogous to #dates , but for java.util.Calendar objects.
+					#numbers : methods for formatting numeric objects.
+					#strings : methods for String objects: contains, startsWith, prepending/appending, etc.
+					#objects : methods for objects in general.
+					#bools : methods for boolean evaluation.
+					#arrays : methods for arrays.
+					#lists : methods for lists.
+					#sets : methods for sets.
+					#maps : methods for maps.
+					#aggregates : methods for creating aggregates on arrays or collections.
+					#ids : methods for dealing with id attributes that might be repeated (for example, as a result of an iteration).
+
+			Selection Variable Expressions: *{...}
+				1.效果跟 ${...} 一樣
+				2.配合 th:object="${session.user}"，
+					<div th:object="${session.user}">
+						<p>Name: <span th:text="*{firstName}">Sebastian</span>.</p>
+						<p>Surname: <span th:text="*{lastName}">Pepper</span>.</p>
+						<p>Nationality: <span th:text="*{nationality}">Saturn</span>.</p>
+					</div>
+					等於
+					<div>
+						<p>Name: <span th:text="${session.user.firstName}">Sebastian</span>.</p>
+						<p>Surname: <span th:text="${session.user.lastName}">Pepper</span>.</p>
+						<p>Nationality: <span th:text="${session.user.nationality}">Saturn</span>.</p>
+					</div>
+
+			Message Expressions: #{...} 取的國際化訊息
+			Link URL Expressions: @{...} 定義url
+
+				<!-- Will produce 'http://localhost:8080/gtvg/order/details?orderId=3' (plus rewriting) -->
+				<a href="details.html"
+				th:href="@{http://localhost:8080/gtvg/order/details(orderId=${o.id})}">view</a>
+				<!-- Will produce '/gtvg/order/details?orderId=3' (plus rewriting) -->
+				<a href="details.html" th:href="@{/order/details(orderId=${o.id})}">view</a>
+				<!-- Will produce '/gtvg/order/3/details' (plus rewriting) -->
+				<a href="details.html" th:href="@{/order/{orderId}/details(orderId=${o.id})}">view</a>
+
+			Fragment Expressions: ~{...} 片段表達式
+		Literals
+			Text literals: 'one text' , 'Another one!' ,…
+			Number literals: 0 , 34 , 3.0 , 12.3 ,…
+			Boolean literals: true , false
+			Null literal: null
+			Literal tokens: one , sometext , main ,…
+		Text operations:
+			String concatenation: +
+			Literal substitutions: |The name is ${name}|
+		Arithmetic operations:
+			Binary operators: + , - , * , / , %
+			Minus sign (unary operator): -
+		Boolean operations:
+			Binary operators: and , or
+			Boolean negation (unary operator): ! , not
+		Comparisons and equality:
+			Comparators: > , < , >= , <= ( gt , lt , ge , le )
+			Equality operators: == , != ( eq , ne )
+		Conditional operators:
+			If-then: (if) ? (then)
+			If-then-else: (if) ? (then) : (else)
+			Default: (value) ?: (defaultvalue)
+		Special tokens:
+			No-Operation: _
+
+案例
+@Controller
+public class HelloController {
+
+
+	// 查資料後放入頁面顯示
+	@RequestMapping("/success")
+	public String success(Map<String,Object> map){
+		// classpath:/templates/success.html
+		map.put("hello","<h1>你好</h1>")
+		map.put("users",Array.asList("張三","李四","王五"))
+		return "success"
+	}
+}
+
+classpath:/templates/success.html
+	<!-- 引入提供提示-->
+	<html xmlns:th="http://www.thymeleaf.org">
+		<body>
+			<hr/>
+
+			<!-- 跳脫特殊符號，經過模板引擎後將輸出 : <h1>你好</h1> -->
+			<div th:text="${hello}"></div>
+			<!-- 轉義特殊符號，經過模板引擎後將輸出 : 你好 -->
+			<div th:utext="${hello}"></div>
+
+			<hr/>
+
+			<!-- th:each 每次遍歷都會生成當前這個標籤 3個h4-->
+			<h4 th:text="${user}" th:each="user:${users}"></h4>
+
+			<hr/>
+
+			<h4>
+				<span th:each="user:${users}"> [[${user}]]<h4/>
+			</h4>
+
+			<hr/>
+		</body>
+	</html>

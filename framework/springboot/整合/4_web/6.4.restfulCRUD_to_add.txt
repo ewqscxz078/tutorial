@@ -1,0 +1,95 @@
+
+添加員工
+	src/main/java/
+		controller/EmployeeController.java
+			@Controller
+			public class EmployeeController {
+
+				@Autowired
+				EmployeeDao employeeDao
+
+				@Autowired
+				DepartmentDao departmentDao
+
+				@GetMapping("/emps")
+				public String list(Mode model){
+
+					Collection<Employee> employees = employeeDao.getAll();
+					// 放在請求域中
+					model.addAttribute( attributeName:"emps", employees);
+
+					// 返回到 resources/templates/emp/list.html
+					return "/emp/list";
+				}
+
+				// 添加頁面
+				@GetMapping("/emp")
+				public String toAddPage(Model model){
+					// 查出所有的部門,頁面顯示
+					Collection<Department> departments = departmentDao.getDepartments();
+					model.addAttribute(attributeName:"depts",departments);
+					return "emp/add";
+				}
+			}
+
+	resources/templates
+		list.html
+			<div th:replace="commons/bar::topbar" ></div>
+			<div th:replace="commons/bar::#sidebar(activeUri='emps')" ></div>
+
+			<div>
+				<h2><a href="emp" th:href="@{/emp}">員工添加</a><h2>
+				<table>
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>lastName</th>
+							<th>email</th>
+							<th>gender</th>
+							<th>department</th>
+							<th>birth</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="emp:$emps">
+							<td th:text="${emp.id}"></td>
+							<td>[[${emp.lastName}]]<td>
+							<td th:text="${emp.email}"></td>
+							<td th:text="${emp.gender}==0?'女':'男'"></td>
+							<td th:text="${emp.department.departmentName}"></td>
+							<td th:text="${#dates.format(emp.birth, 'yyyy-MM-dd HH:mm')}"></td>
+							<td>
+								<button>編輯</button>
+								<button>刪除</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		emp/add.html
+			// 引入公共片段
+			<!-- 模板名會使用 thymeleaf的前後綴配置規則進行解析 -->
+			<div th:replace="dashboard::topbar"></div>
+			<!-- 引入側邊攔 -->
+			<nav th:replace="dashboard::#sidebar"></nav>
+			<form>
+				....
+					<lable>lastName</lable>
+					....
+				....
+					<lable>email</lable>
+					....
+				....
+					<lable>gender</lable>
+					....
+				<div>
+					<lable>department</lable>
+					<select >
+						<option th:each="dept:${depts}" th:text="dept.departmentName" th:value="${dept.id}">
+					</select>
+				</div>
+				....
+					<lable>birth</lable>
+					....
+			</form>

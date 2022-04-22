@@ -1,0 +1,164 @@
+
+添加員工
+	src/main/java/
+		controller/EmployeeController.java
+			@Controller
+			public class EmployeeController {
+
+				@Autowired
+				EmployeeDao employeeDao
+
+				@Autowired
+				DepartmentDao departmentDao
+
+				@GetMapping("/emps")
+				public String list(Mode model){
+
+					Collection<Employee> employees = employeeDao.getAll();
+					// 放在請求域中
+					model.addAttribute( attributeName:"emps", employees);
+
+					// 返回到 resources/templates/emp/list.html
+					return "/emp/list";
+				}
+
+				// 添加頁面
+				@GetMapping("/emp")
+				public String toAddPage(Model model){
+					// 查出所有的部門,頁面顯示
+					Collection<Department> departments = departmentDao.getDepartments();
+					model.addAttribute(attributeName:"depts",departments);
+					return "emp/add";
+				}
+
+				// springMVC 自動將請求參數與對象的屬性進行一一綁定，請求參數名字與javaBean物件的屬性名是一樣
+				@PostMapping("/emp")
+				public String addEmp(Employee employee){
+					// 來到員工表列頁面
+
+					System.out.println("新增的員工資訊",employee);
+					employeeDao.save(employee);
+					// redirect:重定向到一個url，"redirect/emps"， / 代表當前項目路徑
+					// forward:轉發向到一個url
+					return "redirect/emps"
+				}
+
+				// 來到修改頁面
+				@GetMapping("/emp/{id}")
+				public String toEditPage(@PathVariable("id") Integer id){
+					// 查出所有的部門,頁面顯示
+					Employee employee employeeDao.get(id);
+					model.addAttribute(attributeName:"emp",employee);
+
+					Collection<Department> departments = departmentDao.getDepartments();
+					model.addAttribute(attributeName:"depts",departments);
+
+					// 回到修改頁面(add是一個修改新增二合一的頁面)
+					return "emp/add";
+				}
+
+				@PutMapping("/emp")
+				public String updateEmp(Employee employee){
+					System.out.println("修改的員工資訊",employee);
+					employeeDao.save(employee);
+
+					// 回到修改頁面(add是一個修改新增二合一的頁面)
+					return "redirect/emps"
+				}
+
+				@DeleteMapping("/emp/{id}")
+				public String updateEmp(@PathVariable("id") Integer id){
+					employeeDao.delete(id);
+
+					return "redirect/emps"
+				}
+
+			}
+	resources/templates
+		list.html
+			<div th:replace="commons/bar::topbar" ></div>
+			<div th:replace="commons/bar::#sidebar(activeUri='emps')" ></div>
+
+			<div>
+				<h2><button>員工添加</button><h2>
+				<table>
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>lastName</th>
+							<th>email</th>
+							<th>gender</th>
+							<th>department</th>
+							<th>birth</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="emp:$emps">
+							<td th:text="${emp.id}"></td>
+							<td>[[${emp.lastName}]]<td>
+							<td th:text="${emp.email}"></td>
+							<td th:text="${emp.gender}==0?'女':'男'"></td>
+							<td th:text="${emp.department.departmentName}"></td>
+							<td th:text="${#dates.format(emp.birth, 'yyyy-MM-dd HH:mm')}"></td>
+							<td>
+								<a th:href="@{/emp}+${emp.id}">編輯</a>
+								<button th:attr="del_uri=@{/emp/}+${emp.id}" type=submit class="deleteBtn">刪除</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<form id="deleteEmpFrom" th:action="@{/emp}+${emp.id}" method="post">
+					<input type="hidden" name="_method" value="delete" th:if="${emp!=null}"/>
+				</from>
+			</div>
+			<script>
+				$(".deleteBtn").click(function(){
+					${#deleteEmpFrom}.attr("action",${this}.attr("del_uri")).submit();
+					return false;
+				})
+			</script>
+
+
+		emp/add.html
+			// 引入公共片段
+			<!-- 模板名會使用 thymeleaf的前後綴配置規則進行解析 -->
+			<div th:replace="dashboard::topbar"></div>
+			<!-- 引入側邊攔 -->
+			<nav th:replace="dashboard::#sidebar"></nav>
+			<!-- 需要區分修改還是新增-->
+			<!-- 新增是 post-->
+			<!-- 修改是 put-->
+			<form th:action="@{/emp}" method="post">
+				<!-- 發送put請求修改員工資料
+					1.springMVC中配置HiddenHttpMethodFilter
+					2.頁面創建一個post表單
+					3.創建一個input項, name="_method; 值就是我們指定的請求方式"
+				-->
+				<input name="_method" type="hidden" value="put" th:if="${emp!=null}"/>
+				<input name="id" type="hidden" th:if="${emp!=null}" th:value="${emp.id}"/>
+				<div>
+					<lable>lastName</lable>
+					<input name="lastName" type="text" th:text="${emp!=null}?${emp.lastName}">
+				</div>
+				<div>
+					<lable>email</lable>
+					<input name="email" type="email" th:text="${emp!=null}?${emp.email}">
+				</div>
+				<div>
+					<lable>gender</lable>
+					<input name="gender" type="radio" value="1" th:checked="${emp!=null}?${emp.gender==1}">
+					<input name="gender" type="radio" value="0" th:checked="${emp!=null}?${emp.gender==0}">
+				</div>
+				<div>
+					<lable>department</lable>
+					<select name="department.id" >
+						<option th:selected="${emp!=null}?${depts.id == emp.department.id}" th:each="dept:${depts}" th:text="dept.departmentName" th:value="${dept.id}">
+					</select>
+				</div>
+				<div>
+					<lable>birth</lable>
+					<input name="birth" type="text" th:value="${emp!=null}?${#dates.format(emp.birth, 'yyyy-MM-dd HH:mm')}">
+				</div>
+				<button type="submit" th:text="${emp!=null}?'修改':'新增'">新增</button>
+			</form>

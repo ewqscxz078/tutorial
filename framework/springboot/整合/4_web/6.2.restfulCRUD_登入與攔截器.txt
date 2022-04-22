@@ -1,0 +1,115 @@
+
+http status code
+	4xx開頭都是client端錯誤
+
+登入
+	resources/templates
+		login.html
+			<form th:action="@{/user/login}" ></form>
+			<p style="color red" th:text="${msg}" th:if="not ${#strings.isEmpty(msg)}"></p>
+			<input name="username">
+			<input name="password">
+
+	1.關閉模板引擎快取
+		src/main/java/
+			application.properties
+				// request 有快取機制，不利開發除錯誤，dev=關閉快取
+				spring.thymeleaf.cache=false
+
+	2.頁面修改完後重新編譯
+		src/main/java/
+			config/MyConfig.java
+				@Configuration
+				public class MyConfig extends WebMvcConfigurationAdapter {
+					// 只需要複寫要不一樣需求的函數即可
+					@Override
+					public void addViewControllers(ViewControllerRegistry registry){
+						// 瀏覽器訪問 /atguigu 請求來到 success
+						registry.addViewController( urlPath: "/atguigu" ).setViewName("success");
+					}
+
+					// 元件在容器找的到
+					@Bean
+					//所有的 WebMvcConfigurationAdapter 組件都會一起作用
+					public WebMvcConfigurationAdapter webMvcConfigurationAdapter(){
+						WebMvcConfigurationAdapter adapter = new WebMvcConfigurationAdapter(){
+							@Override
+							pubilc void addViewControllers(ViewControllerRegistry registry){
+								registry.addViewController( urlPath: "/atguigu" ).setViewName("index");
+								registry.addViewController( urlPath: "/index.html" ).setViewName("index");
+								registry.addViewController( urlPath: "/main.html" ).setViewName("dashboad");
+							}
+						}
+						return adapter
+					}
+				}
+
+			controller/LoginController.java
+
+				@Controller
+				public class LoginController {
+
+					//DeleteMapping
+					//@GetMapping
+					@PostMapping
+					//@RequestMapping(value = "/user/login",method = RequestMethod.POST)
+					public String login(@RequestParam("username") String username,
+										@RequestParam("password") String password,
+										Map<String,Object> map, HttpSession session){
+						if(!StringUtils.isEmpty(username) && "123456".equals(password) ){
+							// 為了防止表單重複提交，可以重新定向到主頁
+							session.setAttribute(name:"loginer",username)
+							return "redirect:/main.html";
+						}else{
+							//登入失敗
+							map.put("msg","用戶密碼錯誤")
+							return "login";
+						}
+
+					}
+				}
+
+	3.攔截器進行登入檢查
+		src/main/java/
+			component/LoginHandlerInterceptor.java
+			//登入檢查
+			public class LoginHandlerInterceptor implements HandlerInterceptor {
+				// 事前處理
+				@Override
+				public boolean preHandle(HttpServletRequest request, HttpServletReponse reponse, Object handler){
+					Object user = request.getSession().getAttribue( name:"loginUser");
+					if(user == null){
+						//未登入，返回登入頁面
+						request.setAttribute( name:"msg",o:"沒有權限請先登入");
+						request.getRequestDispatcher(path:"/index.html").forward(request,reponse);
+						return false;
+					}else{
+						return true;
+					}
+				}
+				@Override
+				public void postHandle(HttpServletRequest request, HttpServletReponse reponse, Object handler, Mode){
+
+				}
+				@Override
+				public void afterCompletion(HttpServletRequest request, HttpServletReponse reponse, Object handler){
+
+				}
+			}
+
+			config/MyConfig.java
+				@Bean
+				public WebMvcConfigurationAdapter webMvcConfigurationAdapter(){
+					WebMvcConfigurationAdapter adapter = new WebMvcConfigurationAdapter(){
+						....
+						@Override
+						public void addInterceptors(InterceptorRegistry registry){
+							registry.addInterceptors(new LoginHandlerInterceptor())
+								.addPathPatterns("/**") // 其下的所有多層目錄檔案
+								.excludePathPatterns("/index.html", "/","user/login");
+						}
+					}
+					return adapter
+				}
+	4.登入後的 dashboad.html
+		<a>[[$session.loginUser]]<a>

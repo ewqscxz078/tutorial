@@ -1,0 +1,68 @@
+https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#web.servlet.spring-mvc.auto-configuration
+
+The auto-configuration adds the following features on top of Spring’s defaults:
+	1.Inclusion of ContentNegotiatingViewResolver and BeanNameViewResolver beans.
+		ViewResolver (視圖解析器:根據方法的回傳值得到視圖對象view,其決定如何渲染(轉發?重定向))
+		如何訂製:我們可以自己給容器中添加一個視圖解析器；自動將其組合進來
+	2.Support for serving static resources, including support for WebJars (covered later in this document).
+	6.Static index.html support.
+
+	3.Automatic registration of Converter, GenericConverter, and Formatter beans.
+		Converter:轉換器 : public String hello(User user):類型轉換使用
+		Formatter: 2017-12-17 > Date
+	4.Support for HttpMessageConverters (covered later in this document).
+		消息轉換器:springmvc 用來轉換http請求響應的; User <-> json
+	5.Automatic registration of MessageCodesResolver (covered later in this document).
+		定義錯誤代碼生成規則
+	7.Automatic use of a ConfigurableWebBindingInitializer bean (covered later in this document).
+		請求數據 ==> JAVAbean
+
+
+擴展SpringMVC
+	原本
+		<mvc:view-controller path="/hello" view-name="success" />
+		<mvc:intercepters>
+			<mvc:intercepter>
+				<mvc:mapping path="/hello" />
+				<bean></bean>
+			</mvc:intercepter>
+		</mvc:intercepters>
+		<mvc:default-servlet-handler/>
+	延伸既有的默認配置，則編寫一個配置類(@Configuration)，是 WebMvcConfigurationAdapter 類型，不能標註@EnableWebMVC
+		@Configuration
+		public class MyConfig extends WebMvcConfigurationAdapter {
+			// 只需要複寫要不一樣需求的函數即可
+			@Override
+			public void addViewControllers(ViewControllerRegistry registry){
+				// 瀏覽器訪問 /atguigu 請求來到 success
+				registry.addViewController( urlPath: "/atguigu" ).setViewName("success");
+			}
+		}
+	原理
+		1.WebMvcAutoConfiguration 是 SpringMVC 自動配置類
+		2.在做其他其他配置時會導入；@Import(EnableWebMvcConfiguration.class)
+		3.所有容器中的 WebMvcConfigurer 都會一起作用
+		4.我們的配置類也會作用
+
+全面接管SpringMVC
+	不使用默認 SpringMVC 配置，宣告 @EnableWebMvc 即可
+	原理
+		1.EnableWebMvc 的核心
+			@Import(DelegationWebMvcConfiguration.class)
+			public @Interface EnableWebMvc {
+		2.
+			@Configuration
+			public class DelegationWebMvcConfiguration extends WebMvcConfigurationSupport {
+		3.
+			....
+			@ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
+			....
+			public class WebMvcAutoConfiguration {
+		4.@EnableWebMvc 將 WebMvcConfigurationSupport 導入組件進來，只是SpringMVC 只是基本功能
+
+如何修改 SpringBoot 的默認配置
+	模式
+		1. SpringBoot在自動配置很多組建的時候，先看容器中有沒有用戶配置的(@Bean、@Component)如果有就用戶配置的，如果沒有，才自動配置;
+			如果有些組件可以有多個將用戶配置的和自己默認的組合
+
+		2. 在SpringBoot中會有非常多的 xxxConfigurer 幫助我們進行擴展配置

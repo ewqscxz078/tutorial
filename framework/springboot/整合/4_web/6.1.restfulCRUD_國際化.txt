@@ -1,0 +1,85 @@
+MessageSourceAutoConfiguration
+
+以前spring
+	1.編寫國際化編寫文件
+	2.resourceBuundleMessageSource管理國際化資源文件
+	3.在頁面 fmt:message 取出國際化內容
+
+步驟
+	1.編寫國際化配置文件,抽取頁面需要顯示的國際化消息
+		resource/i18n/
+			透過IDE方便修改多個檔案
+				// 新增屬性
+				// login.tip
+				// login.username
+				// login.password
+					login.properties	// 預設
+						請登入
+						用戶名
+						密碼
+					login_zh_TW.properties	// 中文
+						請登入
+						用戶名
+						密碼
+					login_en_US.properties	// 英文
+						please login
+						username
+						password
+	2.springboot 以自動配置好的國際化組件
+		@ConfigurationProperties(prefix = "spring.messages")
+		public class MessageSourceAutoConfiguration {
+
+		指定國際化檔案位置
+		application.properties
+			spring.messages.basename=i18n.login
+
+	3.頁面獲取國際化的值
+
+		classpath:/templates/login.html
+			<!-- 引入提供提示-->
+			<html xmlns:th="http://www.thymeleaf.org">
+				<head>
+					<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.css}" rel=stylesheet></link>
+					<link href="asserts/css/signin.css" th:href="@{/asserts/css/signin.css}" rel=stylesheet></link>
+				</head>
+				<body>
+					<h1>成功<h1>
+					<div th:text="#{login.tip}">請登入</div>
+				</body>
+			</html>
+
+	4. IDE file encoding => UTF-8 for properties
+
+	5. 瀏覽器訪問: 依據語系，若無對應語系則是預設
+
+	6. 連結帶國際化
+		<a th:href="@{/index.html(l='zh_TW')}">中文</a>
+		<a th:href="@{/index.html(l='en_US')}">English</a>
+
+
+
+		src/main/java/
+			component/MyLocaleResolver.java
+				自訂國際化url 解析
+					public class MyLocaleResolver implements LocaleResolver{
+						@Override
+						public Locale resolverLocale(HttpServletRequest request){
+							String l = request.getParameter( name:"1");
+							Locale locale = null;
+							if(StringUtils.isEmpty(l)){
+								String[] split = l.split( req: "_");
+								new Locale( split[1], split[0] );
+							}
+						}
+					}
+		src/main/java/
+			config/MyMvcConfig.java
+				@Bean
+				public LocaleResolver localeResolver(){
+					return new MyLocaleResolver();
+				}
+
+	7. 點擊連結切換國際化
+原理
+	國際化 locale (區域信息對象)；localeResolver in WebMvcAutoConfiguration 獲取區域信息對象
+	預設從 request 取得 locale

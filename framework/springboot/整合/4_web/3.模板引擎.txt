@@ -1,0 +1,32 @@
+Thymeleaf 官網
+	https://www.thymeleaf.org/
+
+理解目前主要前端框架 js
+	https://betterprojectsfaster.com/guide/java-full-stack-index-2021-11-fe-web/
+	https://read01.com/6BaxO38.html#.YlhofehByUk
+		React(facebook)
+		Angular(google)
+		Vue.js (google 輕量化框架)
+
+模板引擎
+	JSP、Velocity、Freemarker、Thymeleaf
+
+springboot 推薦的Thymeleaf
+語法簡單、功能更強大
+
+
+use Thymeleaf 3
+
+pom.xml
+
+	<properties>
+		<!-- Thymeleaf 3主程式搭配 layout 2 -->
+		<!-- Thymeleaf 2主程式搭配 layout 1 -->
+		<thymeleaf.version>3.0.2.RELEASE</thymeleaf.version>
+		<thymeleaf-layout-dialect.version>3.0.2.RELEASE</thymeleaf-layout-dialect.version>
+	</properties>
+
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-thymeleaf</artifactId>
+	</dependency>

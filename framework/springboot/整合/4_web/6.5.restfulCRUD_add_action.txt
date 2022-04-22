@@ -1,0 +1,90 @@
+
+添加員工
+	src/main/java/
+		controller/EmployeeController.java
+			@Controller
+			public class EmployeeController {
+
+				@Autowired
+				EmployeeDao employeeDao
+
+				@Autowired
+				DepartmentDao departmentDao
+
+				@GetMapping("/emps")
+				public String list(Mode model){
+
+					Collection<Employee> employees = employeeDao.getAll();
+					// 放在請求域中
+					model.addAttribute( attributeName:"emps", employees);
+
+					// 返回到 resources/templates/emp/list.html
+					return "/emp/list";
+				}
+
+				// 添加頁面
+				@GetMapping("/emp")
+				public String toAddPage(Model model){
+					// 查出所有的部門,頁面顯示
+					Collection<Department> departments = departmentDao.getDepartments();
+					model.addAttribute(attributeName:"depts",departments);
+					return "emp/add";
+				}
+
+				// springMVC 自動將請求參數與對象的屬性進行一一綁定，請求參數名字與javaBean物件的屬性名是一樣
+				@PostMapping("/emp")
+				public String addEmp(Employee employee){
+					// 來到員工表列頁面
+
+					System.out.println("新增的員工資訊",employee);
+					employeeDao.save(employee);
+					// redirect:重定向到一個url，"redirect/emps"， / 代表當前項目路徑
+					// forward:轉發向到一個url
+					return "redirect/emps"
+				}
+			}
+	resources/templates
+		emp/add.html
+			// 引入公共片段
+			<!-- 模板名會使用 thymeleaf的前後綴配置規則進行解析 -->
+			<div th:replace="dashboard::topbar"></div>
+			<!-- 引入側邊攔 -->
+			<nav th:replace="dashboard::#sidebar"></nav>
+			<form th:action="@{/emp}" method="post">
+				<div>
+					<lable>lastName</lable>
+					<input name="lastName" type="text">
+				</div>
+				<div>
+					<lable>email</lable>
+					<input name="email" type="email">
+				</div>
+				<div>
+					<lable>gender</lable>
+					<input name="gender" type="radio" value="1">
+					<input name="gender" type="radio" value="0">
+				</div>
+				<div>
+					<lable>department</lable>
+					<select name="department.id" >
+						<option th:each="dept:${depts}" th:text="dept.departmentName" th:value="${dept.id}">
+					</select>
+				</div>
+				<div>
+					<lable>birth</lable>
+					<input name="birth" type="text">
+				</div>
+				<button type="submit">新增</button>
+			</form>
+
+	提交的數據格是不對:生日:日期;
+		2017-12-12;
+		2017/12/12;
+		2017.12.12;
+		日期的格式化;SpringMVC將頁面提交的值需要轉換為指定的類型
+		類型轉換，格式化
+		默認日期是按照/的方式
+
+	src/main/java/
+		application.properties
+			spring.mvc.date-format=yyyy-MM-dd
