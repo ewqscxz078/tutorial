@@ -1,0 +1,3 @@
+
+查看 disk 切割 patition
+	lsblk -f

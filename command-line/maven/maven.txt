@@ -195,6 +195,14 @@ This command build the project, runs all the test cases and run any checks on th
 
 	This command tells maven to run parallel builds using the specified thread count. It’s useful in multiple module projects where modules can be built in parallel. It can reduce the build time of the project.
 		mvn -T 4 package
+
+================================================================================
+========================= 常用指令 範例使用 ====================================
+================================================================================
+指定 pom.xml 執行某個class 單元測試
+	mvn test -f "${projectpath}/pom.xml" --settings "${setting.xml filename and path}" -Dtest=${單元測試class name}
+		範例: mvn test -f "/home/ccuser/jenkins/workspace/greenc108/b0-stats-dependency/aw-app/MILITARY/sris3-aw-military-departure-web/pom.xml" --settings "/home/ccuser/.m2/settings-master.xml" -Dtest=ReportToolServiceTest -DBASEDIR="/home/ccuser/jenkins/workspace/greenc108/b0-stats-dependency/aw-app/BASEDIR"
+
 ================================================================================
 ========================= package ==============================================
 ================================================================================

@@ -1,0 +1,31 @@
+LDAP(Lightweight Directory Access Protocol)
+	site:www.itread01.com LDAP基礎
+		https://www.itread01.com/p/574126.html
+
+		https://www.itread01.com/content/1542233523.html
+		https://www.itread01.com/content/1542316327.html
+		https://www.itread01.com/content/1542236526.html
+	https://www.twblogs.net/a/5c0a19d3bd9eee6fb21306ee
+	https://www.openldap.org/doc/admin24/slapdconf2.html
+objectclass
+	LDAP對象類
+Entry
+	entry可以被稱爲條目，一個entry就是一條記錄，是LDAP中一個基本的存儲單元
+DN(Distinguished Name)
+	LDAP中entry的唯一辨別名
+LDAP Search filter
+	使用filter對LDAP進行搜索。
+dc(Domain Component)
+	域名
+Base DN
+	一條Base DN可以是“dc=163,dc=com”，也可以是“dc=People,dc=XX,dc=XX”。
+uid
+	User ID 用戶id
+ou(Organization Unit)
+	組織單位，類似於Linux文件系統中的字目錄
+cn(Common Name)
+	類似於公共名稱
+sn
+	真實名稱
+rdn
+	相對辨別名，類似於文件系統中的相對路徑
