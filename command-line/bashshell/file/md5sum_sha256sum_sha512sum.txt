@@ -1,0 +1,6 @@
+1.驗證檔案下載是否跟遠端一致
+2.確認兩邊檔案是否一致
+
+md5sum <file>
+sha256sum <file>
+sha512sum <file>

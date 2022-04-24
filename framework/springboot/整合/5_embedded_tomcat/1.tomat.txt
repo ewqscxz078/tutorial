@@ -1,0 +1,37 @@
+https://www.baeldung.com/spring-boot-embedded-tomcat-logs
+
+Embedded Tomcat stores two types of logs:
+	1.Access logs
+		By default, the access logs aren't enabled.
+
+		application.properties:
+			server.tomcat.accesslog.enabled=true
+		VM arguments
+			java -jar -Dserver.tomcat.basedir=tomcat -Dserver.tomcat.accesslog.enabled=true app.jar
+
+		default Format
+				0:0:0:0:0:0:0:1 - - [13/May/2019:23:14:51 +0530] "GET /greetings/Harry HTTP/1.1" 200 27
+				0:0:0:0:0:0:0:1 - - [13/May/2019:23:17:23 +0530] "GET /greetings/Harry HTTP/1.1" 200 27
+
+			%h %l %u %t \"%r\" %>s %b
+				%h – the client IP which has sent the request, 0:0:0:0:0:0:0:1 in this case
+				%l – the identity of the user
+				%u – the user name determined by HTTP authentication
+				%t – the time the request was received
+				%r – the request line from the client, GET /greetings/Harry HTTP/1.1 in this case
+				%>s – the status code sent from the server to the client, like 200 here
+				%b – the size of the response to the client, or 27 for these requests
+		Customizing Access Logs
+			application.properties.
+				server.tomcat.accesslog.suffix=.log
+				server.tomcat.accesslog.prefix=access_log
+				server.tomcat.accesslog.file-date-format=.yyyy-MM-dd
+
+				server.tomcat.basedir=tomcat
+				server.tomcat.accesslog.directory=logs
+				server.tomcat.accesslog.pattern=common
+
+	2.Internal server logs
+		application.properties:
+			logging.level.org.apache.tomcat=DEBUG
+			logging.level.org.apache.catalina=DEBUG

@@ -118,7 +118,7 @@ local update origin branch 資訊
 查看 auth commit 的 log
 	git log --author='[author name]'
 
-簡化顯示
+簡化顯示清單 with sha256Id、commit message
 	git log --oneline
 
 查看兩個commit或tags之間

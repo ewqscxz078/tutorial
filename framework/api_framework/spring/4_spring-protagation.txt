@@ -1,0 +1,13 @@
+https://iter01.com/521558.html
+
+spring protagation 交易傳播方式，呼叫方與被呼叫方如何算交易
+
+
+定義	說明
+PROPAGATION_REQUIRED		如果當前沒有事務，就新建一個事務，如果已經存在一個事務，則加入到這個事務中。這是最常見的選擇。
+PROPAGATION_SUPPORTS		支援當前事務，如果當前沒有事務，就以非事務方式執行。
+PROPAGATION_MANDATORY		表示該方法必須在事務中執行，如果當前事務不存在，則會丟擲一個異常。
+PROPAGATION_REQUIRED_NEW	表示當前方法必須執行在它自己的事務中。一個新的事務將被啟動。如果存在當前事務，在該方法執行期間，當前事務會被掛起。
+PROPAGATION_NOT_SUPPORTED	表示該方法不應該執行在事務中。如果當前存在事務，就把當前事務掛起。
+PROPAGATION_NEVER			表示當前方法不應該執行在事務上下文中。如果當前正有一個事務在執行，則會丟擲異常。
+PROPAGATION_NESTED			如果當前存在事務，則在巢狀事務內執行。如果當前沒有事務，則執行與PROPAGATION_REQUIRED類似的操作。
