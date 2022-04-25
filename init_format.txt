@@ -2,6 +2,7 @@
 	git status 中文路徑fix
 		git config --global core.quotepath false
 
+	// https://blog.csdn.net/qq_43373608/article/details/104587953
 	git bash 執行 java 或 keytools 指令後出現亂碼
 		window 環境變數增加
 			JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
