@@ -1,0 +1,11 @@
+http://duckfly-tw.blogspot.com/2021/05/itextltvlong-term-validation.html
+	LTV(long-term Validation) by crl / ocsp
+
+http://ijecorp.blogspot.com/2016/01/ocsp-crl.html
+
+crl(Certificate Revocation List ) 憑證撤銷清單
+oscp( Online Certificate Status Protocol )線上憑證狀態協定
+
+free tsa list
+	https://kbpdfstudio.qoppa.com/list-of-timestamp-servers-for-signing-pdf/
+		tsa(time stamping authority ) 用來證明簽名的時間公信力

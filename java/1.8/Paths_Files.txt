@@ -1,7 +1,15 @@
-https://stackoverflow.com/questions/189094/how-to-scan-a-folder-in-java
-https://docs.oracle.com/javase/tutorial/essential/io/walk.html
-https://jakubstas.com/paths_in_nio_2/#.Yag_UNBBw5v
-
+nio2 path file
+	https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/282/#outline__1_1
+	https://stackoverflow.com/questions/189094/how-to-scan-a-folder-in-java
+	https://docs.oracle.com/javase/tutorial/essential/io/walk.html
+	https://docs.oracle.com/javase/tutorial/displayCode.html?code=https://docs.oracle.com/javase/tutorial/essential/io/examples/Copy.java
+	https://jakubstas.com/paths_in_nio_2/#.Yag_UNBBw5v
+	https://www.baeldung.com/java-io-vs-nio
+	https://ithelp.ithome.com.tw/articles/10102562
+	https://programdoubledragon.blogspot.com/2018/12/java-nio2.html
 Files.
 
 Path path = Paths.get(...)
+
+zip a file
+	https://mkyong.com/java/how-to-compress-files-in-zip-format/

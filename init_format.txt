@@ -1,5 +1,8 @@
 (once)
-	git status 中文路徑fix
+	git config --global user.name "你的帳號"
+	git config --global user.email "你的信箱"
+
+	git status 中文路徑 fix
 		git config --global core.quotepath false
 
 	// https://blog.csdn.net/qq_43373608/article/details/104587953
