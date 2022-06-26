@@ -92,4 +92,89 @@
 				4xx.html
 		3.以上都沒有，就是默認的springBoot 錯誤頁面
 	如何自訂錯誤json頁面
-
+		第一種	// 沒有自適應效果，瀏覽器都是返回json
+			src/main/java/
+				exception/UserNotExistException.java
+					public class UserNotExistException extends RuntimeException {
+						public UserNotExistException{
+							super("用戶不存在");
+						}
+					}
+				controller/helloController.java
+					@ResponseBody
+					@RequestMapping("/hello")
+					public String hello(@RequestParam("user") String username){
+						if(user.equals("aaa")){
+							throws new UserNotExistException();
+						}
+						return "hello world";
+					}
+				瀏覽器訪問: localhost:8080/crud/hello?user=1111
+					hello world
+					
+				controller/MyExceptionHandler.java
+					@ControllerAdvice
+					public class MyExceptionHandler{
+					
+						@ResponseBody
+						@ExceptionHandler(UserNotExistException.class)
+						public Map<String,Object> handleException(Exception e){
+							Map<String,Object> map = new HashMap<>();
+							map.put("code","user.context");
+							map.put("message",e.getMessage());
+							return map;
+						}
+					}
+		第二種	// 轉頁到error進行自適應效果
+				controller/MyExceptionHandler.java
+					
+					@ControllerAdvice
+					public class MyExceptionHandler{
+					
+						@ExceptionHandler(UserNotExistException.class)
+						public String handleException(Exception e, HttpServletRequest request){
+							Map<String,Object> map = new HashMap<>();
+							// 傳入當前的錯誤狀態碼 4xx 5xx，否則就不會進入到錯誤頁面
+							request.setAttribute( name: "java.servlet.error.status_code", o:"400");
+							map.put("code","user.context");
+							map.put("message",e.getMessage());
+							return "forward:/error";
+						}
+					}
+		第三種	// 將自定義的資訊帶出去
+			出現錯誤以後，會來到/error請求，會被 BasicErrorController 處理，回應出去可以獲取的數據是由 getErrorAttributes 得到的(是 AbstractErrorController (ErrorController)規定的方法);
+			1.完全編寫一個 ErrorController 實現類[或者繼承 AbstractErrorController ]，放在容器中
+			2.頁面上能用的數據，或著 json 返回能用的數據都是通過 errorAttributes.getErrorAttributes 得到;
+				容器中 DefaultErrorAttributes 默認進行資訊處理
+				src/main/java/
+					controller/MyExceptionHandler.java
+						
+						@ControllerAdvice
+						public class MyExceptionHandler{
+						
+							@ExceptionHandler(UserNotExistException.class)
+							public String handleException(Exception e, HttpServletRequest request){
+								Map<String,Object> map = new HashMap<>();
+								// 傳入當前的錯誤狀態碼 4xx 5xx，否則就不會進入到錯誤頁面
+								request.setAttribute( name: "java.servlet.error.status_code", o:"400");
+								map.put("code","user.context");
+								map.put("message",e.getMessage());
+								
+								requesst.setAttribute( name:"ext",map);
+								
+								return "forward:/error";
+							}
+						}
+					component/MyErrorAttributes.java
+						@Component
+						public class MyErrorAttributes extends DefaultErrorAttributes {
+							@Override
+							public Map<String,Object> getErrorAttributes(RequestAttributes requestAttributes, boolean includedStack){
+								Map<String,Object> map = super.getErrorAttributes(requestAttributes,includedStack);
+								map.put("company","xxx")
+								Map<String,Object> ext = (Map<String,Object>)requestAttributes.getAttribute( name:"ext", scope:0);
+								map.put("ext", ext);
+								
+								return map;
+							}
+						}

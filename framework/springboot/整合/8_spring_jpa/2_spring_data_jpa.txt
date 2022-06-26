@@ -1,0 +1,83 @@
+1.引入 spring-boot-starter-data-jpa
+2.配置文件打印sql 語句
+3.創建 Entity 標註 JPA 註解
+4.創建 Repository 接口繼承 JpaRepository
+5.測試方法
+
+
+Repository
+	RevisionRepository
+	CrudRepository
+		PagingAndSortingRepository
+			JpaRepository
+
+1.application.yml
+	撰寫 dataSource 資料庫來源設定
+	spring:
+	  dataSource:
+	    url: jdbc:mysql://localhost/jpa
+		username:root
+		password:123456
+		driver-class-name: com.mysql.jdbc.Driver
+	
+	
+2.編寫一個實體類(bean)和資料表對應進行映射
+	src/main/java/.../entity/
+
+		@Entity // 告訴JPA這是一個實體類
+		@Table(name= "tbl_user") // 指定對應資料庫的 table name，若省略默認就是user
+		public class user{
+		
+			@Id // 這是一個主鍵
+			@GeneratedValue(strategy = GeneratedType.IDENTITY) // 自增主鍵
+			private Integer id;
+			
+			@Column(name = "last_name", length = 50) // 這是和資料表對應的一個列
+			private String lastName;
+			
+			@Column // 省略默認就是屬性名
+			private String email
+		}
+
+3.編寫一個 DAO 接口來操作實體類對應的資料表(Repository)
+	src/main/java/.../repository/
+		繼承 JpaRepository來完成資料庫的操作
+		private interface UserRepository extends JpaRepository<User,Integer>{
+			
+		}
+		
+4.基本配置
+	application.yml
+		spring:
+		  jpa:
+			hibernate:
+			  # 更新或創建資料表
+			  ddl-auto: update
+			#console顯示 sql  
+			show-sql: true
+			
+5.
+	src/main/java/.../controller/
+		
+		@RestController
+		public class UserController {
+			@Autowired
+			UserRepository userRepository;
+			
+			@GetMapping("/user/{id}")
+			public User getUser(@PathVariable("id") Integer id){
+				User user = userRepository.findOne(id);
+				return user;
+			}
+			@GetMapping("/user")
+			public User insertUser(User user){
+				User user = userRepository.save(user);
+				return user;
+			}
+		}
+6. browser test
+	http://localhost:8080/user/1
+	
+	http://localhost:8080/user?lastName=lisi&email=aa
+		
+		

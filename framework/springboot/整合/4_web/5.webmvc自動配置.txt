@@ -66,3 +66,5 @@ The auto-configuration adds the following features on top of Spring’s defaults
 			如果有些組件可以有多個將用戶配置的和自己默認的組合
 
 		2. 在SpringBoot中會有非常多的 xxxConfigurer 幫助我們進行擴展配置
+		
+		3. 在SpringBoot中會有非常多的 xxxCustomizer 幫助我們進行定制配置

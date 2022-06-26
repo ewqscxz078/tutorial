@@ -56,8 +56,6 @@ MessageSourceAutoConfiguration
 		<a th:href="@{/index.html(l='zh_TW')}">中文</a>
 		<a th:href="@{/index.html(l='en_US')}">English</a>
 
-
-
 		src/main/java/
 			component/MyLocaleResolver.java
 				自訂國際化url 解析

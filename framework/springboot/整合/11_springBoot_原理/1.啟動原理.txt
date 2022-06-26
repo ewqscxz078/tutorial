@@ -1,0 +1,88 @@
+幾個重要複寫函數
+	配置在 META-INF/spring.factories
+		ApplicationContextInitializer
+		SpringApplicationRunListener
+	只需要放在ioc容器中
+		ApplicationRunner
+		CommandLineRunner
+	
+啟動流程:
+	1.建立 SpringApplication 實例
+		SpringApplication.java
+			public static ConfigurableApplicationContext run(Object[] sources, String[] args){
+				return new SpringApplication(sources).run(args);
+			}
+	
+		initialize(sources){
+			// 保存主配置類
+			if(sources != null && sources.length > 0){
+				this.sources.addAll(Arrays.asList<sources>)
+			}
+			// 判斷當前是否為web應用
+			this.webEnvironment = deduceWebEnvironment();
+			//從類路徑下找到 META-INF/spring.factories 配置的所有 ApplicationContextInitializer;然後保存起來
+			setInitializer((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+			//從類路徑下找到 META-INF/spring.factories 配置的所有 ApplicationListener;然後保存起來
+			setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+			// 從多個配置類中找到有 main 方法的主配置類
+			this.mainApplicationClass = deduceMainEnvironment();
+		}
+	
+	2.運行 run
+		public ConfigurableApplicationContext run(String... args){
+			StopWatch stopWatch = new StopWatch();
+			stopWatch.start();
+			ConfigurableApplicationContext context = null;
+			FailureAnalyzers analyzers = null;
+			configureHeadlessProperty();
+			
+			// 從類路徑下找到 META-INF/spring.factories 配置的所有 SpringApplicationRunListener;然後保存起來
+			SpringApplicationRunListener listeners = getRunListeners(args);
+			
+			// 呼叫所有獲取 SpringApplicationRunListener.starting()方法
+			listeners.starting();
+			try{
+				// 封裝命令行參數
+				ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+				
+				// 準備環境
+				ConfigurableEnvironment environment = prepareEnvironment(listeners,applicationArguments);
+				// 創建環境完成後回調 SpringApplicationRunListener.environmentPrepared(); 表示環境準備完成
+				
+				
+				Banner printedBanner = printBanner(environment);
+				
+				// 創建 ApplicationContext ;決定創建web的ioc還是普通的ioc
+				context = createApplicationContext();
+				
+				analyzers = new FailureAnalyzers(context);
+				
+				// 準備上下文環境;將 environment保存到ioc中;而且 applyInitializers()
+				// applyInitializers(); 回調之前保存的所有的 ApplicationContextInitializer的 initialize方法
+				// 回調所有的SpringApplicationRunListener的 contextPrepared();
+				prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+				// prepareContext運行完成以後回調所有的SpringApplicationRunListener的 contextLoaded();
+				
+				// 刷新容器，ioc容器初始化(如果是web應用還會創建嵌入式的tomcat)
+				// 掃描、創建、加載所有組件的地方(配置類、組件、自動配置)
+				refreshContext(context);
+				
+				// 從IOC容器中獲取所有的ApplicationRunner和CommandLineRunner進行回調
+				// ApplicationListener先回調,CommandLineRunner再回調
+				afterRefresh(context,applicationArguments);
+				
+				// 所有SpringApplicationRunListener回調finished方法
+				listeners.finished(context, null);
+				stopWatch.stop();
+				if(this.logStartupInfo){
+					new StartupInfoLogger(this.mainApplicationClass)
+						.logStarted(getApplicationLog(), stopWatch);
+				}
+				
+				return context;
+			} catch (Throwable ex){
+				handleRunFailure(context,listeners,analyzers,ex);
+				throw new IllegalStateException(ex);
+			}
+			
+		}

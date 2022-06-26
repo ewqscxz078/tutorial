@@ -1,0 +1,7 @@
+dbcp: from apache，spring專案推薦
+    commons-dbcp-*.jar
+    commons-pool-*.jar
+
+c3po: from Hibernate
+
+druid: from 中國阿里巴巴

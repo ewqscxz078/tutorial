@@ -1,0 +1,19 @@
+什麼時候創建嵌入式的Servlet容器工廠?什麼時候獲取嵌入式的Servlet容器並啟動?
+
+獲取嵌入式的Servlet容器工廠
+	1.springboot應用啟動執行run方法
+	2.refreshContext(context);SpringBoot刷新IOC容器 [創建 IOC 物件，並初始化容器，創建容器中的每一個元件]
+		如果是 WEB : AnnotationConfigEmbeddedWebApplicationContext；否則 AnnotationConfigApplicationContext
+	3.refresh(context); 更新剛才創建好的ioc容器
+	4.onRefresh(); web的ioc容器重寫了 onRefresh 方法
+	5.webioc容器會創建嵌入式的 Servlet 容器；createEmbeddedServletContainer();
+	6.獲取嵌入式的servlet容器工廠
+		EmabeddedServletContainerFactory containerFactory = getEmabeddedServletContainerFactory()
+		從ioc容器中獲取 EmabeddedServletContainerFactory 元件，後制處理器一個是這個對象，就獲取所有定制器來先訂製servlet容器的相關配置
+	7.使用容器工廠獲取嵌入式的servlet容器:
+		this.embeddedServletContainer = containerFactory.getEmabeddedServletContainer(getSelfInitializer());
+	8.嵌入式的servlet容器創建對象並啟動servlet容器:
+		先啟動嵌入式的servlet容器，再將ioc容器中剩下沒有創建的對象獲取出來
+		
+		ioc容器啟動創建嵌入式的servlet容器
+	

@@ -1,0 +1,28 @@
+使用嵌入式的servlet容器
+	優點:簡單、攜便
+	缺點:默認不支持jsp、優化客製複雜(使用定製器[serverProperties、自訂義EmbeddedServletContainerCustomizer]、自己編寫嵌入式servlet容器的創建工廠[EmbeddedServletContainerFactory])
+	
+使用外部的servlet容器
+	應用war包的方式打包
+	
+		1.pom.xml打包成 war
+			pom.xml
+				<package>war</package>
+			//將嵌入式的tomcat 改成 <provided>
+		2.嵌入式的 tomcat scope 改為 provided
+			pom.xml
+				<dependency>
+					<group>org.springframework.boot</group>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+					<scope>provided</scope>
+				</dependency>
+		
+		3.必須有一個 SpringBootServletInitializer 的子類，並複寫 configure 呼叫打包 war
+			src/main/java/.../ServletInitializer.java 
+				public class ServletInitializer extends SpringBootServletInitializer{
+					@Override
+					protected SpringApplicationBuilder configure(SpringApplicationBuilder application){
+						return application.sources(你的springboot主程式.class);
+					}
+				}
+		4.啟動服務器就可以使用
