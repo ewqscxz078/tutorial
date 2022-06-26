@@ -19,22 +19,22 @@ Repository
 		username:root
 		password:123456
 		driver-class-name: com.mysql.jdbc.Driver
-	
-	
+
+
 2.編寫一個實體類(bean)和資料表對應進行映射
 	src/main/java/.../entity/
 
 		@Entity // 告訴JPA這是一個實體類
 		@Table(name= "tbl_user") // 指定對應資料庫的 table name，若省略默認就是user
 		public class user{
-		
+
 			@Id // 這是一個主鍵
 			@GeneratedValue(strategy = GeneratedType.IDENTITY) // 自增主鍵
 			private Integer id;
-			
+
 			@Column(name = "last_name", length = 50) // 這是和資料表對應的一個列
 			private String lastName;
-			
+
 			@Column // 省略默認就是屬性名
 			private String email
 		}
@@ -43,9 +43,9 @@ Repository
 	src/main/java/.../repository/
 		繼承 JpaRepository來完成資料庫的操作
 		private interface UserRepository extends JpaRepository<User,Integer>{
-			
+
 		}
-		
+
 4.基本配置
 	application.yml
 		spring:
@@ -53,17 +53,17 @@ Repository
 			hibernate:
 			  # 更新或創建資料表
 			  ddl-auto: update
-			#console顯示 sql  
+			#console顯示 sql
 			show-sql: true
-			
+
 5.
 	src/main/java/.../controller/
-		
+
 		@RestController
 		public class UserController {
 			@Autowired
 			UserRepository userRepository;
-			
+
 			@GetMapping("/user/{id}")
 			public User getUser(@PathVariable("id") Integer id){
 				User user = userRepository.findOne(id);
@@ -77,7 +77,6 @@ Repository
 		}
 6. browser test
 	http://localhost:8080/user/1
-	
+
 	http://localhost:8080/user?lastName=lisi&email=aa
-		
-		
+

@@ -13,7 +13,7 @@ application.yml
 			url: ${your_url}
 			driver-class-name: com.mysql.jdbc.Driver
 
-src/test/java/		
+src/test/java/
 	@RunWith(SpringRunner.class)
 	@SpringBootTest
 	public class SpringBootDataJdbcApplicationTest {
@@ -23,17 +23,17 @@ src/test/java/
 		@Test
 		public void testContextLoads() throws SQLException {
 			System.out.println(datasource.getClass());
-			
+
 			Connection connection = datasource.getConection();
 			System.out.println(connection);
 			connection.close();
 		}
 	}
-	
+
 效果
 	默認是用 org.apache.tomcat.jdbc.pool.DataSource 作為數據來源
 	數據源的相關配置都在 DataSourceProperties 裡面
-	
+
 自動配置
 	org.springframework.boot.autoconfigure.jdbc:
 		1.參考 DataSourceConfiguration，根據配置資料來源，默認使用 Tomcat 連接池；可以使用 spring.datasource.type 指定自訂義的數據源類型
@@ -53,15 +53,15 @@ src/test/java/
 					可以指定位置
 						schema:
 							-classpath: xxxx.sql
-							
+
 				2.runDataScripts()；運行 insert sql 語句
 					默認只需要將文件命名為: data-*.sql
-		5.操作數據庫:自動配置了 jdbcTemplate 
+		5.操作數據庫:自動配置了 jdbcTemplate
 			@Controller
 			public class HelloController {
 				@Autowired
 				JdbcTemplate jdbcTemplate;
-				
+
 				@ResponseBody
 				@GetMapping("/query")
 				public Map<String, Object> map(){
@@ -69,4 +69,3 @@ src/test/java/
 					return list.get(0);
 				}
 			}
-		

@@ -2,21 +2,21 @@
 	提供統一API 來對數據訪問層進行操作；主要是 Spring Data Commons 實現
 	Spring Data Commons 於關聯式或非關聯式資料訪問技術基於spring提供統一標準
 	標準包含了 CRUD、排序分頁相關操作，預設使用hibernate
-	
+
 統一的 Repository 介面
 	Repository<T,ID extends Serializable> 統一接口
 	RevisionRepository<T,ID extends Serializable, N extends Number & Comparable<N>> 基於樂觀鎖
 	CrudRepository<T,ID extends Serializable> 基於 CRUD 操作
 	PagingAndSortingRepository<T,ID extends Serializable> 基本 CRUD 及分頁
-	
+
 提供資料訪問模板類 xxxxTemplate
 	如 MongoTemplate、RedisTemplate
-	
+
 JPA 與 Spring Data
 	1.JpaRepository 基本功能
 		編寫介面繼承 JpaRepository 既有crud 及分頁等基本功能
 	2.定義符合規範的方法命名
-	
+
 	3.@Query 自訂查詢，訂製查詢SQL
-	
+
 	4.Specifications 查詢 (Spring Data JPA 支持 JAP2.0 的 Criteria 查詢)

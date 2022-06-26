@@ -111,11 +111,11 @@
 					}
 				瀏覽器訪問: localhost:8080/crud/hello?user=1111
 					hello world
-					
+
 				controller/MyExceptionHandler.java
 					@ControllerAdvice
 					public class MyExceptionHandler{
-					
+
 						@ResponseBody
 						@ExceptionHandler(UserNotExistException.class)
 						public Map<String,Object> handleException(Exception e){
@@ -127,10 +127,10 @@
 					}
 		第二種	// 轉頁到error進行自適應效果
 				controller/MyExceptionHandler.java
-					
+
 					@ControllerAdvice
 					public class MyExceptionHandler{
-					
+
 						@ExceptionHandler(UserNotExistException.class)
 						public String handleException(Exception e, HttpServletRequest request){
 							Map<String,Object> map = new HashMap<>();
@@ -148,10 +148,10 @@
 				容器中 DefaultErrorAttributes 默認進行資訊處理
 				src/main/java/
 					controller/MyExceptionHandler.java
-						
+
 						@ControllerAdvice
 						public class MyExceptionHandler{
-						
+
 							@ExceptionHandler(UserNotExistException.class)
 							public String handleException(Exception e, HttpServletRequest request){
 								Map<String,Object> map = new HashMap<>();
@@ -159,9 +159,9 @@
 								request.setAttribute( name: "java.servlet.error.status_code", o:"400");
 								map.put("code","user.context");
 								map.put("message",e.getMessage());
-								
+
 								requesst.setAttribute( name:"ext",map);
-								
+
 								return "forward:/error";
 							}
 						}
@@ -174,7 +174,7 @@
 								map.put("company","xxx")
 								Map<String,Object> ext = (Map<String,Object>)requestAttributes.getAttribute( name:"ext", scope:0);
 								map.put("ext", ext);
-								
+
 								return map;
 							}
 						}

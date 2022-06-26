@@ -14,6 +14,5 @@
 		this.embeddedServletContainer = containerFactory.getEmabeddedServletContainer(getSelfInitializer());
 	8.嵌入式的servlet容器創建對象並啟動servlet容器:
 		先啟動嵌入式的servlet容器，再將ioc容器中剩下沒有創建的對象獲取出來
-		
+
 		ioc容器啟動創建嵌入式的servlet容器
-	

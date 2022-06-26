@@ -6,34 +6,34 @@
 		ServletRegistrationBean
 		FilterRegistrationBean
 		ServletListenerRegistrationBean
-		
+
 	SpringBoot幫我們自動SpringMVC的時候，自動註冊SpringMVC的前端 DispatcherServlet
 		DispatcherServletAutoConfiguration
 		默認攔截: / 所有請求;包靜態資源，但不含jsp請求;
 			/* 會攔截 包含jsp請求
-	
+
 4.使用其他 servlet 容器
 	// 預設 tomcat
 	jetty (適合應用長鏈結 long time connection: 如聊天系統)
 	Undertow(不支持 jsp，高併發)
-	
+
 問題
 	1.如何訂製和修改 Servlet 容器 的相關配置
 		1.1.修改server有關配置(ServerProperties 也是 EmabeddedServletContainerCustomizer)
 			server.port=8081
 			server.context-path=/crud
 			server.tomcat.uri-encoding=UTF-8
-			
+
 			// 通用 servlet 容器配置
 			server.xxx
 			// Tomcat 的設置
 			server.tomcat.xxx
 		1.2.編寫一個 EmabeddedServletContainerCustomizer : 嵌入式的servlet容器的訂製器，來配置servlet的配置
 			src/main/java/.../config/MyConfig.java
-				
+
 				@Configuration
 				public class MyConfig extends WebMvcConfigurationAdapter {
-					
+
 					@Bean
 					public EmabeddedServletContainerCustomizer emabeddedServletContainerCustomizer(){
 						return new EmabeddedServletContainerCustomizer(){
@@ -42,7 +42,7 @@
 								container.setPort(8083);
 							}
 						}
-						
+
 					}
 				}
 
@@ -53,7 +53,7 @@
 				protected void doGet(HttpServletRequest request, HttpServletRespose respose) throws ServletException, IOException{
 					doPost();
 				}
-				
+
 				@Override
 				protected void doPost(HttpServletRequest request, HttpServletRespose respose) throws ServletException, IOException{
 					respose.getWriter().write( s:"Hello MyServlet");
@@ -64,15 +64,15 @@
 			public class MyFilter implements Filter {
 				@Override
 				public void init(FilterConfig config) throws ServletException{
-					
+
 				}
-				
+
 				@Override
 				public void doFilter(ServletRequest request, ServletRespose respose,FilterChain chain) throws IOException{
 					System.out.println("MyFilter process...");
 					chain.doFilter(request, respose);
 				}
-				
+
 				@Override
 				public void destory(){
 				}
@@ -83,7 +83,7 @@
 				public void contextInitialed(ServletContextEvent sce) {
 					System.out.println("contextInitialed ... web應用啟動");
 				}
-				
+
 				@Override
 				public void contextDestory(){
 					System.out.println("contextDestoryed ... 當前web應用啟動銷毀");
@@ -92,13 +92,13 @@
 		src/main/java/.../config/MyServerConfig.java
 			@Configuration
 			public class MyServerConfig extends WebMvcConfigurationAdapter {
-				
+
 				// 註冊三大組件之一 Servlet
 				public ServletRegistrationBean myServlet(){
 					ServletRegistrationBean registrationBean = new ServletRegistrationBean(new MyServlet(), ...urlMapping:"/myServlet");
 					return registrationBean;
 				}
-				
+
 				// 註冊三大組件之一 Filter
 				public FilterRegistrationBean myFilter(){
 					FilterRegistrationBean registrationBean = new FilterRegistrationBean();
@@ -106,13 +106,13 @@
 					registrationBean.setUrlPatterns(Arrays.aslist("/hello","/myServlet"));
 					return registrationBean;
 				}
-				
+
 				// 註冊三大組件之一 Listener
 				public ServletListenerRegistrationBean myListener(){
 					ServletListenerRegistrationBean registrationBean = new ServletListenerRegistrationBean<MyListener>(new MyListener());
 					return registrationBean;
 				}
-				
+
 				@Bean
 				public EmabeddedServletContainerCustomizer emabeddedServletContainerCustomizer(){
 					return new EmabeddedServletContainerCustomizer(){
@@ -123,13 +123,13 @@
 					}
 				}
 			}
-			
+
 	3.SpringBoot能不能支持其他 Servlet 容器?
 		pom.xml
 			exclude tomcat
 				<groupId>spring-boot-starter-tomcat</groupId>
 				<artifactId>org.springframework.boot</artifactId>
-				
+
 			dependency jetty
 				<groupId>spring-boot-starter-jetty</groupId>
 				<artifactId>org.springframework.boot</artifactId>

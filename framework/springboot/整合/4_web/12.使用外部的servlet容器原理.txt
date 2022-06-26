@@ -1,9 +1,9 @@
 原理
 	jar:執行 SpringBoot 主類的 main 方法，啟動ioc容器，創建嵌入式的servlet容器
-	
+
 	war:啟動服務器，服務器啟動springBoot應用(SpringBootServletInitializer)，啟動ioc容器
-	
-	
+
+
 	servlet 3.0 (spring 註解版)
 		8.2.4 Shared libaries/runtimes pluggabilitiy
 		規則
@@ -11,21 +11,20 @@
 			2.ServletInitializer 實作類放在 jar 包的 META-INFO/services 文件夾下，有一個名為 javax.servlet.ServletInitializer 的文件，
 				內容就是 ServletInitializer 實作類的全類名
 			3.還可以使用 @HandlesTypes，在應用啟動的時候載入我們感興趣的東西
-			
+
 		流程
 			1.啟動 tomcat
 			2.org/springFramework/spring-web/${verison}/spring-web-${verison}.jar!/META-INFO/services/javax.servlet.ServletInitializer
 				spring web模塊裡面有這個文件: org.springFramework.web.SpringServletContainerInitializer
-			3. SpringServletContainerInitializer 將 @HandlesTypes(WebApplicationInitializer.class)標註的所有這個類型的類都傳入到 onStartup 方法的 
+			3. SpringServletContainerInitializer 將 @HandlesTypes(WebApplicationInitializer.class)標註的所有這個類型的類都傳入到 onStartup 方法的
 				Set<Class<?>>;為非介面類、抽象類創建實例
-				
+
 			4.每一個 WebApplicationInitializer 都呼叫自己的 onStartup
-				
+
 			5.相當於我們的 SpringBootServletInitializer 的實作類，並執行其 onStartup
-			
+
 			6.SpringBootServletInitializer 執行 onStartup 時候，會呼叫 createRootApplicationContext；創建容器
-			
+
 			7.spring的應用就啟動並且啟動ioc容器
-				
+
 			先啟動 servlet容器，再啟動ioc容器
-			 

@@ -18,22 +18,22 @@ public class EmabeddedServletContainerAutoConfiguration {
 			return new TomcatEmabeddedServletContainerFactory();
 		}
 	}
-	
+
 	EmabeddedServletContainer
 		UndertowEmbeddedServletContainer
 		TomcatEmabeddedServletContainer
 		JettyEmabeddedServletContainer
-		
+
 	如何對嵌入式容器的配置修改生效?
 		ServerProperties、EmabeddedServletContainerCustomizer
-		
+
 		EmabeddedServletContainerCustomizer:定制器幫我們修改了servlet容器的配置
 		修改原理
-			
+
 		容器中引入了 EmabeddedServletContainerCustomizerBeanProcessor
-		
+
 		ServerProperties 也是 EmabeddedServletContainerCustomizer
-		
+
 	步驟
 		1.springboot 根據導入的依賴情況，給容器中添加相應的
 			EmabeddedServletContainerFactory[TomcatEmabeddedServletContainerFactory]
@@ -41,5 +41,5 @@ public class EmabeddedServletContainerAutoConfiguration {
 			EmabeddedServletContainerCustomizerBeanProcessor
 			只要是嵌入式的servlet容器工廠，後制處理器就工作；
 		3.後制處理器從容器中獲取所有的 EmabeddedServletContainerCustomizer 呼叫定制器的定制方式
-		
+
 
