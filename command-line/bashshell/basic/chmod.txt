@@ -17,7 +17,19 @@ x:1
 		group = rwx = 4+2+1 = 7
 		others= --- = 0+0+0 = 0
 
-增加可執行權限
+1.增加可執行權限
 	chmod +x [file]
 
 	chmod 755 [file]
+
+2.符號類型改變檔案權限
+	https://shian420.pixnet.net/blog/post/344938711-%5Blinux%5D-chmod-%E6%AA%94%E6%A1%88%E6%AC%8A%E9%99%90%E5%A4%A7%E7%B5%B1%E6%95%B4!
+	https://zh.wikipedia.org/zh-tw/Chmod
+	user=u
+	group=g
+	other=o
+	all=a
+
+	chmod [ugoa][+-=][rwx] 檔案或目錄
+		ex: chmod a+x 檔案或目錄 // 所有權限增加執行權限
+		ex: chmod a-x 檔案或目錄 // 所有權限減少執行權限

@@ -248,6 +248,12 @@ docker logs [container-id] // 從下面位置取出
 docker run --log-opt max-size=每個檔案大小上限
 docker run --log-opt max-file=最多幾個log file 數量上限
 
+#查看 log 尾部，有新的 log 產生會顯示新的 lo
+	docker logs -f [container-id]
+
+#查看 log 尾部多少行
+	docker logs -n {number} [container-id]
+
 =======================================================================
 ================== docker images container 備份匯出匯入================
 =======================================================================

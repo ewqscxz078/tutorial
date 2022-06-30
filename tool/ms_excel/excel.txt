@@ -1,9 +1,19 @@
 excel function
 	How to extract text before a specific character
-		LEFT(cell, SEARCH("char", cell)-1)
+		=LEFT(cell, SEARCH("char", cell)-1)
 
 	How to extract text between two instances of a character
-		MID(cell, SEARCH("char", cell)+1, SEARCH ("char", cell, SEARCH ("char", cell)+1) - SEARCH ("char", cell)-1)
+		=MID(cell, SEARCH("char", cell)+1, SEARCH ("char", cell, SEARCH ("char", cell)+1) - SEARCH ("char", cell)-1)
 
 	How to extract text after character
-		RIGHT(cell,LEN(cell)-SEARCH("char", cell))
+		=RIGHT(cell,LEN(cell)-SEARCH("char", cell))
+
+
+
+找到兩邊 match 返回指定欄位，僅限 match 的最左邊
+	=vlookup(
+
+指定 match 的位置
+	https://junshienwu.pixnet.net/blog/post/326147952-%5Bexcel%5D-vlookup%E5%8F%AA%E8%83%BD%E5%90%91%E5%8F%B3%E6%AF%94%E5%B0%8D%EF%BC%8C%E8%A6%81%E5%A6%82%E4%BD%95%E5%90%91%E5%B7%A6%E6%AF%94%E5%B0%8D
+	=INDEX(搜尋範圍,MATCH(搜尋位置,match欄,0),1)
+	=INDEX(A2:C10,MATCH(E2,B2:B10,0),1)

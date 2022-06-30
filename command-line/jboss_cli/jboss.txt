@@ -1,0 +1,5 @@
+http://www.mastertheboss.com/jbossas/jboss-configuration/find-out-the-jboss-version-you-are-running/
+
+# cli jboss version
+	./jboss-cli.sh -c
+		:product-info

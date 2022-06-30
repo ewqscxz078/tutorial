@@ -1,0 +1,9 @@
+===================================================================
+========================= test port  ==============================
+===================================================================
+wmic os get lastbootuptime
+
+Get-WmiObject -class Win32_OperatingSystem | Select-Object  __SERVER,@{label='LastBootUpTime';expression={$_.ConvertToDateTime($_.LastBootUpTime)}}
+
+Get-CimInstance -Class Win32_OperatingSystem | Select-Object LastBootUpTime
+Get-CimInstance -ClassName win32_operatingsystem | select csname, lastbootuptime
