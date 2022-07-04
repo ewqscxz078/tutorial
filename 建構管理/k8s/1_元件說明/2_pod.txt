@@ -1,0 +1,35 @@
+https://cwhu.medium.com/kubernetes-implement-ingress-deployment-tutorial-7431c5f96c3e
+pod
+
+spec
+	container.name
+		指定運行出的 Container 的名稱
+	container.image
+		指定 Container 要使用哪個 Image，這裡會從 DockerHub 上搜尋
+	container.ports
+		指定該 Container 有哪些 port number 是允許外部資源存取
+
+透過 kubectl 建立 Pod
+	kubectl create -f kubernetes-demo.yaml
+
+確認 pod
+	kubectl get pods
+
+連線到我們 Pod 的服務資源
+	打開瀏覽器的 localhost:3000 我們會發現怎麼什麼都看不到。這是因為在 Pod 中所指定的 port，跟我們本機端的 port 是不相通的
+	kubectl port-forward kubernetes-demo-pod 3000:3000
+
+sample_pod.yaml
+	apiVersion: v1
+	 kind: Pod
+	 metadata:
+	   name: kubernetes-demo-pod
+	   labels:
+		 app: demoApp
+	 spec:
+	   containers:
+		 - name: kubernetes-demo-container
+		   image: hcwxd/kubernetes-demo
+		   ports:
+			 - containerPort: 3000
+

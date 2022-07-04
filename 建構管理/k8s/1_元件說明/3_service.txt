@@ -1,0 +1,96 @@
+https://tachingchen.com/tw/blog/kubernetes-service/
+	https://tachingchen.com/tw/blog/kubernetes-service-in-detail-2/
+
+	https://godleon.github.io/blog/Kubernetes/k8s-Service-Overview/
+
+A Kubernetes Service is an abstraction which defines a logical set of Pods and a policy by which to access them.
+Kubernetes Service 是個抽象化的概念，主要定義了邏輯上的一群 Pod 以及如何存取他們的規則。
+
+有點類似 apache nginx 之類的設定，在抽象化一層。
+
+對於使用者而言，僅須知道有人會處理他們的請求，而毋須知道實際上處理的人是誰
+
+1.誰會使用 Service
+	除外部使用者會透過 Service 存取內部 Pod 以外 (路徑 1 -> 2)，同集群其他的 Pod 也有可能需要存取 (路徑 3 -> 2)。值得注意的是兩條路徑的存取方式以及存取的 IP 位址有所不同
+
+2.什麼是邏輯上的一群 Pod
+	帶著相同標籤、做類似事情的一群 Pod
+
+3.什麼是存取規則
+	如何存取該服務的規則，比方說 TCP/UDP、Port 等等相關規則
+
+三個主要元素:
+	1.服務元資料 (Metadata)
+	2.被存取的應用之標籤 (Label)
+	3.存取該服務的方式
+
+spec.ports
+	1.name: 讓維運人員瞭解該埠用途
+	2.port: 對外部開放的埠號
+	3.targetPort: 實際 Pod 所開放的埠號
+	4.protocol (optional): 該服務使用的協定目前有 TCP/UDP 兩種，預設為 TCP
+	5.nodePort (optional): 此設定只有在 spec.type 為 NodePort 或 LoadBalancer 才會存在
+
+Service 存取路徑裡跟外
+	1.Kubernetes 集群外部使用者
+	2.集群內部其他 Pod
+	差異在於: 存取 IP 不同。
+
+實際上在 Kubernetes 內共有三種 IP 存在
+	External IP: 裸露的網路位址，供外部使用者連線
+	Cluster IP: 叢集內部的網路位址，在 Cluster 內的 Pod 可以透過此位址存取該服務
+	Pod IP: 每個 Pod 獨有的網路位址，只有叢集內可連線
+一個 Service 會擁有兩種 IP
+	Cluster IP: 該服務在集群內用來存取的 IP 位址
+	External IP: 指定 service 為 type: LoadBalancer 時，Cloud Provider (如 GCP、AWS) 配發的 Public IP，
+每個 Pod 本身也有自己獨立的 Pod IP，此 IP 可以被叢集內的 Pod 直接存取。
+
+叢集擴展導致效能降
+	解法1: Sidecar Container
+		https://www.slideshare.net/Docker/slideshare-burns
+	解法2: DNS Load Balancin
+		透過新增多筆 DNS A record 指向到多群 Kubernetes，避免單一叢集過多運算節點
+
+# sample_service.yaml
+kind: Service
+===========================================================================================================================================================================
+===============================================================  Metadata  ================================================================================================
+===========================================================================================================================================================================
+服務的名稱，讓其他人瞭解該服務的用途
+metadata:
+  name:
+===========================================================================================================================================================================
+===============================================================  Label  ===================================================================================================
+===========================================================================================================================================================================
+spec:
+  selector:
+    app: [Application label]
+===========================================================================================================================================================================
+===============================================================  存取該服務的方式  ========================================================================================
+===========================================================================================================================================================================
+sample_service.yaml
+spec:
+  selector:
+    app: [Application label]
+  ports:
+    - name:http
+      # the port for client to access
+      port: 80
+      # the port that web server listen on
+      targetPort: 80
+      # TCP/UDP are available, default is TCP
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+	  nodePort: 30390
+
+取得對外ip
+	minikube ip
+
+瀏覽器 test 外部
+	[minikube ip]:[nodePort]
+連線 test
+	minikube ssh
+	curl [CLUSTER-IP]:[port]

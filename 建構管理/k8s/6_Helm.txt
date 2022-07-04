@@ -1,0 +1,32 @@
+https://cwhu.medium.com/kubernetes-helm-chart-tutorial-fbdad62a8b61
+
+Helm 就是一個管理設定檔的工具
+	把 Kubernetes 一個服務中各種元件裡的 yaml 檔統一打包成一個叫做 chart 的集合，然後透過給參數的方式，去同時管理與設定這些 yaml 檔案。
+
+安裝 helm
+	brew install kubernetes-helm
+初始化
+	helm init
+
+一次建立好所有東西
+	helm install stable/wordpress
+		指令會讓我們直接到 Chart Repository 去載入 Chart 檔並將它部署到我們的 Kubernetes Cluster 上
+		kubectl get all 可確認
+			一次就安裝與部署了兩個 Pod、兩個 Service 以及其他各種元件
+列出所有的 Chart
+	helm list
+
+一次把所有元件刪除
+	helm delete peddling-hog
+
+
+自訂 helm
+	helm create helm-demo
+		.
+		├── Chart.yaml
+		├── charts
+		├── templates
+		│   ├── deployment.yaml
+		│   ├── ingress.yaml
+		│   └── service.yaml
+		└── values.yaml

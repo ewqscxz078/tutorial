@@ -1,0 +1,15 @@
+cluster
+	Kubernetes Cluster = N Master Node + N Worker Node：N主節點+N工作節點； N>=1
+
+架構元件
+	Master Node
+		Control Plane Components	// 總部
+			1.kube-controller-manager	// 決策者
+			2.kube-apiserver			// 秘書部
+			3.cloud-controller-manager	// 外聯部/公關部
+			4.etcd						// 資料庫
+			5.kube-scheduler			// 調度部
+
+	Worker Node						// 分據點
+		1.kubelet						// 廠長
+		2.kube-proxy					// 大門守衛

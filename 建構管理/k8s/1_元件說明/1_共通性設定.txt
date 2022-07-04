@@ -1,0 +1,11 @@
+apiVersion
+	該元件的版本號
+kind
+	該元件是什麼屬性 常見有Pod、Node、Service、Deployment、Namespace、ReplicationController、
+		常用有 Service、Deployment、Ingress
+
+metadata
+	name
+		指定該 kind 的名稱
+	labels
+		指定該 kind 的標籤，這裡我們暫時幫它上標籤為

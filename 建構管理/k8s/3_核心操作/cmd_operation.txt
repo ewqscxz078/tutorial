@@ -1,0 +1,607 @@
+
+https://www.redhat.com/sysadmin/yaml-tips
+
+namespace -> (service) -> (deploy)	-> pod
+									-> pod
+									....
+
+ingress -> service
+		-> service
+
+1、資源創建方式
+	● 命令行/CMD
+		kubectl get ${resource name} ${resource instance name} ....
+		kubectl delete ${resource name} ${resource instance name} ....
+		kubectl apply -f ${yaml name} ....
+		kubectl delete -f ${yaml name} ....
+		kubectl logs ${pod name} ....
+		kubectl logs -f ${pod name} ....
+		kubectl exec -it ${Pod name} -- /bin/bash
+		kubectl describe pod ${pod name}  ....
+		kubectl scale --replicas=5 deply/${deploy name}  ....
+		kubectl rollout history ....
+		kubectl rollout undo ....
+		kubectl expose deployment my-dep ....
+	● YAML
+
+資源
+	1、namespace/ns	名稱空間用來隔離資源(預設)，也是分組，不隔離網路
+
+		命令行/CMD:
+
+				kubectl create ns hello
+				kubectl delete ns hello	// 注意會把該下的所有pods 刪除
+
+				查看 ns
+					kubectl get ns
+
+		YAML:
+			ns-file.yml
+				apiVersion: v1
+				kind: Namespace
+				metadata:
+				  name: hello
+			kubectl apply -f ${ns-file.yml}
+			kubectl delete -f ${ns-file.yml}
+
+
+	2. pod / 可以想像為員工宿舍 / 多個容器組合成一個pod 才能做一個完整事情 => example : 蘋果 ipod
+		運行中的一組容器，Pod是kubernetes中應用的最小單位.
+
+		命令行/CMD:
+			# 查看 pod
+				kubectl get pod // 預設找 namespace : defalut
+				kubectl get pod -A
+				kubectl get pod -n ${namespace name}
+
+				更多資訊如 ip、on what node
+					kubectl get pod -owide
+				# 使用Pod的ip+pod裡面運行容器的端口/ # 集群(機器內)中的任意一個機器以及任意的應用都能通過Pod分配的ip來訪問這個Pod
+					curl ${Pod ip}
+
+				進入pod
+					kubectl exec -it ${Pod name} -- /bin/bash
+
+			kubectl run ${pod name} --image=${docker image name}
+				ex:	kubectl run mynginx --image=nginx
+				預設建立在 namespace default
+
+			# 查看pod 建立過程 ，當pod啟動不起來的時候，debug用
+				kubectl describe pod ${pod name}
+
+			# 刪除
+				kubectl delete pod ${pod name}
+
+			# 查 pod log
+				kubectl logs ${pod name}
+				kubectl logs -f ${pod name}	// 持續追蹤log
+
+		YAML:
+			pod-nginx.yaml
+				apiVersion: v1
+				kind: Pod
+				metadata:
+				  labels:
+					run: mynginx
+				  name: mynginx
+				#  namespace: default
+				spec:
+				  containers:
+				  - image: nginx
+					name: mynginx
+
+			pod 內多個 containers
+			pod-myapp.yaml
+				apiVersion: v1
+				kind: Pod
+				metadata:
+				  labels:
+					run: myapp
+				  name: myapp
+				spec:
+				  containers:
+				  - image: nginx
+					name: nginx
+				  - image: tomcat:8.5.68
+					name: tomcat
+
+			kubectl apply -f ${pod-nginx.yml}
+			kubectl delete -f ${pod-nginx.yml}
+
+		k8s dashboard 建立
+			略....
+
+	3. deployment/deploy
+		控制Pod，多副本、自愈、擴縮容、滾動更新、版本問題
+
+		取得 deploy info
+			kubectl get deploy
+
+		1.自愈能力
+			# 清除所有Pod，比較下面兩個命令有何不同效果？
+				kubectl run mynginx --image=nginx
+
+			# 刪 pod 則 deployment 會在自動另起動container在另外一台
+			pod delete
+				kubectl delete pod ${pod-name}
+
+			deploy delete
+				kubectl create deployment mytomcat --image=tomcat:8.5.68
+
+			# 真正刪除
+				kubectl delete deploy ${deploy-name}
+					ex: kubectl delete deploy mytomcat
+
+		2.多副本佈署
+			kubectl create deployment my-dep --image=nginx --replicas=3
+
+		YAML:
+			dep.yml
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  labels:
+					app: my-dep
+				  name: my-dep
+				spec:
+				  replicas: 3
+				  selector:
+					matchLabels:
+					  app: my-dep
+				  template:
+					metadata:
+					  labels:
+						app: my-dep
+					spec:
+					  containers:
+					  - image: nginx
+						name: nginx
+
+			kubectl apply -f ${dep-name.yml}
+			kubectl delete -f ${dep-name.yml}
+
+		3.擴縮容
+			kubectl scale --replicas=5 deployment/my-dep
+
+			#修改 replicas
+				kubectl edit deployment ${deploy-name}
+					ex: kubectl edit deploy my-dep
+
+		4.自愈&故障轉移
+			#自愈模擬(當前node可修復)
+				容器崩潰:outofmemory
+				docker stop #{worker node : docker container 1 id}
+				watch -n 1 kubectl get pod
+					會看到自動另外啟動該容器副本
+			#故障轉移(當前node不可修復)(建議設定合理的值:如等五分鐘左右)
+				模擬機器開不起來，關機某 node、斷電
+				kubectl get pod -owide
+
+		5.滾動更新(不停機更新) => 開啟一個新的image container，關閉一個舊的image container 模式
+			#顯示資源的yaml
+				kubectl get deploy ${deploy-name} -oyaml
+
+			#更新deploy裡的image
+				kubectl set image deployment/my-dep nginx=nginx:1.16.1 --record
+
+			kubectl rollout status deployment/my-dep
+
+		6.版本回退	=> 開啟一個舊的image container，關閉一個新的image container 模式
+			# 歷史記錄
+				kubectl rollout history deployment/my-dep
+
+			# 查看某個歷史詳情
+				kubectl rollout history deployment/my-dep --revision=2
+
+			# 回滾(回到上次)
+				kubectl rollout undo deployment/my-dep
+
+			# 回滾(回到指定版本)
+				kubectl rollout undo deployment/my-dep --to-revision=2
+
+			# 確認回滾的版本
+				kubectl get deploy/my-dep -oyaml |grep image
+
+	除了Deployment，k8s還有 StatefulSet 、DaemonSet 、Job  等 類型資源。我們都稱為 工作負載。
+	有狀態應用使用  StatefulSet  部署，無狀態應用使用 Deployment 部署
+	https://kubernetes.io/zh/docs/concepts/workloads/controllers/
+
+	4.service/svc
+		將一組 Pods 公開為網絡服務的抽象方法、提供服務發現、負載平衡。
+			預設 type: ClusterIP => 只能在集群訪問:如 master node 無法訪問
+					另一種是 NodePort
+
+		# get info
+			kubectl get service
+
+		# 暴露Deploy
+			kubectl expose deployment my-dep --port=8000 --target-port=80
+
+		# 使用標籤檢索Pod
+			kubectl get pod -l app=my-dep
+
+		# 服務發現
+			當 deploy 擴縮容時，client curl 時會自動找不到或找到新的pod
+
+		YAML:
+			apiVersion: v1
+			kind: Service
+			metadata:
+			  labels:
+				app: my-dep
+			  name: my-dep
+			spec:
+			  selector:
+				app: my-dep
+			  ports:
+			  - port: 8000
+				protocol: TCP
+				targetPort: 80
+
+		# 類型
+			ClusterIP
+				# 等同於沒有--type的
+				kubectl expose deployment my-dep --port=8000 --target-port=80 --type=ClusterIP
+
+				apiVersion: v1
+				kind: Service
+				metadata:
+				  labels:
+					app: my-dep
+				  name: my-dep
+				spec:
+				  ports:
+				  - port: 8000
+					protocol: TCP
+					targetPort: 80
+				  selector:
+					app: my-dep
+				  type: ClusterIP
+
+			NodePort
+				kubectl expose deployment my-dep --port=8000 --target-port=80 --type=NodePort
+
+				apiVersion: v1
+				kind: Service
+				metadata:
+				  labels:
+					app: my-dep
+				  name: my-dep
+				spec:
+				  ports:
+				  - port: 8000
+					protocol: TCP
+					targetPort: 80
+				  selector:
+					app: my-dep
+				  type: NodePort
+
+	5.ingress/ing
+		提供 service 統一的入口
+			wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.47.0/deploy/static/provider/baremetal/deploy.yaml
+
+			#修改镜像
+				vi deploy.yaml
+			#将image的值改为如下值：
+				registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/ingress-nginx-controller:v0.46.0
+
+			# 检查安装的结果
+				kubectl get pod,svc -n ingress-nginx
+
+			# 最后别忘记把svc暴露的端口要放行
+
+			# 官方網站
+				https://kubernetes.github.io/ingress-nginx/
+
+			1.域名訪問
+				apiVersion: networking.k8s.io/v1
+				kind: Ingress
+				metadata:
+				  name: ingress-host-bar
+				spec:
+				  ingressClassName: nginx
+				  rules:
+				  - host: "hello.atguigu.com"
+					http:
+					  paths:
+					  - pathType: Prefix
+						path: "/"
+						backend:
+						  service:
+							name: hello-server
+							port:
+							  number: 8000
+				  - host: "demo.atguigu.com"
+					http:
+					  paths:
+					  - pathType: Prefix
+						path: "/nginx"  # 把请求会转给下面的服务，下面的服务一定要能处理这个路径，不能处理就是404
+						backend:
+						  service:
+							name: nginx-demo  ## java，比如使用路径重写，去掉前缀nginx
+							port:
+							  number: 8000
+
+				問題： path: "/nginx" 與  path: "/" 為什麼會有不同的效果？
+
+			2.路徑重寫
+				apiVersion: networking.k8s.io/v1
+				kind: Ingress
+				metadata:
+				  annotations:
+					nginx.ingress.kubernetes.io/rewrite-target: /$2
+				  name: ingress-host-bar
+				spec:
+				  ingressClassName: nginx
+				  rules:
+				  - host: "hello.atguigu.com"
+					http:
+					  paths:
+					  - pathType: Prefix
+						path: "/"
+						backend:
+						  service:
+							name: hello-server
+							port:
+							  number: 8000
+				  - host: "demo.atguigu.com"
+					http:
+					  paths:
+					  - pathType: Prefix
+						# https://kubernetes.github.io/ingress-nginx/examples/rewrite/
+						# demo.atguigu.com/xxx/yyy => demo.atguigu.com/yyy
+						path: "/nginx(/|$)(.*)"  # 把請求會轉給下面的服務，下面的服務一定要能處理這個路徑，不能處理就是404
+						backend:
+						  service:
+							name: nginx-demo  ## java，比如使用路徑重寫，去掉前綴nginx
+							port:
+							  number: 8000
+			3.流量限制
+				kind: Ingress
+				metadata:
+				  name: ingress-limit-rate
+				  annotations:
+					nginx.ingress.kubernetes.io/limit-rps: "1"
+				spec:
+				  ingressClassName: nginx
+				  rules:
+				  - host: "haha.atguigu.com"
+					http:
+					  paths:
+					  - pathType: Exact # 完整路徑match
+						path: "/"
+						backend:
+						  service:
+							name: nginx-demo
+							port:
+							  number: 8000
+	6.存儲抽象
+		1.安裝
+			1.所有節點安裝
+				yum install -y nfs-utils
+			2.主節點
+				mkdir -p /nfs/data
+				systemctl enable rpcbind --now
+				systemctl enable nfs-server --now
+				#配置生效
+				exportfs -r
+			3.從節點
+				showmount -e 172.31.0.4
+
+				#執行以下命令掛載 nfs 服務器上的共享目錄到本機路徑 /root/nfsmount
+				mkdir -p /nfs/data
+
+				mount -t nfs 172.31.0.4:/nfs/data /nfs/data
+				# 寫入一個測試文件
+			echo "hello nfs server" > /nfs/data/test.txt
+
+		2.原生方式數據掛載
+			apiVersion: apps/v1
+			kind: Deployment
+			metadata:
+			  labels:
+				app: nginx-pv-demo
+			  name: nginx-pv-demo
+			spec:
+			  replicas: 2
+			  selector:
+				matchLabels:
+				  app: nginx-pv-demo
+			  template:
+				metadata:
+				  labels:
+					app: nginx-pv-demo
+				spec:
+				  containers:
+				  - image: nginx
+					name: nginx
+					volumeMounts:
+					- name: html
+					  mountPath: /usr/share/nginx/html
+				  volumes:
+					- name: html
+					  nfs:
+						server: 172.31.0.4
+						path: /nfs/data/nginx-pv
+		3.PersistentVolume/pv&PVC
+			PV：持久卷（Persistent Volume），將應用需要持久化的數據保存到指定位置
+			PVC：持久卷申明（Persistent Volume Claim），申明需要使用的持久卷規格
+			1、創建pv池
+				#nfs主節點
+				mkdir -p /nfs/data/01
+				mkdir -p /nfs/data/02
+				mkdir -p /nfs/data/03
+
+			YAML
+				apiVersion: v1
+				kind: PersistentVolume
+				metadata:
+				  name: pv01-10m
+				spec:
+				  capacity:
+					storage: 10M
+				  accessModes:
+					- ReadWriteMany
+				  storageClassName: nfs
+				  nfs:
+					path: /nfs/data/01
+					server: 172.31.0.4
+				---
+				apiVersion: v1
+				kind: PersistentVolume
+				metadata:
+				  name: pv02-1gi
+				spec:
+				  capacity:
+					storage: 1Gi
+				  accessModes:
+					- ReadWriteMany
+				  storageClassName: nfs
+				  nfs:
+					path: /nfs/data/02
+					server: 172.31.0.4
+				---
+				apiVersion: v1
+				kind: PersistentVolume
+				metadata:
+				  name: pv03-3gi
+				spec:
+				  capacity:
+					storage: 3Gi
+				  accessModes:
+					- ReadWriteMany
+				  storageClassName: nfs
+				  nfs:
+					path: /nfs/data/03
+					server: 172.31.0.4
+			2.PVC創建與綁定
+				kind: PersistentVolumeClaim
+				apiVersion: v1
+				metadata:
+				  name: nginx-pvc
+				spec:
+				  accessModes:
+					- ReadWriteMany
+				  resources:
+					requests:
+					  storage: 200Mi
+				  storageClassName: nfs
+			3.創建Pod綁定PVC
+				apiVersion: apps/v1
+				kind: Deployment
+				metadata:
+				  labels:
+					app: nginx-deploy-pvc
+				  name: nginx-deploy-pvc
+				spec:
+				  replicas: 2
+				  selector:
+					matchLabels:
+					  app: nginx-deploy-pvc
+				  template:
+					metadata:
+					  labels:
+						app: nginx-deploy-pvc
+					spec:
+					  containers:
+					  - image: nginx
+						name: nginx
+						volumeMounts:
+						- name: html
+						  mountPath: /usr/share/nginx/html
+					  volumes:
+						- name: html
+						  persistentVolumeClaim:
+							claimName: nginx-pvc
+		4.ConfigMap/cm
+			# 創建配置，redis保存到k8s的etcd；
+			kubectl create cm redis-conf --from-file=redis.conf
+
+			kubectl get cm redis-conf -oyaml
+				apiVersion: v1
+				data:    #data是所有真正的數據，key：默認是文件名   value：配置文件的內容
+				  redis.conf: |
+					appendonly yes
+				kind: ConfigMap
+				metadata:
+				  name: redis-conf
+				  namespace: default
+			創建Pod
+				apiVersion: v1
+				kind: Pod
+				metadata:
+				  name: redis
+				spec:
+				  containers:
+				  - name: redis
+					image: redis
+					command:
+					  - redis-server
+					  - "/redis-master/redis.conf"  #指的是redis容器內部的位置
+					ports:
+					- containerPort: 6379
+					volumeMounts:
+					- mountPath: /data
+					  name: data
+					- mountPath: /redis-master
+					  name: config
+				  volumes:
+					- name: data
+					  emptyDir: {}
+					- name: config
+					  configMap:
+						name: redis-conf
+						items:
+						- key: redis.conf
+						  path: redis.conf
+			檢查默認配置
+				kubectl exec -it redis -- redis-cli
+
+				127.0.0.1:6379> CONFIG GET appendonly
+				127.0.0.1:6379> CONFIG GET requirepass
+			修改ConfigMap
+				kubectl edit cm redis.conf
+				apiVersion: v1
+				kind: ConfigMap
+				metadata:
+				  name: example-redis-config
+				data:
+				  redis-config: |
+					maxmemory 2mb
+					maxmemory-policy allkeys-lru
+			檢查配置是否更新
+				kubectl exec -it redis -- redis-cli
+
+				127.0.0.1:6379> CONFIG GET maxmemory
+				127.0.0.1:6379> CONFIG GET maxmemory-policy
+
+				檢查指定文件內容是否已經更新
+				修改了CM。 Pod裡面的配置文件會跟著變
+				配置值未更改，因為需要重新啟動 Pod 才能從關聯的 ConfigMap 中獲取更新的值。
+				原因：我們的Pod部署的中間件自己本身沒有熱更新能力
+		5.secret
+			kubectl create secret docker-registry leifengyang-docker \
+			--docker-username=leifengyang \
+			--docker-password=Lfy123456 \
+			--docker-email=534096094@qq.com
+
+			##命令格式
+			kubectl create secret docker-registry regcred \
+			  --docker-server=<你的鏡像倉庫服務器> \
+			  --docker-username=<你的用戶名> \
+			  --docker-password=<你的密碼> \
+			  --docker-email=<你的郵箱地址>
+
+			YAML
+				apiVersion: v1
+				kind: Pod
+				metadata:
+				  name: private-nginx
+				spec:
+				  containers:
+				  - name: private-nginx
+					image: leifengyang/guignginx:v1.0
+				  imagePullSecrets:
+				  - name: leifengyang-docker
+看到66
+	https://www.youtube.com/watch?v=i1_51-fa1uQ&list=PLmOn9nNkQxJFiWd13kMX4w5ebum1AFJpv&index=65&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1

@@ -1,0 +1,236 @@
+install
+	pre install
+		docker
+	k8s
+		注意事項
+			1、安裝kubeadm
+			● 一台兼容的 Linux 主機。 Kubernetes 項目為基於 Debian 和 Red Hat 的 Linux 發行版以及一些不提供包管理器的發行版提供通用的指令
+			● 每台機器 2 GB 或更多的 RAM （如果少於這個數字將會影響你應用的運行內存)
+			● 2 CPU 核或更多
+			● 集群中的所有機器的網絡彼此均能相互連接(公網和內網都可以)
+			  ○ 設置防火牆放行規則
+			● 節點之中不可以有重複的主機名、MAC 地址或 product_uuid。請參見這裡了解更多詳細信息(https://kubernetes.io/zh/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#verify-mac-address)。
+			  ○ 設置不同hostname
+
+			● 開啟機器上的某些端口。請參見這裡 了解更多詳細信息(https://kubernetes.io/zh/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#check-required-ports)。
+			  ○ 內網互信
+			● 禁用交換分區。為了保證 kubelet 正常工作，你 必須 禁用交換分區。
+			  ○ 永久關閉
+		每台機器皆須設定
+			基礎環境
+				#各個機器設置自己的域名
+				hostnamectl set-hostname xxxx
+
+				# 將 SELinux 設置為 permissive 模式（相當於將其禁用）
+				# 暫時禁用
+				sudo setenforce 0
+				# 永久禁用
+				sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+				#關閉swap
+				# 暫時禁用
+				swapoff -a
+				# 永久禁用
+				sed -ri 's/.*swap.*/#&/' /etc/fstab
+
+				#允許 iptables 檢查橋接流量
+				cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+				br_netfilter
+				EOF
+
+				cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+				net.bridge.bridge-nf-call-ip6tables = 1
+				net.bridge.bridge-nf-call-iptables = 1
+				EOF
+
+				#讓上述配置生效
+				sudo sysctl --system
+
+			where download k8s [need 在修改成適當的連結]
+				cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+				[kubernetes]
+				name=Kubernetes
+				baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
+				enabled=1
+				gpgcheck=0
+				repo_gpgcheck=0
+				gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
+				   http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+				exclude=kubelet kubeadm kubectl
+				EOF
+
+			install kubelet kubeadm kubectl
+				sudo yum install -y kubelet-1.20.9 kubeadm-1.20.9 kubectl-1.20.9 --disableexcludes=kubernetes
+			生效 kubelet
+				sudo systemctl enable --now kubelet
+
+			#所有機器添加master域名映射，以下需要修改為自己的，by ip a get 內網ip
+			#所有節點都須執行該內容，讓所有節點知道 集群入口在哪，test by ping cluster-endpoint
+			CLUSTER_ENDPOINT=172.31.0.4
+			CLUSTER_ENDPOINT_NAME=cluster-endpoint"
+			echo "$CLUSTER_ENDPOINT $CLUSTER_ENDPOINT_NAME" >> /etc/hosts
+
+		Master Node
+			1.下載機器需要的鏡像
+				REGISTRY_CACAHE=registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images
+				K8S_VERSION=v1.20.9
+
+				#注意事項
+				#1.以下兩個IP範圍不重疊
+				#2.以下兩個IP範圍也不能跟 CLUSTER_ENDPOINT 重疊
+				K8S_CLUSTER_LOAD_BANLANCE_PORT_RANGE=10.96.0.0/16
+				#以下range跟 network cluster yaml有關係，預設即為192.168.0.0/16，當pod生成後於該ip range 生成
+				K8S_POD_PORT_RANGE=192.168.0.0/16
+
+				sudo tee ./images.sh <<-'EOF'
+				#!/bin/bash
+				images=(
+				kube-apiserver:$K8S_VERSION
+				kube-proxy:$K8S_VERSION
+				kube-controller-manager:$K8S_VERSION
+				kube-scheduler:$K8S_VERSION
+				coredns:1.7.0
+				etcd:3.4.13-0
+				pause:3.2
+				)
+				for imageName in ${images[@]} ; do
+				docker pull $REGISTRY_CACAHE/$imageName
+				done
+				EOF
+
+				chmod +x ./images.sh && ./images.sh
+			2.初始主節點
+				#主節點初始化
+					kubeadm init \
+					--apiserver-advertise-address=$CLUSTER_ENDPOINT \
+					--control-plane-endpoint=$CLUSTER_ENDPOINT_NAME \
+					--image-repository $REGISTRY_CACAHE \
+					--kubernetes-version $K8S_VERSION \
+					--service-cidr=$K8S_CLUSTER_LOAD_BANLANCE_PORT_RANGE \
+					--pod-network-cidr=$K8S_POD_PORT_RANGE
+
+				#執行完後會出現如下訊息
+					Your Kubernetes control-plane has initialized successfully!
+
+					To start using your cluster, you need to run the following as a regular user:
+
+					  mkdir -p $HOME/.kube
+					  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+					  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+					Alternatively, if you are the root user, you can run:
+
+					  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+					You should now deploy a pod network to the cluster.
+					Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+					  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+					You can now join any number of control-plane nodes by copying certificate authorities
+					and service account keys on each node and then running the following as root:
+
+					  kubeadm join cluster-endpoint:6443 --token hums8f.vyx71prsg74ofce7 \
+						--discovery-token-ca-cert-hash sha256:a394d059dd51d68bb007a532a037d0a477131480ae95f75840c461e85e2c6ae3 \
+						--control-plane
+
+					Then you can join any number of worker nodes by running the following on each as root:
+
+					kubeadm join cluster-endpoint:6443 --token hums8f.vyx71prsg74ofce7 \
+						--discovery-token-ca-cert-hash sha256:a394d059dd51d68bb007a532a037d0a477131480ae95f75840c461e85e2c6ae3
+
+					#必須執行
+						mkdir -p $HOME/.kube
+						sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+						sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+					#因此若要增加更多的master node
+						kubeadm join cluster-endpoint:6443 --token hums8f.vyx71prsg74ofce7 \
+						--discovery-token-ca-cert-hash sha256:a394d059dd51d68bb007a532a037d0a477131480ae95f75840c461e85e2c6ae3 \
+						--control-plane
+
+					#因此若要增加更多的 worker node
+						kubeadm join cluster-endpoint:6443 --token hums8f.vyx71prsg74ofce7 \
+												--discovery-token-ca-cert-hash sha256:a394d059dd51d68bb007a532a037d0a477131480ae95f75840c461e85e2c6ae3
+
+					#kubectl get nodes will get STATUS : NotReady
+						因為要去安裝網路套件將所有集群用網路串接起來
+						You should now deploy a pod network to the cluster.
+						Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+						  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+						1.以安裝 calico 為例子
+							curl https://docs.projectcalico.org/manifests/calico.yaml -O
+
+							kubectl apply -f calico.yaml
+
+		worker node
+			docker pull $REGISTRY_CACAHE/kube-proxy:v1.20.9
+
+			1.加入節點
+				// 24小時內有效，若過期要再重新生成
+				kubeadm join cluster-endpoint:6443 --token hums8f.vyx71prsg74ofce7 \
+							--discovery-token-ca-cert-hash sha256:a394d059dd51d68bb007a532a037d0a477131480ae95f75840c461e85e2c6ae3
+
+			2.於 master node check
+				kubectl get pod -A
+				watch
+					kubectl get pod -A -w
+
+		自癒能力測試 check
+			reboot
+				master
+				workder
+
+		令牌過期，有新節點要加入，重新生成令牌
+			1.於master node 直執行
+				kubeadm token create --print-join-command
+
+
+		optional 視覺化k8s dashborad
+			1.https://github.com/kubernetes/dashboard
+				kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml
+			2.type: ClusterIP 改為 type: NodePort
+				kubectl edit svc kubernetes-dashboard -n kubernetes-dashboard
+			3.找到端口，在安全組放行，才能知道dashborad ip port
+				kubectl get svc -A |grep kubernetes-dashboard
+			4.登入後，須建立一個可存取dashboard 的帳號 by dash-user.yml
+				master node
+					dash-user.yml <<
+						#創建訪問賬號，準備一個yaml文件； vi dash.yaml
+						apiVersion: v1
+						kind: ServiceAccount
+						metadata:
+						  name: admin-user
+						  namespace: kubernetes-dashboard
+						---
+						apiVersion: rbac.authorization.k8s.io/v1
+						kind: ClusterRoleBinding
+						metadata:
+						  name: admin-user
+						roleRef:
+						  apiGroup: rbac.authorization.k8s.io
+						  kind: ClusterRole
+						  name: cluster-admin
+						subjects:
+						- kind: ServiceAccount
+						  name: admin-user
+						  namespace: kubernetes-dashboard
+
+					取得 dashboard user token
+						kubectl -n kubernetes-dashboard get secret $ (kubectl -n kubernetes-dashboard get sa / admin-user -o jsonpath = "{.secrets [0] .name}") -o go-template = "{{.data.令牌 | base64decode}} ""
+						執行後將其貼到 k8s-dashboard 登入頁面
+
+						每隔一段時間可能會失效需要在產生token 後再登入
+
+常用指令
+	#查看集群所有節點
+	kubectl get nodes
+
+	#根據配置文件，給集群創建資源
+	kubectl apply -f xxxx.yaml
+
+	#查看集群部署了哪些應用？
+	docker ps   ===   kubectl get pods -A
+	# 運行中的應用在docker裡面叫容器，在k8s裡面叫Pod
+	kubectl get pods -A
+

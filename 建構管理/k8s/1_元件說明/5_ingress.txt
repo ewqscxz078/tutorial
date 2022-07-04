@@ -1,0 +1,41 @@
+入口server
+	Service 中，我們是將每個 Service 元件對外的 port number 跟 Node 上的 port number 做 mapping
+	Service 變多時，port number 以及分流規則的管理變得相當困難。
+
+Ingress
+	可以透過 HTTP/HTTPS，在我們眾多的 Service 前搭建一個 reverse-proxy
+	角色等於 apache nignx
+	由 Ingress Resources、Ingress Server、Ingress Controller 構成
+	可替換的實作有 ingress-gce 跟 ingress-nginx，分別可以對應轉換成 GCE 與 Nginx
+		https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/#additional-controllers
+
+minikube addons enable ingress 來啟用 minikube 的 ingress 功能
+
+
+===========================================================================================================================================================================
+===============================================================  Ingress  =================================================================================================
+===========================================================================================================================================================================
+
+sample_ingress.yaml
+	apiVersion: extensions/v1beta1
+	kind: Ingress
+	metadata:
+	  name: web
+	spec:
+	  rules:
+		- host: blue.demo.com
+		  http:
+			paths:
+			  - backend:
+				  serviceName: blue-service
+				  servicePort: 80
+		- host: purple.demo.com
+		  http:
+			paths:
+			  - backend:
+				  serviceName: purple-service
+				  servicePort: 80
+
+DNS 解析網址時，會先查找本機上 /etc/hosts 後才會到其他 DNS Server 上尋找。所以我們可以透過一個小技巧，在本機上把 blue.demo.com 以及 purple.demo.com 都指向 192.168.99.100。透過指令
+echo 192.168.99.100   blue.demo.com  >> /etc/hosts
+echo 192.168.99.100   purple.demo.com >> /etc/hosts

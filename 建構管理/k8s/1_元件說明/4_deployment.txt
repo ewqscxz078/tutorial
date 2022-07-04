@@ -1,0 +1,114 @@
+https://cwhu.medium.com/kubernetes-implement-ingress-deployment-tutorial-7431c5f96c3e
+
+Deployment
+
+===========================================================================================================================================================================
+===============================================================    ===============================================================================
+===========================================================================================================================================================================
+spec
+	replicas
+		指定要建立多少個相同的 Pod，在這邊給的數字是所謂的 Desire State，當 Cluster 運行時如果 Pod 數量低於此數字，Kubernetes 就會自動幫我們增加 pod，反之就會幫我們關掉 Pod
+	template
+		指定這個 Deployment 建立的 Pod 們統一的設定，包括 metadata 以及這些 Pod 的 Containers，這邊我們就沿用之前建立 Pod 的設定
+	selector
+		指定這個 Deployment 的規則要適用到哪些 Pod，在這邊就是指定我們在 template 中指定的 labels
+
+===========================================================================================================================================================================
+===============================================================  滾動升級 (Rolling Update)  ===============================================================================
+===========================================================================================================================================================================
+
+minReadySeconds: 5
+strategy:
+  # indicate which strategy we want for rolling update
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1
+
+minReadySeconds:
+	容器內應用程式的啟動時間，Kubernetes 會等待設定的時間後才繼續進行升級流程
+	如果沒有此欄位的話，Kubernetes 會假設該容器一開完後即可進行服務
+	若未設定此欄位，在某些極端情況下可能會造成服務無法正常運作(新誕生的 pod 尚未進入可服務階段)
+maxSurge:
+	升級過程中最多可以比原先設定所多出的 pod 數量
+	此欄位可以為固定值或是比例(%)
+	ex. maxSurge: 1、replicas: 5，代表 Kubernetes 會先開好 1 個新 pod 後才刪掉一個舊的 pod，整個升級過程中最多會有 5+1 個 pod
+maxUnavailable:
+	最多可以有幾個 pod 處在無法服務的狀態
+	當 maxSurge 不為零時，此欄位亦不可為零
+	ex. maxUnavailable: 1，代表 Kubernetes 整個升級過程中最多會有 1 個 pod 處在無法服務的狀態
+
+
+三種方式來進行滾動升級 (以升級 docker image 為例)
+1. set image
+	# format
+	$ kubectl set image deployment <deployment> <container>=<image> --record
+	# example
+	$ kubectl set image deployment nginx nginx=nginx:1.11.5 --record
+2. replace 修改 nginx.yaml 內的 image 版本
+	spec:
+	  containers:
+	  - name: nginx
+		# newer image version
+		image: nginx:1.11.5
+		imagePullPolicy: IfNotPresent
+		ports:
+		- containerPort: 80
+	利用 replace 來進行升級而非 apply
+		# format
+		$ kubectl replace -f <yaml> --record
+		# example
+		$ kubectl replace -f new-nginx.yaml --record
+
+3. edit 動態調整執行中的 deployment.yaml
+	# format
+	$ kubectl edit deployment <deployment> --record
+	# example
+	$ kubectl edit deployment nginx --record
+
+	這指令會直接打開編輯器的視窗，讓我們來修改 deployment 內的設定值
+
+
+查詢升級狀況
+	kubectl rollout status deployment nginx
+暫停滾動升級
+	kubectl rollout pause deployment <deployment>
+繼續滾動升級
+	kubectl rollout resume deployment <deployment>
+
+回滾
+	$ kubectl apply -f nginx.yaml --record
+	deployment "nginx" configured
+
+	$ kubectl set image deployment nginx nginx=nginx:1.11.5 --record
+	deployment "nginx" image updated
+
+	$ kubectl rollout history deployment ngin
+	deployments "nginx":
+	REVISION  CHANGE-CAUSE
+	1   kubectl apply -f nginx.yaml --record
+	2   kubectl set image deployment nginx nginx=nginx:1.11.5 --record
+
+	假設我們現在要回滾到 revision 1
+		# to previous revision
+		$ kubectl rollout undo deployment <deployment>
+		# to specific revision
+		$ kubectl rollout undo deployment <deployment> --to-revision=<revision>
+		# exmaple
+		$ kubectl rollout undo deployment nginx --to-revision=1
+
+利用 .spec.revisionHistoryLimit 來決定我們需要保留多久以前的紀錄 (此欄位需要在第一次建立 deployment 時就設定)
+	...
+	spec:
+	  replicas: 10
+	  selector:
+		matchLabels:
+		  service: http-server
+	  strategy:
+		type: RollingUpdate
+		rollingUpdate:
+		  maxSurge: 1
+		  maxUnavailable: 1
+	  minReadySeconds: 5
+	  revisionHistoryLimit: 10
+	...
