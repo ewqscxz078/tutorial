@@ -1,0 +1,33 @@
+● 自動配好Tomcat
+  ○ 引入Tomcat依賴。
+  ○ 配置Tomcat
+	<dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
+      <version>2.3.4.RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
+
+● 自動配好SpringMVC
+  ○ 引入SpringMVC全套組件
+  ○ 自動配好SpringMVC常用組件（功能）
+● 自動配好Web常見功能，如：字符編碼問題
+  ○ SpringBoot幫我們配置好了所有web開發的常見場景
+● 默認的包結構
+  ○ 主程序所在包及其下面的所有子包裡面的組件都會被默認掃描進來
+  ○ 無需以前的包掃描配置
+  ○ 想要改變掃描路徑，@SpringBootApplication(scanBasePackages="com.atguigu")
+    ■ 或者@ComponentScan 指定掃描路徑
+		@SpringBootApplication
+		等同於
+		@SpringBootConfiguration
+		@EnableAutoConfiguration
+		@ComponentScan("com.atguigu.boot")
+
+● 各種配置擁有默認值
+  ○ 默認配置最終都是映射到某個類上，如：MultipartProperties
+  ○ 配置文件的值最終會綁定每個類上，這個類會在容器中創建對象
+● 按需加載所有自動配置項
+  ○ 非常多的starter
+  ○ 引入了哪些場景這個場景的自動配置才會開啟
+  ○ SpringBoot所有的自動配置功能都在 spring-boot-autoconfigure 包裡面

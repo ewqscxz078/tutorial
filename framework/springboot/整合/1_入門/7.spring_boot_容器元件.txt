@@ -1,0 +1,102 @@
+組件添加
+1、@Configuration
+	● 基本使用
+	● Full模式與Lite模式
+	  ○ 示例
+	  ○ 最佳實戰
+		■ 配置 類組件之間無依賴關係用Lite模式加速容器啟動過程，減少判斷
+		■ 配置類組件之間有依賴關係，方法會被調用得到之前單實例組件，用Full模式
+
+	#############################Configuration使用示例######################################################
+	/**
+	 * 1、配置類裡面使用@Bean標註在方法上給容器註冊組件，默認也是單實例的
+	 * 2、配置類本身也是組件
+	 * 3、proxyBeanMethods：代理bean的方法
+	 *      Full(proxyBeanMethods = true)、【保證每個@Bean方法被調用多少次返回的組件都是單實例的】 default
+	 *      Lite(proxyBeanMethods = false)【每個@Bean方法被調用多少次返回的組件都是新創建的】
+	 *      組件依賴必須使用Full模式默認。其他默認是否Lite模式
+	 *
+	 *
+	 *
+	 */
+	@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
+	public class MyConfig {
+
+		/**
+		 * Full:外部無論對配置類中的這個組件註冊方法調用多少次獲取的都是之前註冊容器中的單實例對象
+		 * @return
+		 */
+		@Bean //給容器中添加組件。以方法名作為組件的id。返回類型就是組件類型。返回的值，就是組件在容器中的實例
+		public User user01(){
+			User zhangsan = new User("zhangsan", 18);
+			//user組件依賴了Pet組件
+			zhangsan.setPet(tomcatPet());
+			return zhangsan;
+		}
+
+		@Bean("tom")
+		public Pet tomcatPet(){
+			return new Pet("tomcat");
+		}
+	}
+
+
+	################################@Configuration測試代碼如下########################################
+	@SpringBootConfiguration
+	@EnableAutoConfiguration
+	@ComponentScan("com.atguigu.boot")
+	public class MainApplication {
+
+		public static void main(String[] args) {
+			//1、返回我們IOC容器
+			ConfigurableApplicationContext run = SpringApplication.run(MainApplication.class, args);
+
+			//2、查看容器裡面的組件
+			String[] names = run.getBeanDefinitionNames();
+			for (String name : names) {
+				System.out.println(name);
+			}
+
+			//3、從容器中獲取組件
+
+			Pet tom01 = run.getBean("tom", Pet.class);
+
+			Pet tom02 = run.getBean("tom", Pet.class);
+
+			System.out.println("組件："+(tom01 == tom02));
+
+
+			//4、com.atguigu.boot.config.MyConfig$$EnhancerBySpringCGLIB$$51f1e1ca@1654a892
+			MyConfig bean = run.getBean(MyConfig.class);
+			System.out.println(bean);
+
+			//如果@Configuration(proxyBeanMethods = true)代理對象調用方法。 SpringBoot總會檢查這個組件是否在容器中有。
+			//保持組件單實例
+			User user = bean.user01();
+			User user1 = bean.user01();
+			System.out.println(user == user1);
+
+
+			User user01 = run.getBean("user01", User.class);
+			Pet tom = run.getBean("tom", Pet.class);
+
+			System.out.println("用戶的寵物："+(user01.getPet() == tom));
+
+
+
+		}
+	}
+
+2、@Bean、@Component、@Controller、@Service、@Repository
+
+3、@ComponentScan、@Import
+	@Import
+		* 4、@Import({User.class, DBHelper.class})
+		 *      給容器中自動創建出這兩個類型的組件、默認組件的名字就是全類名
+		 *
+		 */
+
+		@Import({User.class, DBHelper.class})
+		@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
+		public class MyConfig {
+		}
