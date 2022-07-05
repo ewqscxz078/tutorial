@@ -6,11 +6,30 @@ https://www.notion.so/Java-74bdc89111324c3489097339f7c46628
 springboot看到72
 	https://www.youtube.com/watch?v=hbH4yLjl6Rg&list=PLmOn9nNkQxJEFsK2HVO9-WA55Z7LZ2N0S&index=3&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-springboot2
+springboot2 看到9
 	https://www.youtube.com/watch?v=xu33IJNxkn0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=1&t=67s&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+	文件
+	https://www.yuque.com/atguigu/springboot
 
 微服務架構
 	https://www.youtube.com/watch?v=7faPOjHNRzg&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
 官方文件
 	https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#legal
+
+	參考文件
+		https://spring.io/projects/spring-boot#learn
+			點擊 Reference Doc.
+	查看各版更差異
+		https://spring.io/projects/spring-boot#overview
+			點擊 the project release notes section
+
+todo
+	eclipse 開啟入門專案
+
+
+學習路徑
+	springboot2
+	maven
+	spring Framework
+	spring cloud
