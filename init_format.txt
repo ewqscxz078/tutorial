@@ -22,7 +22,7 @@ replace tail space or tab // todo fix tail x tab no replace
 		egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/[[:blank:]]*$//"
 
 確認檔案是否有結尾 tab
-	egrep -InR $'\t'+$
+	egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js}
 
 	replace tail tab
 		egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/\t\+$//g"
