@@ -1,102 +1,233 @@
-組件添加
-1、@Configuration
-	● 基本使用
-	● Full模式與Lite模式
-	  ○ 示例
-	  ○ 最佳實戰
-		■ 配置 類組件之間無依賴關係用Lite模式加速容器啟動過程，減少判斷
-		■ 配置類組件之間有依賴關係，方法會被調用得到之前單實例組件，用Full模式
+元件添加
+	1、@Configuration
+		● 基本使用
+		● Full模式與Lite模式
+		  ○ 示例
+		  ○ 最佳實戰
+			■ 配置 類組件之間無依賴關係用Lite模式加速容器啟動過程，減少判斷
+			■ 配置類組件之間有依賴關係，方法會被調用得到之前單實例組件，用Full模式
 
-	#############################Configuration使用示例######################################################
-	/**
-	 * 1、配置類裡面使用@Bean標註在方法上給容器註冊組件，默認也是單實例的
-	 * 2、配置類本身也是組件
-	 * 3、proxyBeanMethods：代理bean的方法
-	 *      Full(proxyBeanMethods = true)、【保證每個@Bean方法被調用多少次返回的組件都是單實例的】 default
-	 *      Lite(proxyBeanMethods = false)【每個@Bean方法被調用多少次返回的組件都是新創建的】
-	 *      組件依賴必須使用Full模式默認。其他默認是否Lite模式
-	 *
-	 *
-	 *
-	 */
-	@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
-	public class MyConfig {
-
+		#############################Configuration使用示例######################################################
 		/**
-		 * Full:外部無論對配置類中的這個組件註冊方法調用多少次獲取的都是之前註冊容器中的單實例對象
-		 * @return
-		 */
-		@Bean //給容器中添加組件。以方法名作為組件的id。返回類型就是組件類型。返回的值，就是組件在容器中的實例
-		public User user01(){
-			User zhangsan = new User("zhangsan", 18);
-			//user組件依賴了Pet組件
-			zhangsan.setPet(tomcatPet());
-			return zhangsan;
-		}
-
-		@Bean("tom")
-		public Pet tomcatPet(){
-			return new Pet("tomcat");
-		}
-	}
-
-
-	################################@Configuration測試代碼如下########################################
-	@SpringBootConfiguration
-	@EnableAutoConfiguration
-	@ComponentScan("com.atguigu.boot")
-	public class MainApplication {
-
-		public static void main(String[] args) {
-			//1、返回我們IOC容器
-			ConfigurableApplicationContext run = SpringApplication.run(MainApplication.class, args);
-
-			//2、查看容器裡面的組件
-			String[] names = run.getBeanDefinitionNames();
-			for (String name : names) {
-				System.out.println(name);
-			}
-
-			//3、從容器中獲取組件
-
-			Pet tom01 = run.getBean("tom", Pet.class);
-
-			Pet tom02 = run.getBean("tom", Pet.class);
-
-			System.out.println("組件："+(tom01 == tom02));
-
-
-			//4、com.atguigu.boot.config.MyConfig$$EnhancerBySpringCGLIB$$51f1e1ca@1654a892
-			MyConfig bean = run.getBean(MyConfig.class);
-			System.out.println(bean);
-
-			//如果@Configuration(proxyBeanMethods = true)代理對象調用方法。 SpringBoot總會檢查這個組件是否在容器中有。
-			//保持組件單實例
-			User user = bean.user01();
-			User user1 = bean.user01();
-			System.out.println(user == user1);
-
-
-			User user01 = run.getBean("user01", User.class);
-			Pet tom = run.getBean("tom", Pet.class);
-
-			System.out.println("用戶的寵物："+(user01.getPet() == tom));
-
-
-
-		}
-	}
-
-2、@Bean、@Component、@Controller、@Service、@Repository
-
-3、@ComponentScan、@Import
-	@Import
-		* 4、@Import({User.class, DBHelper.class})
-		 *      給容器中自動創建出這兩個類型的組件、默認組件的名字就是全類名
+		 * 1、配置類裡面使用@Bean標註在方法上給容器註冊組件，默認也是單實例的
+		 * 2、配置類本身也是組件
+		 * 3、proxyBeanMethods：代理bean的方法
+		 *      Full(proxyBeanMethods = true)、【保證每個@Bean方法被調用多少次返回的組件都是單實例的】 default
+		 *      Lite(proxyBeanMethods = false)【每個@Bean方法被調用多少次返回的組件都是新創建的】
+		 *      組件依賴必須使用Full模式默認。其他默認是否Lite模式
+		 *
+		 *
 		 *
 		 */
-
-		@Import({User.class, DBHelper.class})
 		@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
 		public class MyConfig {
+
+			/**
+			 * Full:外部無論對配置類中的這個組件註冊方法調用多少次獲取的都是之前註冊容器中的單實例對象
+			 * @return
+			 */
+			@Bean //給容器中添加組件。以方法名作為組件的id。返回類型就是組件類型。返回的值，就是組件在容器中的實例
+			public User user01(){
+				User zhangsan = new User("zhangsan", 18);
+				//user組件依賴了Pet組件
+				zhangsan.setPet(tomcatPet());
+				return zhangsan;
+			}
+
+			@Bean("tom")
+			public Pet tomcatPet(){
+				return new Pet("tomcat");
+			}
 		}
+
+
+		################################@Configuration測試代碼如下########################################
+		@SpringBootConfiguration
+		@EnableAutoConfiguration
+		@ComponentScan("com.atguigu.boot")
+		public class MainApplication {
+
+			public static void main(String[] args) {
+				//1、返回我們IOC容器
+				ConfigurableApplicationContext run = SpringApplication.run(MainApplication.class, args);
+
+				//2、查看容器裡面的組件
+				String[] names = run.getBeanDefinitionNames();
+				for (String name : names) {
+					System.out.println(name);
+				}
+
+				//3、從容器中獲取組件
+
+				Pet tom01 = run.getBean("tom", Pet.class);
+
+				Pet tom02 = run.getBean("tom", Pet.class);
+
+				System.out.println("組件："+(tom01 == tom02));
+
+
+				//4、com.atguigu.boot.config.MyConfig$$EnhancerBySpringCGLIB$$51f1e1ca@1654a892
+				MyConfig bean = run.getBean(MyConfig.class);
+				System.out.println(bean);
+
+				//如果@Configuration(proxyBeanMethods = true)代理對象調用方法。 SpringBoot總會檢查這個組件是否在容器中有。
+				//保持組件單實例
+				User user = bean.user01();
+				User user1 = bean.user01();
+				System.out.println(user == user1);
+
+
+				User user01 = run.getBean("user01", User.class);
+				Pet tom = run.getBean("tom", Pet.class);
+
+				System.out.println("用戶的寵物："+(user01.getPet() == tom));
+
+
+
+			}
+		}
+
+	2、@Bean、@Component、@Controller、@Service、@Repository
+
+	3、@ComponentScan、@Import
+		@Import
+			* 4、@Import({User.class, DBHelper.class})
+			 *      給容器中自動創建出這兩個類型的組件、默認組件的名字就是全類名
+			 *
+			 */
+
+			@Import({User.class, DBHelper.class})
+			@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
+			public class MyConfig {
+			}
+
+	4、@Conditional
+		條件裝配：滿足Conditional指定的條件，則進行組件注入
+		@ConditionalOn....
+			=====================测试条件装配==========================
+			@Configuration(proxyBeanMethods = false) //告诉SpringBoot这是一个配置类 == 配置文件
+			//@ConditionalOnBean(name = "tom")
+			@ConditionalOnMissingBean(name = "tom")
+			public class MyConfig {
+
+
+				/**
+				 * Full:外部无论对配置类中的这个组件注册方法调用多少次获取的都是之前注册容器中的单实例对象
+				 * @return
+				 */
+
+				@Bean //给容器中添加组件。以方法名作为组件的id。返回类型就是组件类型。返回的值，就是组件在容器中的实例
+				public User user01(){
+					User zhangsan = new User("zhangsan", 18);
+					//user组件依赖了Pet组件
+					zhangsan.setPet(tomcatPet());
+					return zhangsan;
+				}
+
+				@Bean("tom22")
+				public Pet tomcatPet(){
+					return new Pet("tomcat");
+				}
+			}
+
+			public static void main(String[] args) {
+					//1、返回我们IOC容器
+					ConfigurableApplicationContext run = SpringApplication.run(MainApplication.class, args);
+
+					//2、查看容器里面的组件
+					String[] names = run.getBeanDefinitionNames();
+					for (String name : names) {
+						System.out.println(name);
+					}
+
+					boolean tom = run.containsBean("tom");
+					System.out.println("容器中Tom组件："+tom);
+
+					boolean user01 = run.containsBean("user01");
+					System.out.println("容器中user01组件："+user01);
+
+					boolean tom22 = run.containsBean("tom22");
+					System.out.println("容器中tom22组件："+tom22);
+
+
+				}
+
+2.2、原生配置文件引入 @ImportResource
+	1、@ImportResource
+		======================beans.xml=========================
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			   xmlns:context="http://www.springframework.org/schema/context"
+			   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+			<bean id="haha" class="com.atguigu.boot.bean.User">
+				<property name="name" value="zhangsan"></property>
+				<property name="age" value="18"></property>
+			</bean>
+
+			<bean id="hehe" class="com.atguigu.boot.bean.Pet">
+				<property name="name" value="tomcat"></property>
+			</bean>
+		</beans>
+
+		@ImportResource("classpath:beans.xml")
+		public class MyConfig {}
+
+		======================測試=================
+				boolean haha = run.containsBean("haha");
+				boolean hehe = run.containsBean("hehe");
+				System.out.println("haha："+haha);//true
+				System.out.println("hehe："+hehe);//true
+
+
+2.3、配置綁定  @ConfigurationProperties
+	如何使用Java讀取到properties文件中的內容，並且把它封裝到JavaBean中，以供隨時使用；
+		public class getProperties {
+			 public static void main(String[] args) throws FileNotFoundException, IOException {
+				 Properties pps = new Properties();
+				 pps.load(new FileInputStream("a.properties"));
+				 Enumeration enum1 = pps.propertyNames();//得到配置文件的名字
+				 while(enum1.hasMoreElements()) {
+					 String strKey = (String) enum1.nextElement();
+					 String strValue = pps.getProperty(strKey);
+					 System.out.println(strKey + "=" + strValue);
+					 //封裝到JavaBean。
+				 }
+			 }
+		 }
+
+
+		1、@Component + @ConfigurationProperties
+			/**
+			 * 只有在容器中的組件，才會擁有SpringBoot提供的強大功能
+			 */
+			@Component
+			@ConfigurationProperties(prefix = "mycar")
+			public class Car {
+
+				private String brand;
+				private Integer price;
+
+				.... getter setter
+				.... toString
+
+
+		2、@EnableConfigurationProperties + @ConfigurationProperties  // 當引用第三方當作設定元件時才會使用
+			/**
+			 * 只有在容器中的組件，才會擁有SpringBoot提供的強大功能
+			 */
+			@ConfigurationProperties(prefix = "mycar")
+			public class Car {
+
+				private String brand;
+				private Integer price;
+
+				.... getter setter
+				.... toString
+
+			@EnableConfigurationProperties(Car.class)
+			//1、開啟Car配置綁定功能
+			//2、把這個Car這個組件自動註冊到容器中
+			public class MyConfig {
+			}
