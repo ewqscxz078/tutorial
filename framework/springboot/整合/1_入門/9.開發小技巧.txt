@@ -1,0 +1,85 @@
+4、開發小技巧
+	4.1、Lombok
+		簡化JavaBean開發
+
+		https://www.tpisoftware.com/tpu/articleDetails/1861
+
+		1-2 Lombok的優點
+			1. 能通過註解的形式自動生成構造器、getter/setter、equals、hashcode、toString等方法，提高了一定的開發效率
+
+			2. 讓代碼變得簡潔，不用過多的去關注相應的方法
+
+			3.屬性做修改時，也簡化了維護為這些屬性所生成的getter/setter方法等
+
+		1-3 Lombok的缺點
+			1. 不支持多種參數構造器的重載
+
+			2.雖然省去了手動創建getter/setter方法的麻煩，但大大降低了原始碼的可讀性和完整性，降低了閱讀原始碼的舒適度
+
+			3.一旦在resource包裡用了Lombok，別人想看原始碼也不得不裝外掛
+
+		1-4 Lombok如何安裝
+			1.下載lombok
+				https://projectlombok.org/download
+			2.open eclipse
+				Help / Install new Software
+					work with : https://projectlombok.org/p2 and enter
+					select lombok next ... waiting to install .. trust sign ... and will restart eclipse
+				check is installed
+					Help / About eclipse IDE /
+						will see lombok message is intalled
+					open eclipse.ini will see
+						-javaagent:D:\dev\java\IDE\eclipse-jee-2022-06-R-win32-x86_64\eclipse\plugins\org.projectlombok.agent_1.18.24/lombok.jar
+
+
+		2-1 eclipse project pom.xml add
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+			</dependency>
+
+		2-2 lombok annotation
+			https://projectlombok.org/features/all
+				@Getter 和 @Setter：為屬性創建 getter 和 setter
+				@EqualsAndHashCode：實現 equals() 方法和 hashCode() 方法
+				@ToString：實現 toString() 方法
+				@Data：上述3個 annotation 的和，會創建 getter setter equals hashCode 和 toString （最實用）
+				@Cleanup：關閉流
+				@Synchronized：對象同步
+				@SneakyThrows：拋出異常
+				@Slf4j: Slf4j 日誌聲明
+				@AllArgsConstructor：能自動產生類別的全屬性建構子。
+				@NoArgsConstructor：能自動產生類別的無屬性建構子。
+
+			===============================簡化JavaBean開發===================================
+			@NoArgsConstructor
+			//@AllArgsConstructor
+			@Data
+			 // @ToString
+			 // @EqualsAndHashCode
+			public class User {
+
+				private String name;
+				private Integer age;
+
+				private Pet pet;
+
+				public User(String name,Integer age){
+					this.name = name;
+					this.age = age;
+				}
+
+			}
+
+			================================簡化日誌開發===================================
+			@Slf4j
+			@RestController
+			public class HelloController {
+				@RequestMapping("/hello")
+				public String handle01(@RequestParam("name") String name){
+
+					log.info("請求進來了....");
+
+					return "Hello, Spring Boot 2!"+"你好："+name;
+				}
+			}
