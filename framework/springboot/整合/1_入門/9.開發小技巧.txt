@@ -83,3 +83,15 @@
 					return "Hello, Spring Boot 2!"+"你好："+name;
 				}
 			}
+
+	4.2、dev-tools
+		https://docs.spring.io/spring-boot/docs/current/reference/html/using.html#using.devtools
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+		1.提供自動重啟動 springboot
+			項目或者頁面修改以後 eclipse：Ctrl+b；
+		2. ....
