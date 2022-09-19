@@ -11,7 +11,7 @@
 			JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
 		重開 git bash
 
-window 換行 dos2unix
+window 換行改 unix (dos2unix)
 	find -type f -name "*.txt" | xargs dos2unix
 
 check enocde
