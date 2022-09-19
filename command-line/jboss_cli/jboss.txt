@@ -1,5 +1,18 @@
 http://www.mastertheboss.com/jbossas/jboss-configuration/find-out-the-jboss-version-you-are-running/
 
-# cli jboss version
+# 登入
 	./jboss-cli.sh -c
-		:product-info
+
+# cli jboss version
+	:product-info
+	version
+
+# test connection work
+	/subsystem=datasources/data-source=${可用的名稱}:test-connection-in-pool
+
+# list datasource resource attr
+	/subsystem=datasources/data-source=${可用的名稱}:read-resource
+
+# 解析 attr resolve-expressions
+	/subsystem=datasources/data-source=${可用的名稱}:read-resource(include-runtime=true)
+

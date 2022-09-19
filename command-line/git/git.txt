@@ -96,6 +96,20 @@ local update origin branch 資訊
 	git rev-parse --abbrev-ref HEAD
 
 ==========================================================================================
+==================================== git diff ============================================
+==========================================================================================
+https://www.shellhacks.com/git-diff-staged-unstaged-files/
+# 顯示所有異動 (等於 git status)
+	git diff --name-only HEAD
+
+# 僅顯示 staged files of green
+	git diff --name-only --staged
+	git diff --name-only --cached
+
+# 僅顯示 unstaged files of red
+	git diff --name-only
+
+==========================================================================================
 ==================================== git log =============================================
 ==========================================================================================
 
@@ -121,6 +135,11 @@ local update origin branch 資訊
 
 查看 auth commit 的 log
 	git log --author='[author name]'
+
+搜尋 commit message log，則會將 match 到的就會
+	https://stackoverflow.com/questions/7124914/how-to-search-a-git-repository-by-commit-message
+	git log --grep='輸入關鍵字'
+		ex: git log --grep='1923:'
 
 簡化顯示清單 with sha256Id、commit message
 	git log --oneline
@@ -151,7 +170,7 @@ git diff --cached HEAD => 索引 vs HEAD
 git diff --cached => 索引 vs HEAD
 git diff HEAD^ HEAD => HEAD^ vs HEAD
 
-比對branch diff
+比對 branch diff
 	git diff <branchA>:<fileA> <branchB>:<fileB>,
 	or if you want to compare the same file git diff <branchA> <branchB> -- <file>
 		ex:  git diff issue/333 issue/342 -- ./RC/config/batchjob.xml
@@ -279,19 +298,34 @@ Changes not staged for commit:
 		modified:   REPORTS/SERVER/sris3-report-server-exec/src/test/java/tw/gov/moi/ae/reporting/server/cli/ReportingServerCLITest.java
 
 		顯示以上之類
-git stash // 放到暫存
-git stash save 'my_stash 自訂名稱放到暫存
-git status
-git stash list // 列舉暫存
-git stash apply // 將最新暫存apply到當前branch
-git stash apply stash@{2} // 指定 stash apply 到當前branch
-git stash save '自訂 stash name' --include-untracked  // 包含 untracked file 都加入 stash
+放到暫存
+	git stash
+
+自訂名稱放到暫存
+	git stash save 'my_stash'
+
+列舉暫存
+	git stash list
+
+將最新暫存apply到當前branch
+	git stash apply
+
+指定 stash apply 到當前branch
+	git stash apply stash@{2}
+
+包含 untracked file 都加入 stash
+	git stash save '自訂 stash name' --include-untracked
 
 // https://stackoverflow.com/questions/5506339/how-can-i-git-stash-a-specific-file
-git stash push -m 'assign file 1 3' test1 test3// 指定檔案 存到 stash
+指定檔案 存到 stash，如果檔案有 untracked，要先git add 後再執行如下指令
+	git stash push -m 'assign file 1 3' test1 test3
 
-git stash pop stash@{?} // 簽出指定 stash，並移除指定 stash
-git stash drop	stash@{?}  // 移除指定stash
+
+簽出指定 stash，並移除指定 stash
+	git stash pop stash@{?}
+
+移除指定stash
+	git stash drop	stash@{?}
 
 	// To show files changed in the last stash only file
 git stash show -p // to view the content of the most recent stash
@@ -315,19 +349,19 @@ Apply your stashes
 	git apply /old/project/dir/[patchName]
 	git stash
 
-使用 git stash apply [id] 也有可能衝突
-如內容出現
-	<<<<<<< Updated upstream
-					<mapping resource='tw/gov/moi/domain/Tcdf2102Type.hbm.xml' />
-					<mapping resource='tw/gov/moi/domain/Tcdf2103Type.hbm.xml' />
-					<mapping resource='tw/gov/moi/domain/Tcdf2200Type.hbm.xml' />
-					<mapping resource='tw/gov/moi/domain/Tcdfc2o3Type.hbm.xml' />
-	=======
-	>>>>>>> Stashed changes
+	使用 git stash apply [id] 也有可能衝突
+	如內容出現
+		<<<<<<< Updated upstream
+						<mapping resource='tw/gov/moi/domain/Tcdf2102Type.hbm.xml' />
+						<mapping resource='tw/gov/moi/domain/Tcdf2103Type.hbm.xml' />
+						<mapping resource='tw/gov/moi/domain/Tcdf2200Type.hbm.xml' />
+						<mapping resource='tw/gov/moi/domain/Tcdfc2o3Type.hbm.xml' />
+		=======
+		>>>>>>> Stashed changes
 
-Updated upstream 代表 上面的版本
-Stashed changes 代表 stash版本
-fix掉即可
+	Updated upstream 代表 上面的版本
+	Stashed changes 代表 stash版本
+	fix掉即可
 
 // 參考 https://wincent.com/wiki/Git_merge_conflict_cheatsheet
 
@@ -356,7 +390,11 @@ stash track and untrack to patch
 ================================== merge =================================================
 ==========================================================================================
 git merge [branchName] --no-edit --no-ff
---no-ff // 代表不fastforward merge
+	https://stackoverflow.com/questions/24609146/stop-git-merge-from-opening-text-editor
+		--no-edit // 代表 merge 時不會跳出編輯器的畫面
+	https://medium.com/@fcamel/%E4%BD%95%E6%99%82%E8%A9%B2%E7%94%A8-git-merge-no-ff-d765c3a6bef5
+	https://stackoverflow.com/questions/9069061/what-effect-does-the-no-ff-flag-have-for-git-merge
+		--no-ff // 代表不 fastforward merge， ff 代表會縮減節點，讓節點比較乾淨而已
 
 當 binary檔(doc pdf jar) merge 後有衝突
 可使用
@@ -383,10 +421,29 @@ merge 常例
 列舉設定
 	git config --list
 
-列舉設定與涵蓋原始目錄
-	git config --list  --show-origin
+列舉設定與涵蓋原始目錄或類型
+	https://stackoverflow.com/questions/60202175/what-is-the-difference-between-global-and-local-configuration-in-git
+	顯示實際位置
+		git config --list  --show-origin
+	顯示配置類型(system、global、local)
+		git config --list  --show-scpoe
 
-設定commit 的作者與email
+	僅 system
+		System: These variables are available for every user in the system
+			[path]/etc/gitconfig.
+				ex: C:/Program Files/Git/etc/gitconfig
+					git config --list --system
+	僅 global
+		Global: Global configurations are available for the current users for all the projects
+			~/.gitconfig or ~/.config/git/config
+				ex: C:/Users/Username/.gitconfig
+					git config --list --global
+	僅 local
+		Local: Local configs are available for the current repository only. You can make git read
+			git config --list --local
+
+
+設定 commit 的作者與 email
     git config --global user.name "Your Name"
     git config --global user.email you@example.com
 
@@ -422,6 +479,13 @@ git show [commid] [file]
 
 # 取得當前branch 分支完整名稱與路徑
 	git rev-parse --abbrev-ref --symbolic-full-name HEAD
+
+==========================================================================================
+================================== 查看 repo =============================================
+==========================================================================================
+https://stackoverflow.com/questions/15715825/how-do-you-get-the-git-repositorys-name-in-some-git-repository
+basename `git rev-parse --show-toplevel`
+current_repo=$(basename `git rev-parse --show-toplevel`)
 
 ==========================================================================================
 ================================== git url ===============================================
