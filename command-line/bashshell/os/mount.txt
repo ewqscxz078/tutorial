@@ -1,1 +1,22 @@
 https://blog.gtwang.org/linux/linux-mount/
+
+# 列舉設備掛載狀況
+mount
+
+# 基本語法 掛載設備到指定目錄
+mount -t {type} {device} {dir}
+	# type: ext4、vfat 、iso9660 或 ntfs
+	ex: 掛載唯讀的光碟
+		sudo mount -t iso9660 -o ro /dev/cdrom /mnt/cdrom
+
+# 卸載設備
+umount {dir}
+
+# 掛載中所有的設備（device）
+	// vi /etc/fstab
+	# mount all in /etc/fstab 掛載所有設備
+	mount -a
+
+	# 卸載所有設備
+	umount -a
+

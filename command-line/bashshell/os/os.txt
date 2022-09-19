@@ -24,3 +24,8 @@
 看開機多久
 	uptime
 	top #第一行資訊為 HH:mm:ss(現在時間) up mm:ss(開機多久時間)
+
+https://www.geeksforgeeks.org/auto-logout-in-linux-shell-using-tmout-shell-variable/
+auto logout if no access，例如300秒(5分鐘)未操作自動登出
+	sudo vi /etc/profile
+		TMOUT=300

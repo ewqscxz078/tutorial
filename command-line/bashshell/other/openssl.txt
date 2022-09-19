@@ -1,6 +1,5 @@
-
 ===================================================================================
-====================== ts =========================================================
+====================== 時戳 ts ====================================================
 ===================================================================================
 https://weisser-zwerg.dev/posts/trusted_timestamping/
 https://freetsa.org/index_zh.php
@@ -29,5 +28,64 @@ echo "test" > test.txt
 // view tsr
 	openssl ts -reply -in file.tsr -text
 
+===================================================================================
+====================== 自簽憑證 ===================================================
+===================================================================================
+https://computingforgeeks.com/secure-ldap-server-with-ssl-tls-on-ubuntu/
+https://www.cnblogs.com/swordfall/p/14677980.html
 
+	openssl genrsa -aes128 -out ldap_server.key 4096
+		輸入密碼兩次
+	openssl rsa -in ldap_server.key -out ldap_server.key
 
+	openssl req -new -days 3650 -key ldap_server.key -out ldap_server.csr
+
+	openssl x509 -in ldap_server.csr -out ldap_server.crt -req -signkey ldap_server.key -days 3650
+
+	cp {ldap_server.key,ldap_server.crt} /etc/ssl/certs/ca-certificates.crt ${target}
+
+	認證機構憑證
+		ca-certificates.crt
+	自簽憑證
+		ldap_server.crt
+	自簽憑證 key
+		ldap_server.key
+
+===================================================================================
+====================== cipher 演算法確認 ==========================================
+===================================================================================
+
+https://blog.miniasp.com/post/2021/05/12/Checking-Cipher-Suites-using-OpenSSL-and-cURL
+# list support os openssl cipher suite list
+	openssl ciphers
+	openssl ciphers -stdname
+	openssl ciphers -v
+	openssl ciphers -V
+
+===================================================================================
+====================== tls 確認 ===================================================
+===================================================================================
+https://blog.miniasp.com/post/2021/05/12/Checking-Cipher-Suites-using-OpenSSL-and-cURL
+openssl s_client -connect ${host}:${port}
+	openssl s_client -connect localhost:443
+	openssl s_client -connect localhost:443 -tls1
+	openssl s_client -connect localhost:443 -tls1_1
+	openssl s_client -connect localhost:443 -tls1_2
+	openssl s_client -connect localhost:443 -tls1_3
+
+https://www.nocentino.com/posts/2021-05-20-testing-for-specific-versions-of-tls-protocols-using-curl/
+# check by curl
+	curl https://${host}:${port}/ --verbose -tlsv1.0 --tls-max 1.0
+	curl https://${host}:${port}/ --verbose -tlsv1.1 --tls-max 1.1
+	curl https://${host}:${port}/ --verbose -tlsv1.2 --tls-max 1.2
+	curl https://${host}:${port}/ --verbose -tlsv1.3 --tls-max 1.3
+
+===================================================================================
+====================== read cer info ==============================================
+===================================================================================
+https://serverfault.com/questions/215606/how-do-i-view-the-details-of-a-digital-certificate-cer-file
+
+openssl x509 -in cerfile.cer -noout -text
+	The format of the .CER file might require that you specify a different encoding format to be explicitly called out.
+		openssl x509 -inform pem -in cerfile.cer -noout -text
+		openssl x509 -inform der -in cerfile.cer -noout -text

@@ -1,0 +1,46 @@
+主要參考 http://n.sfs.tw/content/index/11830
+option https://malagege.github.io/blog/2020/07/18/%E7%94%A2%E7%94%9F%E8%87%AA%E7%B0%BD%E6%86%91%E8%AD%89%E7%AD%86%E8%A8%98/
+
+自簽Root CA
+	建立私鑰
+		openssl genrsa  -out RootCA.key 2048
+	產生根憑證申請檔
+		openssl req -new -key RootCA.key -out RootCA.req
+			TW
+			Taiwan
+			TW
+			IISI
+			戶役政
+			test.iisi.com
+			email address [enter略過]
+			A challenge passwd [enter略過]
+			An optional company name [enter略過]
+
+	利用申請檔產生憑證檔
+		openssl x509 -req -days 3650 -sha256 -extensions v3_ca -signkey RootCA.key -in RootCA.req -out RootCA.crt
+
+製作終端憑證(伺服器憑證)
+	建立伺服器私鑰
+		openssl genrsa -out ServerCert.key 2048
+	同上，產生憑證申請檔
+		openssl req -new -key ServerCert.key -out ServerCert.req
+			TW
+			Taiwan
+			TW
+			IISI
+			戶役政
+			test.li.com
+			email address [enter略過]
+			A challenge passwd [enter略過]
+			An optional company name [enter略過]
+
+	產生流水號檔
+		echo 1000 > RootCA.srl
+
+	產生憑證檔一樣簽十年
+		openssl x509 -req -days 3650 -sha256 -extensions v3_req -CA RootCA.crt -CAkey RootCA.key -CAserial RootCA.srl -CAcreateserial -in ServerCert.req -out ServerCert.crt
+
+apache
+	SSLCertificateFile /etc/pki/tls/certs/ServerCert.crt
+	SSLCertificateKeyFile /etc/pki/tls/private/ServerCert.key
+	SSLCACertificateFile /etc/pki/tls/certs/RootCA.crt

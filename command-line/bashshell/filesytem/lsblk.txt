@@ -1,3 +1,6 @@
 
+查看切割那些 disk 概況
+	lsblk
+
 查看 disk 切割 patition
 	lsblk -f

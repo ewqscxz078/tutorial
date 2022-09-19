@@ -1,0 +1,26 @@
+https://www.openldap.org/doc/admin24/
+https://access.redhat.com/articles/1474813
+https://access.redhat.com/articles/1482663
+
+# check slapd version of ubuntu
+	dpkg -s slapd | grep Version
+
+# check slapd global config
+	ldapsearch -Y  EXTERNAL -H ldapi:/// -b cn=config cn=config
+
+https://docs.oracle.com/cd/E19957-01/820-2521/fsuyv/index.html
+# apply ldif setting to slapd
+	vi test.ldif
+		dn: cn=config
+		changetype: modify
+		{add|replace|delete}: ${屬性}
+		${屬性}: ${值}
+
+	ex:
+		dn: cn=config
+		changetype: modify
+		add: olcTLSCipherSuite
+		olcTLSCipherSuite: HIGH:MEDIUM:-SSLv2
+
+	ldapmodify -Y EXTERNAL -H ldapi:/// -f test.ldif
+

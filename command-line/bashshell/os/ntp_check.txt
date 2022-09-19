@@ -1,0 +1,5 @@
+https://www.cyberciti.biz/faq/linux-unix-bsd-is-ntp-client-working/
+	ntpq -p
+	ntpstat
+
+	timedatectl status

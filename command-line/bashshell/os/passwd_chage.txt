@@ -32,4 +32,4 @@ https://www.twblogs.net/a/5c7669acbd9eee339917f7b3
 	chage -l [username]
 
 更改帳號過期
-	chage -E "YYYY-MM-DD" username]
+	chage -E "YYYY-MM-DD" [username]

@@ -1,4 +1,5 @@
-xargs
+https://blog.gtwang.org/linux/xargs-command-examples-in-linux-unix/
+
 
 -I 前面執行結果傳到這後的當前變數指定替換名稱
 -i 當前變數 {}

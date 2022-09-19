@@ -135,6 +135,8 @@ declare [-aixr] variable
 ===================================================================
 ========================= if ======================================
 ===================================================================
+https://stackoverflow.com/questions/20449543/shell-equality-operators-eq
+
 # 一個條件判斷，分成功進行與失敗進行 (else)
 if [ 條件判斷式 ]; then
 	當條件判斷式成立時，可以進行的指令工作內容；
@@ -307,10 +309,26 @@ find -inum 檔案編號(數字) -delete
 find -inum 檔案編號(數字) -exec rm -rf {} \;
 
 ===================================================================
-========================= include shell ===========================
+========================= excute shell 方式 =======================
 ===================================================================
-. file
-source file
+https://www.yenchen-design.com/diary/linux%E4%B8%AD%E5%9F%B7%E8%A1%8Cshell%E8%85%B3%E6%9C%AC%E7%9A%844%E7%A8%AE%E6%96%B9%E6%B3%95/
+
+切換到shell 腳本所在目錄，執行 shell
+	cd ${target_dir}
+	./${target_shell}.sh
+
+絕對路徑執行 shell 腳本
+	/${target_path}/${target_shell}.sh
+
+直接使用 bash/sh 來執行 shell 腳本
+	cd ${target_dir}
+	bash ${target_shell}.sh
+	sh ${target_shell}.sh
+
+在當前 shell 環境中執行腳本 (include shell)
+	cd ${target_dir}
+	. ${target_shell}.sh
+	source ${target_shell}.sh
 
 ===================================================================
 ============================ array ================================
@@ -448,9 +466,18 @@ test EXPRESSION
 	fi
 
 ===================================================================
+======================== if regular expression ====================
+===================================================================
+https://stackoverflow.com/questions/18709962/regex-matching-in-a-bash-if-statement
+
+pat="[0-9a-zA-Z ]"
+if [[ $x =~ $pat ]]; then ...
+
+===================================================================
 ======================== 變數是否存在 =============================
 ===================================================================
 https://tldp.org/LDP/abs/html/comparison-ops.html
+https://stackoverflow.com/questions/3601515/how-to-check-if-a-variable-is-set-in-bash
 
 -z
 	string is null, that is, has zero length
