@@ -1,0 +1,135 @@
+普通參數與基本註解
+	1.1、註解：
+		@PathVariable、@RequestHeader、@ModelAttribute、@RequestParam、@MatrixVariable、@CookieValue、@RequestBody
+
+			@RestController
+			public class ParameterTestController {
+				//  car/2/owner/zhangsan
+				@GetMapping("/car/{id}/owner/{username}")
+				public Map<String,Object> getCar(@PathVariable("id") Integer id,
+												 @PathVariable("username") String name,
+												 @PathVariable Map<String,String> pv,
+												 @RequestHeader("User-Agent") String userAgent,
+												 @RequestHeader Map<String,String> header,
+												 @RequestParam("age") Integer age,
+												 @RequestParam("inters") List<String> inters,
+												 @RequestParam Map<String,String> params,
+												 @CookieValue("_ga") String _ga,
+												 @CookieValue("_ga") Cookie cookie){
+
+
+					Map<String,Object> map = new HashMap<>();
+
+			//        map.put("id",id);
+			//        map.put("name",name);
+			//        map.put("pv",pv);
+			//        map.put("userAgent",userAgent);
+			//        map.put("headers",header);
+					map.put("age",age);
+					map.put("inters",inters);
+					map.put("params",params);
+					map.put("_ga",_ga);
+					System.out.println(cookie.getName()+"===>"+cookie.getValue());
+					return map;
+				}
+
+				@PostMapping("/save")
+				public Map postMethod(@RequestBody String content){
+					Map<String,Object> map = new HashMap<>();
+					map.put("content",content);
+					return map;
+				}
+
+
+				// 使用 MatrixVariable 的原因
+				// 頁面開發，cookie禁用了，session裡面的內容怎麼使用?
+				// session.set(a,b) -> jsessionid -> cookie -> 每次發請求攜帶
+				// url 重寫: /abc;jsessionid=xxx 把cookie的值使用矩陣變量方式進行傳遞
+
+				//1、語法： 請求路徑：/cars/sell;low=34;brand=byd,audi,yd
+				//2、SpringBoot默認是禁用了矩陣變量的功能
+				//      手動開啟：原理。對於路徑的處理。 UrlPathHelper進行解析。
+				//              removeSemicolonContent（移除分號內容）支持矩陣變量的
+				//3、矩陣變量必須有url路徑變量才能被解析
+				@GetMapping("/cars/{path}")
+				public Map carsSell(@MatrixVariable("low") Integer low,
+									@MatrixVariable("brand") List<String> brand,
+									@PathVariable("path") String path){
+					Map<String,Object> map = new HashMap<>();
+
+					map.put("low",low);
+					map.put("brand",brand);
+					map.put("path",path);
+					return map;
+				}
+
+				// /boss/1;age=20/2;age=10
+				@GetMapping("/boss/{bossId}/{empId}")
+				public Map boss(@MatrixVariable(value = "age",pathVar = "bossId") Integer bossAge,
+								@MatrixVariable(value = "age",pathVar = "empId") Integer empAge){
+					Map<String,Object> map = new HashMap<>();
+
+					map.put("bossAge",bossAge);
+					map.put("empAge",empAge);
+					return map;
+
+				}
+
+			}
+
+1.2、Servlet API：
+	WebRequest、ServletRequest、MultipartRequest、 HttpSession、javax.servlet.http.PushBuilder、Principal、InputStream、Reader、HttpMethod、Locale、TimeZone、ZoneId
+
+	ServletRequestMethodArgumentResolver  以上的部分參數
+
+1.3、複雜參數：
+	回傳值 : Map，參數值:Map、Model
+	Map、Model（map、model裡面的數據會被放在request的請求域  request.setAttribute）、Errors/BindingResult、
+	RedirectAttributes（ 重定向攜帶數據）、ServletResponse（response）、SessionStatus、UriComponentsBuilder、ServletUriComponentsBuilder
+
+		Map<String,Object> map,  Model model, HttpServletRequest request 都是可以給 request 域中放數據，
+		request.getAttribute();
+
+		request.setAttribute => 就是等於 form 表單傳值 url?param=$value
+
+		Map、Model類型的參數，會返回 mavContainer.getModel（）；---> BindingAwareModelMap 是Model 也是Map
+		mavContainer.getModel(); 獲取到值的
+
+
+1.4、自定義對象參數
+	透過 ServletModelAttributeMethodProcessor 轉換到 自定義的POJO bean，從頁面直接轉換到 pojo bean 裡
+
+		WebDataBinder binder = binderFactory.createBinder(webRequest, attribute, name);
+		WebDataBinder :web數據綁定器，將請求參數的值綁定到指定的JavaBean裡面
+		WebDataBinder 利用它裡面的 Converters 將請求數據轉成指定的數據類型。再次封裝到JavaBean中
+
+		GenericConversionService：在設置每一個值的時候，找它裡面的所有converter那個可以將這個數據類型（request帶來參數的字符串）轉換到指定的類型（JavaBean -- Integer）
+		byte -- > file
+
+		@FunctionalInterfacepublic interface Converter<S, T>	// 自訂義Converter， 前端頁面如何 String 轉 Pet 物件
+			@Configuration XXXconfig.java
+				@Bean
+				public WebMvcConfigurer webMvcConfigurer() {
+					return new WebMvcConfigurer() {
+						@Override
+						public void addFormatters(final FormatterRegistry registry) {
+							registry.addConverter(new Converter<String, Pet>() {
+
+								@Override
+								public Pet convert(final String source) {
+									if (StringUtils.hasText(source)) {
+										final Pet pet = new Pet();
+										final String[] split = source.split(",");
+										pet.setName(split[0]);
+										pet.setAge(Integer.parseInt(split[1]));
+
+									}
+									return null;
+								}
+							});
+						}
+					};
+				}
+
+			XXX.html
+				寵物: <input type="text" name="pet" value="阿貓,3"/> <br/>

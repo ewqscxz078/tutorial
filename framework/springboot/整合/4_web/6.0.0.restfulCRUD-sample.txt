@@ -1,0 +1,74 @@
+3、請求參數處理
+	0、請求映射
+		1、rest使用與原理
+			● @xxxMapping；
+			● Rest風格支持（使用HTTP請求方式動詞來表示對資源的操作）
+			  ○ 以前：/getUser   獲取用戶     /deleteUser 刪除用戶    /editUser  修改用戶       /saveUser 保存用戶
+			  ○ 現在： /user    GET-獲取用戶    DELETE-刪除用戶     PUT-修改用戶      POST-保存用戶
+			  ○ 核心Filter；HiddenHttpMethodFilter
+				■ 用法： 表單method=post，隱藏域 _method=put
+				■ SpringBoot中手動開啟
+			  ○ 擴展：如何把_method 這個名字換成我們自己喜歡的。
+
+
+				@RequestMapping(value = "/user",method = RequestMethod.GET)
+				public String getUser(){
+					return "GET-張三";
+				}
+
+				@RequestMapping(value = "/user",method = RequestMethod.POST)
+				public String saveUser(){
+					return "POST-張三";
+				}
+
+
+				@RequestMapping(value = "/user",method = RequestMethod.PUT)
+				public String putUser(){
+					return "PUT-張三";
+				}
+
+				@RequestMapping(value = "/user",method = RequestMethod.DELETE)
+				public String deleteUser(){
+					return "DELETE-張三";
+				}
+
+
+				@Bean
+				@ConditionalOnMissingBean(HiddenHttpMethodFilter.class)
+				@ConditionalOnProperty(prefix = "spring.mvc.hiddenmethod.filter", name = "enabled", matchIfMissing = false)
+				public OrderedHiddenHttpMethodFilter hiddenHttpMethodFilter() {
+					return new OrderedHiddenHttpMethodFilter();
+				}
+
+
+				//自定義filter
+				@Bean
+				public HiddenHttpMethodFilter hiddenHttpMethodFilter(){
+					HiddenHttpMethodFilter methodFilter = new HiddenHttpMethodFilter();
+					methodFilter.setMethodParam("_m");
+					return methodFilter;
+				}
+
+Rest原理（表單提交要使用REST的時候）
+	● 表單提交會帶上_method=PUT
+	● 請求過來被HiddenHttpMethodFilter攔截
+	  ○ 請求是否正常，並且是POST
+		■ 獲取到_method的值。
+		■ 兼容以下請求；PUT.DELETE.PATCH
+		■ 原生request（post），包裝模式requesWrapper重寫了getMethod方法，返回的是傳入的值。
+		■ 過濾器鏈放行的時候用wrapper。以後的方法調用getMethod是調用requesWrapper的。
+
+Rest使用客户端工具，
+	● 如PostMan直接发送Put、delete等方式请求，无需Filter。
+
+	spring:
+	  mvc:
+		hiddenmethod:
+		  filter:
+			enabled: true   #開啟頁面表單的Rest功能
+
+
+自定義注入複寫 HiddenHttpMethodFilter
+	HiddenHttpMethodFilter hiddenHttpMethodFilter = new HiddenHttpMethodFilter();
+	hiddenHttpMethodFilter.setMethodParam("xxxx");
+	可自訂 html hidden 的 valude值

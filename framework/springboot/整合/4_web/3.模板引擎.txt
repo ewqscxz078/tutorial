@@ -11,8 +11,11 @@ Thymeleaf 官網
 模板引擎
 	JSP、Velocity、Freemarker、Thymeleaf
 
-springboot 推薦的Thymeleaf
-語法簡單、功能更強大
+springboot 推薦的 Thymeleaf
+	語法簡單、功能更強大
+	html 直接開啟頁面為預設的渲染
+	html 若透過ap server渲染會有對應的語法展現動態結果
+	缺點效能沒有那麼強，非高性能
 
 
 use Thymeleaf 3

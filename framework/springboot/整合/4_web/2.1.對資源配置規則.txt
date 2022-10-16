@@ -1,0 +1,62 @@
+springboot映射規則
+
+webMvcAutoConfiguration
+	1.所有/webjars/**，都去classpath:/META-INF/resources/webjars/找資源
+		webjars: 以jar包的方式引入靜態資源
+
+		https://www.webjars.org/
+
+		  <dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>jquery</artifactId>
+			<version>3.3.1</version>
+		  </dependency>
+
+
+		localhost:8080/webjars/jquery/3.3.1/jquery.js
+
+	2./**訪問當前項目的任何資源，靜態資源的文件夾
+		classpath:/META-INF/resources/
+		classpath:/resources/
+		classpath:/static/
+		classpath:/public/
+		"/"
+
+		例如在
+			javaProject/src/main/resources/static/
+				放入 assert/js/Chat.min.js
+		訪問
+			當前項目根路徑/ + 靜態資源名
+				localhost:8080/assert/js/Chat.min.js
+
+		原理： 靜態映射/**。
+			請求進來，先去找Controller看能不能處理。不能處理的所有請求又都交給靜態資源處理器。靜態資源也找不到則響應404頁面
+
+		改變默認的靜態資源東西
+			#改變訪問靜態資源的方式，訪問的前墜
+			spring:
+			  mvc:
+				static-path-pattern: /res/**
+
+				也就是 localhost:8080/res/${專案的靜態資源路徑}
+
+			#改變靜態資源的路徑來源
+			  resources:
+				static-locations: [classpath:/haha/]
+
+	3.歡迎頁；靜態資源文件夾下的所有 index.html 頁面; 被 /** 對應
+		localhost:8080/ 找 index.html 頁面
+
+		  ○ 可以配置靜態資源路徑
+		  ○ 但是不可以配置靜態資源的訪問前綴。否則導致 index.html不能被默認訪問
+			spring:
+			#  mvc:
+			#    static-path-pattern: /res/**   這個會導致welcome page功能失效
+
+			  resources:
+				static-locations: [classpath:/haha/]
+
+	4.圖標；所有的 /**/favicon.ico 都在靜態資源文件下找
+		spring:
+		#  mvc:
+		#    static-path-pattern: /res/**   這個會導致 Favicon 功能失效

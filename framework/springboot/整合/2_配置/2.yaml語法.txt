@@ -1,9 +1,12 @@
 YAML
 	基本語法
-		1.使用縮進表示層級關係
-		2.縮進時不允許使用tab，只允許使用空格
-		3.縮進的空格數目不重要，只要相同層級的層級元素左側對齊即可
-		4.大小寫敏感
+		1.key: value; kv之間要有空格
+		2.使用縮進表示層級關係
+		3.縮進時不允許使用tab，只允許使用空格
+		4.縮進的空格數目不重要，只要相同層級的層級元素左側對齊即可
+		5.大小寫敏感
+		6.'#'表示註解
+		7.'' 單引號與 "" 雙引號表示字串內容會被轉譯不轉譯
 
 	資料結構
 		1.常數(數字、字串、布林)：單個的、不可再分的值
@@ -12,6 +15,7 @@ YAML
 				name: "xxxx \n yyyy" 輸出 => xxxx 換行 yyyy
 			'':單引號:轉義特殊符號，特殊符號只是普通字的意思
 				name: 'xxxx \n yyyy' 輸出 => xxxx \n yyyy
+
 		2.物件、MAP：key value 鍵值對的集合 k:(空格)v 空格必須有
 			friends:
 			  lasName: xxx
@@ -34,3 +38,36 @@ YAML
 
 	多配置文件於一個檔案
 		用 --- 隔開
+
+
+讓 application.yml/properties 也會出現自訂配置檔的提示
+	pom.xml add
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+		排除打包不含 輔助用的 spring-boot-configuration-processor
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<configuration>
+						<excludes>
+							<exclude>
+								<groupId>org.springframework.boot</groupId>
+								<artifactId>spring-boot-configuration-processor</artifactId>
+							</exclude>
+						</excludes>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+
+	mvn clean install -Dmaven.skip.test 或
+	eclipse / ${yourproject}右鍵 / run as / Maven build ... / clean install and 勾選 skip test
+
+	則在 ${yourproject}\target\classes\META-INF\
+		會自動生成 spring-configuration-metadata.json

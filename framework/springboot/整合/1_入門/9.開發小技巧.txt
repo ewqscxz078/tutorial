@@ -95,3 +95,8 @@
 		1.提供自動重啟動 springboot
 			項目或者頁面修改以後 eclipse：Ctrl+b；
 		2. ....
+
+	4.3、Spring Initailizr
+		自動依據選取的場景建立基本專案
+			1.建立場景的基本依賴
+			2.springboot 主程序

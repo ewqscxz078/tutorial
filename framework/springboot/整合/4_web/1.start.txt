@@ -7,3 +7,32 @@
 
 	xxxxAutoConfiguration: 幫我們給容器自動配置組件
 	xxxxProperties: 配置類來封裝配置文件
+
+
+1、SpringMVC自動配置概覽
+	Spring Boot provides auto-configuration for Spring MVC that works well with most applications.(大多場景我們都無需自定義配置)
+	The auto-configuration adds the following features on top of Spring’s defaults:
+	● Inclusion of ContentNegotiatingViewResolver and BeanNameViewResolver beans.
+	  ○ 內容協商視圖解析器和BeanName視圖解析器
+	● Support for serving static resources, including support for WebJars (covered later in this document)).
+	  ○ 靜態資源（包括webjars）
+	● Automatic registration of Converter, GenericConverter, and Formatter beans.
+	  ○ 自動註冊 Converter，GenericConverter，Formatter
+	● Support for HttpMessageConverters (covered later in this document).
+	  ○ 支持 HttpMessageConverters （後來我們配合內容協商理解原理）
+	● Automatic registration of MessageCodesResolver (covered later in this document).
+	  ○ 自動註冊 MessageCodesResolver （國際化用）
+	● Static index.html support.
+	  ○ 靜態index.html 頁支持
+	● Custom Favicon support (covered later in this document).
+	  ○ 自定義 Favicon
+	● Automatic use of a ConfigurableWebBindingInitializer bean (covered later in this document).
+	  ○ 自動使用 ConfigurableWebBindingInitializer ，（DataBinder負責將請求數據綁定到JavaBean上）
+	If you want to keep those Spring Boot MVC customizations and make more MVC customizations (interceptors, formatters, view controllers, and other features), you can add your own @Configuration class of type WebMvcConfigurer but without @EnableWebMvc.
+	不用@EnableWebMvc註解。使用 @Configuration + WebMvcConfigurer 自定義規則
+
+	If you want to provide custom instances of RequestMappingHandlerMapping, RequestMappingHandlerAdapter, or ExceptionHandlerExceptionResolver, and still keep the Spring Boot MVC customizations, you can declare a bean of type WebMvcRegistrations and use it to provide custom instances of those components.
+	聲明 WebMvcRegistrations 改變默認底層組件
+
+	If you want to take complete control of Spring MVC, you can add your own @Configuration annotated with @EnableWebMvc, or alternatively add your own @Configuration-annotated DelegatingWebMvcConfiguration as described in the Javadoc of @EnableWebMvc.
+	使用 @EnableWebMvc+@Configuration+DelegatingWebMvcConfiguration 全面接管SpringMVC

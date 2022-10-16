@@ -1,18 +1,35 @@
 
 官網下載使用方式pdf
 	https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.pdf
+		Thymeleaf is a modern server-side Java template engine for both web and standalone environments, capable of processing HTML, XML, JavaScript, CSS and even plain text.
 
-ThymeleafAutoConfiguration
-	@ConfigurationProperties(prefix = "spring.thymeleaf")
-	public class ThymeleafProperties {
-		private static final
-		private static final
-		private static final String DEFALUT_PREFIX = "classpath:/templates/";
-		private static final String DEFALUT_SUFFIX = ".html";
+1、引入Starter
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-thymeleaf</artifactId>
+	</dependency>
 
-		//只要我們把頁面 classpath:/templates/， Thymeleaf就能自動渲染
-		....
-	}
+2、spring boot 已自動配置好基本設定 thymeleaf
+	@Configuration(proxyBeanMethods = false)
+	@EnableConfigurationProperties(ThymeleafProperties.class)
+	@ConditionalOnClass({ TemplateMode.class, SpringTemplateEngine.class })
+	@AutoConfigureAfter({ WebMvcAutoConfiguration.class, WebFluxAutoConfiguration.class })
+	ThymeleafAutoConfiguration
+		@ConfigurationProperties(prefix = "spring.thymeleaf")
+		public class ThymeleafProperties {
+			private static final
+			private static final
+			private static final String DEFALUT_PREFIX = "classpath:/templates/";
+			private static final String DEFALUT_SUFFIX = ".html";
+
+			//只要我們把頁面 classpath:/templates/， Thymeleaf就能自動渲染
+			....
+		}
+
+	● 1、所有thymeleaf的配置值都在 ThymeleafProperties
+	● 2、配置好了 SpringTemplateEngine
+	● 3、配好了 ThymeleafViewResolver
+	● 4、我們只需要直接開發頁面
 
 @Controller
 public class HelloController {

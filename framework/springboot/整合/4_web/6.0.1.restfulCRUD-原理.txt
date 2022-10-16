@@ -1,0 +1,127 @@
+2、請求映射原理
+	HttpServlet(javax.servlet.http)
+		HttpServletBean(org.springframework.web.servlet)
+			FrameworkServlet(org.springframework.web.servlet)
+				DispatcherServlet(org.springframework.web.servlet)
+
+	HttpServlet.doGet
+		HttpServletBean.processRequest
+			FrameworkServlet.doService
+				DispatcherServlet.doDispatch(每個請求都會被呼叫)
+
+	SpringMVC功能分析都從 org.springframework.web.servlet.DispatcherServlet-》doDispatch（）
+
+		protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
+			HttpServletRequest processedRequest = request;
+			HandlerExecutionChain mappedHandler = null;
+			boolean multipartRequestParsed = false;
+
+			WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
+
+			try {
+				ModelAndView mv = null;
+				Exception dispatchException = null;
+
+				try {
+					processedRequest = checkMultipart(request);
+					multipartRequestParsed = (processedRequest != request);
+
+					// 找到當前請求使用哪個Handler（Controller的方法）處理
+					mappedHandler = getHandler(processedRequest);
+
+					//HandlerMapping：處理器映射。 /xxx->>xxxx
+						@Nullable
+						protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+							if (this.handlerMappings != null) {
+								for (HandlerMapping mapping : this.handlerMappings) {
+									HandlerExecutionChain handler = mapping.getHandler(request);
+									if (handler != null) {
+										return handler;
+									}
+								}
+							}
+							return null;
+						}
+
+						....
+
+						RequestMappingInfoHandlerMapping
+							保存了所有@RequestMapping 和handler的映射規則。
+						WelcomePageHandlerMapping
+						BeanNameUrlHandlerMapping
+						RouterFunctionMapping
+						SimpleUrlHandlerMapping
+
+							所有的請求映射都在HandlerMapping中。
+
+							● SpringBoot自動配置歡迎頁的 WelcomePageHandlerMapping 。訪問 /能訪問到index.html；
+							● SpringBoot自動配置了默認 的 RequestMappingHandlerMapping
+							● 請求進來，挨個嘗試所有的HandlerMapping看是否有請求信息。
+							  ○ 如果有就找到這個請求對應的handler
+							  ○ 如果沒有就是下一個 HandlerMapping
+							● 我們需要一些自定義的映射處理，我們也可以自己給容器中放HandlerMapping。自定義 HandlerMapping
+
+					....
+
+					// Actually invoke the handler.
+					mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
+						AbstractHandlerMethodAdapter.handle(HttpServletRequest request, HttpServletResponse response, Object handler){
+							return RequestMappingHandlerAdapter.handleInternal(request, response, (HandlerMethod) handler){
+								....
+								// No synchronization on session demanded at all...
+								mav = invokeHandlerMethod(request, response, handlerMethod){
+									....
+									invocableMethod.invokeAndHandle(webRequest, mavContainer){
+										ServletInvocableHandlerMethod.invokeAndHandle(ServletWebRequest webRequest, ModelAndViewContainer mavContainer,Object... providedArgs){
+											Object returnValue = invokeForRequest(webRequest, mavContainer, providedArgs){
+												//獲取方法的參數值處理方式
+												Object[] args = getMethodArgumentValues(request, mavContainer, providedArgs){
+													....
+													args[i] = this.resolvers.resolveArgument(parameter, mavContainer, request, this.dataBinderFactory){
+														HandlerMethodArgumentResolverComposite.resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory){
+															HandlerMethodArgumentResolver resolver = getArgumentResolver(parameter){
+																HandlerMethodArgumentResolverComposite.getArgumentResolver(MethodParameter parameter) {
+																	//挨個判斷所有參數解析器那個支持解析這個參數，如(@PathVariable、@RequestHeader、@ModelAttribute、@RequestParam、@MatrixVariable、@CookieValue、@RequestBody)
+																	// ServletRequestMethodArgumentResolver， support(WebRequest、ServletRequest、MultipartRequest、 HttpSession、javax.servlet.http.PushBuilder、Principal、InputStream、Reader、HttpMethod、Locale、TimeZone、ZoneId)
+																	HandlerMethodArgumentResolver result = this.argumentResolverCache.get(parameter);
+																	if (result == null) {
+																		for (HandlerMethodArgumentResolver resolver : this.argumentResolvers) {
+																			if (resolver.supportsParameter(parameter)) {
+																				result = resolver;
+																				this.argumentResolverCache.put(parameter, result);
+																				break;
+																			}
+																		}
+																	}
+																	return result;
+																}
+															};
+															....
+														};
+													};
+													....
+												};
+												....
+											};
+											....
+											// 獲取方法的返回值處理方式
+											try {
+												this.returnValueHandlers.handleReturnValue(
+														returnValue, getReturnValueType(returnValue), mavContainer, webRequest){
+													....
+													handler.handleReturnValue(returnValue, returnType, mavContainer, webRequest){
+														// 共有 1X 種類型 方法返回值的處理方式
+													};
+													....
+
+
+												};
+											}
+											....
+										}
+									};
+									....
+								};
+								....
+							}
+						}
