@@ -1,0 +1,33 @@
+https://www.youtube.com/watch?v=LseVjRCgBW0&list=PL3kyJChfwew9uIxVX-9_FXgEKOY5027_W&index=35&ab_channel=%E8%95%BE%E5%92%AARami
+	Google Finance
+	https://www.google.com/finance/
+
+	ex: 搜尋 AAPL 蘋果
+		若為中長期投資者
+			觀察六個月或1年為參考指標
+
+		穩健標的
+			建議找超過市值10億
+
+		定存股
+			較關心殖利率: 購買股票後能獲得多少利息
+
+		季度財務資料(先行指標)，使較晚的結果，落後指標，通常透過對應下游廠商的財務了解標的的實際狀況
+			y/y是去年同期意思，主要是各行業有淡旺季問題，因此用此數據相對比較
+
+
+
+		DATAROMA
+			集結美國基金管理公司、美國基金管理公司的進出標的報告
+				參考大戶加碼、買進哪些股票
+					ex:巴菲特
+						https://www.dataroma.com/m/holdings.php?m=BRK
+		信奉的投資派別
+			挑選適合的標的
+				詳細研究標的
+					商業模式
+					經營狀況
+						本益比
+						殖利率
+						本業收入百分比
+					決定是否投資
