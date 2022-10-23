@@ -1,0 +1,22 @@
+https://www.twblogs.net/a/5ef8dd36836f69573a47be66
+https://www.readfog.com/a/1635535751834865664
+
+和Random結合以克服所有的性能問題，該類繼承自Random。
+
+1.使用一個普通的long而不是使用Random中的AtomicLong作爲seed
+2.不能自己創建ThreadLocalRandom實例，因爲它的構造函數是私有的，可以使用它的靜態工廠ThreadLocalRandom.current()
+3.它是CPU緩存感知式的，使用8個long虛擬域來填充64位L1高速緩存行
+4.正確使用方式是ThreadLocalRandom.current().nextX(...)，不能在多線程之間共享ThreadLocalRandom
+
+    public static void main(String[] args) {
+        for (int i = 0; i < 10; i++) {
+            new Player().start();
+        }
+    }
+
+    private static class Player extends Thread {
+        @Override
+        public void run() {
+            System.out.println(getName() + ": " + ThreadLocalRandom.current().nextInt(100));
+        }
+    }

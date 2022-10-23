@@ -1,0 +1,7 @@
+https://www.twblogs.net/a/5e51442bbd9eee21167f63d1
+
+Math.random()一隨機數
+java.util.Random僞隨機數（線性同餘法生成）
+java.util.concurrent.ThreadLocalRandom 工具類
+java.security.SecureRandom 真隨機數
+Apache Commons-Lang 包中的 RandomStringUtils 類
