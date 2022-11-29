@@ -1,0 +1,47 @@
+https://www.youtube.com/watch?v=PMaonqe9XCU&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=48&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+spring 透過 aop 攔截目標 url，提供 執行目標方法前後與完成的複寫函數
+
+web filter > Interceptor 	> 			controller > service > ...
+					    prehandle
+						postHandle
+						afterCompletion
+
+* 1、編寫一個攔截器實現HandlerInterceptor接口
+	public class LoginIntercepter implements HandlerInterceptor {
+		@Override
+		public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) throws Exception {
+			return false;
+		}
+		@Override
+		public void postHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler, final ModelAndView modelAndView) throws Exception {
+			HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
+		}
+		@Override
+		public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response, final Object handler, final Exception ex) throws Exception {
+			HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
+		}
+	}
+* 2、攔截器註冊到容器中（實現WebMvcConfigurer的addInterceptors）
+* 3、指定攔截規則【如果是攔截所有，靜態資源也會被攔截】
+	@Configuration
+	public class AdminWebConfig implements WebMvcConfigurer {
+
+		@Override
+		public void addInterceptors(final InterceptorRegistry registry) {
+			registry.addInterceptor(new LoginIntercepter())//
+					.addPathPatterns("/**")// 所有請求攔截
+					.excludePathPatterns("/", "login", "/css/**", "/js/**"); // 排除不需要攔截
+		}
+	}
+
+https://www.youtube.com/watch?v=wSMi4qkxnJo&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=50&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+攔截器原理
+	1、根據當前請求，找到HandlerExecutionChain【可以處理請求的handler以及handler的所有 攔截器】
+	2、先來順序執行 所有攔截器的 preHandle方法
+		● 1、如果當前攔截器prehandler返回為true。則執行下一個攔截器的preHandle
+		● 2、如果當前攔截器返回為false。直接    倒序執行所有已經執行了的攔截器的  afterCompletion；
+	3、如果任何一個攔截器返回false。直接跳出不執行目標方法
+	4、所有攔截器都返回True。執行目標方法
+	5、倒序執行所有攔截器的postHandle方法。
+	6、前面的步驟有任何異常都會直接倒序觸發 afterCompletion
+	7、頁面成功渲染完成以後，也會倒序觸發 afterCompletion

@@ -1,0 +1,49 @@
+https://www.youtube.com/watch?v=TN2OO1vAoWs&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=51&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+form_upload.html
+	<form method="post" action="/upload" enctype="multipart/form-data">
+		<input type="file" name="file"><br>
+		<input type="submit" value="提交">
+	</form>
+
+
+formUploadController.java
+	// MultiPartAutoConfiguration
+	@PostMapping("/upload")
+	public String upload(@RequestParam("email") final String email, //
+			@RequestParam("username") final String username, //
+			@RequestPart("headerImg") final MultipartFile headerImg, //
+			@RequestPart("photos") final MultipartFile[] photos) throws IllegalStateException, IOException {
+
+		log.debug("上傳訊息 : email = {}, username = {}, headerImg = {}, photos = {}", //
+				email, username, headerImg.getSize(), photos.length);
+		if (!headerImg.isEmpty()) {
+			final String originalFilename = headerImg.getOriginalFilename();
+			headerImg.transferTo(Paths.get("D:\\tmp\\" + originalFilename));
+		}
+
+		if (photos.length > 0) {
+			for (final MultipartFile photo : photos) {
+				if (!photo.isEmpty()) {
+					final String originalFilename = photo.getOriginalFilename();
+					headerImg.transferTo(Paths.get("D:\\tmp\\" + originalFilename));
+				}
+			}
+		}
+		return "main";
+	}
+
+application.properties
+	spring.servlet.multipart.max-file-size=10MB
+	spring.servlet.multipart.max-request-size=100MB
+
+https://www.youtube.com/watch?v=Hy-Jw_scbew&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=52&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+檔案上傳原理
+	自動配置原理
+		文件上傳自動配置類-MultipartAutoConfiguration-MultipartProperties
+			● 自動配置好了 StandardServletMultipartResolver   【文件上傳解析器】
+			● 原理步驟
+			  ○ 1、請求進來使用文件上傳解析器判斷（isMultipart）並封裝（resolveMultipart，返回MultipartHttpServletRequest）文件上傳請求
+			  ○ 2、參數解析器來解析請求中的文件內容封裝成MultipartFile
+			  ○ 3、將request中文件信息封裝為一個Map；MultiValueMap<String, MultipartFile>
+			FileCopyUtils。實現文件流的拷貝

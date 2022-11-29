@@ -68,3 +68,24 @@ The auto-configuration adds the following features on top of Spring’s defaults
 		2. 在SpringBoot中會有非常多的 xxxConfigurer 幫助我們進行擴展配置
 
 		3. 在SpringBoot中會有非常多的 xxxCustomizer 幫助我們進行定制配置
+
+
+視圖解析原理流程
+	1、目標方法處理的過程中，所有數據都會被放在 ModelAndViewContainer 裡面。包括數據和視圖地址
+	2、方法的參數是一個自定義類型對象（從請求參數中確定的），把他重新放在 ModelAndViewContainer
+	3、任何目標方法執行完成以後都會返回 ModelAndView（數據和視圖地址）。
+	4、processDispatchResult  處理派發結果（頁面改如何響應）
+	● 1、render(mv, request, response); 進行頁面渲染邏輯
+	  ○ 1、根據方法的String返回值得到 View 對象【定義了頁面的渲染邏輯】
+		■ 1、所有的視圖解析器嘗試是否能根據當前返回值得到View對象
+		■ 2、得到了  redirect:/main.html --> Thymeleaf new RedirectView()
+		■ 3、ContentNegotiationViewResolver 裡麵包含了下面所有的視圖解析器，內部還是利用下面所有視圖解析器得到視圖對象。
+		■ 4、view.render(mv.getModelInternal(), request, response);   視圖對象調用自定義的render進行頁面渲染工作
+		  ● RedirectView 如何渲染【重定向到一個頁面】
+		  ● 1、獲取目標url地址
+		  ● 2、response.sendRedirect(encodedURL);
+
+	視圖解析：
+	  ○ 返回值以 forward: 開始： new InternalResourceView(forwardUrl); -->  轉發request.getRequestDispatcher(path).forward(request, response);
+	  ○ 返回值以 redirect: 開始： new RedirectView() --》 render就是重定向
+	  ○ 返回值是普通字符串： new ThymeleafView（）--->

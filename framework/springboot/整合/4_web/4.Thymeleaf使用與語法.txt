@@ -190,3 +190,53 @@ classpath:/templates/success.html
 			<hr/>
 		</body>
 	</html>
+
+抽取共通頁面
+	classpath:/templates/common/common.html
+		<body>
+			<div th:fragment="commonLeft">
+				<h1>HELLO common left</h1>
+				<!-- 左側公共頁面 left side start -->
+				<a href="table/basic_table.html" th:href="@{/basicTable}">basic_table</a><br/>
+				<a href="table/dynameic_table.html" th:href="@{/dynamicTable}">dynameic_table</a><br/>
+			</div>
+
+			<!-- 上側公共頁面 top side start -->
+			<div id="commontTop">
+				<h1>HELLO common top </h1>
+			</div>
+		</body>
+
+	classpath:/templates/table/basic_table.html
+		<body>
+			<div th:insert="common/common :: commonLeft"></div>
+
+			<div th:insert="common/common :: #commontTop"></div>
+
+			<h1>HELLO basic table</h1>
+		</body>
+
+	classpath:/templates/table/dynameic_table.html
+		<body>
+			<div th:insert="common/common :: commonLeft"></div>
+			<div th:insert="common/common :: #commontTop"></div>
+
+			<!-- 走訪物件與其索引顯示 -->
+			<h1>HELLO dynamic table</h1>
+			<table>
+				<thead>
+					<tr>
+						<th>索引</th>
+						<th>用戶</th>
+						<th>密碼</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="user,stats : ${users}">
+						<th th:text="${stats.count}"></th>
+						<th th:text="${user.username}"></th>
+						<th >[[${user.password}]]</th>
+					</tr>
+				</tbody>
+			</table>
+		</body>
