@@ -1,0 +1,11 @@
+before understand PKI (Public Key Infrastructure)
+	在了解憑證格式之前，建議先行
+		瞭解公開金鑰加密 (Public Key Cryptography) 與
+			https://learn.microsoft.com/zh-tw/previous-versions/exchange-server/exchange-server-2000//aa998077(v=exchg.65)?redirectedfrom=MSDN
+		瞭解數位憑證 (Digital Certificates) 的基本觀念，
+			https://learn.microsoft.com/zh-tw/previous-versions/exchange-server/exchange-server-2000//bb123848(v=exchg.65)?redirectedfrom=MSDN
+	這部分的知識與觀念是幫助你理解 公開金鑰基礎建設 (Public Key Infrastructure) (PKI) 的基石。
+
+基本理解
+	https://blog.miniasp.com/post/2018/04/21/PKI-Digital-Certificate-Format-Convertion-Notes
+	https://zh.wikipedia.org/zh-tw/X.509
