@@ -471,6 +471,8 @@ test EXPRESSION
 https://stackoverflow.com/questions/18709962/regex-matching-in-a-bash-if-statement
 
 pat="[0-9a-zA-Z ]"
+若是單純 字串 建議加 ^($變數)$
+	不然可能不是預期執行的結果
 if [[ $x =~ $pat ]]; then ...
 
 ===================================================================

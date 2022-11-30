@@ -1,0 +1,4 @@
+du -s * | grep G
+
+// https://blog.51cto.com/keep11/4811264
+docker ps -q | xargs docker inspect --format '{{.State.Pid}}, {{.Id}}, {{.Name}}, {{.GraphDriver.Data.WorkDir}}' | grep "一串id"

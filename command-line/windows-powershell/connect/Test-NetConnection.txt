@@ -5,3 +5,4 @@ https://serverfault.com/questions/35218/in-windows-using-the-command-line-how-do
 
 Test-NetConnection <domain> -Port <port>
 	Test-NetConnection fcm.googleapis.com -Port 443
+	Test-NetConnection 223.200.155.71 -Port 443

@@ -246,7 +246,7 @@ https://stackoverflow.com/questions/1628088/reset-local-repository-branch-to-be-
 還原到遠端結果，會將已commit的未push移除，local尚未add的會留存
 	git fetch origin
 	git reset --hard origin/{targetBranch}
-	並且清除本機尚未add
+	並且清除本機尚未add (untracked-files)，要到 git root dir 才會生效
 		git clean -fd
 
 tracked file
@@ -306,6 +306,9 @@ Changes not staged for commit:
 
 列舉暫存
 	git stash list
+列舉暫存與檔案異動簡要清單
+	https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/How-to-list-and-show-the-git-stash-history
+		git stash list --stat
 
 將最新暫存apply到當前branch
 	git stash apply
