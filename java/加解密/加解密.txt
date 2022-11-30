@@ -1,0 +1,565 @@
+
+
+==========================================================================================
+========================================= 基本了解 =======================================
+==========================================================================================
+https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/316121/
+加密
+	雙向加密: 明文加密後形成密文，可以通過演算法還原成明文
+		(有些資料將加密直接分為對稱加密和非對稱加密)
+		對稱加密
+		非對稱加密
+	單向加密: 資訊進行了摘要計算，不能通過演算法生成明文
+
+
+一、主要的加密方式程式碼提供方
+	1.1、JDK
+		程式碼在java安裝目錄下的jre\lib\jce.jar包裡
+	1.2、CC：Apache公司提供的org.apache.commons.codec
+		http://commons.apache.org/proper/commons-codec/
+	1.3、BC：org.bounccastle
+		http://www.bouncycastle.org/java.html
+
+二、Base64演算法
+	2.1、具有不可讀性
+	2.2、一般用於url的處理，處理後再發布在網路上。
+	2.3、java example
+		import java.util.Base64;
+		import com.amuro.strategy.IStrategy;
+		/**
+		* Base64演算法基於64個基本字元，加密後的string中只包含這64個字元
+		*
+		*/
+		public class Base64Strategy implements IStrategy {
+			public String encode(String src) {
+				byte[] encodeBytes = Base64.getEncoder().encode(src.getBytes());
+				return new String(encodeBytes);
+			}
+			public String decode(String src) {
+				byte[] decodeBytes = Base64.getDecoder().decode(src.getBytes());
+				return new String(decodeBytes);
+			}
+		}
+
+三、訊息摘要演算法（Message Digest），單向加密: 資料指紋
+	3.1、MD5
+		java example
+			import java.security.MessageDigest;
+			import java.security.NoSuchAlgorithmException;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			/**
+			* 訊息摘要演算法
+			*
+			*/
+			public class MD5Strategy implements IStrategy {
+				public String encode(String src) {
+					try {
+						MessageDigest md = MessageDigest.getInstance("MD5");
+						byte[] encodeBytes = md.digest(src.getBytes());
+						return Hex.encodeHexString(encodeBytes);
+					} catch (NoSuchAlgorithmException e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					throw new RuntimeException("MD5 no decode");
+				}
+			}
+	3.2、SHA
+		java example
+			import java.security.MessageDigest;
+			import java.security.NoSuchAlgorithmException;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			/**
+			* 安全雜湊演算法
+			*
+			*/
+			public class SHAStrategy implements IStrategy {
+				public String encode(String src) {
+					try {
+						MessageDigest md = MessageDigest.getInstance("SHA");
+						md.update(src.getBytes());
+						return Hex.encodeHexString(md.digest());
+					} catch (NoSuchAlgorithmException e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					throw new RuntimeException("SHA no decode");
+				}
+			}
+
+四、對稱加密
+	1、DES(Data Encryption Standard、資料加密標準)
+		java example
+			import javax.crypto.Cipher;
+			import javax.crypto.KeyGenerator;
+			import javax.crypto.SecretKey;
+			import javax.crypto.SecretKeyFactory;
+			import javax.crypto.spec.DESKeySpec;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+
+			public class DESStrategy implements IStrategy {
+				private Cipher cipher;
+				private SecretKey generateKey;
+				public String encode(String src) {
+					try {
+						KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
+						keyGenerator.init(56);//size
+						SecretKey secretKey = keyGenerator.generateKey();
+						byte[] keyBytes = secretKey.getEncoded();
+						DESKeySpec desKeySpec = new DESKeySpec(keyBytes);
+						SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("DES");
+						generateKey = secretKeyFactory.generateSecret(desKeySpec);
+						cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+						cipher.init(Cipher.ENCRYPT_MODE, generateKey);
+						byte[] resultBytes = cipher.doFinal(src.getBytes());
+						return Hex.encodeHexString(resultBytes);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					try {
+						cipher.init(Cipher.DECRYPT_MODE, generateKey);
+						byte[] result = Hex.decodeHex(src.toCharArray());
+						return new String(cipher.doFinal(result));
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+			}
+	2、3DES(Triple DES、三重資料加密演算法)
+		java example
+			import javax.crypto.Cipher;
+			import javax.crypto.KeyGenerator;
+			import javax.crypto.SecretKey;
+			import javax.crypto.SecretKeyFactory;
+			import javax.crypto.spec.DESedeKeySpec;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			public class _3DESStrategy implements IStrategy {
+				private Cipher cipher;
+				private SecretKey generateKey;
+				public String encode(String src) {
+					try {
+						KeyGenerator keyGenerator = KeyGenerator.getInstance("DESede");
+						keyGenerator.init(168);//size
+						SecretKey secretKey = keyGenerator.generateKey();
+						byte[] keyBytes = secretKey.getEncoded();
+						DESedeKeySpec desKeySpec = new DESedeKeySpec(keyBytes);
+						SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("DESede");
+						generateKey = secretKeyFactory.generateSecret(desKeySpec);
+						cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
+						cipher.init(Cipher.ENCRYPT_MODE, generateKey);
+						byte[] resultBytes = cipher.doFinal(src.getBytes());
+						return Hex.encodeHexString(resultBytes);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					try {
+						cipher.init(Cipher.DECRYPT_MODE, generateKey);
+						byte[] result = Hex.decodeHex(src.toCharArray());
+						return new String(cipher.doFinal(result));
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+			}
+	3、AES(Advanced Encryption Standard、高階加密標準)
+		java example
+			import javax.crypto.Cipher;
+			import javax.crypto.KeyGenerator;
+			import javax.crypto.SecretKey;
+			import javax.crypto.spec.SecretKeySpec;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			public class AESStrategy implements IStrategy {
+				private Cipher cipher;
+				private SecretKey generateKey;
+				public String encode(String src) {
+					try {
+						KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+						keyGenerator.init(128);//size
+						SecretKey secretKey = keyGenerator.generateKey();
+						byte[] keyBytes = secretKey.getEncoded();
+						generateKey = new SecretKeySpec(keyBytes, "AES");
+						cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+						cipher.init(Cipher.ENCRYPT_MODE, generateKey);
+						byte[] resultBytes = cipher.doFinal(src.getBytes());
+						return Hex.encodeHexString(resultBytes);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					try {
+						cipher.init(Cipher.DECRYPT_MODE, generateKey);
+						byte[] result = Hex.decodeHex(src.toCharArray());
+						return new String(cipher.doFinal(result));
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+			}
+	4、PBE(Password Base Encryption、基於口令加密)
+		java example
+			import java.security.SecureRandom;
+			import javax.crypto.Cipher;
+			import javax.crypto.SecretKey;
+			import javax.crypto.SecretKeyFactory;
+			import javax.crypto.spec.PBEKeySpec;
+			import javax.crypto.spec.PBEParameterSpec;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			/**
+			* 基於口令的加密（password），對稱   訊息摘要
+			*
+			*/
+			public class PBEStrategy implements IStrategy {
+				private Cipher cipher;
+				private SecretKey generateKey;
+				private PBEParameterSpec pbeParameterSpec;
+				public String encode(String src) {
+					try {
+						SecureRandom secureRandom = new SecureRandom();
+						byte[] salt = secureRandom.generateSeed(8);
+						String password = "amuro";
+						PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray());
+						SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBEWITHMD5andDES");
+						generateKey = secretKeyFactory.generateSecret(pbeKeySpec);
+						pbeParameterSpec = new PBEParameterSpec(salt, 100);
+						cipher = Cipher.getInstance("PBEWITHMD5andDES");
+						cipher.init(Cipher.ENCRYPT_MODE, generateKey, pbeParameterSpec);
+						byte[] resultBytes = cipher.doFinal(src.getBytes());
+						return Hex.encodeHexString(resultBytes);
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					try {
+						cipher.init(Cipher.DECRYPT_MODE, generateKey, pbeParameterSpec);
+						byte[] result = Hex.decodeHex(src.toCharArray());
+						return new String(cipher.doFinal(result));
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+						return null;
+					}
+				}
+			}
+
+五、非對稱加密
+	演算法基於一個十分簡單的數論事實：將兩個大素數相乘十分容易，但是想要對其乘積進行因式分解卻極其困難，因此可以將乘積公開作為加密金鑰
+	場景適用
+		資料加密:一般是公鑰加密，私鑰解密
+		數位簽名:一般是私鑰加密，公鑰解密
+	1、RSA
+		java example
+			import java.security.KeyFactory;
+			import java.security.KeyPair;
+			import java.security.KeyPairGenerator;
+			import java.security.PrivateKey;
+			import java.security.PublicKey;
+			import java.security.interfaces.RSAPrivateKey;
+			import java.security.interfaces.RSAPublicKey;
+			import java.security.spec.PKCS8EncodedKeySpec;
+			import java.security.spec.X509EncodedKeySpec;
+			import javax.crypto.Cipher;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			public class RSAStrategy implements IStrategy {
+				private RSAPublicKey rsaPublicKey;
+				private RSAPrivateKey rsaPrivateKey;
+				public String encode(String src) {
+					try {
+						//初始化金鑰
+						KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+						keyPairGenerator.initialize(512);
+						KeyPair keyPair = keyPairGenerator.generateKeyPair();
+						rsaPublicKey = (RSAPublicKey)keyPair.getPublic();
+						rsaPrivateKey = (RSAPrivateKey)keyPair.getPrivate();
+						//私鑰加密 公鑰解密
+						PKCS8EncodedKeySpec pkcs8EncodedKeySpec
+						= new PKCS8EncodedKeySpec(rsaPrivateKey.getEncoded());
+						KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+						PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+						Cipher cipher = Cipher.getInstance("RSA");
+						cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+						byte[] resultBytes = cipher.doFinal(src.getBytes());
+						//私鑰解密 公鑰加密
+						//  X509EncodedKeySpec x509EncodedKeySpec =
+						//   new X509EncodedKeySpec(rsaPublicKey.getEncoded());
+						//  KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+						//  PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
+						//  Cipher cipher = Cipher.getInstance("RSA");
+						//  cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+						//  byte[] resultBytes = cipher.doFinal(src.getBytes());
+						return Hex.encodeHexString(resultBytes);
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					try {
+						//私鑰加密 公鑰解密
+						X509EncodedKeySpec x509EncodedKeySpec =
+						new X509EncodedKeySpec(rsaPublicKey.getEncoded());
+						KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+						PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
+						Cipher cipher = Cipher.getInstance("RSA");
+						cipher.init(Cipher.DECRYPT_MODE, publicKey);
+						byte[] resultBytes = cipher.doFinal(Hex.decodeHex(src.toCharArray()));
+						//私鑰解密 公鑰加密
+						//  PKCS8EncodedKeySpec pkcs8EncodedKeySpec
+						//  = new PKCS8EncodedKeySpec(rsaPrivateKey.getEncoded());
+						//  KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+						//  PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+						//  Cipher cipher = Cipher.getInstance("RSA");
+						//  cipher.init(Cipher.DECRYPT_MODE, privateKey);
+						//  byte[] resultBytes = cipher.doFinal(Hex.decodeHex(src.toCharArray()));
+						return new String(resultBytes);
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+			}
+
+	2、DH演算法(Diffie-Hellman、)
+		  一種確保共享KEY安全穿越不安全網路，金鑰一致協議，允許兩名使用者在公開媒體上交換資訊以生成“一致”的、可以共享的金鑰，
+		也就是由甲方產出一對金鑰（公鑰、私鑰），乙方依照甲方公鑰產生乙方金鑰對（公鑰、私鑰），以此為基線，作為資料傳輸保密基礎，
+		同時雙方使用同一種對稱加密演算法構建本地金鑰（SecretKey）對資料加密。這樣，在互通了本地金鑰（SecretKey）演算法後，
+		甲乙雙方公開自己的公鑰，使用對方的公鑰和剛才產生的私鑰加密資料，同時可以使用對方的公鑰和自己的私鑰對資料解密。
+		不單單是甲乙雙方兩方，可以擴充套件為多方共享資料通訊，這樣就完成了網路互動資料的安全通訊。
+
+		java example
+			import java.security.KeyFactory;
+			import java.security.KeyPair;
+			import java.security.KeyPairGenerator;
+			import java.security.PrivateKey;
+			import java.security.PublicKey;
+			import java.security.spec.X509EncodedKeySpec;
+			import java.util.Objects;
+			import javax.crypto.Cipher;
+			import javax.crypto.KeyAgreement;
+			import javax.crypto.SecretKey;
+			import javax.crypto.interfaces.DHPublicKey;
+			import javax.crypto.spec.DHParameterSpec;
+			import org.apache.commons.codec.binary.Hex;
+			import com.amuro.strategy.IStrategy;
+			public class DHStrategy implements IStrategy {
+				private Cipher cipher;
+				private SecretKey receiverSecretKey;
+				public String encode(String src) {
+					try {
+						//初始化傳送方金鑰
+						KeyPairGenerator senderKeyPairGenerator = KeyPairGenerator.getInstance("DH");
+						senderKeyPairGenerator.initialize(512);
+						KeyPair senderkeyPair = senderKeyPairGenerator.generateKeyPair();
+						PrivateKey senderPrivateKey = senderkeyPair.getPrivate();
+						byte[] senderPublicKeyBytes = senderkeyPair.getPublic().getEncoded();//傳送方的公鑰
+						//初始化接收方金鑰,用傳送方的公鑰
+						KeyFactory receiverKeyFactory = KeyFactory.getInstance("DH");
+						X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(senderPublicKeyBytes);
+						PublicKey receiverPublicKey = receiverKeyFactory.generatePublic(x509EncodedKeySpec);
+						DHParameterSpec dhParameterSpec =
+						((DHPublicKey)receiverPublicKey).getParams();
+						KeyPairGenerator receiverKeyPairGenerator = KeyPairGenerator.getInstance("DH");
+						receiverKeyPairGenerator.initialize(dhParameterSpec);
+						KeyPair receiverKeyPair = receiverKeyPairGenerator.generateKeyPair();
+						PrivateKey receiverPrivateKey = receiverKeyPair.getPrivate();
+						byte[] receiverPublicKeyBytes = receiverKeyPair.getPublic().getEncoded();
+						KeyAgreement receiverKeyAgreement = KeyAgreement.getInstance("DH");
+						receiverKeyAgreement.init(receiverPrivateKey);
+						receiverKeyAgreement.doPhase(receiverPublicKey, true);
+						receiverSecretKey = receiverKeyAgreement.generateSecret("DES");
+						//傳送方拿到接收方的public key就可以做加密了
+						KeyFactory senderKeyFactory = KeyFactory.getInstance("DH");
+						x509EncodedKeySpec = new X509EncodedKeySpec(receiverPublicKeyBytes);
+						PublicKey senderPublicKey = senderKeyFactory.generatePublic(x509EncodedKeySpec);
+						KeyAgreement senderKeyAgreement = KeyAgreement.getInstance("DH");
+						senderKeyAgreement.init(senderPrivateKey);
+						senderKeyAgreement.doPhase(senderPublicKey, true);
+						SecretKey senderSecretKey = senderKeyAgreement.generateSecret("DES");
+						if(Objects.equals(receiverSecretKey, senderSecretKey)) {
+							cipher = Cipher.getInstance("DES");
+							cipher.init(Cipher.ENCRYPT_MODE, senderSecretKey);
+							byte[] result = cipher.doFinal(src.getBytes());
+							return Hex.encodeHexString(result);
+						}
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+				public String decode(String src) {
+					try {
+						cipher.init(Cipher.DECRYPT_MODE, receiverSecretKey);
+						byte[] result = Hex.decodeHex(src.toCharArray());
+						return new String(cipher.doFinal(result));
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+			}
+
+六、數字簽名證書
+	  CA申請一份數字證書，其實主要就是公鑰的訊息摘要，有了這份證書，當我再用公鑰加密的時候，
+	我就可以先驗證一下當前的公鑰是否確定是伺服器A傳送給我的。驗簽的意思
+
+		java example
+			import java.security.KeyFactory;
+			import java.security.KeyPair;
+			import java.security.KeyPairGenerator;
+			import java.security.PrivateKey;
+			import java.security.PublicKey;
+			import java.security.Signature;
+			import java.security.interfaces.RSAPrivateKey;
+			import java.security.interfaces.RSAPublicKey;
+			import java.security.spec.PKCS8EncodedKeySpec;
+			import java.security.spec.X509EncodedKeySpec;
+			public class RSASign {
+				public static boolean verifySign(String src) {
+					try {
+						KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+						keyPairGenerator.initialize(512);
+						KeyPair keyPair = keyPairGenerator.generateKeyPair();
+						PublicKey rsaPublicKey = (RSAPublicKey)keyPair.getPublic();
+						PrivateKey rsaPrivateKey = (RSAPrivateKey)keyPair.getPrivate();
+						PKCS8EncodedKeySpec pkcs8EncodedKeySpec
+						= new PKCS8EncodedKeySpec(rsaPrivateKey.getEncoded());
+						KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+						PrivateKey privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
+						Signature signature = Signature.getInstance("MD5withRSA");
+						signature.initSign(privateKey);
+						signature.update(src.getBytes());
+						//生成簽名bytes
+						byte[] signBytes = signature.sign();
+						X509EncodedKeySpec x509EncodedKeySpec =
+						new X509EncodedKeySpec(rsaPublicKey.getEncoded());
+						keyFactory = KeyFactory.getInstance("RSA");
+						PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
+						signature = Signature.getInstance("MD5withRSA");
+						signature.initVerify(publicKey);
+						signature.update(src.getBytes());
+						boolean isVerified = signature.verify(signBytes);
+						return isVerified;
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+					return false;
+				}
+			}
+
+==========================================================================================
+========================================= 其他 ===========================================
+==========================================================================================
+
+large file 非對稱加密
+	https://security.stackexchange.com/questions/149064/is-it-possible-to-combine-rsa-and-aes
+		https://en.wikipedia.org/wiki/Hybrid_cryptosystem
+	https://infosecwriteups.com/why-rsa-is-not-used-to-encrypt-large-files-d3172d83febd
+		RSA 是一種非常耗費資源的算法，生成 RSA 密鑰並對這些巨大的素數執行操作需要時間
+			RSA KEY 加解密檔案非常耗資源
+		一般建議是:
+			The Balance of Speed and Security (AES+RSA)
+				使用 RSA 加密公鑰 ?
+				使用 AES 加密內容
+
+bouncy-castle example
+	https://www.baeldung.com/java-bouncy-castle
+		how to encryptData、decryptData、signData、verifSignedData
+
+	CMSEnvelopedDataStreamGenerator  example for large file
+		http://www.java2s.com/example/java-api/org/bouncycastle/cms/cmsenvelopeddatastreamgenerator/cmsenvelopeddatastreamgenerator-0-0.html
+
+Using AES With RSA for File Encryption and Decryption in Java
+	https://www.novixys.com/blog/using-aes-rsa-file-encryption-decryption-java/
+
+==========================================================================================
+========================================= BASE64 =========================================
+==========================================================================================
+lib
+	1.jdk 8 base64 jar // 支援 stream 處理，檔案大則建議使用。總體效能較好
+	2.bounccastle jar
+	3.apache commons-codec jar
+
+jdk base64
+	https://www.techiedelight.com/zh-tw/base64-encoding-decoding-java-8/
+		// 編碼
+		String encoded = encoder.encodeToString(string.getBytes());
+		// 解碼
+		String decoded = new String(Base64.getDecoder().decode(encoded));
+
+	encoder source from steam
+		https://stackoverflow.com/questions/56221732/convert-large-file-to-base64-representation-in-java-outofmemory-exception
+			OutputStream wrap = Base64.getEncoder().wrap(response.getOutputStream());
+
+
+==========================================================================================
+========================================= 其他 - 公私鑰 ==================================
+==========================================================================================
+bouncy-castle
+	生成公私鑰
+		https://stackoverflow.com/questions/22008337/generating-keypair-using-bouncy-castle
+		https://gist.github.com/sadrakgunadi/43634752ea5e750bc5f86c78d6e7ed66
+
+java jdk 生成公私鑰
+	https://medium.com/@jeevaengg21/private-public-key-generation-key-object-to-string-conversion-and-vice-versa-in-java-1935e48834b1
+		gen object key
+			KeyPairGenerator gen = KeyPairGenerator.getInstance(“RSA”);
+			gen.initialize(2048);
+			KeyPair keyPair = gen.generateKeyPair();
+			RSAPublicKey pkey = (RSAPublicKey) keyPair.getPublic();
+			PrivateKey prvKey = keyPair.getPrivate();
+			PublicKey pubKey = keyPair.getPublic();
+		Converting Key Object to String:
+			String pubkey = Base64.getEncoder().encodeToString(pubKey.getEncoded());
+			String prvkey = Base64.getEncoder().encodeToString(prvKey.getEncoded());
+		Convert Public Key String to object
+			public static PublicKey getPublicKey() {
+				PublicKey pubKey = null;
+				try {
+					String publicK = “<PUBLIC_KEY_STRING>”;
+					byte[] publicBytes = Base64.getDecoder().decode(publicK);
+					X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+					KeyFactory keyFactory = KeyFactory.getInstance(“RSA”);
+					pubKey = keyFactory.generatePublic(keySpec);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				return pubKey;
+			}
+		Convert Private Key String to object
+			public static PrivateKey getPrivateKey() {
+				PrivateKey prvKey = null;
+				try {
+					String privateK = “<PRIVATE_KEY_STRING>”;
+					byte[] privateBytes = Base64.getDecoder().decode(privateK);
+					PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateBytes);
+					KeyFactory keyFactory = KeyFactory.getInstance(“RSA”);
+					prvKey = keyFactory.generatePrivate(keySpec);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				return prvKey;
+			}
+

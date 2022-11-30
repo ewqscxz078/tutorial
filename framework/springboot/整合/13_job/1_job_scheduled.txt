@@ -1,0 +1,5 @@
+https://www.baeldung.com/spring-scheduled-enabled-conditionally
+1.Using a Boolean Flag
+2.Using @ConditionalOnProperty
+3.Using Spring Profiles
+4.Value Placeholder in Cron Expression

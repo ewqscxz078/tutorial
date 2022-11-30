@@ -1,3 +1,10 @@
+logback mdc
+	https://www.796t.com/content/1541525951.html
+
+logback xml setting
+	https://www.cnblogs.com/xrq730/p/8628945.html
+
+
 ========================================================================================================================
 =================================== maven dependency ===================================================================
 ========================================================================================================================
@@ -8,51 +15,70 @@
     <scope>test</scope>
 </dependency>
 
-Logger,
-Appender,
-Layout.
 ========================================================================================================================
-==================================== auto reload =======================================================================
+=================================== log level ==========================================================================
 ========================================================================================================================
-
-<configuration scan="true" scanPeriod="15 seconds">
-  ...
-</configuration>
-
-========================================================================================================================
-================================= Variable Substitution ================================================================
-========================================================================================================================
-
-<property name="LOG_DIR" value="/var/log/application" />
-<appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>${LOG_DIR}/tests.log</file>
-    <append>true</append>
-    <encoder>
-        <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
-    </encoder>
-</appender>
+層級由大到小
+	TRACE > DEBUG > INFO > WARN > ERROR
+		if setting log level DEBUG
+			print DEBUG > INFO > WARN > ERROR
+		if setting log level WARN
+			print WARN > ERROR
+		....
 
 ========================================================================================================================
-==================================== ConsoleAppender ===================================================================
+================================= <configuration> ======================================================================
 ========================================================================================================================
-
-<configuration>
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <root level="debug">
-    <appender-ref ref="STDOUT" />
-  </root>
-</configuration>
-
+三個主要屬性
+	scan：當scan被設置為true時，當配置文件發生改變，將會被重新加載，默認為true
+	scanPeriod：檢測配置文件是否有修改的時間間隔，如果沒有給出時間單位，默認為毫秒，當scan=true時這個值生效，默認時間間隔為1分鐘
+	debug：當被設置為true時，將打印出logback內部日誌信息，實時查看logback運行信息，默認為false
 
 ========================================================================================================================
-================================= FileAppender =========================================================================
+================================= <logger>與<root> =====================================================================
 ========================================================================================================================
+<logger>
+	用來設置某一個包或者俱體某一個類的日誌打印級別、以及指定<appender>。
+	<logger>可以包含零個或者多個<appender-ref>元素，標識這個appender將會添加到這個logger。
+	<logger>僅有一個name屬性、一個可選的level屬性和一個可選的additivity屬性：
 
+	name：用來指定受此logger約束的某一個包或者俱體的某一個類
+	level：用來設置打印級別，五個常用打印級別從低至高依次為 TRACE、DEBUG、INFO、WARN、ERROR，如果未設置此級別，那麼當前logger會繼承上級的級別
+	additivity：是否向上級logger傳遞打印信息，默認為true
+
+<root>
+	也是<logger>元素，但是它是根logger，只有一個level屬性，因為它的name就是ROOT
+
+========================================================================================================================
+================================= 慣例用法 =============================================================================
+========================================================================================================================
+auto reload in prod
+	<configuration scan="true" scanPeriod="15 seconds">
+	  ...
+	</configuration>
+
+Variable Substitution
+	<property name="LOG_DIR" value="/var/log/application" />
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>${LOG_DIR}/tests.log</file>
+		<append>true</append>
+		<encoder>
+			<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+ConsoleAppender
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<root level="debug">
+		<appender-ref ref="STDOUT" />
+	</root>
+
+FileAppender
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>tests.log</file>
         <append>true</append>
@@ -64,36 +90,44 @@ Layout.
         <appender-ref ref="FILE" />
     </logger>
 
-========================================================================================================================
-================================= RollingFileAppender ==================================================================
-========================================================================================================================
-<property name="LOG_FILE" value="LogFile" />
+RollingFileAppender
+	<property name="LOG_FILE" value="LogFile" />
 
-<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_FILE}.log</file>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-        <!-- daily rollover -->
-        <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_FILE}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- daily rollover -->
+			<fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.gz</fileNamePattern>
 
-        <!-- keep 30 days' worth of history capped at 3GB total size -->
-        <maxHistory>30</maxHistory>
-        <totalSizeCap>3GB</totalSizeCap>
-    </rollingPolicy>
-    <encoder>
-        <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
-    </encoder>
-</appender>
+			<!-- keep 30 days' worth of history capped at 3GB total size -->
+			<maxHistory>30</maxHistory>
+			<totalSizeCap>3GB</totalSizeCap>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+	</appender>
 
-========================================================================================================================
-================================= Layouts ==============================================================================
-========================================================================================================================
+Layouts
+	<encoder>
+		<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+	</encoder>
 
-<encoder>
-    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-</encoder>
+	%d{HH:mm:ss.SSS} – a timestamp with hours, minutes, seconds and milliseconds
+	[%thread] – the thread name generating the log message, surrounded by square brackets
+	%-5level – the level of the logging event, padded to 5 characters
+	%logger{36} – the name of the logger, truncated to 35 characters
+	%msg%n – the log messages followed by the platform dependent line separator character
 
-%d{HH:mm:ss.SSS} – a timestamp with hours, minutes, seconds and milliseconds
-[%thread] – the thread name generating the log message, surrounded by square brackets
-%-5level – the level of the logging event, padded to 5 characters
-%logger{36} – the name of the logger, truncated to 35 characters
-%msg%n – the log messages followed by the platform dependent line separator character
+指定部分 java package log level
+	<logger name="tw.gov.moi" level="DEBUG" />
+
+<root> 設定基本 level，指定那些 appender-ref ref="OTHER-APPENDER" 沿用
+	<root level="DEBUG">
+		<if condition='property("stdout.enable")'.contains("Y")><then><appender-ref ref="STDOUT"></then></if>
+		<appender-ref ref="FILE-ROLL">
+	</root>
+
+指定那些 <logger> 之 appender-ref 不沿用 <root>
+	<logger name="PROFILER" level="TRACE" additivity="false"><appender-ref ref="FILE-ROLL-PROFILER"><logger/>
+	...

@@ -1,0 +1,6 @@
+https://www.baeldung.com/java-synchronizedmap-vs-concurrenthashmap
+
+https://www.baeldung.com/java-thread-safety
+
+thread-safety 意味
+	多執行緒時，處理目標不會因其他執行緒存取異動造成當前執行緒執行結果非預期

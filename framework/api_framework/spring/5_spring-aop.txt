@@ -1,0 +1,7 @@
+https://stackoverflow.com/questions/51811372/why-aop-does-not-work-in-my-spring-boot-application
+	1.use @EnableAspectJAutoProxy without (proxyTargetClass = true)
+	2.be sure your @Aspect annotation is scaned. you can use @ComponentScan("myAspectPackageContainer.*")
+	3.you don't need @Component annotation when use @Aspect anymore.
+	4.use method modifier in your expression "execution( public * com.example.demo..."
+	5.at the end of your expression use "myPackage.*.*(..)"
+	6.check with dependencies

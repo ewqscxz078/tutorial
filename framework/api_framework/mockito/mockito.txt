@@ -1,0 +1,19 @@
+mockito example
+	https://vivifish.medium.com/java-%E5%96%AE%E5%85%83%E6%B8%AC%E8%A9%A6%E5%B7%A5%E5%85%B7-mockito-e5f0ce93579d
+
+
+mock static method
+	after 3.4.0 of Mockito
+		https://www.baeldung.com/mockito-mock-static-methods
+			1.src/test/resources/mockito-extensions directory named org.mockito.plugins.MockMaker and add a single line of text:
+				mock-maker-inline
+			2.
+				try (MockedStatic<StaticUtils> utilities = Mockito.mockStatic(StaticUtils.class)) {
+					utilities.when(StaticUtils::name).thenReturn("Eugen");
+					assertThat(StaticUtils.name()).isEqualTo("Eugen");
+				}
+
+mock method
+	https://www.baeldung.com/mockito-mock-methods
+		MyList listMock = mock(MyList.class);
+		when(listMock.add(anyString())).thenReturn(false);

@@ -1,0 +1,5 @@
+https://www.jianshu.com/p/217ccb986290
+	SpringBoot 設置 @Configuration 的加載順序
+
+https://www.gushiciku.cn/pl/p1XX/zh-tw
+	如何正確控制 springboot 中 bean 的載入順序總結

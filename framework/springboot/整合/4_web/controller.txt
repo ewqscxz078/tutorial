@@ -6,3 +6,9 @@ Controller
 
 	// 瀏覽器 path 對應
 	@RequestMapping("/hello")
+
+spring-web-flash-attributes
+	https://www.baeldung.com/spring-web-flash-attributes
+	post -> redirect -> get
+		flash-attributes 用途
+		確保 post redirect 轉向到 get 時可確保將 post 資訊轉移，轉移後就可以自動消失

@@ -1,0 +1,119 @@
+spring boot unit test
+	https://stackoverflow.com/questions/20819130/whats-required-to-make-mockmvc-test-a-filters-init-routine
+	https://stackoverflow.com/questions/25901985/difference-between-mockmvc-and-resttemplate-in-integration-tests
+		spring boot testresttemplate mockmvc 差異
+
+https://www.concretepage.com/spring-5/webappconfiguration-example-spring-test#Technologies
+	@ExtendWith: A JUnit 5 annotation to register extensions for test method.
+	SpringExtension: It is used to integrate Spring TestContext with JUnit 5 Jupiter Test.
+	@ContextConfiguration: It loads an ApplicationContext in Spring integration test.
+	@WebAppConfiguration: It loads WebApplicationContext in Spring integration test.
+	WebApplicationContext: It provides configuration for a web application.
+	MockMvc: It is main entry point for Spring MVC test support.
+	MockServletContext: It is the mock implementation of the ServletContext.
+
+https://www.baeldung.com/spring-boot-testing
+	@SpringBootTest
+		Integration Testing 會啟動整個 server 測試
+
+	@SpringBootTest
+	@AutoConfigureMockMvc
+		不啟動 server 測試
+
+	unit test prevent work ApplicationRunner or CommandLineRunner of spring boot
+		https://www.baeldung.com/spring-junit-prevent-runner-beans-testing-execution
+
+
+	@WebMvcTest
+		僅針對 web 測試
+
+		https://spring.io/guides/gs/testing-web/
+		Testing the Web Layer
+			server side test
+				for testing a @RestController use MockMvc.
+			client side test
+				for testing a Filter or other infrastructure elements, use TestRestTemplate.
+
+					https://matthung0807.blogspot.com/2020/04/spring-boot-test-testresttemplate.html
+						@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+						class DemoControllerTests {
+
+							@Autowired
+							private TestRestTemplate testRestTemplate;
+
+							@LocalServerPort
+							private int port;
+
+							@Test
+							void memberGetJohn() throws Exception {
+								ResponseEntity<DemoResponse> responseEntity =
+										testRestTemplate.getForEntity("/member/1", DemoResponse.class);
+
+								Assertions.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+								Assertions.assertEquals(HttpStatus.OK.value(), responseEntity.getStatusCodeValue());
+								Assertions.assertNotNull(responseEntity.getBody());
+
+								DemoResponse demoResponse = responseEntity.getBody();
+								Assertions.assertEquals("0000", demoResponse.getCode());
+								Assertions.assertEquals("success", demoResponse.getMessage());
+
+								ObjectMapper mapper = new ObjectMapper();
+								String data = mapper.writeValueAsString(demoResponse.getData());
+								Assertions.assertTrue(data.contains("John"));
+
+								String body = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseEntity.getBody());
+								System.out.println(body);
+								/*
+								{
+									"code" : "0000",
+									"message" : "success",
+									"data" : {
+										"id" : 1,
+										"name" : "John",
+										"age" : 28
+									}
+								}
+
+								*/
+							}
+						}
+
+MockBean vs SpyBean
+	https://juejin.cn/post/6881981078735699976
+		MockBean mock all method，全面正向造假 測試
+			則需要針對預期的某些方法與預期回傳搭配來 test
+			when(testService.test()).thenReturn(xxxx);
+
+		SpyBean all method will real execute，部分造假 測試
+			doReturn("").when(testService).doSomething();
+
+
+TestPropertySource
+	可複寫 application.properties 裡面的值
+
+Integration Testing in Spring
+	https://www.baeldung.com/integration-testing-in-spring
+Spring Boot MockMVC Example
+	https://howtodoinjava.com/spring-boot2/testing/spring-boot-mockmvc-example/
+		with param
+			param = "test";
+			mockmvc.perform(post(uri))
+				.param("param", param)).andReturn();
+
+		// https://stackoverflow.com/questions/35515773/mockmvc-how-to-involve-a-custom-object-in-junit-test
+		with requestContent of json object
+			mockmvc.perform(post(uri))
+				.contentType(new MediaType(Media.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype),Charset.forName("utf8"))
+				.content(this.objectMapper.writeValueAsString(customObject))
+				.andReturn();
+
+		with custom object or model
+			CustomObj customObj = new CustomObj();
+			mockmvc.perform(post(uri))
+				.flashAttr("customObj", customObj)).andReturn();
+
+
+spring test util
+	強制覆值 給 spring ioc bean instance variables Non-Public
+		https://www.baeldung.com/spring-reflection-test-utils
+			ReflectionTestUtils.setField(${spring ioc bean}, 欄位, 值)

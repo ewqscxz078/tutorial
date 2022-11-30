@@ -1,0 +1,34 @@
+https://www.baeldung.com/spring-boot-add-filter
+https://stackoverflow.com/questions/39710526/how-to-apply-spring-boot-filter-based-on-url-pattern
+how to add filter to spring boot
+	@Bean
+	public FilterRegistrationBean someFilterRegistration() {
+
+		FilterRegistrationBean registration = new FilterRegistrationBean();
+		registration.setFilter(someFilter());
+		registration.addUrlPatterns("/url/*");
+		registration.addInitParameter("paramName", "paramValue");
+		registration.setName("someFilter");
+		registration.setOrder(1);
+		return registration;
+	}
+
+	@Bean(name = "someFilter")
+	public Filter someFilter() {
+		return new SomeFilter();
+	}
+
+https://www.baeldung.com/spring-exclude-filter
+	xxxFilter extends OncePerRequestFilter
+		@Override
+		protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+		  FilterChain filterChain) throws ServletException, IOException {
+		  ....
+		}
+
+		@Override
+		protected boolean shouldNotFilter(HttpServletRequest request)
+		  throws ServletException {
+			String path = request.getRequestURI();
+			return "/health".equals(path);
+		}

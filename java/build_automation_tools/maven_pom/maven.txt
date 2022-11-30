@@ -52,3 +52,42 @@
 	2.compiler
 		<maven.compiler.source>1.8</maven.compiler.source>
 
+==================================================================================================
+============================== parent、modules ===================================================
+==================================================================================================
+https://stackoverflow.com/questions/40213901/eclipse-cant-open-sub-project-of-maven-parent-project
+1.當於 project 點擊 parent 可到 parent pom.xml
+2.當於 parent pom.xml 點擊 modules 可到 modules pom.xml
+3.import existed maven project pom.xml 若有 modules 的 pom.xml 則會有階層效果訊問是否要將其連帶的 modules import 進來
+
+parent
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <modelVersion>4.0.0</modelVersion>
+	  <groupId>parent</groupId>
+	  <artifactId>test.parent</artifactId>
+	  <version>0.0.1-SNAPSHOT</version>
+	  <packaging>pom</packaging>
+	  <modules>
+		<module>mod1</module>
+	  </modules>
+	</project>
+Module
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <modelVersion>4.0.0</modelVersion>
+	  <parent>
+		<groupId>parent</groupId>
+		<artifactId>test.parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	  </parent>
+	  <artifactId>mod1</artifactId>
+	</project>
+==================================================================================================
+============================== parent、relaivePath ===============================================
+==================================================================================================
+https://stackoverflow.com/questions/37062491/maven-complaining-about-parent-relative-path
+<parent> 裡若沒有 <relaivePath> 或是 <relaivePath/> 則預設於 ../pom.xml 找 parent pom.xml
+
+In order to resolve the parent project, these possible sources are checked:
+	1.relativePath
+	2.local repository
+	3.remote repositories

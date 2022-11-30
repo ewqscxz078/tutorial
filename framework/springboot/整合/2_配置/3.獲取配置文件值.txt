@@ -97,6 +97,7 @@ pom.xml
 				@Valid
 		5.複雜類型封裝:支援 map、list、object
 	@Value
+		https://www.baeldung.com/spring-value-annotation
 		1.一個一個綁定
 		2.嚴僅綁定(all match)
 		3.SpEL evaluation : 支援

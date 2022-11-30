@@ -1,96 +1,186 @@
 https://springframework.guru/spring-framework-annotations/
+https://hackmd.io/@LeeLo/leelo
 
-Core Spring Framework Annotations
+	Core Spring Framework Annotations
 
-	代表javaconfig，等於xml
-		@Configuration
+		代表javaconfig，等於xml
+			@Configuration
 
-	限制掃package路徑
-		@ComponentScan
+		限制掃package路徑
+			@ComponentScan
 
-	匯入其他javaconfig
-		@Import
+		匯入其他javaconfig
+			@Import
 
-	ioc 注入bean
-		@Bean
+		ioc 注入bean
+			@Bean
 
-	@Lazy
+		@Lazy
 
-	@Value
+		spring-beans.annotations/
+			https://openhome.cc/Gossip/Spring/Value.html
+			@Value
+				  用來注入某值，值可以是 Java 基本型態、字串，搭配 PlaceHolder 語法，
+				可以設置系統或 .properties 属性，搭配 Spring EL，可設置運算式結果、其他 Bean 的屬性，
+				搭配特定協定，可以設置文件或者是 URL 資源等。
 
-	@Required
+			https://stackoverflow.com/questions/68398867/spring-required-annotation-deprecated
+			@Required
+				  Deprecated as of 5.1, in favor of using constructor injection for required settings
+				(or a custom InitializingBean implementation).
+				告知一定要被設定
 
-	@Autowired
+			https://www.baeldung.com/spring-autowire
+			@Autowired
+				  注入已被 spring ioc 控管的 bean
+				假設有
+					@Component("fooFormatter")
+					public class FooFormatter {
+						public String format() {
+							return "foo";
+						}
+					}
+				1. on Properties
+					@Component
+					public class FooService {
+						@Autowired
+						private FooFormatter fooFormatter;
+					}
+				2. on Setters
+					public class FooService {
+						private FooFormatter fooFormatter;
+						@Autowired
+						public void setFormatter(FooFormatter fooFormatter) {
+							this.fooFormatter = fooFormatter;
+						}
+					}
+				3. on Constructors
+					public class FooService {
+						private FooFormatter fooFormatter;
+						@Autowired
+						public FooService(FooFormatter fooFormatter) {
+							this.fooFormatter = fooFormatter;
+						}
+					}
 
-	@Qualifier
+			https://www.baeldung.com/spring-autowire
+			@Qualifier
+				當生成的 bean 名字有雷同可用該註解哪個才是預期的
+				@Component("fooFormatter")
+				public class FooFormatter implements Formatter {
+					public String format() {
+						return "foo";
+					}
+				}
+				@Component("barFormatter")
+				public class BarFormatter implements Formatter {
+					public String format() {
+						return "bar";
+					}
+				}
+				public class FooService {
+					@Autowired
+					@Qualifier("fooFormatter")
+					private Formatter formatter;
+				}
 
-Spring Framework Stereotype Annotations
-	@Component
+	Spring Framework Stereotype Annotations
+		@Component
 
-	@Controller
+		@Controller
 
-	@Service
+		@Service
 
-	@Repository
+		@Repository
 
-Spring Boot Annotations
+	Spring Boot Annotations
 
-	@EnableAutoConfiguration
+		@EnableAutoConfiguration
 
-	@SpringBootApplication
+		@SpringBootApplication
 
-Spring MVC and REST Annotations
-	@Controller
+	Spring MVC and REST Annotations
+		@Controller
 
-	@RequestMapping
+		@RequestMapping
 
-	@CookieValue
+		@CookieValue
 
-	@CrossOrigin
+		@CrossOrigin
 
-Composed @RequestMapping Variants
-	@GetMapping
-	@PostMapping
-	@PutMapping
-	@PatchMapping
-	@DeleteMapping
-	@ExceptionHandler
-	@InitBinder
-	@Mappings and @Mapping
-	@MatrixVariable
-	@PathVariable
-	@RequestAttribute
-	@RequestBody
-	@RequestHeader
-	@RequestParam
-	@RequestPart
-	@ResponseBody
-	@ResponseStatus
-	@ControllerAdvice
-	@RestController
-	....
+	Composed @RequestMapping Variants
+		@GetMapping
+		@PostMapping
+		@PutMapping
+		@PatchMapping
+		@DeleteMapping
+		@ExceptionHandler
+		@InitBinder
+		@Mappings and @Mapping
+		@MatrixVariable
+		@PathVariable
+		@RequestAttribute
+		@RequestBody
+		@RequestHeader
+		@RequestParam
+		@RequestPart
+		@ResponseBody
+		@ResponseStatus
+		@ControllerAdvice
+		@RestController
+		....
 
 
-	@Transactional
-		propagation = Propagation.????
-		REQUIRED
-			業務方法需要在一個事務中執行,如果方法執行時,已處在一個事務中,那麼就加入該事務,否則自己建立一個新的事務.這是spring預設的傳播行為.。
-				@tractional 預設 propagation：Propagation.REQUIRED 使用既有交易，若不存在開一個新的
-		SUPPORTS
-			如果業務方法在某個事務範圍內被呼叫,則方法成為該事務的一部分,如果業務方法在事務範圍外被呼叫,則方法在沒有事務的環境下執行。
-				為了減少太多無謂的交易次數，把有互相呼叫的function合併成一個交易或是沒有
-				a method 有交易 ， call b method(propagation = Propagation.SUPPORTS)，則合併交易
-				a method 無交易 ， call b method(propagation = Propagation.SUPPORTS)，則無交易
-		MANDATORY
-			只能在一個已存在事務中執行,業務方法不能發起自己的事務,如果業務方法在沒有事務的環境下呼叫,就拋異常
-		REQUIRES_NEW
-			業務方法總是會為自己發起一個新的事務,如果方法已執行在一個事務中,則原有事務被掛起,新的事務被建立,直到方法結束,新事務才結束,原先的事務才會恢復執行.
-		NOT_SUPPORTED
-			宣告方法需要事務,如果方法沒有關聯到一個事務,容器不會為它開啟事務.如果方法在一個事務中被呼叫,該事務會被掛起,在方法呼叫結束後,原先的事務便會恢復執行.
-		NEVER
-			宣告方法絕對不能在事務範圍內執行,如果方法在某個事務範圍內執行,容器就拋異常.只有沒關聯到事務,才正常執行.
-		NESTED
-			如果一個活動的事務存在,則執行在一個巢狀的事務中.如果沒有活動的事務,則按REQUIRED屬性執行.它使用了一個單獨的事務, 這個事務擁有多個可以回滾的保證點.內部事務回滾不會對外部事務造成影響, 它只對DataSourceTransactionManager 事務管理器起效.
+		@Transactional
+			propagation = Propagation.????
+			REQUIRED
+				業務方法需要在一個事務中執行,如果方法執行時,已處在一個事務中,那麼就加入該事務,否則自己建立一個新的事務.這是spring預設的傳播行為.。
+					@tractional 預設 propagation：Propagation.REQUIRED 使用既有交易，若不存在開一個新的
+			SUPPORTS
+				如果業務方法在某個事務範圍內被呼叫,則方法成為該事務的一部分,如果業務方法在事務範圍外被呼叫,則方法在沒有事務的環境下執行。
+					為了減少太多無謂的交易次數，把有互相呼叫的function合併成一個交易或是沒有
+					a method 有交易 ， call b method(propagation = Propagation.SUPPORTS)，則合併交易
+					a method 無交易 ， call b method(propagation = Propagation.SUPPORTS)，則無交易
+			MANDATORY
+				只能在一個已存在事務中執行,業務方法不能發起自己的事務,如果業務方法在沒有事務的環境下呼叫,就拋異常
+			REQUIRES_NEW
+				業務方法總是會為自己發起一個新的事務,如果方法已執行在一個事務中,則原有事務被掛起,新的事務被建立,直到方法結束,新事務才結束,原先的事務才會恢復執行.
+			NOT_SUPPORTED
+				宣告方法需要事務,如果方法沒有關聯到一個事務,容器不會為它開啟事務.如果方法在一個事務中被呼叫,該事務會被掛起,在方法呼叫結束後,原先的事務便會恢復執行.
+			NEVER
+				宣告方法絕對不能在事務範圍內執行,如果方法在某個事務範圍內執行,容器就拋異常.只有沒關聯到事務,才正常執行.
+			NESTED
+				如果一個活動的事務存在,則執行在一個巢狀的事務中.如果沒有活動的事務,則按REQUIRED屬性執行.它使用了一個單獨的事務, 這個事務擁有多個可以回滾的保證點.內部事務回滾不會對外部事務造成影響, 它只對DataSourceTransactionManager 事務管理器起效.
 
-		REQUIRES_NEW、NESTED
-			兩者都是事務巢狀，不同之處在於，內外事務之間是否存在彼此之間的影響；NESTED之間會受到影響，而產生部分回滾，而REQUIRED_NEW則是獨立的。
+			REQUIRES_NEW、NESTED
+				兩者都是事務巢狀，不同之處在於，內外事務之間是否存在彼此之間的影響；NESTED之間會受到影響，而產生部分回滾，而REQUIRED_NEW則是獨立的。
+
+spring-context
+	https://www.baeldung.com/spring-bean
+	https://www.cnblogs.com/lgjlife/p/11060570.html
+	@Bean
+		讓 spring ioc 反轉控制 生成 Bean 方式，預設是單例
+
+
+	https://www.baeldung.com/spring-qualifier-annotation
+	@Primary vs @Qualifier
+		@Primary : 當有多個同源元件，預設為主要的 ioc bean name，讓當有多個引用 ioc bean 時不用特別宣告 @Qualifier 指定 ioc bean name
+		@Qualifier : 當有多個同源元件，指定 ioc bean name
+
+	https://www.baeldung.com/spring-depends-on
+	@DependsOn
+		控制 bean 之間依賴於誰後才生成，如下例 FileProcessor 需要依賴 fileReader、fileWriter 才會生成的順序控制
+			@Bean
+			@DependsOn({"fileReader","fileWriter"})
+			public FileProcessor fileProcessor(){
+				return new FileProcessor();
+			}
+			@Bean("fileReader")
+			public FileReader fileReader() {
+				return new FileReader();
+			}
+
+			@Bean("fileWriter")
+			public FileWriter fileWriter() {
+				return new FileWriter();
+			}

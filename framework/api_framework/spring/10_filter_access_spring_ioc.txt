@@ -1,0 +1,13 @@
+spring framework
+	https://blog.csdn.net/yu870646595/article/details/51201576
+		Filter中默認是不能通過@Autowired或@Resource的方式註入spring ioc容器中的對象，即使spring ioc容器已經初始化完成，
+
+		因為spring ioc是通過ContextLoaderListener在容器啟動的時候去加載的，
+
+		那我我們可以通過下面的方式來在Filter中訪問spring中的對象
+
+			1.在init方法中獲得ApplicationContext對象
+			2.使用spring提供的DelegatingFilterProxy類
+
+spring framework/spring boot filter be spring bean
+	https://stackoverflow.com/questions/71121673/why-servlet-filter-can-be-spring-bean

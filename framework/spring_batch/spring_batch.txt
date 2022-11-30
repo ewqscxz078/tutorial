@@ -1,0 +1,5 @@
+https://tanzu.vmware.com/developer/guides/spring-batch/
+	spring batch 、spring cloud task、spring cloud data flow 關係
+https://www.baeldung.com/introduction-to-spring-batch
+定義一個慣例的批次流程，
+	processing framework designed for robust execution of jobs.為作業的穩健執行而設計的處理框架

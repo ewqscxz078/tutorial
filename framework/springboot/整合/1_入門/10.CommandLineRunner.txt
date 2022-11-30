@@ -1,0 +1,4 @@
+https://www.baeldung.com/spring-boot-console-app
+Console Application
+	implements Spring's CommandLineRunner interface
+		會自動執行有實作 CommandLineRunner 所有的 run method，通常會設定 spring.main.web-application-type=NONE，代表非 web 應用程式

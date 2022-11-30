@@ -1,0 +1,28 @@
+https://www.baeldung.com/junit-src-test-resources-directory-path
+	Get the Path of the /src/test/resources Directory in JUnit
+		1.Using java.io.File
+
+		2.Using Path
+
+		3.Using ClassLoader
+
+https://stackoverflow.com/questions/14037404/java-read-large-text-file-with-70million-line-of-text
+	InputStreamReader isr = new InputStreamReader(new FileInputStream(FilePath),"unicode");
+	BufferedReader br = new BufferedReader(isr);
+	while((cur=br.readLine()) != null){
+		....
+	}
+
+character 處理
+	https://www.baeldung.com/java-read-lines-large-file
+		LineIterator it = FileUtils.lineIterator(theFile, "UTF-8");
+		try {
+			while (it.hasNext()) {
+				String line = it.nextLine();
+				// do something with line
+			}
+		} finally {
+			LineIterator.closeQuietly(it);
+		}
+
+

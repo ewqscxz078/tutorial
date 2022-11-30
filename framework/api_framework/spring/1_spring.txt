@@ -10,7 +10,7 @@ public class RS_TABLES {
     }
 }
 
-单
+單例
 
 RS_TABLES.xml
 	<beans>

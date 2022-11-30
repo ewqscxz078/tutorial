@@ -1,0 +1,8 @@
+https://www.baeldung.com/java-threadlocal
+http://www.jasongj.com/java/threadlocal/
+
+提供多執行緒裡，各自執行緒裡使用的獨立變數，彼此不互相干擾
+	  ThreadLocal 提供了線程本地的實例。它與普通變量的區別在於，
+	每個使用該變量的線程都會初始化一個完全獨立的實例副本。
+	ThreadLocal 變量通常被 private static 修飾。當一個線程結束時，
+	它所使用的所有 ThreadLocal 相對的實例副本都可被回收。

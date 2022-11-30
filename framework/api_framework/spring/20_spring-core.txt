@@ -1,0 +1,34 @@
+===========================================================================
+============================== file / resource ============================
+===========================================================================
+Access a File from the Classpath in a Spring Application
+	https://www.baeldung.com/spring-classpath-file-access
+	https://stackoverflow.com/questions/43428305/spring-boot-how-to-read-resource-from-classpath-in-unit-test
+
+	1. Using ClassPathResource
+		new ClassPathResource("data/employees.dat");
+
+	2. Using @Value
+		https://dzone.com/articles/working-with-resources-in-spring
+		@Value("classpath:data/resource-data.txt")
+		Resource resourceFile;
+
+	3. Using ResourceLoader
+		// lazily load resource
+		@Autowired
+		ResourceLoader resourceLoader;
+
+	4. Using ResourceUtils
+		// spring 內部私用
+		ResourceUtils.getFile("classpath:data/employees.dat");
+
+
+===========================================================================
+============================== spring / spring boot 事件 ==================
+===========================================================================
+https://www.baeldung.com/spring-context-events
+https://xie.infoq.cn/article/89dbe44f02f45d9d7bbe55ab5
+	ApplicationStartingEvent -> ApplicationEnvironmentPreparedEvent  -> ApplicationPreparedEvent  ->
+		ContextStartedEvent -> ContextRefreshedEvent ->
+	ApplicationStartedEvent-> ApplicationReadyEvent
+

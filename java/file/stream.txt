@@ -1,0 +1,57 @@
+Java IO 是典型的裝飾者模式(Decorator Pattern)的應用
+
+
+byte 導向處理
+	InputStream
+		FileInputStream	// 一般檔案處理用
+			BufferedInputStream	// 讀檔快取用
+			DataInputStream
+			PushbackInputStream
+		ByteArrayInputStream	// 處理單位: byte array，cache in memory 有2g上限問題，當檔案超過2g 會 outofmemory
+		ObjectInputStream	// 序列化處理用
+
+	OutpoutStream
+		FileOutputStream // 一般檔案處理用
+			BufferedOutpoutStream	// 寫檔快取用
+			DataOutputStream
+			PrintStream	// console 列印顯示用
+		ByteArrayOutputStream	// 處理單位: byte array，cache in memory 有2g上限問題，當檔案超過2g 會 outofmemory
+		ObjectOutputStream	// 序列化處理用
+
+	// https://stackoverflow.com/questions/10819164/why-would-you-wrap-fileoutputstream-with-a-dataoutputstream
+	DataOutputStream
+	  is a concrete decorator that, attached to another decorator or component, is able to extend
+	  the functionality by giving you a way to write primitives onto the stream, without caring about what there is
+	  in the underlying chain of decoration
+
+	常用慣例
+		DEFAULT_WRITE_BUF_SIZE = DEFAULT_READ_BUF_SIZE = 32 * 1024
+		try (
+			BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(inFile)))
+			BufferedOutputStream bos = new BufferedOutputStream(new ByteArrayOutputStream(outFile))) ) {
+			int = len;
+			byte[] buffer = new byte[DEFAULT_WRITE_BUF_SIZE]; // 32 KB
+			while( (len = bis.read(buf, 0, buf.length)) > 0 ){
+				bos.write(buf, 0, len);
+			}
+			bos.flush(); // 將緩衝區資料寫出
+		}
+
+
+	Most Efficient Way of Java Large File Processing
+		https://www.amitph.com/java-read-write-large-files-efficiently/
+
+	Java-Writing huge file using ByteArrayOutputStream
+		https://stackoverflow.com/questions/38695709/java-writing-huge-file-using-byteoutputstream
+			You can't have buffer of 2 GB or more in a ByteArrayOutputStream as the size is 32-bit signed.
+
+			byte 8 bits, short 16 bits, int 32 bits, long 64 bits
+
+character 導向處理
+
+	Reader
+		BufferedReader
+			FileReader
+	Writer
+		BufferedWriter
+			FileWriter

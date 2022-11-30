@@ -1,0 +1,3 @@
+https://www.baeldung.com/spring-boot-changing-log-level-at-runtime
+1. by actuator
+2. Spring Boot Admin
