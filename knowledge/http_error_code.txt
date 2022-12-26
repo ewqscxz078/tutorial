@@ -1,0 +1,16 @@
+https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+http status code
+
+	2xx	success. client was received, understood, and accepted
+		200 server 回應成功
+
+	3xx redirection
+		302 告訴 client 端找到了一個轉頁的 url
+
+	4xx	client errors 端系列錯誤
+		403 Forbidden : 權限不足
+
+		404 網頁找不到 : 客戶端輸入非預期網頁
+
+	5xx	server errors 端系列錯誤
+		500 Internal Server Error : 通常指 server 執行某行有異常

@@ -1,0 +1,40 @@
+切換嵌入式Servlet容器
+● 默認支持的webServer
+  ○ Tomcat, Jetty, or Undertow
+  ○ ServletWebServerApplicationContext 容器啟動尋找ServletWebServerFactory 並引導創建服務器
+● 切換服務器
+	JettyWebServer
+	NettyWebServer
+	TomcatWebServer
+	UndertowWebServer
+
+
+● 原理
+  ○ SpringBoot應用啟動發現當前是Web應用。 web場景包-導入tomcat
+  ○ web應用會創建一個web版的ioc容器 ServletWebServerApplicationContext
+  ○ ServletWebServerApplicationContext  啟動的時候尋找 ServletWebServerFactory（Servlet 的web服務器工廠---> Servlet 的web服務器）
+  ○ SpringBoot底層默認有很多的WebServer工廠；TomcatServletWebServerFactory, JettyServletWebServerFactory, or UndertowServletWebServerFactory
+  ○ 底層直接會有一個自動配置類。 ServletWebServerFactoryAutoConfiguration
+  ○ ServletWebServerFactoryAutoConfiguration導入了ServletWebServerFactoryConfiguration（配置類）
+  ○ ServletWebServerFactoryConfiguration 配置類 根據動態判斷系統中到底導入了那個Web服務器的包。 （默認是web-starter導入tomcat包），容器中就有 TomcatServletWebServerFactory
+  ○ TomcatServletWebServerFactory 創建出Tomcat服務器並啟動；TomcatWebServer 的構造器擁有初始化方法initialize---this.tomcat.start();
+  ○ 內嵌服務器，就是手動把啟動服務器的代碼調用（tomcat核心jar包存在）
+
+● 定制Servlet容器
+	○實現  WebServerFactoryCustomizer<ConfigurableServletWebServerFactory>
+		把配置文件的值和ServletWebServerFactory 進行綁定
+	○修改配置文件 server.xxx
+	○直接自定義 ConfigurableServletWebServerFactory
+
+	xxxxxCustomizer：定制化器，可以改變xxxx的默認規則
+		import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+		import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
+		import org.springframework.stereotype.Component;
+
+		@Component
+		public class CustomizationBean implements WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> {
+			@Override
+			public void customize(ConfigurableServletWebServerFactory server) {
+				server.setPort(9000);
+			}
+		}

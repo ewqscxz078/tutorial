@@ -1,28 +1,40 @@
+https://www.youtube.com/watch?v=TOwcNVQtniU&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=55&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-默認
-	1.瀏覽器，返回一個默認的錯誤葉面
+1.默認規則
+	1.瀏覽器，返回一個默認的錯誤頁面
 		Whitelabel Error Page
-			status code 4-4
+			status code 404
 		No message available
 
 		瀏覽器請求頭:
 			network/..
 				Accept:text/html
-	2.如果是其他客戶端,默認回應一個json錯誤
+	2.如果是其他客戶端,默認回應一個json錯誤，包含錯誤，HTTP狀態和異常消息的詳細信息
 		....
 		status:404
 		message:No message available
 		....
 
-		postMan
-
+		postMan 請求頭:
 				Accept:*/*
 
-原理
-	可以參照 ErrorMvcAutoConfiguration，錯誤處理的自動配置
-	給容器增加了
-		1.DefaultErrorAttributes : 幫我們在頁面共享訊息
-		2.BasicErrorController : 默認處理/error請求
+		例如 curl
+			$ curl -i --header "Cookie: JSESSIONID=72FA55DF5A91250C0A4DCB1CC94E95DA" http://localhost:8080/1231423121
+			  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+											 Dload  Upload   Total   Spent    Left  Speed
+			100   132    0   132    0     0   3284      0 --:--:-- --:--:-- --:--:--  3384HTTP/1.1 404
+			Content-Type: application/json
+			Transfer-Encoding: chunked
+			Date: Wed, 30 Nov 2022 19:58:09 GMT
+
+			{"timestamp":"2022-11-30T19:58:09.796+00:00","status":404,"error":"Not Found","message":"No message available","path":"/1231423121"}
+
+
+2.錯誤處理的自動配置說明
+	參照 ErrorMvcAutoConfiguration，錯誤處理的自動配置
+	給容器自動配置了元件
+		1.元件 DefaultErrorAttributes : 定義在頁面錯誤頁面可用顯示的訊息開關設定
+		2.元件 BasicErrorController : 默認處理/error請求
 			@Controller
 			@RequestMapping("${server.error.path:${error.path:/error}}")
 			public class BasicErrorController extends AbstractErrorController {
@@ -45,15 +57,22 @@
 					return new ResponseEntity<Map<String,Object>>(body,status)
 				}
 
-		3.ErrorPageCustomlizer
+		3.元件 ErrorPageCustomizer
 			@Value("${error.path:/error}")
-			private String path ="/error"; 系統出現錯誤以後來到error請求進行處理; (web.xml註冊的錯誤頁面)
+			private String path ="/error"; 系統出現錯誤以後來到error請求進行處理; (等於 web.xml 註冊的錯誤頁面)
 
-		4.DefaultErrorViewResolver
+		4.元件 DefaultErrorViewResolver
 			// 怎麼找到錯誤頁面的處理
 
+		因此流程為
+			1.元件 ErrorPageCustomizer 定義 error to where error page view
+			2.error 發生 trigger 元件 BasicErrorController 依據 meta 資訊處理資訊包裝 view 用的 model
+			3.若是瀏覽器頁面則依據 元件 DefaultErrorViewResolver 決定到哪個的 error page view，反之 json 回應 error view
+			4.若沒定義 error page view 則跑到 預設的 defaultErrorView( new ModelAndView("error",model) )
+			5.而這些 error page view 可使用預設的 model 屬性值依據 DefaultErrorAttributes 可拿取的到
+
 	步驟
-		1.一旦系統出現4xx、5xx之類的錯誤，ErrorPageCustomlizer就會生效(訂製錯誤的回應規則)
+		1.一旦系統出現4xx、5xx之類的錯誤，ErrorPageCustomizer 就會生效(訂製錯誤的回應規則)
 		2.就會來到/error請求，就會被 BasicErrorController 處理
 			2.1.回應html頁面; 去哪個頁面是由 DefaultErrorViewResolver
 				protectd ModelAndView resolveErrorView(HttpServletRequest request,HttpServletReponse response,Httpstatus status,Map<String,Object> model){
@@ -67,7 +86,28 @@
 					return null;
 				}
 
-1.
+3. 異常處理步驟流程
+	DispatcherServlet.doDispatch
+		1、執行目標方法(mv = ha.handle(processedRequest, response, mappedHandler.getHandler());)，目標方法運行期間有任何異常都會被 catch、而且標誌當前請求結束；並且用 dispatchException
+		2、進入視圖解析流程（頁面渲染？）
+			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
+		3、mv = processHandlerException；處理handler發生的異常，處理完成返回 ModelAndView；
+		● 	1、遍歷所有的 handlerExceptionResolvers，看誰能處理當前異常【 HandlerExceptionResolver 處理器異常解析器】
+			2、系統默認的  異常解析器；
+				DefaultErrorAttributes implements ErrorAttributes, HandlerExceptionResolver
+				HandlerExceptionResolverComposite implements HandlerExceptionResolver, Ordered
+					ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExceptionResolver implements ApplicationContextAware, InitializingBean
+					ResponseStatusExceptionResolver extends AbstractHandlerExceptionResolver implements MessageSourceAware
+					DefaultHandlerExceptionResolver extends AbstractHandlerExceptionResolver
+
+				○ 1、DefaultErrorAttributes 先來處理異常。把異常信息保存到request域，並且返回null；
+				○ 2、默認沒有任何人能處理異常，所以異常會被拋出
+					■ 1、如果沒有任何人能處理最終底層就會發送 /error 請求。會被底層的BasicErrorController處理
+					■ 2、解析錯誤視圖；遍歷所有的  ErrorViewResolver  看誰能解析。
+					■ 3、默認的 DefaultErrorViewResolver ,作用是把響應狀態碼作為錯誤頁的地址，error/500.html
+					■ 4、模板引擎最終響應這個頁面 error/500.html
+
+4.
 	如何自訂錯誤頁面
 		1.有模板引擎情況下，error/狀態碼; 將錯誤頁面命名 錯誤狀態碼.html 放在模板引擎文件夾下的error,當發生此狀態碼錯誤就會來到對應頁面
 			resources/templates/error
@@ -178,3 +218,26 @@
 								return map;
 							}
 						}
+
+
+5.定制錯誤處理邏輯
+	● 自定義錯誤頁
+		○ error/404.html   error/5xx.html；有精確的錯誤狀態碼頁面就匹配精確，沒有就找 4xx.html；如果都沒有就觸發白頁
+	● 自定義處理全局異常
+		○ @ControllerAdvice+@ExceptionHandler ；底層是 ExceptionHandlerExceptionResolver 支持的
+	● 自定義指定回應狀態碼與訊息到預設錯誤頁面
+		○ @ResponseStatus+自定義異常 ；底層是 ResponseStatusExceptionResolver ，把 responsestatus 註解的信息底層調用 response.sendError(statusCode, resolvedReason)；tomcat發送的/error
+	● Spring底層的異常，如 參數類型轉換異常；DefaultHandlerExceptionResolver 處理框架底層的異常。
+		○ response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+	● 自定義實現 HandlerExceptionResolver 處理異常；可以作為默認的全局異常處理規則
+		○ 並搭配 @Order 調整權重控制異常解析器的為預期順序，以利如何安排異常解析順序如預期
+			預設異常解析器有如下
+				DefaultErrorAttributes implements ErrorAttributes, HandlerExceptionResolver
+				HandlerExceptionResolverComposite implements HandlerExceptionResolver, Ordered
+					ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExceptionResolver implements ApplicationContextAware, InitializingBean
+					ResponseStatusExceptionResolver extends AbstractHandlerExceptionResolver implements MessageSourceAware
+					DefaultHandlerExceptionResolver extends AbstractHandlerExceptionResolver
+	● 自定義處理異常 view : ErrorViewResolver ，一般不自定義；
+		○ response.sendError 。 error 請求就會轉給 controller
+		○ 你的異常沒有任何人能處理。 tomcat底層 response.sendError。 error 請求就會轉給 controller
+		○ basicErrorController 要去的頁面地址是 ErrorViewResolver

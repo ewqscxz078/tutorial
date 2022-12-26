@@ -1,0 +1,139 @@
+https://www.youtube.com/watch?v=1uG7UXdiCYM&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=60&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+pom.xml
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-data-jdbc</artifactId>
+	</dependency>
+
+	預設已依賴了
+		com.zaxxer.HikariCP
+		org.springframework:spring-jdbc
+			org.springframework:spring-tx
+
+為何沒有數據庫驅動？
+	為什麼導入JDBC場景，官方不導入驅動？官方不知道我們接下要操作什麼數據庫。
+	數據庫版本和驅動版本對應
+
+driver dependency
+	默認版本：<mysql.version>8.0.22</mysql.version>
+
+			<dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+	<!--            <version>5.1.49</version>-->
+			</dependency>
+	想要修改版本
+		1、直接依賴引入具體版本（maven的就近依賴原則）
+		2、重新聲明版本（maven的屬性的就近優先原則）
+			<properties>
+				<java.version>1.8</java.version>
+				<mysql.version>5.1.49</mysql.version>
+			</properties>
+
+
+分析自動配置
+	1、自動配置的類
+	● DataSourceAutoConfiguration ： 數據源的自動配置
+	  ○ 修改數據源相關的配置：spring.datasource
+	  ○ 數據庫連接池的配置，是自己容器中沒有DataSource才自動配置的
+	  ○ 底層配置好的連接池是：HikariDataSource
+		@Configuration(proxyBeanMethods = false)
+		@Conditional(PooledDataSourceCondition.class)
+		@ConditionalOnMissingBean({ DataSource.class, XADataSource.class })
+		@Import({ DataSourceConfiguration.Hikari.class, DataSourceConfiguration.Tomcat.class,
+				DataSourceConfiguration.Dbcp2.class, DataSourceConfiguration.OracleUcp.class,
+				DataSourceConfiguration.Generic.class, DataSourceJmxConfiguration.class })
+		protected static class PooledDataSourceConfiguration
+	● DataSourceTransactionManagerAutoConfiguration： 事務管理器的自動配置
+	● JdbcTemplateAutoConfiguration： JdbcTemplate的自動配置，可以來對數據庫進行crud
+	  ○ 可以修改這個配置項@ConfigurationProperties(prefix = "spring.jdbc") 來修改JdbcTemplate
+	  ○ @Bean@Primary    JdbcTemplate；容器中有這個組件
+	● JndiDataSourceAutoConfiguration： jndi的自動配置
+	● XADataSourceAutoConfiguration： 分佈式事務相關的
+
+
+
+
+application.yml
+	spring:
+		datasource:
+			username: ${your_username}
+			password: ${your_password}
+			url: ${your_url}
+			driver-class-name: com.mysql.jdbc.Driver
+
+src/test/java/
+	範例1:
+		@RunWith(SpringRunner.class)
+		@SpringBootTest
+		public class SpringBootDataJdbcApplicationTest {
+			@Autowired
+			DataSource datasource;
+
+			@Test
+			public void testContextLoads() throws SQLException {
+				System.out.println(datasource.getClass());
+
+				Connection connection = datasource.getConection();
+				System.out.println(connection);
+				connection.close();
+			}
+		}
+
+	範例2:
+		@Slf4j
+		@SpringBootTest
+		class Boot05WebAdminApplicationTests {
+
+			@Autowired
+			JdbcTemplate jdbcTemplate;
+
+			@Test
+			void contextLoads() {
+		//        jdbcTemplate.queryForObject("select * from account_tbl")
+		//        jdbcTemplate.queryForList("select * from account_tbl",)
+				Long aLong = jdbcTemplate.queryForObject("select count(*) from account_tbl", Long.class);
+				log.info("記錄總數：{}",aLong);
+			}
+		}
+
+效果
+	默認是用 org.apache.tomcat.jdbc.pool.DataSource 作為數據來源
+	數據源的相關配置都在 DataSourceProperties 裡面
+
+自動配置
+	org.springframework.boot.autoconfigure.jdbc:
+		1.參考 DataSourceConfiguration，根據配置資料來源，默認使用 Tomcat 連接池；可以使用 spring.datasource.type 指定自訂義的數據源類型
+		2.spring boot 默認支持；
+			org.apache.tomcat.jdbc.pool.DataSource
+			HikariDataSource
+			BasicDataSource
+		3.自訂義資料來源
+			繼承 spring.datasource.type
+			透過 static class Generic
+				DataSourceBuilder 建構生成，利用反射建立對應type的數據源，並且綁定相關屬性
+				properties.initalizeDataSourceBuilder().build();
+		4.DataSouceIinitalizer:ApplicationListener；
+			作用
+				1.runSchemaScripts()；運行 sql 建表語句
+					默認只需要將文件命名為: schema-*.sql(schema.sql、schema-all.sql)
+					可以指定位置
+						schema:
+							-classpath: xxxx.sql
+
+				2.runDataScripts()；運行 insert sql 語句
+					默認只需要將文件命名為: data-*.sql
+		5.操作數據庫:自動配置了 jdbcTemplate
+			@Controller
+			public class HelloController {
+				@Autowired
+				JdbcTemplate jdbcTemplate;
+
+				@ResponseBody
+				@GetMapping("/query")
+				public Map<String, Object> map(){
+					List<Map<String,Object>>> list = jdbcTemplate.queryForList( sql: "select * from table");
+					return list.get(0);
+				}
+			}

@@ -1,0 +1,74 @@
+https://www.youtube.com/watch?v=oi6ChwpC6rc&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=56&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+1、使用 Servlet API
+	@ServletComponentScan :指定原生Servlet組件都放在那裡
+		src/java/.../configuration
+			@Configuration
+			@ServletComponentScan(basePackages = "com.thymeleaf.example.web")
+			public class MyWebConfiguration {
+				....
+			}
+
+		@WebServlet：效果：直接響應，沒有經過 Spring 的攔截器？
+			src/java/.../web/servlet
+				@WebServlet(urlPatterns = "/myServlet")
+				public class MyServlet extends HttpServlet {
+					....
+				}
+		@WebFilter
+			src/java/.../web/filter
+				@WebFilter(urlPatterns = { "/css/*", "/images/*" })
+				public class MyFilter implements Filter {
+					....
+				}
+		@WebListener
+			src/java/.../web/listener
+				@WebListener
+				public class MyListener implements ServletContextListener {
+					....
+				}
+
+2、使用 RegistrationBean 來 spring ioc 註冊 web bean，達到可抽出共用彈性效果
+	ServletRegistrationBean、FilterRegistrationBean 和 ServletListenerRegistrationBean
+
+		@Configuration
+		public class MyWebConfiguration {
+			@Bean
+			ServletRegistrationBean<MyServlet> myServlet() {
+				final MyServlet myServlet = new MyServlet();
+				return new ServletRegistrationBean<MyServlet>(myServlet, "/my", "/my02");
+			}
+			@Bean
+			FilterRegistrationBean<MyFilter> myFilter() {
+				final MyFilter myFilter = new MyFilter();
+				final FilterRegistrationBean<MyFilter> filterRegistrationBean = new FilterRegistrationBean<MyFilter>(myFilter);
+				filterRegistrationBean.setUrlPatterns(Arrays.asList("/my", "/css/*"));
+				return filterRegistrationBean;
+			}
+			@Bean
+			ServletListenerRegistrationBean<MyListener> myListener() {
+				final MyListener myListener = new MyListener();
+				return new ServletListenerRegistrationBean<MyListener>(myListener);
+			}
+		}
+
+3.原理
+	https://www.youtube.com/watch?v=b-YRFm9OtAo&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=57&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+	擴展：DispatchServlet 如何註冊進來
+		● 容器中自動配置了  DispatcherServlet  屬性綁定到 WebMvcProperties；對應的配置文件配置項是 spring.mvc。
+		● 通過 ServletRegistrationBean<DispatcherServlet> 把 DispatcherServlet  配置進來。
+		● 默認映射的是 / 路徑。
+
+	Tomcat-Servlet；
+		多個Servlet都能處理到同一層路徑，精確優選原則
+		A servlet ： /my/
+		B servlet ： /my/1
+
+		若是輸入 /my/1 => 選擇 B servlet
+		若是輸入 /my/2 => 選擇 A servlet
+
+
+	DispatchServlet : /			: spring 流程
+	MyServlet		: /my		: tomcat 處理
+
+		因此上方的 @WebServlet 沒有經過 spring 攔截器的問題

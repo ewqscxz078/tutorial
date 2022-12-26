@@ -1,0 +1,23 @@
+https://www.youtube.com/watch?v=UbGHT87dXtU&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=60&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+定制化原理
+	1、定制化的常見方式
+		● 修改配置文件；
+		● xxxxxCustomizer；
+		● 編寫自定義的配置類   xxxConfiguration；+ @Bean替換、增加容器中默認組件；視圖解析器
+		● Web應用 編寫一個配置類實現 WebMvcConfigurer 即可定制化web功能；+ @Bean給容器中再擴展一些組件
+			@Configuration
+			public class AdminWebConfig implements WebMvcConfigurer
+		● @EnableWebMvc + WebMvcConfigurer —— @Bean  可以全面接管SpringMVC，所有規則全部自己重新配置； 實現定制和擴展功能
+		  ○ 原理
+		  ○ 1、WebMvcAutoConfiguration  默認的SpringMVC的自動配置功能類。靜態資源、歡迎頁.....
+		  ○ 2、一旦使用 @EnableWebMvc 、。會 @Import(DelegatingWebMvcConfiguration.class)
+		  ○ 3、DelegatingWebMvcConfiguration 的 作用，只保證SpringMVC最基本的使用
+			■ 把所有系統中的 WebMvcConfigurer 拿過來。所有功能的定制都是這些 WebMvcConfigurer  合起來一起生效
+			■ 自動配置了一些非常底層的組件。 RequestMappingHandlerMapping、這些組件依賴的組件都是從容器中獲取
+			■ public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport
+		  ○ 4、WebMvcAutoConfiguration 裡面的配置要能生效 必須  @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
+		  ○ 5、@EnableWebMvc  導致了 WebMvcAutoConfiguration  沒有生效。
+
+	2、原理分析套路
+		場景starter(pom.xml) - xxxxAutoConfiguration - 導入xxx組件 - 綁定xxxProperties -- 綁定配置文件項
