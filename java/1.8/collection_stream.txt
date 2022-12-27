@@ -1,0 +1,7 @@
+https://stackoverflow.com/questions/45793226/cannot-make-filter-foreach-collect-in-one-stream
+過濾集合裡的東西再將其物件轉換到別的物件後收集
+假設 List<File> items 過濾收集後變為 List<String> names
+ List<String> names = items.stream()
+   .filter(f -> f.exist())
+   .map(f -> f.getName())
+   .collect(Collectors.toList());

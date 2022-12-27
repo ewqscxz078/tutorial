@@ -1,0 +1,45 @@
+https://snyk.io/blog/10-java-security-best-practices/
+	10 Java security best practices
+		1. sql injection
+			有問題程式碼
+				public void selectExample(String parameter) throws SQLException {
+				   Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+				   String query = "SELECT * FROM USERS WHERE lastname = " + parameter;
+				   Statement statement = connection.createStatement();
+				   ResultSet result = statement.executeQuery(query);
+
+				   printResult(result);
+				}
+
+
+				if parameter is '' OR 1=1; 會有資安問題
+
+			正確寫法
+				public void prepStatmentExample(String parameter) throws SQLException {
+				   Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+				   String query = "SELECT * FROM USERS WHERE lastname = ?";
+				   PreparedStatement statement = connection.prepareStatement(query);
+				   statement.setString(1, parameter);
+				   System.out.println(statement);
+				   ResultSet result = statement.executeQuery();
+
+				   printResult(result);
+				}
+
+		2. Use OpenID Connect with 2FA
+
+		3. Scan your dependencies for known vulnerabilities
+
+		4. Handle sensitive data with care
+
+		5. Sanitize all input
+
+		6. Configure your XML-parsers to prevent XXE
+
+		7. Avoid Java serialization
+
+		8. Use strong encryption and hashing algorithms.
+
+		9. Enable the Java Security Manager
+
+		10. Centralize logging and monitoring
