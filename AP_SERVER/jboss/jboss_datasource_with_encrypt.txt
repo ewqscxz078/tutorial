@@ -1,0 +1,44 @@
+
+jboss 7.1 以前可用 SecureIdentityLoginModule ，7.1 之後請用 Credential Store 或 Password Vault
+Password encrypted via security-domain throws ERROR PBOX000016: Access denied: authentication failed
+	jboss 輸出 加密後的密碼 問題 (org.picketbox.datasource.security.SecureIdentityLoginModule not find)
+		https://stackoverflow.com/questions/37429541/could-not-find-or-load-main-class-org-picketbox-datasource-security-secureidenti
+
+	jboss cli add security-domain sample
+		https://stackoverflow.com/questions/70361279/how-to-add-security-domain-with-wildfly-jboss-cli
+
+	jboss datasource with encrypt password
+		https://stackoverflow.com/questions/10520997/jboss-as-7-1-datasource-how-to-encrypt-password
+		https://access.redhat.com/documentation/en-us/jboss_enterprise_application_platform/5/html/security_guide/encrypting_data_source_passwords
+		https://access.redhat.com/solutions/184963
+
+		How to configure multiple datasources using encrypted password on JBoss
+		https://access.redhat.com/solutions/304063
+
+		即使使用上面方式 啟動 jboss server 會出現
+			PB0X00016 Access denied: authorization failed
+				https://access.redhat.com/solutions/2134181 with login jboss 帳號
+
+
+JBoss EAP 7.1 and later uses credential stores, which are much more advanced and only decrypt the data momentarily at the moment of use. They never hold onto decrypted passwords.
+	https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/html/how_to_configure_server_security/securely_storing_credentials#credential_store
+
+	有兩種方式
+		Credential Store
+			https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/html/how_to_configure_server_security/securely_storing_credentials#credential_store
+				3.1.1. Create a Credential Store
+					/subsystem=elytron/credential-store=my_store:add(location="cred_stores/my_store.jceks", relative-to=jboss.server.data.dir,  credential-reference={clear-text=supersecretstorepassword},create=true)
+				3.1.2. Add a Credential to the Credential Store
+					/subsystem=elytron/credential-store=my_store:add-alias(alias=database-pw, secret-value="speci@l_db_pa$$_01")
+				3.1.3. Use a Stored Credential in a Configuration
+					data-source add --name=my_DS --jndi-name=java:/my_DS --driver-name=h2 --connection-url=jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE --user-name=db_user --credential-reference={store=my_store, alias=database-pw}
+				3.1.4. List the Credentials in the Credential Store
+					/subsystem=elytron/credential-store=STORE_NAME:read-aliases()
+				3.1.5. Remove a Credential from the Credential Store
+					/subsystem=elytron/credential-store=my_store:remove-alias(alias=database-pw)
+
+		Password Vault
+			https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/html/how_to_configure_server_security/securely_storing_credentials#password_vault
+
+			jboss datasource with encrypt password and Vault
+				https://access.redhat.com/solutions/2790371 with login jboss 帳號
