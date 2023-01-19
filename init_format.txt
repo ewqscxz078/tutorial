@@ -26,3 +26,6 @@ replace tail space or tab // todo fix tail x tab no replace
 
 	replace tail tab
 		egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/\t\+$//g"
+			// 無法處理檔名有空白問題，會跳出如下錯誤
+			// sed: can't read java/java_security/2_high/2_Log: No such file or directory
+			// sed: can't read Forging.txt: No such file or directory
