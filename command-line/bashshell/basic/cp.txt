@@ -1,3 +1,5 @@
+
+
 # --reflink=auto 代表有使用到cow 的檔案系統 會加速 copy
 	cp -r --reflink=auto "$fromdir" "$todir"
 
@@ -7,9 +9,17 @@
 # copy 目錄含相關子目錄 -R or -r
 	cp -r sourcefile targetfile
 
-# allows a file's directory structure to be copied to another directory:
-	https://unix.stackexchange.com/questions/97131/is-there-a-parents-option-for-mv-like-for-cp
-	cp --parents <source> <target>
+https://weikaiwei.com/linux/cp/
+	# 使用 cp 複製 file_A file_B file_N 到 Dir_A 裡
+		cp file_A file_B file_N Dir_A
 
-# 保留原始檔案權限狀態, 主要是 -p 的參數
+	# 複製 Dir_A 裡的所有檔案到 Dir_B 裡
+		cp -r Dir_A/* Dir_B
 
+https://unix.stackexchange.com/questions/97131/is-there-a-parents-option-for-mv-like-for-cp
+	# allows a file's directory structure to be copied to another directory:
+		cp --parents <source> <target>
+
+http://n.sfs.tw/mymedia/index/10691
+	# 保留原始檔案權限狀態, 主要是 -p 的參數
+		cp -p
