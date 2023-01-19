@@ -91,3 +91,40 @@ In order to resolve the parent project, these possible sources are checked:
 	1.relativePath
 	2.local repository
 	3.remote repositories
+
+==================================================================================================
+============================== project.build.directory ===========================================
+==================================================================================================
+https://stackoverflow.com/questions/13354531/maven-project-build-directory
+
+how to know maven properties and other
+
+	1.${M2_HOME}/lib/maven-model-builder-3.0.3.jar
+	2.Navigate to org/apache/maven/model
+	3.vi pom-4.0.0.xml
+		<project>
+			...
+			<build>
+				<directory>${project.basedir}/target</directory>
+				<outputDirectory>${project.build.directory}/classes</outputDirectory>
+				<finalName>${project.artifactId}-${project.version}</finalName>
+				<testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
+				<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+				<scriptSourceDirectory>src/main/scripts</scriptSourceDirectory>
+				<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
+				<resources>
+					<resource>
+						<directory>${project.basedir}/src/main/resources</directory>
+					</resource>
+				</resources>
+				<testResources>
+					<testResource>
+						<directory>${project.basedir}/src/test/resources</directory>
+					</testResource>
+				</testResources>
+				...
+			</build>
+			...
+		</project>
+
+or ref https://github.com/apache/maven/blob/trunk/maven-model-builder/src/main/resources/org/apache/maven/model/pom-4.0.0.xml#L53

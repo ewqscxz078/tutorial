@@ -1,0 +1,17 @@
+https://superuser.com/questions/1218943/windows-command-prompt-capture-output-of-bash-script-in-one-step/1321240#1321240
+
+"%ProgramFiles%\Git\bin\bash.exe" script_name.sh to run a script
+"%ProgramFiles%\Git\bin\bash.exe" -c "echo 'it works'" to run one-liner
+
+
+basic
+	https://www.baeldung.com/run-shell-command-in-java
+
+
+processbuilder
+	https://www.baeldung.com/java-lang-processbuilder-api
+	https://stackoverflow.com/questions/62302055/read-output-git-bash-with-processbuilder-in-java
+
+
+java processbuilder errorStream 處理方式
+	https://stackoverflow.com/questions/14165517/processbuilder-forwarding-stdout-and-stderr-of-started-processes-without-blocki

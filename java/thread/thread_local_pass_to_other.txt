@@ -1,0 +1,40 @@
+https://stackoverflow.com/questions/47170557/pass-threadlocal-class-to-another-thread
+
+use InheritableThreadLocal 可跨越 thread 因此可以傳遞
+
+	public class ThreadLocalManager {
+		public static final InheritableThreadLocal<String> accountUsername = new InheritableThreadLocal<String>();
+		public static final InheritableThreadLocal<String> accountPassword = new InheritableThreadLocal<String>();
+		public static final InheritableThreadLocal<Long> accountId = new InheritableThreadLocal<Long>();
+	}
+
+	public class ThreadLocalMain {
+
+		public static void main(String[] args) {
+			System.out.println("At start of main");
+			System.out.println(ThreadLocalManager.accountId.get());
+			System.out.println(ThreadLocalManager.accountUsername.get());
+			System.out.println(ThreadLocalManager.accountPassword.get());
+
+			Thread t1 = new Thread(new Runnable(){
+
+				@Override
+				public void run() {
+					ThreadLocalManager.accountId.set(new Long(12345));
+					ThreadLocalManager.accountUsername.set("user1");
+					ThreadLocalManager.accountPassword.set("pass1");
+
+					System.out.println("In t1 run");
+					System.out.println(ThreadLocalManager.accountId.get());
+					System.out.println(ThreadLocalManager.accountUsername.get());
+					System.out.println(ThreadLocalManager.accountPassword.get());
+
+					Thread t2 = new Thread(new Runner());
+					t2.start();
+				}
+
+			});
+			t1.start();
+		}
+
+	}

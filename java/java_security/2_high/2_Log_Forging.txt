@@ -1,0 +1,21 @@
+範例
+		final String dnsUrl = System.getenv(EXDNS);
+		isValidURL(dnsUrl);
+
+		private void isValidURL(String url){
+			try{
+				new URL(url).toURI();
+			} catch (final MalformedURLException e) {
+				LOGGER.error("URL 非預期格式 : {}", url);
+				throw new ExchangeException(ExchangeMesg.AE_G801_E, String.format("URL 非預期格式 : %s ", url));
+			} catch (final URISyntaxException e) {
+				LOGGER.error("URL 非預期格式 : {}", url);
+				throw new ExchangeException(ExchangeMesg.AE_G801_E, String.format("URL 非預期格式 : %s ", url));
+			}
+		}
+
+		LOGGER.error("URL 非預期格式 : {}", url); 裡的 url 可能偽造非法的內容造成 log forging 問題
+
+解決方法
+	1. 不要列印未受檢驗核可的 外部參數
+	2. 過濾外部參數後才可將其列印

@@ -1,0 +1,220 @@
+https://www.baeldung.com/java-thread-safety
+
+What is Thread-Safety and How to Achieve it?
+
+1.Stateless Implementations 無狀態實作
+	public class MathUtils {
+		public static BigInteger factorial(int number) {
+			BigInteger f = new BigInteger("1");
+			for (int i = 2; i <= number; i++) {
+				f = f.multiply(BigInteger.valueOf(i));
+			}
+			return f;
+		}
+	}
+
+	方法不依賴任何外部資訊狀態
+		The method neither relies on external state nor maintains state at all
+
+2.Immutable Implementations 不可變實作
+	public class MessageService {
+		private final String message;
+
+		public MessageService(String message) {
+			this.message = message;
+		}
+		// standard getter
+	}
+
+	透過建構函數傳入值後，僅開放 read/getter，也就是不可變的資訊狀態
+		a class instance is immutable when its internal state can't be modified after it has been constructed.
+
+3.Thread-Local Fields 執行緒內的獨立欄位變數
+	第一種 : 基本概念
+		public class ThreadA extends Thread {
+			private final List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
+			@Override
+			public void run() {
+				numbers.forEach(System.out::println);
+			}
+		}
+		public class ThreadB extends Thread {
+			private final List<String> letters = Arrays.asList("a", "b", "c", "d", "e", "f");
+			@Override
+			public void run() {
+				letters.forEach(System.out::println);
+			}
+		}
+
+		兩個 class 不共享欄位資訊
+			In both implementations, the classes have their own state, but it's not shared with other threads. So, the classes are thread-safe.
+	第二種 : use ThreadLocal
+		public class StateHolder {
+			private final String state;
+			// standard constructors / getter
+		}
+		public class ThreadState {
+			public static final ThreadLocal<StateHolder> statePerThread = new ThreadLocal<StateHolder>() {
+				@Override
+				protected StateHolder initialValue() {
+					return new StateHolder("active");
+				}
+			};
+			public static StateHolder getState() {
+				return statePerThread.get();
+			}
+		}
+
+		thread 之間不共享欄位資訊，彼此有各自獨立維護的資訊(state)
+			each thread has its own state
+
+4.Synchronized Collections
+	Collection<Integer> syncCollection = Collections.synchronizedCollection(new ArrayList<>());
+	Thread thread1 = new Thread(() -> syncCollection.addAll(Arrays.asList(1, 2, 3, 4, 5, 6)));
+	Thread thread2 = new Thread(() -> syncCollection.addAll(Arrays.asList(7, 8, 9, 10, 11, 12)));
+	thread1.start();
+	thread2.start();
+
+	同步集合的方法僅能一次一個 thread 同步執行，因此 同步訪問的底層邏輯，同步會降低性能
+		This means that the methods can be accessed by only one thread at a time,
+		while other threads will be blocked until the method is unlocked by the first thread.
+
+5.Concurrent Collections
+	Map<String,String> concurrentMap = new ConcurrentHashMap<>();
+	concurrentMap.put("1", "one");
+	concurrentMap.put("2", "two");
+	concurrentMap.put("3", "three");
+
+	併發集合通過將數據分成段來實現線程安全，效能較同步集合高
+		concurrent collections achieve thread-safety by dividing their data into segments
+
+6.Atomic Objects
+	public class AtomicCounter {
+		private final AtomicInteger counter = new AtomicInteger();
+		public void incrementCounter() {
+			counter.incrementAndGet();
+		}
+		public int getCounter() {
+			return counter.get();
+		}
+	}
+
+	原子操作，未使用同步鎖，主要底層實作是透過 volatile
+		Atomic classes allow us to perform atomic operations, which are thread-safe, without using synchronization.
+
+9.Synchronized Methods
+	public synchronized void incrementCounter() {
+		counter += 1;
+	}
+
+	鎖定方法，並行執行時，僅能一次一個 thread 執行該方法
+		only one thread can access a synchronized method at a time, while blocking access to this method from other threads
+
+10.Synchronized Statements
+	public void incrementCounter() {
+		// additional unsynced operations
+		synchronized(this) {
+			counter += 1;
+		}
+	}
+
+	鎖定語句，鎖定的代價較為昂貴，僅能一個執行緒執行其中
+		Synchronization is expensive, so with this option, we are able to only synchronize the relevant parts of a method.
+
+11.Other Objects as a Lock
+	public class ObjectLockCounter {
+		private int counter = 0;
+		private final Object lock = new Object();
+
+		public void incrementCounter() {
+			synchronized(lock) {
+				counter += 1;
+			}
+		}
+		// standard getter
+	}
+
+	使用另一個物件鎖定監控，多線程環境中提供了對共享資源的協調訪問，而且還使用外部實體強制執行對資源的獨占訪問
+		Not only does this provide coordinated access to a shared resource in a multithreaded environment, but it also uses an external entity to enforce exclusive access to the resource:
+
+12.Caveats 注意事項
+	public class Class1 {
+		private static final String LOCK  = "Lock";
+		// uses the LOCK as the intrinsic lock
+	}
+
+	public class Class2 {
+		private static final String LOCK  = "Lock";
+		// uses the LOCK as the intrinsic lock
+	}
+
+	String LOCK 可能於記憶體使用同一份，造成非預期的鎖定，應避免使用 "基本型別" 鎖定
+
+
+13.Volatile Fields
+	第一種
+		public class Counter {
+			private volatile int counter;
+			// standard constructors / getter
+		}
+
+		基本型別可能被 CPU cache，指示 JVM 和編譯器將變量 counter 存儲在主內存中。
+
+	第二種
+		public class User {
+			private String name;
+			private volatile int age;
+
+			// standard constructors / getters
+		}
+
+		每次 JVM 將 age volatile 變量寫入主內存時，它也會將 non-volatile name 變量寫入主內存。
+		這確保了兩個變量的最新值都存儲在主內存中，因此對變量的後續更新將自動對其他線程可見。
+
+
+14.Reentrant Locks
+	public class ReentrantLockCounter {
+		private int counter;
+		private final ReentrantLock reLock = new ReentrantLock(true);
+		public void incrementCounter() {
+			reLock.lock();
+			try {
+				counter += 1;
+			} finally {
+				reLock.unlock();
+			}
+		}
+		// standard constructors / getter
+	}
+
+	提供進階鎖定:
+		ReentrantLock 構造函數採用可選的公平布爾參數。 當設置為 true 時，並且多個線程正在嘗試獲取鎖，JVM 將優先考慮等待時間最長的線程並授予對鎖的訪問權限。
+
+15.Read/Write Locks
+	public class ReentrantReadWriteLockCounter {
+		private int counter;
+		private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+		private final Lock readLock = rwLock.readLock();
+		private final Lock writeLock = rwLock.writeLock();
+		public void incrementCounter() {
+			writeLock.lock();
+			try {
+				counter += 1;
+			} finally {
+				writeLock.unlock();
+			}
+		}
+		public int getCounter() {
+			readLock.lock();
+			try {
+				return counter;
+			} finally {
+				readLock.unlock();
+			}
+		}
+	   // standard constructors
+	}
+
+	多執行緒時，寫少讀多情境適合
+		只要沒有線程寫入資源，就可能有許多線程讀取資源。 此外，寫入資源的線程將阻止其他線程讀取它
+			As a result, it's possible to have many threads reading a resource, as long as there's no thread writing to it. Moreover, the thread writing to the resource will prevent other threads from reading it.

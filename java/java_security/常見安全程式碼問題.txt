@@ -10,8 +10,6 @@ https://snyk.io/blog/10-java-security-best-practices/
 
 				   printResult(result);
 				}
-
-
 				if parameter is '' OR 1=1; 會有資安問題
 
 			正確寫法
@@ -43,3 +41,87 @@ https://snyk.io/blog/10-java-security-best-practices/
 		9. Enable the Java Security Manager
 
 		10. Centralize logging and monitoring
+
+Critical 嚴重風險(from fortify)
+
+
+High 高風險(from fortify)
+	Unreleased Resource: Streams
+	Access Specifier Manipulation
+
+Medium 中風險(from fortify)
+
+Low (from fortify)low
+	Dead Code: Expression is Always false
+	Dead Code: Unused Method
+	Dead Code: Unused Field
+	Dead Code: Expression is Always true
+	Dead Code: Empty Try Block
+	Poor Error Handling: Overly Broad Catch
+	Poor Error Handling: Overly Broad Throws
+	Poor Error Handling: Empty Catch Block
+	Poor Error Handling: Throw Inside Finally
+	Poor Error Handling: Program Catches NullPointerException
+	System Information Leak: Internal
+	System Information Leak
+	System Information Leak: Externa
+	System Information Leak: Incomplete Servlet Error Handling
+	System Information Leak: HTML Comment in JSP
+	Hidden Field
+	Cross-Site Request Forgery
+	Redundant Null Check
+	Obsolete
+	Log Forging (debug)
+	Password Management: Password in Comment
+	Password Management: Null Password
+	Build Misconfiguration: External Maven Dependency Repository
+	Trust Boundary Violation
+	Poor Style: Value Never Read
+	Poor Style: Non-final Public Static Field
+	Poor Style: Confusing Naming
+	Poor Style: Redundant Initialization
+	Poor Style: Identifier Contains Dollar Symbol ($)
+	Poor Logging Practice: Use of a System Output Stream
+	Access Control: SecurityManager Bypass
+	J2EE Bad Practices: Threads
+	J2EE Bad Practices: Leftover Debug Code
+	J2EE Bad Practices: JVM Termination
+	J2EE Bad Practices: Sockets
+	J2EE Misconfiguration: Incomplete Error Handling
+	J2EE Misconfiguration: Excessive Session Timeout
+	J2EE Misconfiguration: Missing Error Handling
+	Code Correctness: Constructor Invokes Overridable Function
+	Code Correctness: Byte Array to String Conversion
+	Code Correctness: Erroneous String Compare
+	Code Correctness: clone() Invokes Overridable Function
+	Code Correctness: Call to Thread.run()
+	Code Correctness: Misleading Method Signature
+	Code Correctness: Multiple Stream Commits
+	Code Correctness: Class Does Not Implement equals
+	Code Correctness: Erroneous Class Compare
+	Code Correctness: Non-Static Inner Class Implements Serializable
+	Code Correctness: readObject() Invokes Overridable Function
+	Code Correctness: Byte Array to String Conversion
+	Code Correctness: Comparison of Boxed Primitive Types
+	Code Correctness: Non-Synchronized Method Overrides Synchronized Method
+	Unchecked Return Value
+	Denial of Service
+	Denial of Service: Parse Double
+	Denial of Service: StringBuilder
+	Privilege Management: Overly Broad Access Specifier
+	Dynamic Code Evaluation: Unsafe Deserialization
+	JavaScript Hijacking
+	JavaScript Hijacking: Vulnerable Framework
+	Unsafe Mobile Code: Inner Class
+	Unsafe Mobile Code: Unsafe Public Field
+	Process Control
+	Object Model Violation: Just one of equals() and hashCode() Defined
+	Object Model Violation: Erroneous clone() Method
+	HTML5: Overly Permissive Message Posting Policy
+	HTML5: Overly Permissive CORS Policy
+	Missing Check against Null
+	Missing SecurityManager Check: Serializable
+	Weak Cryptographic Hash
+	Weak Cryptographic Signature: Missing Required Step
+	Cookie Security: Cookie not Sent Over SSL
+	Cookie Security: HTTPOnly not Set

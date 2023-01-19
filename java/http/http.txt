@@ -1,0 +1,16 @@
+https://www.cnblogs.com/shamo89/p/10204479.html
+http://web.mit.edu/~mkgray/project/bha/HTTPClient/doc/urlcon_vs_httpclient.html
+
+HttpURLConnection
+	JDK的 java.net 包中已經提供了訪問HTTP協議的基本功能的類
+
+
+HttpClient
+	HttpClient就是一個增強版的HttpURLConnection，HttpURLConnection可以做的事情HttpClient全部可以做；
+		  在一般情況下，如果只是需要向Web站點的某個簡單頁面提交請求並獲取服務器響應，HttpURLConnection完全可以勝任。
+		但在絕大部分情況下，Web站點的網頁可能沒這麼簡單，這些頁面並不是通過一個簡單的URL就可訪問的，可能需要用戶登錄
+		而且具有相應的權限才可訪問該頁面。在這種情況下，就需要涉及Session、Cookie的處理了，如果打算使用HttpURLConnection
+		來處理這些細節，當然也是可能實現的，只是處理起來難度就大了。為了更好地處理向Web站點請求，包括處理Session、Cookie等細節問題，
+		Apache開源組織提供了一個HttpClient項目，看它的名稱就知道，它是一個簡單的HTTP客戶端（並不是瀏覽器），
+		可以用於發送HTTP請求，接收HTTP響應。但不會緩存服務器的響應，不能執行HTML頁面中嵌入的Javascript代碼；
+		也不會對頁面內容進行任何解析、處理。
