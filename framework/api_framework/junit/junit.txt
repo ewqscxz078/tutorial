@@ -15,5 +15,61 @@ system/env mock
 Migrating from JUnit 4 to JUnit 5
 	https://www.baeldung.com/junit-5-migration#differences
 
+	Annotations diff
+		1.The most important one is that we can no longer use the @Test annotation for specifying expectations.
+			junit 4
+				@Test(expected = Exception.class)
+				public void shouldRaiseAnException() throws Exception {
+					// ...
+				}
+
+			=>
+			junit 5
+				void shouldRaiseAnException() throws Exception {
+					Assertions.assertThrows(Exception.class, () -> {
+						//...
+					});
+				}
+		2.timeout attribute
+			junit 4
+				@Test(timeout = 1)
+				public void shouldFailBecauseTimeout() throws InterruptedException {
+					Thread.sleep(10);
+				}
+			junit 5
+				@Test
+				void shouldFailBecauseTimeout() throws InterruptedException {
+					Assertions.assertTimeout(Duration.ofMillis(1), () -> Thread.sleep(10));
+				}
+
+		3. Annotations name
+			junit 4 => junit 5
+				@Before => @BeforeEach
+				@After => @AfterEach
+				@BeforeClass => @BeforeAll
+				@AfterClass => @AfterAll
+				@Ignore => @Disabled
+	Assertions
+	Assumptions
+	Tagging and Filtering
+
+	New Annotations for Running Tests
+		junit 4
+			@RunWith(SpringJUnit4ClassRunner.class)
+			@ContextConfiguration(
+			  {"/app-config.xml", "/test-data-access-config.xml"})
+			public class SpringExtensionTest {
+				/*...*/
+			}
+		junit 5
+			@ExtendWith(SpringExtension.class)
+			@ContextConfiguration(
+			  { "/app-config.xml", "/test-data-access-config.xml" })
+			class SpringExtensionTest {
+				/*...*/
+			}
+	New Test Rules Annotations
+	JUnit 5 Vintage
+
 multithread test
 	https://www.baeldung.com/java-testing-multithreaded

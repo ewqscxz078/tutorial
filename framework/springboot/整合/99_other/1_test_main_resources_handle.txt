@@ -1,0 +1,21 @@
+maven project 編譯檔案後的預設處理結果
+	結構
+		src/main/java
+		src/main/resources
+		src/test/java
+		src/test/resources
+	每當編譯後會被放在
+		src/main/java		>	target/classes
+		src/main/resources	>	target/classes
+		src/test/java		>	target/test-classes
+		src/test/resources	>	target/test-classes
+
+https://stackoverflow.com/questions/59240478/when-spring-looks-to-test-resources
+	springboot auto look for file by file name - if the file name is the same in test and main resources folder,
+	it chooses firstly from main,
+	secondly from test - the file name must be specific for the test
+		1. springboot 依據檔名選擇(假設為 ${fileName})
+		2. 若 test 或 main 下的 resources 資料夾有其相同檔名
+			2.1. 嘗試使用 src/main/resources/${fileName}
+			2.2. 反之使用 src/test/resources/${fileName}
+

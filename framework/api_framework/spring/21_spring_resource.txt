@@ -1,0 +1,68 @@
+https://www.baeldung.com/spring-classpath-file-access
+
+取得資源方式
+	1.ClassPathResource
+		public Resource loadEmployeesWithClassPathResource() {
+			// 等於 return new ClassPathResource("data/employees.dat", this.getClass().getClassLoader());
+			return new ClassPathResource("data/employees.dat");
+
+			// 間接指定類別取得路徑資源
+			// return new ClassPathResource("data/employees.dat", Employee.class.getClassLoader());
+		}
+
+
+	2. Using @Value
+		@Value("classpath:data/resource-data.txt")
+		Resource resourceFile;
+
+	3. Using ResourceLoader
+		延遲載入 If we want to lazily load our resource
+
+		方法一
+			@Autowired
+			ResourceLoader resourceLoader;
+
+			public Resource loadEmployeesWithResourceLoader() {
+				return resourceLoader.getResource(
+				  "classpath:data/employees.dat");
+			}
+
+		方法二
+			ApplicationContext context;
+
+			public Resource loadEmployeesWithApplicationContext() {
+				return context.getResource("classpath:data/employees.dat");
+			}
+
+	4. Using ResourceUtils
+		public File loadEmployeesWithSpringInternalClass()
+		  throws FileNotFoundException {
+			return ResourceUtils.getFile(
+			  "classpath:data/employees.dat");
+		}
+
+讀取資源 Reading Resource Data
+	1. Reading as a File
+		@Test
+		public void whenResourceAsFile_thenReadSuccessful()
+		  throws IOException {
+
+			File resource = new ClassPathResource(
+			  "data/employees.dat").getFile();
+			String employees = new String(
+			  Files.readAllBytes(resource.toPath()));
+			assertEquals(
+			  "Joe Employee,Jan Employee,James T. Employee",
+			  employees);
+		}
+
+	2. Reading as an InputStream
+		@Test
+		public void whenResourceAsStream_thenReadSuccessful()
+		  throws IOException {
+			InputStream resource = new ClassPathResource("data/employees.dat").getInputStream();
+			try ( BufferedReader reader = new BufferedReader(new InputStreamReader(resource)) ) {
+				String employees = reader.lines().collect(Collectors.joining("\n"));
+				assertEquals("Joe Employee,Jan Employee,James T. Employee", employees);
+			}
+		}

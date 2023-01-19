@@ -1,0 +1,53 @@
+https://www.baeldung.com/spring-reflection-test-utils
+
+ReflectionTestUtils
+	1.to Set a Value of a Non-Public Field
+		public class Employee {
+			private Integer id;
+			private String name;
+
+			// standard getters/setters
+		}
+		@Test
+		public void whenNonPublicField_thenReflectionTestUtilsSetField() {
+			Employee employee = new Employee();
+			ReflectionTestUtils.setField(employee, "id", 1);
+
+			assertTrue(employee.getId().equals(1));
+		}
+	2.to Invoke a Non-Public Method
+		private String employeeToString(){
+			return "id: " + getId() + "; name: " + getName();
+		}
+		@Test
+		public void whenNonPublicMethod_thenReflectionTestUtilsInvokeMethod() {
+			Employee employee = new Employee();
+			ReflectionTestUtils.setField(employee, "id", 1);
+			employee.setName("Smith, John");
+
+			assertTrue(ReflectionTestUtils.invokeMethod(employee, "employeeToString")
+			  .equals("id: 1; name: Smith, John"));
+		}
+
+	3.to Inject Dependencies
+		@Component
+		public class EmployeeService {
+			@Autowired
+			private HRService hrService;
+			public String findEmployeeStatus(Integer employeeId) {
+				return "Employee " + employeeId + " status: " + hrService.getEmployeeStatus(employeeId);
+			}
+		}
+
+		@Component
+		public class HRService {
+			public String getEmployeeStatus(Integer employeeId) {
+				return "Inactive";
+			}
+		}
+
+		HRService hrService = mock(HRService.class);
+		when(hrService.getEmployeeStatus(employee.getId())).thenReturn("Active");
+
+		EmployeeService employeeService = new EmployeeService();
+		ReflectionTestUtils.setField(employeeService, "hrService", hrService);

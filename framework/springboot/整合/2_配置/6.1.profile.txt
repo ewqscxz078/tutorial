@@ -1,7 +1,7 @@
 
 profile 是 spring 依據不同環境提供不同配置的支援，依據執行時導入對應的環境profile檔案
 
-1. 多profile 文件形式
+1. 多 profile 文件形式
 	預設一定使用 application.properties
 	格式 : application-{profile}.properties
 		ex :
@@ -37,4 +37,4 @@ profile 是 spring 依據不同環境提供不同配置的支援，依據執行�
 	配置文件 spring.profiles.active=dev
 	命令模式 --spring.profiles.active=dev
 		java -jar your.jar --spring.profiles.active=dev
-	jvm參數 -Dspring.profiles.active=dev
+	jvm 參數 -Dspring.profiles.active=dev

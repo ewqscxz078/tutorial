@@ -1,0 +1,30 @@
+https://www.baeldung.com/java-validate-url
+
+java jdk 內建
+	import java.net.URL;
+
+	boolean isValidURL(String url) throws MalformedURLException, URISyntaxException {
+		try {
+			new URL(url).toURI();
+			return true;
+		} catch (MalformedURLException e) {
+			return false;
+		} catch (URISyntaxException e) {
+			return false;
+		}
+	}
+
+apache Commons
+	<dependency>
+		<groupId>commons-validator</groupId>
+		<artifactId>commons-validator</artifactId>
+		<version>1.7</version>
+	</dependency>
+
+	boolean isValidURL(String url) throws MalformedURLException {
+		UrlValidator validator = new UrlValidator();
+		return validator.isValid(url);
+	}
+
+assertFalse(isValidURL("https://www.baeldung.com/ java-%%$^&& iuyi"));
+assertTrue(isValidURL("http://baeldung.com/"));
