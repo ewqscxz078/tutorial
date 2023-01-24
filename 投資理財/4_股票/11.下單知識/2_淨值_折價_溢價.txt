@@ -1,0 +1,15 @@
+https://www.capitalfund.com.tw/opinion/article/83
+
+
+淨值: 淨資產價值
+	擁有一個資產的公允價值
+
+ETF淨值:
+	= 所持有標的淨值加總 / ETF發行的單位數
+ETF市價: 在市場上交易的價錢
+
+ETF溢價
+	ETF市價 > ETF淨值	=> 溢價 = 買貴了
+
+ETF折價
+	ETF淨值 > ETF市價	=> 折價 = 買便宜了
