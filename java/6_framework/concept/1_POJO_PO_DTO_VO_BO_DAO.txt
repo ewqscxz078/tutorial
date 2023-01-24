@@ -1,0 +1,19 @@
+https://hackmd.io/@MonsterLee/HJyAdgRBB
+
+POJO (Plain Old Java Object)
+	一個Java物件只包含自己的屬性(private)和提取或儲存這些屬性的method(get、set)，而其他的Object也是以POJO為基準開始延伸
+
+PO (persistent object)
+	資料庫table對應的java物件
+
+DTO (Data Transfer Object)
+	傳輸用的物件，假設今天我的程式像資料庫提取了PO資料物件，我必須將我的資料傳往其他系統或是服務時則可以用DTO進行再包裝，通常DTO的資訊都會比PO少，因為沒有必要將全部的資料傳輸出去。
+
+VO (value object)
+	用於呈現時的資料包裝，並且將實體的資料(PO)抽象適合當前程式運作的物件，他可以很單純如同PO一樣對應資料庫的屬性，但他也可以包含多個PO組裝成一個較為複雜的資料物件。
+
+DAO (data access object)
+	用於ORM(hibernate)將資料從資料庫提取的邏輯物件，其中邏輯主要包含如何提取資料庫的資料(SQL)並且將資料包裝成PO
+
+BO (business object)
+	用於業務層開發的物件，和PO和VO差別在於BO包含複雜的業務邏輯，而不再是單純的資料存取或儲存物件。
