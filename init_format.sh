@@ -11,7 +11,10 @@ func_replaceTailTab(){
 
 func_reqlaceTailSpace(){
   #egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js}
+  #if not match will $?=1
+
   egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/\t\+$//g"
+  ##if not match will $?=1，sed: no input files
 }
 
 main(){

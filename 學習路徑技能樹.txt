@@ -1,0 +1,16 @@
+程式語言
+	java
+		java 17
+		framework
+			spring
+				spring boot 2
+				spring Framework
+				spring boot data
+				spring cloud
+			junit
+
+	內功心法
+		design pattern
+
+建構管理
+	maven
