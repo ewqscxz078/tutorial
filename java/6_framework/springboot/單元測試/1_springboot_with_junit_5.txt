@@ -1,0 +1,48 @@
+https://www.youtube.com/watch?v=X60MOsSfSTk&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=71&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+1、JUnit5 的變化
+	Spring Boot 2.2.0 版本開始引入 JUnit 5 作為單元測試默認庫
+	作為最新版本的JUnit框架，JUnit5與之前版本的Junit框架有很大的不同。由三個不同子項目的幾個不同模塊組成。
+	JUnit 5 = JUnit Platform + JUnit Jupiter + JUnit Vintage
+	JUnit Platform: Junit Platform是在JVM上啟動測試框架的基礎，不僅支持Junit自製的測試引擎，其他測試引擎也都可以接入。
+	JUnit Jupiter: JUnit Jupiter提供了JUnit5的新的編程模型，是JUnit5新特性的核心。內部 包含了一個測試引擎，用於在Junit Platform上運行。
+	JUnit Vintage: 由於JUint已經發展多年，為了照顧老的項目，JUnit Vintage提供了兼容JUnit4.x,Junit3.x的測試引擎。
+
+	注意：
+		SpringBoot 2.4 以上版本移除了默認對 Vintage 的依賴。如果需要兼容junit4需要自行引入（不能使用junit4的功能 @Test）
+		JUnit 5’s Vintage Engine Removed from spring-boot-starter-test,如果需要繼續兼容junit4需要自行引入vintage
+			<dependency>
+				<groupId>org.junit.vintage</groupId>
+				<artifactId>junit-vintage-engine</artifactId>
+				<scope>test</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>org.hamcrest</groupId>
+						<artifactId>hamcrest-core</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
+	springboot with junit
+		<dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-starter-test</artifactId>
+		  <scope>test</scope>
+		</dependency>
+
+		現在使用方式
+			@SpringBootTest
+			class Boot05WebAdminApplicationTests {
+
+				@Test
+				void contextLoads() {
+
+				}
+			}
+
+		以前使用方式：
+			@SpringBootTest + @RunWith(SpringTest.class)
+
+	SpringBoot整合Junit以後。
+	● 編寫測試方法：@Test標註（注意需要使用junit5版本的註解）
+	● Junit類具有Spring的功能，@Autowired、比如 @Transactional 標註測試方法，測試完成後自動回滾

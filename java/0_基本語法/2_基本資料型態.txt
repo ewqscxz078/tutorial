@@ -1,0 +1,28 @@
+https://www.youtube.com/watch?v=IAbulGo9KRw&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=14&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+整數類型：
+	byte	: 8bit
+		byte b = 10;
+	short	: 16bit
+		short s = 10;
+	int		: 32bit
+		int i = 10;
+	long	: 64bit
+		long l = 10;
+
+浮點類型： 含有小數點類型
+	當未暗示時，默認使用 double 精度類型
+	根據精準度分為
+		float	: 單精度浮點類型
+			float f = 1.0f;
+			float f = 1.0F;
+		double	: 雙精度浮點類型
+			double d = 2.0;
+			double d = 2.0d;
+			double d = 2.0D;
+
+字元類型 :
+	char c ='@';
+
+布林類型 :
+	boolean bln = true;

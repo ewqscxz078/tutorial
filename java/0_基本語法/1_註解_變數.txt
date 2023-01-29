@@ -1,0 +1,58 @@
+https://www.youtube.com/watch?v=z8J0GSfl5ZU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=9&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+// 單行註解
+
+/*
+ * 多行註解
+ */
+
+
+https://www.youtube.com/watch?v=OSp9Ot5OQTw&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=10&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+https://www.youtube.com/watch?v=KJJ2GToS0RU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=12&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+// ; 代表該行結尾
+1.變數聲明
+	String str;
+2.變數賦值
+	str = "hello";
+3.變數使用
+	System.out.println(str);
+
+4.聲明與賦值同行使用
+	String str = "hello world";
+
+// str 稱之為變數，可在任意地方重複使用
+
+https://www.youtube.com/watch?v=ZmafJ3R5YQ8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=13&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+變數名稱命名規則
+	1.英文字母
+	2.僅能使用下畫線或$符號，其他特殊符號不能使用(@,#,%, )
+	3.數字不能放在變數名稱開頭
+	4.用過的變數名稱不可再命名
+	5.英文字母大小寫敏感區分
+	6.保留字不可當作變數名稱(public、private、....)
+	7.慣例命名方式為駱駝式命名
+		ex: userName
+	8.變數名稱沒有長度限制
+
+https://www.youtube.com/watch?v=1X6WJZHUArQ&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=13&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+變數類型
+	1. bit : 位元運算最小儲存單位
+	2. byte : 位元資料的最小儲存單位
+		1byte = 8bit
+		KB, MB, GB, TB....PB,EB
+		1024 Byte 	=	1KB
+		1024 KB		=	1MB
+		1024 MB		=	1GB
+		1024 GB		=	1TB
+
+	Java 的變數類型可以確定資料的範圍
+		基本資料類型	=>	數值類型	=>	整數類型：byte, short, int, long
+										=>	浮點類型：float, double
+						=>	字元類型:char
+						=>	布林類型:boolean
+		引用資料類型	=>	類(class):String
+						=>	介面(Interface):
+						=>	陣列(String[]、int[])
+						=>	列舉(enum)
+						=>	特殊類型值:null

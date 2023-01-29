@@ -1,0 +1,21 @@
+https://www.youtube.com/watch?v=dnSACnkK1rQ&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=16&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+型態不一致，不可轉換
+	String name = "李四";
+	int age = 10;
+
+	name = "張三";
+	name = age; // fail 型態不一致
+
+小範圍的可以轉換大範圍的型態
+	// byte -> short -> int -> long -> float -> double
+	byte b = 10;
+	short s = b;
+	int i = s;
+	long lon = i;
+	float f = lon;
+	double d = f;
+
+
+大範圍的不可以轉換小範圍的型態，但可以強制轉換，但可能會有精準度遺失風險問題
+	int i1 = (int)d;
