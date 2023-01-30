@@ -1,0 +1,102 @@
+https://www.youtube.com/watch?v=ko75V2ql0Jg&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=72&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+JUnit5的註解與JUnit4的註解有所變化
+	https://junit.org/junit5/docs/current/user-guide/#writing-tests-annotations
+	● @Test :表示方法是測試方法。但是與JUnit4的@Test不同，他的職責非常單一不能聲明任何屬性，拓展的測試將會由Jupiter提供額外測試
+	● @ParameterizedTest :表示方法是參數化測試，下方會有詳細介紹
+	● @RepeatedTest :表示方法可重複執行，下方會有詳細介紹
+	● @DisplayName :為測試類或者測試方法設置展示名稱
+	● @BeforeEach :表示在每個單元測試之前執行
+	● @AfterEach :表示在每個單元測試之後執行
+	● @BeforeAll :表示在所有單元測試之前執行
+	● @AfterAll :表示在所有單元測試之後執行
+	● @Tag :表示單元測試類別，類似於JUnit4中的@Categories
+	● @Disabled :表示測試類或測試方法不執行，類似於JUnit4中的 @Ignore
+	● @Timeout :表示測試方法運行如果超過了指定時間將會返回錯誤
+	● @ExtendWith :為測試類或測試方法提供擴展類引用，類似於JUnit4中的 @RunWith
+
+
+使用案例
+	import org.junit.jupiter.api.Test; //注意這裡使用的是jupiter的Test註解！ ！
+
+	// 這樣 spring 容器控管的 bean才會自動注入(@Autowired) 生效
+	@SpringBootTest
+	@DisplayName("junit5測試")
+	public class Junit5Test {
+
+	  @Autowired
+	  JdbcTemplate jdbcTemplate;
+
+	  @BeforeAll
+	  public static void testBeforeAll() {
+		System.out.println("test Before All");
+	  }
+
+	  @BeforeEach
+	  public void testBeforeEach() {
+		System.out.println("test Before Each");
+	  }
+
+	  @DisplayName("測試 DisplayName 註解")
+	  @Test
+	  public void testDisplayName() {
+		System.out.println("test 1");
+	  }
+
+	  @Disabled
+	  @DisplayName("測試 2")
+	  @Test
+	  public void testDisabled() {
+		System.out.println("test 2");
+	  }
+
+	  @DisplayName("測試 Timeout")
+	  @Timeout(value = "5", unit = TimeUnit.MILLISECONDS)
+	  @Test
+	  public void testTimeout() throws InterruptedException{
+		System.out.println("test Timeout");
+		Thread.sleep(500); // > 500 will fail
+	  }
+
+	  @DisplayName("測試 Repeated")
+	  @RepeatedTest(2)
+	  @Test
+	  public void testRepeat() {
+		System.out.println("test Repeat");
+	  }
+
+	  @AfterEach
+	  public void testAfterEach() {
+		System.out.println("test After Each");
+	  }
+
+	  @AfterAll
+	  public static void testAfterAll() {
+		System.out.println("test After All");
+	  }
+
+	}
+
+	will 如下輸出
+		測試 DisplayName 註解  // success 綠燈
+			test Before All
+			test Before Each
+			test 1
+			test After Each
+			test After All
+		測試 2	// disable 符號
+		測試 Timeout	// success 綠燈
+			test Before All
+			test Before Each
+			test Timeout
+			test After Each
+			test After All
+		測試 Repeated	// success 綠燈
+			test Before All
+			test Before Each
+			test Repeat
+			test After Each
+			test Before Each
+			test Repeat
+			test After Each
+			test After All
