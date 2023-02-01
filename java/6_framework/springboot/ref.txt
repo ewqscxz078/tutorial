@@ -6,7 +6,7 @@ https://www.notion.so/Java-74bdc89111324c3489097339f7c46628
 springboot1 看到72
 	https://www.youtube.com/watch?v=hbH4yLjl6Rg&list=PLmOn9nNkQxJEFsK2HVO9-WA55Z7LZ2N0S&index=3&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-springboot2 看到71/87
+springboot2 看到73/87
 	63-67 myBatis 待回頭看
 	68-69 redis 待回頭看
 

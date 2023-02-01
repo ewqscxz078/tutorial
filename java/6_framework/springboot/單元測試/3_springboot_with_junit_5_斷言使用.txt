@@ -1,0 +1,82 @@
+https://www.youtube.com/watch?v=4lC90sbQ7a0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=73&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+斷言（assertions）
+	斷言（assertions）是測試方法中的核心部分，用來對測試需要滿足的條件進行驗證。這些斷言方法都是 org.junit.jupiter.api.Assertions 的靜態方法。
+	JUnit 5 內置的斷言可以分成如下幾個類別：
+	檢查業務邏輯返回的數據是否合理。
+	所有的測試運行結束以後，會有一個詳細的測試報告；
+		1、簡單斷言
+			用來對單個值進行簡單的驗證。如：
+			方法			說明
+			assertEquals	判斷兩個對像或兩個原始類型是否相等
+			assertNotEquals	判斷兩個對像或兩個原始類型是否不相等
+			assertSame		判斷兩個對象引用是否指向同一個對象
+			assertNotSame	判斷兩個對象引用是否指向不同的對象
+			assertTrue		判斷給定的布爾值是否為 true
+			assertFalse		判斷給定的布爾值是否為 false
+			assertNull		判斷給定的對象引用是否為 null
+			assertNotNull	判斷給定的對象引用是否不為 null
+
+			@Test
+			@DisplayName("simple assertion")
+			public void simple() {
+				// 以下若有一個測試失敗，則其下面的測試不會執行
+				 assertEquals(3, 1 + 2, "simple math");
+				 assertNotEquals(3, 1 + 1);
+
+				 assertNotSame(new Object(), new Object());
+				 Object obj = new Object();
+				 assertSame(obj, obj);
+
+				 assertFalse(1 > 2);
+				 assertTrue(1 < 2);
+
+				 assertNull(null);
+				 assertNotNull(new Object());
+			}
+		2、數組斷言
+			通過 assertArrayEquals 方法來判斷兩個對像或原始類型的數組是否相等
+			@Test
+			@DisplayName("array assertion")
+			public void array() {
+				assertArrayEquals(new int[]{1, 2}, new int[] {1, 2});
+			}
+		3、組合斷言
+			assertAll 方法接受多個 org.junit.jupiter.api.Executable 函數式接口的實例作為要驗證的斷言，可以通過 lambda 表達式很容易的提供這些斷言
+			@Test
+			@DisplayName("assert all")
+			public void all() {
+			 // 全部都為預期才算測試成功
+			 assertAll("Math",
+				() -> assertEquals(2, 1 + 1),
+				() -> assertTrue(1 > 0)
+			 );
+			}
+		4、異常斷言
+			在JUnit4時期，想要測試方法的異常情況時，需要用@Rule註解的ExpectedException變量還是比較麻煩的。
+			而JUnit5提供了一種新的斷言方式Assertions.assertThrows() ,配合函數式編程就可以進行使用。
+			@Test
+			@DisplayName("異常測試")
+			public void exceptionTest() {
+				ArithmeticException exception = Assertions.assertThrows(
+					   //扔出斷言異常
+						ArithmeticException.class, () -> System.out.println(1 % 0));
+
+			}
+		5、超時斷言
+			Junit5還提供了Assertions.assertTimeout() 為測試方法設置了超時時間
+			@Test
+			@DisplayName("超時測試")
+			public void timeoutTest() {
+				//如果測試方法時間超過1s將會異常
+				Assertions.assertTimeout(Duration.ofMillis(1000), () -> Thread.sleep(500));
+			}
+		6、快速失敗
+			通過 fail 方法直接使得測試失敗
+			@Test
+			@DisplayName("fail")
+			public void shouldFail() {
+				if(1 == 2 ) {
+					fail("This should fail");
+				}
+			}
