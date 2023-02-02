@@ -1,0 +1,78 @@
+https://www.youtube.com/watch?v=X_nRTn9NRck&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=75&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+5、巢狀測試
+	JUnit 5 可以通過 Java 中的內部類和 @Nested 註解實現巢狀測試，從而可以更好的把相關的測試方法組織在一起。
+	在內部類中可以使用 @BeforeEach 和@AfterEach 註解，而且嵌套的層次沒有限制。
+		@DisplayName("A stack")
+		class TestingAStackDemo {
+
+			Stack<Object> stack;
+			@Test
+			@DisplayName("is instantiated with new Stack()")
+			void isInstantiatedWithNew() {
+				new Stack<>();
+				// 巢狀測試，外層 Test 不能驅動內層 Before(After)Each/All 之類的方法提前/之後運行:也就是外層測試的事前準備不會影響到內層測試結果
+				assertNull(stack);
+			}
+
+			@Nested
+			@DisplayName("when new")
+			class WhenNew {
+
+				@BeforeEach
+				void createNewStack() {
+					stack = new Stack<>();
+				}
+
+				@Test
+				@DisplayName("is empty")
+				void isEmpty() {
+					assertTrue(stack.isEmpty());
+				}
+
+				@Test
+				@DisplayName("throws EmptyStackException when popped")
+				void throwsExceptionWhenPopped() {
+					assertThrows(EmptyStackException.class, stack::pop);
+				}
+
+				@Test
+				@DisplayName("throws EmptyStackException when peeked")
+				void throwsExceptionWhenPeeked() {
+					assertThrows(EmptyStackException.class, stack::peek);
+				}
+
+				@Nested
+				@DisplayName("after pushing an element")
+				class AfterPushing {
+
+					String anElement = "an element";
+
+					@BeforeEach
+					void pushAnElement() {
+						stack.push(anElement);
+					}
+
+					@Test
+					@DisplayName("it is no longer empty")
+					void isNotEmpty() {
+						// 巢狀測試，內層 Test 能驅動外層 Before(After)Each/All 之類的方法提前/之後運行:也就是層測試的事前準備不會影響到內層測試結果
+						assertFalse(stack.isEmpty());
+					}
+
+					@Test
+					@DisplayName("returns the element when popped and is empty")
+					void returnElementWhenPopped() {
+						assertEquals(anElement, stack.pop());
+						assertTrue(stack.isEmpty());
+					}
+
+					@Test
+					@DisplayName("returns the element when peeked but remains not empty")
+					void returnElementWhenPeeked() {
+						assertEquals(anElement, stack.peek());
+						assertFalse(stack.isEmpty());
+					}
+				}
+			}
+		}

@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=mGf1M9VNDWs&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=76&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+參數化測試
+	JUnit5很重要的一個新特性，它使得用不同的參數多次運行測試成為了可能，也為我們的單元測試帶來許多便利。
+
+	利用@ValueSource等註解，指定入參，我們將可以使用不同的參數進行多次單元測試，而不需要每新增一個參數就新增一個單元測試，省去了很多冗餘代碼。
+		@ValueSource: 為參數化測試指定入參來源，支持八大基礎類以及String類型,Class類型
+		@NullSource: 表示為參數化測試提供一個null的入參
+		@EnumSource: 表示為參數化測試提供一個枚舉入參
+		@CsvFileSource：表示讀取指定CSV文件內容作為參數化測試入參
+		@MethodSource：表示讀取指定方法的返回值作為參數化測試入參(注意方法返回需要是一個流)
+
+	當然如果參數化測試僅僅只能做到指定普通的入參還達不到讓我覺得驚豔的地步。
+	讓我真正感到他的強大之處的地方在於他可以支持外部的各類入參。如:CSV,YML,JSON 文件甚至方法的返回值也可以作為入參。
+	只需要去實現ArgumentsProvider接口，任何外部文件都可以作為它的入參。
+
+		@ParameterizedTest
+		@ValueSource(ints = {1,2,3,4,5})
+		@DisplayName("參數化測試1")
+		public void parameterizedTest1(int i) {
+			System.out.println(i);
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = {"one", "two", "three"})
+		@DisplayName("參數化測試2")
+		public void parameterizedTest2(String string) {
+			System.out.println(string);
+			Assertions.assertTrue(StringUtils.isNotBlank(string));
+		}
+
+		@ParameterizedTest
+		@MethodSource("method")    //指定方法名
+		@DisplayName("方法來源參數")
+		public void testWithExplicitLocalMethodSource(String name) {
+			System.out.println(name);
+			Assertions.assertNotNull(name);
+		}
+
+		static Stream<String> method() {
+			return Stream.of("apple", "banana");
+		}

@@ -1,0 +1,29 @@
+https://www.youtube.com/watch?v=JoqUZqBSUMc&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=74&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+4、前置條件（assumptions）
+	JUnit 5 中的前置條件（assumptions【假設】）類似於斷言，
+	不同之處在於不滿足的斷言會使得測試方法失敗，而不滿足的前置條件只會使得測試方法的執行終止。
+	前置條件可以看成是測試方法執行的前提，當該前提不滿足時，就沒有繼續執行的必要
+
+	當前置條件不符合則強制 @Disabled
+		@DisplayName("前置條件")
+		public class AssumptionsTest {
+			private final String environment = "DEV";
+			@Test
+			@DisplayName("simple")
+			public void simpleAssume() {
+				assumeTrue(Objects.equals(this.environment, "DEV"));
+				assumeFalse(() -> Objects.equals(this.environment, "PROD"));
+			}
+			@Test
+			@DisplayName("assume then do")
+			public void assumeThenDo() {
+				assumingThat(
+				   Objects.equals(this.environment, "DEV"),
+				   () -> System.out.println("In DEV")
+				);
+			}
+		}
+		assumeTrue 和 assumFalse 確保給定的條件為 true 或 false，不滿足條件會使得測試執行終止。
+		assumingThat 的參數是表示條件的布爾值和對應的 Executable 接口的實現對象。
+		只有條件滿足時，Executable 對象才會被執行；當條件不滿足時，測試執行並不會終止。

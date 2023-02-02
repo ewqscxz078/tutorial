@@ -1,5 +1,8 @@
 https://www.youtube.com/watch?v=X60MOsSfSTk&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=71&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
+線上說明文件
+	https://junit.org/junit5/docs/current/user-guide/
+
 1、JUnit5 的變化
 	Spring Boot 2.2.0 版本開始引入 JUnit 5 作為單元測試默認庫
 	作為最新版本的JUnit框架，JUnit5與之前版本的Junit框架有很大的不同。由三個不同子項目的幾個不同模塊組成。

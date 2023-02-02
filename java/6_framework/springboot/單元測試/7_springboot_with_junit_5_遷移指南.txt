@@ -1,0 +1,10 @@
+https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4
+
+7、遷移指南
+	在進行遷移的時候需要注意如下的變化：
+	● 註解在 org.junit.jupiter.api 包中，斷言在 org.junit.jupiter.api.Assertions 類中，前置條件在 org.junit.jupiter.api.Assumptions 類中。
+	● 把@Before 和@After 替換成@BeforeEach 和@AfterEach。
+	● 把@BeforeClass 和@AfterClass 替換成@BeforeAll 和@AfterAll。
+	● 把@Ignore 替換成@Disabled。
+	● 把@Category 替換成@Tag。
+	● 把@RunWith、@Rule 和@ClassRule 替換成@ExtendWith。
