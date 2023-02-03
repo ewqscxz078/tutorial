@@ -1,0 +1,23 @@
+===================================================================
+========================= alias  ==================================
+===================================================================
+列舉所有指令別名
+	alias
+
+將聚合的指令變成命令別名
+	alias [命令別名]='[複合指令]'
+	ex:
+		alias rm='rm -i'
+
+取消別名
+	unalias [命令別名]
+	ex:
+		unalias rm
+
+https://jiangliheng.github.io/2021/04/27/linux-alias/
+	unix
+		系統級別名設置，推薦在 /etc/profile.d 目錄下創建 alias.sh，source /etc/profile.d/alias.sh 生效即可。不推薦:/etc/bashrc，/etc/profile。
+		用戶級別名設置，可添加到~/.bashrc或~/.bash_profile中，source ~/.bashrc 生效。
+	windows
+		用戶級別名設置，可添加到~/.bashrc或~/.bash_profile中，source ~/.bashrc 生效。
+			/c/Users/${使用者}/.bashrc
