@@ -1,0 +1,136 @@
+once
+	1.download tools
+		notepad++	
+			https://notepad-plus-plus.org/downloads/
+		jdk			
+			https://adoptopenjdk.net/
+		git
+			https://git-scm.com/downloads
+				注意換行設定
+		maven
+			https://maven.apache.org/
+		eclipse		
+			https://www.eclipse.org/downloads/
+				Home / Downloads / Packages / Release / Eclipse IDE 2022-06 R
+					Eclipse IDE for Enterprise Java and Web Developers / Windows x86_64
+		options
+			AP server
+				tomcat
+					https://tomcat.apache.org/
+			db
+				
+	2.java home setting
+		新增環境變數
+			set JAVA_HOME=${你的位置}
+		Path 新增路徑
+			export PATH=%JAVA_HOME%\bin:$PATH
+		git bash
+			java -version
+	3.maven home setting
+		新增環境變數
+			set MAVEN_HOME=${你的位置}
+		Path 新增路徑
+			export PATH=%MAVEN_HOME%\bin:$PATH
+		git bash
+			mvn -version
+	4.eclipse 設定
+		執行連結增加
+			-data ${eclipse_home}\eclipse-workspace
+		
+		window / Preferences
+			workspace
+				text file encoding
+					UTF-8
+				new text file line delimiter
+					unix
+			java
+				Installed JREs
+					add 開發用的 jdk位置，預設的eclipse jdk 會有點差別
+			maven
+				User Settings
+					User Settings 指定自己用的 maven settings
+			General
+				Appearance
+					Colors and Fonts
+						Text Font / Edit
+							10 -> 12
+			java/
+				Code syle
+					clean up
+						Code Organizing
+							Formatter
+								Format source code 勾選
+								
+						Code Style
+							Control statments
+								Use blocks in if/while/for/do statements
+									Always
+							Variable declarations
+								Use modifier 'final' where possible
+									Private fields 、 Parameter、 Local variables 皆勾選
+						Member Access
+							Non static access
+								Use 'this' qualifier for field access
+									Always
+								Use 'this' qualifier for method access
+									Always
+					Formatter(Editor)
+						Comments
+							Format line comments on first column 勾選
+							Enable header comment formatting 勾選
+						
+				Editor
+					save actions
+						Perform the selected actions on save
+							勾選
+						Format source code
+							勾選
+						Organize imports 
+							取消勾選，為了單元測試可以 import static *
+						Additional actions 
+							勾選
+								Code Style
+									Variable 'final' where possible
+										Private fields
+											取消
+										Parameter
+											勾選
+									Member Accesses
+										Use 'this' qualifier for field access
+											Always 勾選
+				
+		Project
+			Build Automatically
+				cancel
+		Help[options]
+			Eclipse Marketplace
+				in Find input text type springboot
+					install Spring Tools 4 
+						1.提供 application.properties 輔助資訊
+						2.Spring Initailizr tool
+						3.執行 spring boot 啟動輔助
+	5. 常用語法 alias
+		alias grep="grep --color=always" >> ~/.bashrc
+
+	6. window intall jq
+		https://stackoverflow.com/questions/53967693/how-to-run-jq-from-gitbash-in-windows
+		https://www.youtube.com/watch?v=RrQpCC4Y_T8&ab_channel=PavanDevarakonda
+			1.於 https://stedolan.github.io/jq/ 下載 window 64 版本 的檔案 jq-win64.exe
+			2.將 jq-win64.exe 放於
+				C:\Users\${使用者帳號}\bin\jq-win64.exe
+			3.於 個人區 C:\Users\${使用者帳號}\.bashrc
+				alias jq=/c/Users/${使用者帳號}/bin/jq-win64.exe				
+			4.open git bash
+				#將會自動生成 git bash 對應東西
+					WARNING: Found ~/.bashrc but no ~/.bash_profile, ~/.bash_login or ~/.profile.
+
+					This looks like an incorrect setup.
+					A ~/.bash_profile that loads ~/.bashrc will be created for you.
+				重新開啟 git bash
+				測試
+					jq --version
+
+					echo '{"foo": 0}' | jq
+						{
+						  "foo": 0
+						}
