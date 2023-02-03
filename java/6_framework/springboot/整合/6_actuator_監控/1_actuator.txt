@@ -1,0 +1,29 @@
+https://www.baeldung.com/spring-boot-actuator-enable-endpoints
+https://www.youtube.com/watch?v=6Wiz3BuvoE0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=77&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+SpringBoot Actuator
+	未來每一個微服務在雲上部署以後，我們都需要對其進行監控、追踪、審計、控制等。 
+	SpringBoot就抽取了Actuator場景，使得我們每個微服務快速引用即可獲得生產級別的應用監控、審計等功能。
+	
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-actuator</artifactId>
+	</dependency>
+	
+如何使用
+	● 引入場景
+	● 訪問 http://localhost:8080/actuator/**
+	● 暴露所有監控信息為HTTP
+		management:
+		  endpoints:
+			enabled-by-default: true #暴露所有端點信息
+			web:
+			  exposure:
+				include: '*'  #以web方式暴露所以端點
+
+		測試				
+			http://localhost:8080/actuator/beans
+			http://localhost:8080/actuator/configprops
+			http://localhost:8080/actuator/metrics
+			http://localhost:8080/actuator/metrics/jvm.gc.pause
+			http://localhost:8080/actuator/${endpointName}/${detailPath}
