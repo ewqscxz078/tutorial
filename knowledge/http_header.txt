@@ -1,0 +1,7 @@
+https://blog.csdn.net/jokeMqc/article/details/78739677
+
+x-requested-with 代表從 ajax 異步 ，反之沒有代表傳統請求(同步)
+
+HttpOnly 瀏覽器會限制 cookie 只能經由 HTTP(S) 協定來存取 session cookie，間接防範 xss 盜用使用者的身份
+
+https://tech-blog.cymetrics.io/posts/jo/zerobased-secure-samesite-httponly/
