@@ -1,15 +1,15 @@
 once
 	1.download tools
-		notepad++	
+		notepad++
 			https://notepad-plus-plus.org/downloads/
-		jdk			
+		jdk
 			https://adoptopenjdk.net/
 		git
 			https://git-scm.com/downloads
 				注意換行設定
 		maven
 			https://maven.apache.org/
-		eclipse		
+		eclipse
 			https://www.eclipse.org/downloads/
 				Home / Downloads / Packages / Release / Eclipse IDE 2022-06 R
 					Eclipse IDE for Enterprise Java and Web Developers / Windows x86_64
@@ -18,7 +18,7 @@ once
 				tomcat
 					https://tomcat.apache.org/
 			db
-				
+
 	2.java home setting
 		新增環境變數
 			set JAVA_HOME=${你的位置}
@@ -36,7 +36,7 @@ once
 	4.eclipse 設定
 		執行連結增加
 			-data ${eclipse_home}\eclipse-workspace
-		
+
 		window / Preferences
 			workspace
 				text file encoding
@@ -60,7 +60,7 @@ once
 						Code Organizing
 							Formatter
 								Format source code 勾選
-								
+
 						Code Style
 							Control statments
 								Use blocks in if/while/for/do statements
@@ -78,16 +78,16 @@ once
 						Comments
 							Format line comments on first column 勾選
 							Enable header comment formatting 勾選
-						
+
 				Editor
 					save actions
 						Perform the selected actions on save
 							勾選
 						Format source code
 							勾選
-						Organize imports 
+						Organize imports
 							取消勾選，為了單元測試可以 import static *
-						Additional actions 
+						Additional actions
 							勾選
 								Code Style
 									Variable 'final' where possible
@@ -98,14 +98,14 @@ once
 									Member Accesses
 										Use 'this' qualifier for field access
 											Always 勾選
-				
+
 		Project
 			Build Automatically
 				cancel
 		Help[options]
 			Eclipse Marketplace
 				in Find input text type springboot
-					install Spring Tools 4 
+					install Spring Tools 4
 						1.提供 application.properties 輔助資訊
 						2.Spring Initailizr tool
 						3.執行 spring boot 啟動輔助
@@ -119,7 +119,7 @@ once
 			2.將 jq-win64.exe 放於
 				C:\Users\${使用者帳號}\bin\jq-win64.exe
 			3.於 個人區 C:\Users\${使用者帳號}\.bashrc
-				alias jq=/c/Users/${使用者帳號}/bin/jq-win64.exe				
+				alias jq=/c/Users/${使用者帳號}/bin/jq-win64.exe
 			4.open git bash
 				#將會自動生成 git bash 對應東西
 					WARNING: Found ~/.bashrc but no ~/.bash_profile, ~/.bash_login or ~/.profile.
