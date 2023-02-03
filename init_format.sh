@@ -1,6 +1,11 @@
 #!/bin/bash
 
 func_2unix(){
+  # 使用 file ${filepath} 判斷
+  # dos : filename.txt: ASCII text, with CRLF line terminators
+  # unix : filename.txt: ASCII text
+  # 使用「od」指令來查看檔案的十六進位表示，看是否包含「0d 0a」（即「CR+LF」）
+  # od -c filename.txt
   find -type f -name "*.txt" | xargs dos2unix
 }
 
