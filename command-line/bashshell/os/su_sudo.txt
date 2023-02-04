@@ -47,6 +47,26 @@ https://ithelp.ithome.com.tw/articles/10270945?sc=hot
 	sudo [command]
 
 ===================================================================
+============================ sudo with env ========================
+===================================================================
+https://superuser.com/questions/1646926/sudo-sorry-you-are-not-allowed-to-set-the-following-environment-variables
+#若透過 /etc/sudoers.d 下方是授權使用者可 sudo 時，若需要傳遞環境變數則要宣告 SETENV
+	假設檔案 /etc/sudoers.d/ccuser
+		vi /etc/sudoers.d/ccuser
+			ccuser ALL=(ALL:ALL) NOPASSWD:SETENV:${你允許的指令}
+
+https://www.petefreitag.com/item/877.cfm
+#Tell sudo to preserve all environment
+	sudo -E ${指令}
+	sudo --preserve-env ${指令}
+
+#Passing only the variables you need
+	sudo --preserve-env={指定的環境變數} ${指令}
+
+#於 sudo 直接設定環境變數
+	sudo ZEBRA=true ${指令}
+
+===================================================================
 ============================ id ===================================
 ===================================================================
 

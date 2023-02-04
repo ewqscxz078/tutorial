@@ -1,0 +1,12 @@
+https://blog.51cto.com/u_10742668/1944831
+https://www.cnblogs.com/zdfjf/p/6651457.html
+
+刪除行首空格或tab
+	sed 's/^[ \t]*//g'
+
+
+刪除行末空格或tab
+	sed 's/[ \t]*$//g'
+	
+删除所有的空格或tab
+	sed s/[[:space:]]//g
