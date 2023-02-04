@@ -1,3 +1,36 @@
 https://spring.io/guides/gs/securing-web/
+https://ithelp.ithome.com.tw/m/articles/10250502
+	記憶體帳密範例
+		@Configuration
+		@EnableWebSecurity
+		public class WebSecurityConfig {
+
+			@Bean
+			public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+				http.authorizeHttpRequests((requests) -> requests
+						.requestMatchers("/", "/home").permitAll() // / , /home 允許訪問
+						.anyRequest().authenticated()	// 其他需要認證
+					)
+					.formLogin((form) -> form		// 從 loginPage 登入
+						.loginPage("/login")
+						.permitAll()
+					)
+					.logout((logout) -> logout.permitAll());
+				return http.build();
+			}
+
+			@Bean
+			public UserDetailsService userDetailsService() {
+				UserDetails user =
+					 User.withDefaultPasswordEncoder()
+						.username("user")
+						.password("password")
+						.roles("USER")
+						.build();
+
+				return new InMemoryUserDetailsManager(user);
+			}
+		}
+
 
 https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter

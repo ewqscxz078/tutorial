@@ -1,0 +1,65 @@
+https://blog.csdn.net/u012702547/article/details/106206339
+
+https://www.baeldung.com/spring-security-csrf
+
+模擬 CSRF 攻擊
+	建立允許 csrf 攻擊的專案 (csrf source project)
+		@RestController
+		public class HelloController{
+			@PostMapping(/transfer)
+			public void transferMoney(String name,Integer money){
+				System.out.println("name =" + name);
+				System.out.println("money =" + money);
+			}
+			
+			@GetMapping(/hello)
+			public String hello(){
+				return "hello";
+			}	
+		}
+		
+		@Configuration
+		@EnableWebSecurity
+		public class WebSecurityConfig {
+
+			@Bean
+			public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+				http.authorizeHttpRequests((requests) -> requests
+						.anyRequest().permitAll()	// 允許訪問
+					)
+					.formLogin(().disable().httpBasic();
+					.and().csrf().disable();
+				return http.build();
+			}
+
+			@Bean
+			public UserDetailsService userDetailsService() {
+				UserDetails user =
+					 User.withDefaultPasswordEncoder()
+						.username("user")
+						.password("password")
+						.roles("USER")
+						.build();
+
+				return new InMemoryUserDetailsManager(user);
+			}
+		}
+	
+	建立模擬的危險網站，模擬使用者點擊到該網站攻擊 csrf source project，當點擊該連結則會間接執行 csrf 攻擊
+		application.properties
+			server.port=8081
+		
+		resoucre/static/hello.html
+			<body>
+				<!-- http://localhost:8080/transfer 被攻擊的網站 -->
+				<form action="http://localhost:8080/transfer" method="post">
+					<input type="hidden" value="javaboy" name="name">
+					<input type="hidden" value="1000" name="money">
+					<input type="submit" value="點擊看美女圖片">
+				</form>
+			</body>
+
+防範 CSRF 攻擊
+	前後端不分離專案的方式
+		
+		<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>

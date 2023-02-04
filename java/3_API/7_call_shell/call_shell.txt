@@ -11,6 +11,42 @@ basic
 processbuilder
 	https://www.baeldung.com/java-lang-processbuilder-api
 	https://stackoverflow.com/questions/62302055/read-output-git-bash-with-processbuilder-in-java
+		public void execCmd(){
+			File workdir = new File("${your work dir of shell}");
+			final List<String> commands = new ArrayList<String>();
+			// 每個指令都要完整分開，不要一次一整串
+			// commands.add("xxxx yyyy")
+			// 每個指令都要分開參數傳到 processBuilder ，不能一次傳入，不然會遇到類似如下錯誤
+			//    Caused by: java.io.IOException: Cannot run program "xxxx yyyy": error=2, No such file or directory
+			//            at java.lang.ProcessBuilder.start(ProcessBuilder.java:1048)
+			//            at tw.gov.moi.sris3.rd.ln.ldap.mgr.service.LnLdapMgrServiceImpl.execCmd(LnLdapMgrServiceImpl.java:356)
+			//    Caused by: java.io.IOException: error=2, No such file or directory
+			//            at java.lang.UNIXProcess.forkAndExec(Native Method)
+			//            at java.lang.UNIXProcess.<init>(UNIXProcess.java:247)
+			//            at java.lang.ProcessImpl.start(ProcessImpl.java:134)
+			//            at java.lang.ProcessBuilder.start(ProcessBuilder.java:1029)
+			commands.add("xxxx")
+			commands.add("yyyy")
+
+			final ProcessBuilder builder = new ProcessBuilder(commands).directory(workdir);
+			process = builder.start();
+			final int exitCode = process.waitFor();
+			if (exitCode != 0) {
+				final InputStream errorStream = process.getErrorStream();
+				final List<String> errorReadLines = IOUtils.readLines(errorStream, StandardCharsets.UTF_8.name());
+				final String errStr = errorReadLines.stream().collect(Collectors.joining("\n"));
+				throw new LnLdapMgrException(LnLdapMgrEvent.TX_SH10_E, errStr);
+			} else {
+				try (InputStream inputStream = process.getInputStream();) {
+					final List<String> readLines = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
+					final List<String> cmdResultFilter = readLines.stream()//
+							.filter(data -> StringUtils.isNotBlank(data))//
+							.collect(Collectors.toList());
+					LOGGER.info("cmdResultFilter : {}", cmdResultFilter);
+					return cmdResultFilter;
+				}
+			}
+		}
 
 
 java processbuilder errorStream 處理方式
