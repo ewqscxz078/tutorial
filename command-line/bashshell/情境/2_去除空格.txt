@@ -7,6 +7,6 @@ https://www.cnblogs.com/zdfjf/p/6651457.html
 
 刪除行末空格或tab
 	sed 's/[ \t]*$//g'
-	
+
 删除所有的空格或tab
 	sed s/[[:space:]]//g

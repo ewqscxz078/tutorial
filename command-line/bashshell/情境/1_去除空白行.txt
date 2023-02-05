@@ -10,6 +10,6 @@ https://blog.51cto.com/u_10742668/1944831
 	3. awk
 		cat ${檔名} |awk '{if($0!="")print}'
 		cat ${檔名} |awk '{if(length !=0) print $0}'
-	
+
 	4. grep
 		grep -v "^$" ${檔名}
