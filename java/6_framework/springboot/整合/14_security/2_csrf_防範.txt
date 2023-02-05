@@ -1,8 +1,10 @@
 https://blog.csdn.net/u012702547/article/details/106206339
 
+===================================================================
+========================= 模擬 CSRF 攻擊 ==========================
+===================================================================
 https://www.baeldung.com/spring-security-csrf
 
-模擬 CSRF 攻擊
 	建立允許 csrf 攻擊的專案 (csrf source project)
 		@RestController
 		public class HelloController{
@@ -11,13 +13,13 @@ https://www.baeldung.com/spring-security-csrf
 				System.out.println("name =" + name);
 				System.out.println("money =" + money);
 			}
-			
+
 			@GetMapping(/hello)
 			public String hello(){
 				return "hello";
-			}	
+			}
 		}
-		
+
 		@Configuration
 		@EnableWebSecurity
 		public class WebSecurityConfig {
@@ -44,11 +46,11 @@ https://www.baeldung.com/spring-security-csrf
 				return new InMemoryUserDetailsManager(user);
 			}
 		}
-	
+
 	建立模擬的危險網站，模擬使用者點擊到該網站攻擊 csrf source project，當點擊該連結則會間接執行 csrf 攻擊
 		application.properties
 			server.port=8081
-		
+
 		resoucre/static/hello.html
 			<body>
 				<!-- http://localhost:8080/transfer 被攻擊的網站 -->
@@ -61,5 +63,42 @@ https://www.baeldung.com/spring-security-csrf
 
 防範 CSRF 攻擊
 	前後端不分離專案的方式
-		
+
 		<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+
+==========================================================================================================
+========================= 不禁用 CSRF 保護，避免在沒有表單的情況下出現 403 錯誤 ==========================
+==========================================================================================================
+from open api
+	如果您不想禁用 CSRF 保護，則可以使用特殊請求頭（例如 X-Requested-With）：
+	使用特殊請求頭可以避免在沒有表單的情況下出現 403 錯誤。
+
+		@Configuration
+		@EnableWebSecurity
+		public class WebSecurityConfig {
+			http
+			  .csrf().ignoringAntMatchers("/api/**")
+			  .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+			  .and()
+			  .addFilterAfter(new CsrfHeaderFilter(), CsrfFilter.class);
+		}
+
+		private static class CsrfHeaderFilter extends OncePerRequestFilter {
+		  @Override
+		  protected void doFilterInternal(HttpServletRequest request,
+										  HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+			CsrfToken csrf = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+			if (csrf != null) {
+			  Cookie cookie = WebUtils.getCookie(request, "XSRF-TOKEN");
+			  String token = csrf.getToken();
+			  if (cookie == null || token != null
+				&& !token.equals(cookie.getValue())) {
+				cookie = new Cookie("XSRF-TOKEN", token);
+				cookie.setPath("/");
+				response.addCookie(cookie);
+			  }
+			}
+			filterChain.doFilter(request, response);
+		  }
+		}

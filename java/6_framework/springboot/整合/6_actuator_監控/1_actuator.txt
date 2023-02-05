@@ -1,29 +1,102 @@
-https://www.baeldung.com/spring-boot-actuator-enable-endpoints
-https://www.youtube.com/watch?v=6Wiz3BuvoE0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=77&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
-
 SpringBoot Actuator
+https://www.baeldung.com/spring-boot-actuator-enable-endpoints
+
+https://www.youtube.com/watch?v=6Wiz3BuvoE0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=77&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 	未來每一個微服務在雲上部署以後，我們都需要對其進行監控、追踪、審計、控制等。
-	SpringBoot就抽取了Actuator場景，使得我們每個微服務快速引用即可獲得生產級別的應用監控、審計等功能。
+		SpringBoot就抽取了Actuator場景，使得我們每個微服務快速引用即可獲得生產級別的應用監控、審計等功能。
 
-	<dependency>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-actuator</artifactId>
-	</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 
-如何使用
-	● 引入場景
-	● 訪問 http://localhost:8080/actuator/**
-	● 暴露所有監控信息為HTTP
-		management:
-		  endpoints:
-			enabled-by-default: true #暴露所有端點信息
-			web:
-			  exposure:
-				include: '*'  #以web方式暴露所以端點
+	如何使用
+		● 引入場景
+		● 訪問 http://localhost:8080/actuator/**
+		● 暴露所有監控信息為HTTP
+			management:
+			  endpoints:
+				enabled-by-default: true #暴露所有端點信息
+				web:
+				  exposure:
+					include: '*'  #以web方式暴露所以端點
 
-		測試
-			http://localhost:8080/actuator/beans
-			http://localhost:8080/actuator/configprops
-			http://localhost:8080/actuator/metrics
-			http://localhost:8080/actuator/metrics/jvm.gc.pause
-			http://localhost:8080/actuator/${endpointName}/${detailPath}
+			測試
+				http://localhost:8080/actuator/beans
+				http://localhost:8080/actuator/configprops
+				http://localhost:8080/actuator/metrics
+				http://localhost:8080/actuator/metrics/jvm.gc.pause
+				http://localhost:8080/actuator/${endpointName}/${detailPath}
+
+https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=79&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+	最常用的Endpoint
+		● Health：監控狀況
+		● Metrics：運行時指標
+		● Loggers：日誌記錄
+
+		Health Endpoint
+			健康檢查端點，我們一般用於在雲平台，平台會定時的檢查應用的健康狀況，我們就需要Health Endpoint可以為平台返回當前應用的一系列組件健康狀況的集合。
+			重要的幾點：
+				● health endpoint返回的結果，應該是一系列健康檢查後的一個匯總報告
+				● 很多的健康檢查默認已經自動配置好了，比如：數據庫、redis等
+				● 可以很容易的添加自定義的健康檢查機制
+				management:
+				  endpoints:
+					enabled-by-default: true
+				  endpoint:
+					health:
+					  show-details: always # 顯示 健康訊息下的元件是否正常
+
+		Metrics Endpoint
+			提供詳細的、層級的、空間指標信息，這些信息可以被pull（主動推送）或者push（被動獲取）方式得到；
+				● 通過Metrics對接多種監控系統
+				● 簡化核心Metrics開發
+				● 添加自定義Metrics或者擴展已有Metrics
+
+
+	管理 Endpoints
+		開啟與禁用 Endpoints
+			● 默認所有的 Endpoint 除過 shutdown 都是開啟的。
+			● 需要開啟或者禁用某個Endpoint。
+				配置模式為  management.endpoint.<endpointName>.enabled = true
+
+			● 或者禁用所有的Endpoint然後手動開啟指定的Endpoint
+				management:
+				  endpoints:
+					enabled-by-default: false
+				  endpoint:
+					beans:
+					  enabled: true
+					health:
+					  enabled: true
+
+	暴露Endpoints
+		支持的暴露方式
+			● HTTP：默認只暴露 health 和 info Endpoint
+			● JMX：默認暴露所有 Endpoint
+			● 除過 health 和 info，剩下的Endpoint都應該進行保護訪問。如果引入SpringSecurity，則會默認配置安全訪問規則
+				ID					JMX	Web
+				auditevents			Yes	No
+				beans				Yes	No
+				caches				Yes	No
+				conditions			Yes	No
+				configprops			Yes	No
+				env					Yes	No
+				flyway				Yes	No
+				health				Yes	Yes
+				heapdump			N/A	No
+				httptrace			Yes	No
+				info				Yes	Yes
+				integrationgraph	Yes	No
+				jolokia				N/A	No
+				logfile				N/A	No
+				loggers				Yes	No
+				liquibase			Yes	No
+				metrics				Yes	No
+				mappings			Yes	No
+				prometheus			N/A	No
+				scheduledtasks		Yes	No
+				sessions			Yes	No
+				shutdown			Yes	No
+				startup				Yes	No
+				threaddump			Yes	No

@@ -19,7 +19,7 @@ https://cloud.tencent.com/developer/article/1756145
 		<groupId>子專案</groupId><artifactId>${子專案.package.base.path/}/artifactId>
 			<dependency><groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId></dependency>
 		則會依據是否使用到 junit class 來決定是否傳遞 junit 依賴
-		
+
 常見於 parent pom 、共通專案設定依賴 <optional>true</optional>
 ==================================================================================================
 ============================== scope =============================================================
