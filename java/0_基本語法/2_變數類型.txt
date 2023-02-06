@@ -1,0 +1,21 @@
+https://www.youtube.com/watch?v=1X6WJZHUArQ&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=13&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+變數類型
+	1. bit : 位元運算最小儲存單位
+	2. byte : 位元資料的最小儲存單位
+		1byte = 8bit
+		KB, MB, GB, TB....PB,EB
+		1024 Byte 	=	1KB
+		1024 KB		=	1MB
+		1024 MB		=	1GB
+		1024 GB		=	1TB
+
+	Java 的變數類型可以確定資料的範圍
+		基本資料類型	=>	數值類型	=>	整數類型：byte, short, int, long
+										=>	浮點類型：float, double
+						=>	字元類型:char
+						=>	布林類型:boolean
+		引用資料類型	=>	類(class):String
+						=>	介面(Interface):
+						=>	陣列(String[]、int[])
+						=>	列舉(enum)
+						=>	特殊類型值:null

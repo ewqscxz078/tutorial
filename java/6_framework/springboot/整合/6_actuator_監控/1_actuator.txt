@@ -30,6 +30,35 @@ https://www.youtube.com/watch?v=6Wiz3BuvoE0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=79&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 	最常用的Endpoint
+		ID					描述
+		auditevents			暴露當前應用程序的審核事件信息。需要一個AuditEventRepository組件。
+		beans				顯示應用程序中所有Spring Bean的完整列表。
+		caches				暴露可用的緩存。
+		conditions			顯示自動配置的所有條件信息，包括匹配或不匹配的原因。
+		configprops			顯示所有@ConfigurationProperties。
+		env					暴露Spring的屬性ConfigurableEnvironment
+		flyway				顯示已應用的所有Flyway數據庫遷移。需要一個或多個Flyway組件。
+		health				顯示應用程序運行狀況信息。
+		httptrace			顯示HTTP跟踪信息（默認情況下，最近100個HTTP請求-響應）。需要一個HttpTraceRepository組件。
+		info				顯示應用程序信息。
+		integrationgraph	顯示Spring integrationgraph 。需要依賴spring-integration-core。
+		loggers				顯示和修改應用程序中日誌的配置。
+		liquibase			顯示已應用的所有Liquibase數據庫遷移。需要一個或多個Liquibase組件。
+		metrics				顯示當前應用程序的“指標”信息。
+		mappings			顯示所有@RequestMapping路徑列表。
+		scheduledtasks		顯示應用程序中的計劃任務。
+		sessions			允許從Spring Session支持的會話存儲中檢索和刪除用戶會話。需要使用Spring Session的基於Servlet的Web應用程序。
+		shutdown			使應用程序正常關閉。默認禁用。
+		startup				顯示由ApplicationStartup收集的啟動步驟數據。需要使用SpringApplication進行配置BufferingApplicationStartup。
+		threaddump			執行線程轉儲。	
+
+		如果您的應用程序是Web應用程序（Spring MVC，Spring WebFlux或Jersey），則可以使用以下附加端點：
+		ID					描述
+		heapdump			返回hprof堆轉儲文件。
+		jolokia				通過HTTP暴露JMX bean（需要引入Jolokia，不適用於WebFlux）。需要引入依賴jolokia-core。
+		logfile				返回日誌文件的內容（如果已設置logging.file.name或logging.file.path屬性）。支持使用HTTPRange標頭來檢索部分日誌文件的內容。
+		prometheus			以Prometheus服務器可以抓取的格式公開指標。需要依賴 micrometer-registry-prometheus。
+	
 		● Health：監控狀況
 		● Metrics：運行時指標
 		● Loggers：日誌記錄
@@ -56,7 +85,7 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 	管理 Endpoints
 		開啟與禁用 Endpoints
-			● 默認所有的 Endpoint 除過 shutdown 都是開啟的。
+			● 默認所有的 Endpoint 都是開啟的，除了 shutdown 。
 			● 需要開啟或者禁用某個Endpoint。
 				配置模式為  management.endpoint.<endpointName>.enabled = true
 
@@ -70,7 +99,7 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					health:
 					  enabled: true
 
-	暴露Endpoints
+	暴露 Endpoints
 		支持的暴露方式
 			● HTTP：默認只暴露 health 和 info Endpoint
 			● JMX：默認暴露所有 Endpoint
@@ -100,3 +129,117 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 				shutdown			Yes	No
 				startup				Yes	No
 				threaddump			Yes	No
+
+
+https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=79&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+定制 Endpoint
+	1、定制 Health 信息
+		透過 實作 HealthIndicator 或 繼承 AbstractHealthIndicator
+			application.properties
+				management:
+					health:
+					  enabled: true
+					  show-details: always #總是顯示詳細信息。可顯示每個模塊的狀態信息
+			
+			// 增加額外的健康資訊
+			MyComHealthIndicator 
+				@Component
+				public class MyComHealthIndicator extends AbstractHealthIndicator {
+
+					@Override
+					protected void doHealthCheck(Health.Builder builder) throws Exception {
+						//mongodb。獲取連接進行測試
+						Map<String,Object> map = new HashMap<>();
+						// 檢查完成
+						if(1 == 2){
+							// builder.up(); //健康
+							builder.status(Status.UP);
+							map.put("count",1);
+							map.put("ms",100);
+						}else {
+							// builder.down();
+							builder.status(Status.OUT_OF_SERVICE);
+							map.put("err","連接超時");
+							map.put("ms",3000);
+						}
+
+						builder.withDetail("code",100)
+								.withDetails(map);
+					}
+				}
+			http://localhost:8080/actuator/health，則可看到 MyCom 的健康訊息
+			
+	2、定制 info 信息
+		常用兩種方式
+			1、編寫配置文件
+				application.properties
+					info:
+					  appName: boot-admin
+					  version: 2.0.1
+					  mavenProjectName: @project.artifactId@  #使用@@可以獲取maven的pom文件值
+					  mavenProjectVersion: @project.version@
+
+			2、編寫InfoContributor
+				@Component
+				public class ExampleInfoContributor implements InfoContributor {
+					@Override
+					public void contribute(Info.Builder builder) {
+						builder.withDetail("example",
+								Collections.singletonMap("key", "value"));
+					}
+				}
+			http://localhost:8080/actuator/info 會輸出以上方式返回的所有info信息
+			
+	3、定制 Metrics 信息
+		1、SpringBoot支持自動適配的 Metrics
+			● JVM metrics, report utilization of:
+			  ○ Various memory and buffer pools
+			  ○ Statistics related to garbage collection
+			  ○ Threads utilization
+			  ○ Number of classes loaded/unloaded
+			● CPU metrics
+			● File descriptor metrics
+			● Kafka consumer and producer metrics
+			● Log4j2 metrics: record the number of events logged to Log4j2 at each level
+			● Logback metrics: record the number of events logged to Logback at each level
+			● Uptime metrics: report a gauge for uptime and a fixed gauge representing the application’s absolute start time
+			● Tomcat metrics (server.tomcat.mbeanregistry.enabled must be set to true for all Tomcat metrics to be registered)
+			● Spring Integration metrics
+
+		2、增加定制 Metrics
+			方法一: 增加 指標 myservice.method.running.counter
+				class MyService{
+					Counter counter;
+					public MyService(MeterRegistry meterRegistry){
+						 counter = meterRegistry.counter("myservice.method.running.counter");
+					}
+
+					public void hello() {
+						counter.increment();
+					}
+				}
+			
+			方法二: 
+				//也可以使用下面的方式
+				@Bean
+				MeterBinder queueSize(Queue queue) {
+					return (registry) -> Gauge.builder("queueSize", queue::size).register(registry);
+				}
+
+	4、定制 Endpoint
+		新增制定 Endpoint
+			@Component
+			@Endpoint(id = "container")
+			public class DockerEndpoint {
+				@ReadOperation
+				public Map getDockerInfo(){
+					return Collections.singletonMap("info","docker started...");
+				}
+				@WriteOperation
+				private void restartDocker(){
+					System.out.println("docker restarted....");
+				}
+			}
+		
+		場景：開發ReadinessEndpoint來管理程序是否就緒，或者LivenessEndpoint來管理程序是否存活；
+		當然，這個也可以直接使用 https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-kubernetes-probes		

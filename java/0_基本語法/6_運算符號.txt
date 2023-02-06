@@ -1,0 +1,16 @@
+https://www.youtube.com/watch?v=RBxPeSCi7xU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=17&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+算術運算符號
+	二元運算 : + - * /
+	一元運算 : ++ --
+
+賦值運算符號 : = += -= *= /= %=
+
+關係運算符號 : == != > >= < <=
+
+邏輯運算符號
+	邏輯運算 : & | ^ !
+	短路運算 : && ||
+
+三元運算符號
+	(關係表達式 ? 表達式1 : 表達式2)
