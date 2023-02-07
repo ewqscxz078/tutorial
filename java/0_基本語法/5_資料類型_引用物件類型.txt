@@ -1,8 +1,8 @@
 https://www.youtube.com/watch?v=n-ntrPzyXCQ&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=17&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 引用資料類型
-	
+
 	String xxxx = "Hello"
-		內存					
+		內存
 			變數 ->	向量紀錄 xxxx -> 資料紀錄 Hello
 		則稱 String 引用資料物件類型
 
@@ -10,5 +10,4 @@ https://www.youtube.com/watch?v=n-ntrPzyXCQ&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 		內存
 			向量紀錄 xxxx = 10
 		因 int 為基本資料類型，故 int 非引用資料物件類型，因為在記憶體紀錄的方式不同
-		
-								
+

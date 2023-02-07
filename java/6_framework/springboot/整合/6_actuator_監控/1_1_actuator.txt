@@ -50,7 +50,7 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 		sessions			允許從Spring Session支持的會話存儲中檢索和刪除用戶會話。需要使用Spring Session的基於Servlet的Web應用程序。
 		shutdown			使應用程序正常關閉。默認禁用。
 		startup				顯示由ApplicationStartup收集的啟動步驟數據。需要使用SpringApplication進行配置BufferingApplicationStartup。
-		threaddump			執行線程轉儲。	
+		threaddump			執行線程轉儲。
 
 		如果您的應用程序是Web應用程序（Spring MVC，Spring WebFlux或Jersey），則可以使用以下附加端點：
 		ID					描述
@@ -58,7 +58,7 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 		jolokia				通過HTTP暴露JMX bean（需要引入Jolokia，不適用於WebFlux）。需要引入依賴jolokia-core。
 		logfile				返回日誌文件的內容（如果已設置logging.file.name或logging.file.path屬性）。支持使用HTTPRange標頭來檢索部分日誌文件的內容。
 		prometheus			以Prometheus服務器可以抓取的格式公開指標。需要依賴 micrometer-registry-prometheus。
-	
+
 		● Health：監控狀況
 		● Metrics：運行時指標
 		● Loggers：日誌記錄
@@ -140,9 +140,9 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					health:
 					  enabled: true
 					  show-details: always #總是顯示詳細信息。可顯示每個模塊的狀態信息
-			
+
 			// 增加額外的健康資訊
-			MyComHealthIndicator 
+			MyComHealthIndicator
 				@Component
 				public class MyComHealthIndicator extends AbstractHealthIndicator {
 
@@ -168,7 +168,7 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					}
 				}
 			http://localhost:8080/actuator/health，則可看到 MyCom 的健康訊息
-			
+
 	2、定制 info 信息
 		常用兩種方式
 			1、編寫配置文件
@@ -189,7 +189,7 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					}
 				}
 			http://localhost:8080/actuator/info 會輸出以上方式返回的所有info信息
-			
+
 	3、定制 Metrics 信息
 		1、SpringBoot支持自動適配的 Metrics
 			● JVM metrics, report utilization of:
@@ -218,8 +218,8 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 						counter.increment();
 					}
 				}
-			
-			方法二: 
+
+			方法二:
 				//也可以使用下面的方式
 				@Bean
 				MeterBinder queueSize(Queue queue) {
@@ -240,6 +240,6 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					System.out.println("docker restarted....");
 				}
 			}
-		
+
 		場景：開發ReadinessEndpoint來管理程序是否就緒，或者LivenessEndpoint來管理程序是否存活；
-		當然，這個也可以直接使用 https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-kubernetes-probes		
+		當然，這個也可以直接使用 https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-kubernetes-probes

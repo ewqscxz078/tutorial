@@ -1,7 +1,26 @@
 https://www.youtube.com/watch?v=RBxPeSCi7xU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=17&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+https://www.youtube.com/watch?v=rMxSKrdpnCE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=19&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
 算術運算符號
 	二元運算 : + - * /
+		算術表達式 = 元素1 二元運算 元素2，運算完的類型為 元素1、元素2中最大類型，最小使用類型為 int
+			System.out.println(1 + 2); // 3
+			System.out.println(2 - 2); // 0
+			System.out.println(3 * 2); // 6
+			System.out.println(4 / 2); // 2
+			System.out.println(1 / 2); // 0(取整)，非0.5 (int, int) => int
+			System.out.println(1.0 / 2); // 0.5 (double, int) => double
+			System.out.println(5 % 2); // 1(取餘)
+
+			byte b1 = 10;
+			byte b2 = 20;
+			int b3 = b1 + b1; // (int, int) = int
+			byte b3 = (byte)(b1 + b1); // (int, int) => byte = byte
+
+			System.out.println(1 + 2 * 3); // 7
+			System.out.println((1 + 2) * 3); // 9，括號優先運算
+
+
 	一元運算 : ++ --
 
 賦值運算符號 : = += -= *= /= %=
