@@ -1,1 +1,229 @@
 https://www.baeldung.com/spring-profiles
+https://www.youtube.com/watch?v=newMNCS4sik&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=81&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+設定 Profile 方式
+
+	@Profile
+		於 java Bean 告知於特定的環境才生效該 bean
+
+			@Component
+			@Profile("dev")
+			public class DevDatasourceConfig
+
+			@Component
+			@Profile("!dev")
+			public class DevDatasourceConfig
+
+
+	Programmatically via WebApplicationInitializer Interface
+		@Configuration
+		public class MyWebApplicationInitializer
+		  implements WebApplicationInitializer {
+
+			@Override
+			public void onStartup(ServletContext servletContext) throws ServletException {
+
+				servletContext.setInitParameter(
+				  "spring.profiles.active", "dev");
+			}
+		}
+
+	Programmatically via ConfigurableEnvironment
+		@Autowired
+		private ConfigurableEnvironment env;
+		...
+		env.setActiveProfiles("someProfile");
+
+	Context Parameter in web.xml
+		<context-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/app-config.xml</param-value>
+		</context-param>
+		<context-param>
+			<param-name>spring.profiles.active</param-name>
+			<param-value>dev</param-value>
+		</context-param>
+
+	JVM System Parameter
+		-Dspring.profiles.active=dev
+
+	Environment Variable
+		export spring_profiles_active=dev
+
+
+	Maven Profile
+		pom.xml
+			<profiles>
+				<profile>
+					<id>dev</id>
+					<activation>
+						<activeByDefault>true</activeByDefault>
+					</activation>
+					<properties>
+						<spring.profiles.active>dev</spring.profiles.active>
+					</properties>
+				</profile>
+				<profile>
+					<id>prod</id>
+					<properties>
+						<spring.profiles.active>prod</spring.profiles.active>
+					</properties>
+				</profile>
+			</profiles>
+
+		application.properties
+			spring.profiles.active=@spring.profiles.active@
+
+		enable resource filtering in pom.xml:
+			<build>
+				<resources>
+					<resource>
+						<directory>src/main/resources</directory>
+						<filtering>true</filtering>
+					</resource>
+				</resources>
+				...
+			</build>
+
+		mvn clean package -Pprod
+
+	@ActiveProfile in Tests
+		@ActiveProfiles("dev")
+
+
+優先覆蓋順序: 高到低順序
+	1.Context parameter in web.xml
+	2.WebApplicationInitializer
+	3.JVM System parameter
+	4.Environment variable
+	5.Maven profile
+
+	web.xml > WebApplicationInitializer > JVM System parameter > Environment variable > Maven profile
+
+The Default Profile:一定載入
+	application.yml/properties
+
+	或是使用 spring.profiles.default 修改預設
+
+
+Get Active Profiles
+	Using Environment
+		public class ProfileManager {
+			@Autowired
+			private Environment environment;
+
+			public void getActiveProfiles() {
+				for (String profileName : environment.getActiveProfiles()) {
+					System.out.println("Currently active profile - " + profileName);
+				}
+			}
+		}
+
+	Using spring.profiles.active
+		public class ProfileManager {
+			@Value("${spring.profiles.active:}") // 為避免沒有特別指名的 profile 給予預設值空
+			private String activeProfiles;
+
+			public String getActiveProfiles() {
+				for (String profileName : activeProfiles.split(",")) {
+					System.out.println("Currently active profile - " + profileName);
+				}
+			}
+		}
+
+因環境而異的設定
+	因環境而異的配置檔
+		用 application-${profile}.yml 區隔
+	因環境而異的 java 業務
+		用 @Profile("你的環境值") 標註在不同的 bean 區隔達到而異行為
+
+Profiles in Spring Boot
+	Activating or Setting a Profile : 套用或設定 profile
+		spring.profiles.active=dev
+			// https://stackoverflow.com/questions/73062721/what-is-diff-between-spring-profiles-active-vs-spring-config-activate-on-profile
+				starting Spring Boot 2.4, this property cannot be used in conjunction with spring.config.activate.on-profile,
+				as this could raise a ConfigDataException (i.e. an InvalidConfigDataPropertyException or an InactiveConfigDataAccessException).
+
+			https://spring.io/blog/2020/08/14/config-file-processing-in-spring-boot-2-4#profile-activation
+			spring.profiles.active 不能與 spring.config.activate.on-profile 混用，可能會有意外發生
+				spring.profiles.active 用於指定套用設定
+				spring.config.activate.on-profile 用於多環境設定在同一個檔案的區別設定用
+
+			in Spring Boot 2.4 was that the spring.profiles.active property is no longer allowed in combination with spring.config.activate.on-profile
+				因此
+					當 Multi-Document Files 模式時，使用 spring.config.activate.on-profile 區隔不同的 profile 環境套用設定
+					非 Multi-Document Files 模式時，使用 spring.profiles.active 環境套用設定
+
+		1.用程式方式套用 profile : To set profiles programmatically, we can also use the SpringApplication class:
+			SpringApplication.setAdditionalProfiles("dev");
+
+		2.by maven
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<configuration>
+						<profiles>
+							<profile>dev</profile>
+						</profiles>
+					</configuration>
+				</plugin>
+				...
+			</plugins>
+			mvn spring-boot:run
+
+	Profile-specific Properties Files : 較建議的方式
+		application-prod.properties
+			spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+			spring.datasource.url=jdbc:mysql://localhost:3306/db
+			spring.datasource.username=root
+			spring.datasource.password=root
+
+		application-dev.properties
+			spring.datasource.driver-class-name=org.h2.Driver
+			spring.datasource.url=jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
+			spring.datasource.username=sa
+			spring.datasource.password=sa
+
+	Multi-Document Files
+		we can specify the dev and production properties in the same application.properties:
+		允許 application.properties 整合寫在一起 dev and production properties
+			my.prop=used-always-in-all-profiles
+			#---
+			spring.config.activate.on-profile=dev
+			spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+			spring.datasource.url=jdbc:mysql://localhost:3306/db
+			spring.datasource.username=root
+			spring.datasource.password=root
+			#---
+			spring.config.activate.on-profile=production
+			spring.datasource.driver-class-name=org.h2.Driver
+			spring.datasource.url=jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
+			spring.datasource.username=sa
+			spring.datasource.password=sa
+
+		注意同 key 順序覆蓋問題
+			// https://developer.aliyun.com/article/775505
+			This file is read by Spring Boot in top to bottom order. That is, if some property, say my.prop,
+			occurs once more at the end in the above example, the endmost value will be considered.
+			讀取從上到下，若有相同值則會以最後面相同的覆蓋
+
+	Profile Groups
+		it allows us to group similar profiles together
+
+			application-proddb.properties
+
+			application-prodquartz.properties
+
+			group 設定
+				方式一
+					application-prod.properties
+						spring.profiles.group.production=proddb,prodquartz
+
+				方式二
+					application-prod.properties
+						spring.profiles.group.production[0]=proddb
+						spring.profiles.group.production[1]=prodmq
+
+			group 套用：
+				命令行套用 --spring.profiles.active=production
