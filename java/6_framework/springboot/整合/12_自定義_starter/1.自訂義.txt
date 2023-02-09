@@ -1,20 +1,22 @@
-1.這個廠景需要使用的依賴是什麼
+https://www.youtube.com/watch?v=gFz5MLFSQKQ&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=83&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+1.這個場景需要使用的依賴是什麼
 2.如何編寫自動配置
 
-@Configuration 		// 指定這個類是一個配置類
-@ConditionalOnXXX 	// 在指定條件成立的情況下自動配置類生效
-@AutoConfigureAfter // 指定自動配置類的順序
-@Bean 				// 給容器中增加組件
+	@Configuration 		// 指定這個類是一個配置類
+	@ConditionalOnXXX 	// 在指定條件成立的情況下自動配置類生效
+	@AutoConfigureAfter // 指定自動配置類的順序
+	@Bean 				// 給容器中增加組件
 
-@ConfigurationProperties // 結合相關 xxxProperties類來綁定相關的配置
-@EnableConnfigurationProperties // 讓 xxxProperties 生效加入到容器中
-
+	@ConfigurationProperties // 結合相關 xxxProperties 類來綁定相關的配置
+	@EnableConnfigurationProperties // 讓 xxxProperties 生效加入到容器中
 
 自動配置類要能加載
-將需要啟動就加載的自動配置類，配置在 META-INF/spring.factories
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
-org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
+	將需要啟動就加載的自動配置類，配置在
+	META-INF/spring.factories
+		org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+		org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
+		org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
 
 3.模式:
 啟動器(starter)
@@ -34,13 +36,23 @@ org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
 	xxx-starter -> xxx-starter-autoconfigurer
 
 	3.1 建立專案 xxx-starter
-		依賴 xxx-starter-autoconfigurer
+		依賴 xxx-starter-autoconfigurer 專案
+		pom.xml
+			<dependencies>
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>xxx-starter-autoconfigurer</artifactId>
+				</dependency>
+			<dependencies>
+
 	3.2 建立專案 xxx-starter-autoconfigurer 撰寫
 		依賴基本
-			<groupId>org.springframework.boot
-			<artifactId>spring-boot-starter
-
-		ex:
+			pom.xml
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter</artifactId>
+				</dependency>
+		ex: 假設抽取出常用的 service 為例，並配置預設設定檔於 api 裡使用(也可以讓引用該場景的專案覆寫設定檔)
 			建立一個 HelloService.java
 				public class HelloService {
 
@@ -71,12 +83,13 @@ org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
 			建立一個 HelloServiceAutoConfiguration.java
 				@Configuration
 				@ConfigurationOnWebApplication // web 應用才生效
-				@EnableAutoConfiguration(HelloProperties.class)
+				@EnableAutoConfiguration(HelloProperties.class) // 讓 HelloProperties 生效並自動加入到容器中
 				public class HelloServiceAutoConfiguration {
 
 					@AutoWired
 					HelloProperties helloProperties;
 
+					@ConditionalOnMissingBean(HelloService.class) // 容器不存在該組件才導入
 					@Bean
 					public HelloService helloService(){
 						HelloService helloService = new HelloService();
@@ -90,8 +103,8 @@ org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
 				{HelloServiceAutoConfiguration.package路徑}
 
 			test
-				xxx-starter 專案 => maven install to local
-				xxx-starter-autoconfigurer => maven install to local
+				xxx-starter 專案 => maven install // to local
+				xxx-starter-autoconfigurer 專案 => maven install // to local
 
 				create new 專案
 					1.依賴 spring-boot-starter-web
@@ -104,7 +117,7 @@ org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
 
 							@GetMapping("/hello")
 							public String hello(){
-								return helloService.sayHelloAtguigu( name:"haha");
+								return helloService.sayHelloAtguigu( "haha" );
 							}
 						}
 					4.resources/application.properties
