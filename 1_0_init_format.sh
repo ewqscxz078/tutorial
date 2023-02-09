@@ -30,4 +30,16 @@ main(){
   func_reqlaceTailSpace
 }
 
+check_non_unix_new_line(){
+  find . -type f -name "*.txt" -print0 | xargs -0 file | grep "CRLF"
+}
+check_tailTab(){
+  egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js}
+}
+check_tailSpace(){
+  egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js}
+}
+
+
+
 main
