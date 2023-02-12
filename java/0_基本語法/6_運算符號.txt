@@ -1,7 +1,7 @@
 https://www.youtube.com/watch?v=RBxPeSCi7xU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=17&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
-https://www.youtube.com/watch?v=rMxSKrdpnCE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=19&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
 算術運算符號
+	https://www.youtube.com/watch?v=rMxSKrdpnCE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=19&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 	二元運算 : + - * /
 		算術表達式 = 元素1 二元運算 元素2，運算完的類型為 元素1、元素2中最大類型，最小使用類型為 int
 			System.out.println(1 + 2); // 3
@@ -20,10 +20,50 @@ https://www.youtube.com/watch?v=rMxSKrdpnCE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 			System.out.println(1 + 2 * 3); // 7
 			System.out.println((1 + 2) * 3); // 9，括號優先運算
 
+	https://www.youtube.com/watch?v=5DwiByUUbEk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=20&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+	一元運算 : ++ --，為了簡化操作
+		++ 本質就是加 +1 操作的簡化，自增運算符
+		-- 本質就是減 +1 操作的簡化，自減運算符
+			String 簡化
+				相對於字串 String temp = "temp";
+					其實是 String temp; temp = "temp" 簡化組合
+			int 簡化
+				事後 + 1
+					int i = 0;
+					// int j = i; // j = 0
+					// i = i + 1; // i = 1
+					// 簡化
+					int j = i++;
+					System.out.println("i = " + i)
+					System.out.println("j = " + j)
 
-	一元運算 : ++ --
+				事前 + 1
+				int i = 0;
+				// i = i + 1; // i = 1
+				// int j = i; // j = 1
+				// 簡化
+				int j = ++i;
+				System.out.println("i = " + i)
+				System.out.println("j = " + j)
 
 賦值運算符號 : = += -= *= /= %=
+	等號就是賦值運算符;將等號右邊表達式的結果賦值給等號左邊的變量
+		賦值運算符號需要考慮類型的關係，小的可以賦值給大的
+			String name = "test";
+			byte b = 10;
+			short s = b;
+
+		複合賦值運算符 : +=、-=、*=、/=、%=
+			如果元素進行運算後重新賦值給自己，那麼可以將運算和賦值得符號進行簡化
+				int i = 1;
+				// i = i + 1;
+				i += 1;	// i = 2
+				System.out.println("i = " + i)
+			如果使用了複合賦值運算符，那麼數據類型不會發生變化
+				byte b1 =  10;
+				// b1 = b1 + 20; // byte -> int + int  => result int . but b1 is byte. it fail
+				b1 +=20; // b1 = 30，因為 數據類型不會發生變化
+
 
 關係運算符號 : == != > >= < <=
 

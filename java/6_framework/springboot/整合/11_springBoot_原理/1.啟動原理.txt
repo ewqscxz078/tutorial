@@ -1,32 +1,57 @@
-幾個重要複寫函數
-	配置在 META-INF/spring.factories
-		ApplicationContextInitializer
-		SpringApplicationRunListener
-	只需要放在ioc容器中
-		ApplicationRunner
-		CommandLineRunner
+https://www.youtube.com/watch?v=-wkJ6yGN1Wg&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=85&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-啟動流程:
+SpringBoot原理 : 整體重點
+	Spring原理【Spring註解】、SpringMVC原理、自動配置原理、SpringBoot啟動過程原理
+
+	幾個重要複寫函數
+		配置在 META-INF/spring.factories
+			ApplicationContextInitializer
+			SpringApplicationRunListener
+		只需要放在ioc容器中
+			ApplicationRunner
+			CommandLineRunner
+
+	1.SpringBoot 啟動過程
+		創建 SpringApplication
+
+	2.Application Events ands Listeners
+		ApplicationContextInitializer
+		ApplicationListener
+		SpringApplicationRunListener
+
+	3.ApplicationRunner 與 CommandLineRunner
+
+SpringBoot 啟動過程
 	1.建立 SpringApplication 實例
 		SpringApplication.java
 			public static ConfigurableApplicationContext run(Object[] sources, String[] args){
 				return new SpringApplication(sources).run(args);
 			}
 
-		initialize(sources){
-			// 保存主配置類
-			if(sources != null && sources.length > 0){
-				this.sources.addAll(Arrays.asList<sources>)
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
+				// 保存一些信息。
+				this.resourceLoader = resourceLoader;
+				Assert.notNull(primarySources, "PrimarySources must not be null");
+				this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+
+				// 判定當前應用的類型。 ClassUtils。 Servlet
+				this.webApplicationType = WebApplicationType.deduceFromClasspath();
+
+				// bootstrappers：初始啟動引導器（List<Bootstrapper>）：去spring.factories文件中找 org.springframework.boot.Bootstrapper
+				// org.springframework.boot.Bootstrapper
+				this.bootstrapRegistryInitializers = new ArrayList<>(
+						getSpringFactoriesInstances(BootstrapRegistryInitializer.class));
+
+				// 從類路徑下找到 META-INF/spring.factories 配置的所有 ApplicationContextInitializer;然後保存起來
+				setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+
+				// 從類路徑下找到 META-INF/spring.factories 配置的所有 ApplicationListener;然後保存起來
+				setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+
+				// 從多個類中找到第一個有 main 方法的主配置類
+				this.mainApplicationClass = deduceMainApplicationClass();
 			}
-			// 判斷當前是否為web應用
-			this.webEnvironment = deduceWebEnvironment();
-			//從類路徑下找到 META-INF/spring.factories 配置的所有 ApplicationContextInitializer;然後保存起來
-			setInitializer((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
-			//從類路徑下找到 META-INF/spring.factories 配置的所有 ApplicationListener;然後保存起來
-			setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
-			// 從多個配置類中找到有 main 方法的主配置類
-			this.mainApplicationClass = deduceMainEnvironment();
-		}
 
 	2.運行 run
 		public ConfigurableApplicationContext run(String... args){
