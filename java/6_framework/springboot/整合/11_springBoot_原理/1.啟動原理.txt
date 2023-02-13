@@ -53,6 +53,7 @@ SpringBoot 啟動過程
 				this.mainApplicationClass = deduceMainApplicationClass();
 			}
 
+	https://www.youtube.com/watch?v=jyTdn5-yV2o&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=85&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 	2.運行 run
 		public ConfigurableApplicationContext run(String... args){
 			StopWatch stopWatch = new StopWatch();
@@ -111,3 +112,54 @@ SpringBoot 啟動過程
 			}
 
 		}
+
+
+		● 運行 SpringApplication
+		  ○ StopWatch
+		  ○ 記錄應用的啟動時間
+		  ○ 創建引導上下文（Context環境）createBootstrapContext()
+			■ 獲取到所有之前的 bootstrappers 挨個執行 intitialize() 來完成對引導啟動器上下文環境設置
+		  ○ 讓當前應用進入headless模式。 java.awt.headless
+		  ○ 獲取所有 RunListener（運行監聽器）【為了方便所有Listener進行事件感知】
+			■ getSpringFactoriesInstances 去spring.factories找 SpringApplicationRunListener.
+		  ○ 遍歷 SpringApplicationRunListener 調用 starting 方法；
+			■ 相當於通知所有感興趣系統正在啟動過程的人，項目正在 starting。
+		  ○ 保存命令行參數；ApplicationArguments
+		  ○ 準備環境 prepareEnvironment（）;
+			■ 返回或者創建基礎環境信息對象。 StandardServletEnvironment
+			■ 配置環境信息對象。
+			  ● 讀取所有的配置源的配置屬性值。
+			■ 綁定環境信息
+			■ 監聽器調用 listener.environmentPrepared()；通知所有的監聽器當前環境準備完成
+		  ○ 創建IOC容器（createApplicationContext（））
+			■ 根據項目類型（Servlet）創建容器，
+			■ 當前會創建 AnnotationConfigServletWebServerApplicationContext
+		  ○ 準備 ApplicationContext IOC容器的基本信息 prepareContext()
+			■ 保存環境信息
+			■ IOC容器的後置處理流程。
+			■ 應用初始化器；applyInitializers；
+			  ● 遍歷所有的 ApplicationContextInitializer 。調用 initialize.。來對ioc容器進行初始化擴展功能
+			  ● 遍歷所有的 listener 調用 contextPrepared。 EventPublishRunListenr；通知所有的監聽器contextPrepared
+			■ 所有的監聽器 調用 contextLoaded。通知所有的監聽器 contextLoaded；
+		  ○ 刷新IOC容器。 refreshContext
+			■ 創建容器中的所有組件（Spring註解）
+		  ○ 容器刷新完成後工作？ afterRefresh
+		  ○ 所有監聽器調用 listeners.started(context); 通知所有的監聽器 started
+		  ○ 調用所有 runners；callRunners()
+			■ 獲取容器中的 ApplicationRunner
+			■ 獲取容器中的  CommandLineRunner
+			■ 合併所有runner並且按照@Order進行排序
+			■ 遍歷所有的runner。調用 run 方法
+		  ○ 如果以上有異常，
+			■ 調用Listener 的 failed
+		  ○ 調用所有監聽器的 running 方法  listeners.running(context); 通知所有的監聽器 running
+		  ○ running如果有問題。繼續通知 failed 。調用所有 Listener 的 failed；通知所有的監聽器 failed
+
+由上得知 Initializer、Listener、Runner 被呼叫的時機
+	Application Events and Listeners
+		https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-application-events-and-listeners
+		ApplicationContextInitializer
+		ApplicationListener
+		SpringApplicationRunListener
+
+	ApplicationRunner 与 CommandLineRunner
