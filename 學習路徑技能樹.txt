@@ -1,14 +1,17 @@
 程式語言
 	java
-		java 17
+		java jdk 6(done) => 17
+		第三方 lib
+			junit 5
+			apache ....
 		framework
 			spring
-				spring boot 2
 				spring Framework
+				spring boot 2
 				spring boot data
 				spring cloud
 				spring boot 2 react
-			junit 5
+
 
 	內功心法
 		design pattern
