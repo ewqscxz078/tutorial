@@ -64,12 +64,73 @@ https://www.youtube.com/watch?v=RBxPeSCi7xU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 				// b1 = b1 + 20; // byte -> int + int  => result int . but b1 is byte. it fail
 				b1 +=20; // b1 = 30，因為 數據類型不會發生變化
 
-
+https://www.youtube.com/watch?v=35xGSmlkB4g&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=22&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 關係運算符號 : == != > >= < <=
+	比較兩個資料之間關係的運算符
+		元素1(資料1、表達式1) 關係運算符(== != > >= < <=) 元素2(資料2、表達式2)
+		關係表達式結果為布林類型，預想結果相同則為 true; 反之 false
+			int i = 10;
+			int j = 20;
+			System.out.println( i == j ); // false，是否相等
+			System.out.println( i != j ); // true，是否不相等
+			System.out.println( i > j ); // false，是否 i 大於 j
+			System.out.println( i >= j ); // false，是否 i 大於或等於 j
+			System.out.println( i < j ); // true，是否 i 小於 j
+			System.out.println( i <= j ); // true，是否 i 小於或等於 j
 
 邏輯運算符號
-	邏輯運算 : & | ^ !
-	短路運算 : && ||
+	表達多個表達式之間的關係
+	變數 = (條件表達式1) 邏輯運算符 (條件表達式2)，結果為布林類型
+	因條件表達式為布林類型，所以邏輯運算符也是布林類型，但有以下排列組合情形
+		true false => ?
+		true false => ?
+		false true => ?
+		false false => ?
+		邏輯運算 : & | ^ !
+			& 且運算，要求兩個條件表達式都必須算出結果，只有當兩個結果都為 true 時，最終結果才為 true，其他皆為 false
+				int i = 10;
+				System.out.println( (i > 5) & (i < 20) ); // true true => true
+				System.out.println( (i > 5) & (i > 20) ); // true false => false
+				System.out.println( (i < 5) & (i < 20) ); // false true => false
+				System.out.println( (i < 5) & (i > 20) ); // false false => false
+			| 或運算，要求兩個條件表達式都必須算出結果，其中一個結果都為 true 時，最終結果就為 true，其他皆為 false
+				int i = 10;
+				System.out.println( (i > 5) | (i < 20) ); // true true => true
+				System.out.println( (i > 5) | (i > 20) ); // true false => true
+				System.out.println( (i < 5) | (i < 20) ); // false true => true
+				System.out.println( (i < 5) | (i > 20) ); // false false => false
+			! 相反邏輯運算
+				true = > false
+				false = > true
+					int i = 10;
+					System.out.println( i == 10 );	// true
+					System.out.println( !(i == 10) ); // false
+		短路運算 : && ||
+			根據第一個條件表達式是否執行下一個條件表達式
+			&& 短路且運算，第一個條件表達式為 true，才執行下一個條件表達式，反之忽略下一個條件表達式。當全為 true，則結果為 true，可少運算條件表達式
+				int i = 10;
+				int j = 20;
+				System.out.println( (i > 5) && (++j < 20) ); // true true => true
+				System.out.println(j); // j = 21
+				System.out.println( (i < 5) && (++j > 20) ); // false 略過 => false
+				System.out.println(j); // j = 20
+			|| 短路或運算，第一個條件表達式為 false，才執行下一個條件表達式，反之忽略下一個條件表達式。當其中一個為 true，則結果為 true，反之為 false，可少運算條件表達式
+				int i = 10;
+				int j = 20;
+				System.out.println( (i == 10) || (++j > 30) ); // true 略過 => true
+				System.out.println(j); // j = 20
+				System.out.println( (i < 5) || (++j > 30) ); // false false => false
+				System.out.println(j); // j = 21
 
+https://www.youtube.com/watch?v=sX9JO7Ll3sw&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=24&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 三元運算符號
+	三個元素參與運算的運算符
 	(關係表達式 ? 表達式1 : 表達式2)
+	變數 = (條件表達式) ? (任意表達式1) : (任意表達式2)
+	運算規則 : 判斷條件表達式的結果, 如果為 true, 那們執行任意表達式1的值；反之執行任意表達式2的值
+	int i = 10;
+	int j = 20;
+	int k = ( i == 10 ) ? 1+1 : 2+2;
+	System.out.println(k); // k = 2
+	int k = ( i > 10 ) ? 1+1 : 2+2;
+	System.out.println(k); // k = 4

@@ -162,4 +162,7 @@ SpringBoot 啟動過程
 		ApplicationListener
 		SpringApplicationRunListener
 
-	ApplicationRunner 与 CommandLineRunner
+	ApplicationRunner 與 CommandLineRunner
+
+	依據需求時若有需要於 spring boot 啟動後執行什麼，依據時機點時做對應的 Listeners、Runners，若有執行先後順序可在加 @order 控制順序
+

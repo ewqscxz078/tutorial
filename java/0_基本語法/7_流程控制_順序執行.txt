@@ -1,0 +1,17 @@
+https://www.youtube.com/watch?v=M_WsdUDyKm4&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=24&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+流程控制
+	指令按照代碼的順序執行控制
+	1.順序執行 : 代碼的先後順序以及語法的先後順序
+		1.正常順序
+			int i = 10;
+			int j = 20;
+			System.out.println( i+j ); // 30
+		2.不正常順序
+			int i;
+			int j;
+			System.out.println( i+j ); // 編譯錯誤
+			int i = 10;
+			int j = 20;
+	2.判斷執行
+	3.重複執行
