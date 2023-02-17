@@ -8,9 +8,23 @@ http status code
 		302 告訴 client 端找到了一個轉頁的 url
 
 	4xx	client errors 端系列錯誤
+		400 Bad Request
+			含義是你訪問的頁面域名不存在或者請求錯誤。主要分為兩種。
+				1、語義有誤，當前請求無法被服務器理解。除非進行修改，否則客戶端不應該重複提交這個請求。
+				2、請求參數有誤。
+			400的主要有兩種形式：
+				1、bad request意思是“錯誤的請求"；
+				2、invalid hostname意思是"不存在的域名”。
 		403 Forbidden : 權限不足
 
 		404 網頁找不到 : 客戶端輸入非預期網頁
 
+		405 Method Not Allowed : 請求的方式不允許
+			client 使用 httop method 不允許的方式，確認 server 請求的方式是否支援 (server 環境檢查其支援 GET、POST、PUT、DELETE 狀況)
+
 	5xx	server errors 端系列錯誤
 		500 Internal Server Error : 通常指 server 執行某行有異常
+
+		502 Bad Gateway : 中間層異常，如 apache 設定導錯機器
+
+		503 Service Unavailable : 通常是伺服器正在進行維護或是當下流量過載。這種錯誤回傳應該是暫時性的
