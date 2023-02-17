@@ -1,10 +1,10 @@
 https://www.youtube.com/watch?v=PMaonqe9XCU&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=48&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 spring 透過 aop 攔截目標 url，提供 執行目標方法前後與完成的複寫函數
 
-web filter > Interceptor 	> 			controller > service > ...
-					    prehandle
-						postHandle
-						afterCompletion
+web filter > DispatcherServlet  > Interceptor 	> 			controller > service > ...
+											prehandle
+											postHandle
+											afterCompletion
 
 * 1、編寫一個攔截器實現HandlerInterceptor接口
 	public class LoginIntercepter implements HandlerInterceptor {

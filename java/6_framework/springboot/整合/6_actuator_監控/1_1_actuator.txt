@@ -167,7 +167,7 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 								.withDetails(map);
 					}
 				}
-			http://localhost:8080/actuator/health，則可看到 MyCom 的健康訊息
+			http://localhost:8080/actuator/health，則可看到 MyCom ，(預設抓取 ClassName 前墜)的健康訊息
 
 	2、定制 info 信息
 		常用兩種方式
@@ -179,7 +179,7 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					  mavenProjectName: @project.artifactId@  #使用@@可以獲取maven的pom文件值
 					  mavenProjectVersion: @project.version@
 
-			2、編寫InfoContributor
+			2、編寫 InfoContributor
 				@Component
 				public class ExampleInfoContributor implements InfoContributor {
 					@Override
@@ -189,6 +189,60 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					}
 				}
 			http://localhost:8080/actuator/info 會輸出以上方式返回的所有info信息
+
+			3.套用 maven 已可用的資訊
+				https://reflectoring.io/spring-boot-info-endpoint/
+				<plugin>
+				  <groupId>org.springframework.boot</groupId>
+				  <artifactId>spring-boot-maven-plugin</artifactId>
+				  <version>2.6.4</version>
+				  <executions>
+					<execution>
+					  <goals>
+						<goal>build-info</goal>
+					  </goals>
+					</execution>
+				  </executions>
+				</plugin>
+
+				於 target/classes/META-INF/ 將產生 build-info.properties
+					內容會長得像是
+						build.artifact=spring-boot-build-info
+						build.group=io.reflectoring
+						build.name=spring-boot-build-info
+						build.time=2022-03-06T05\:53\:45.236Z
+						build.version=0.0.1-SNAPSHOT
+
+				We can also add custom properties to this list
+					<execution>
+					  <goals>
+						<goal>build-info</goal>
+					  </goals>
+					  <configuration>
+						<additionalProperties>
+						  <custom.key1>value1</custom.key1>
+						  <custom.key2>value2</custom.key2>
+						</additionalProperties>
+						<excludeInfoProperties>
+							<infoProperty>artifact</infoProperty> <!-- 排除 內建info 部分資訊 -->
+						</excludeInfoProperties>
+					  </configuration>
+					</execution>
+
+				http://localhost:8080/actuator/info 會輸出類似如下結果
+					{
+					  "build": {
+						"custom": {
+						  "key2": "value2",
+						  "key1": "value1"
+						},
+						"version": "0.0.1-SNAPSHOT",
+						// "artifact": "spring-boot-build-info",
+						"name": "spring-boot-build-info",
+						"time": "2022-03-06T06:34:30.306Z",
+						"group": "io.reflectoring"
+					  }
+					}
 
 	3、定制 Metrics 信息
 		1、SpringBoot支持自動適配的 Metrics
