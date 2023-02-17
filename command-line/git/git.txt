@@ -458,6 +458,25 @@ merge 常例
 	git config --global --unset ${your setting name}
 	or edit online
 		git config --global --edit
+
+https://blog.miniasp.com/post/2018/05/28/Git-Credential-Howto
+	Git 儲存帳號、密碼
+		# 設定自動儲存帳號與密碼，下次不用再打密碼
+		git config --global credential.helper store
+
+		// https://blog.csdn.net/lrs1353281004/article/details/106289737
+		# 不同使用者在同一機器，同一目錄使用不同密碼登入
+		git config credential.helper 'store --file .git/.my-credentials'
+
+	Git 暫存帳號、密碼
+		# 設定自動暫存帳號與密碼（存在記憶體 15 分鐘）
+		git config --global credential.helper cache
+
+		# 指定暫存 1小時
+		git config credential.helper 'cache --timeout=3600'
+
+
+
 ==========================================================================================
 ==================================查看檔案================================================
 ==========================================================================================

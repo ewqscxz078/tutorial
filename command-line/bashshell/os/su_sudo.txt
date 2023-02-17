@@ -61,7 +61,9 @@ https://www.petefreitag.com/item/877.cfm
 	sudo --preserve-env ${指令}
 
 #Passing only the variables you need
-	sudo --preserve-env={指定的環境變數} ${指令}
+	sudo --preserve-env={指定的環境變數，多個變數用,分隔} ${指令}
+	ex
+		sudo --preserve-env=JAVA_HOME,MEVEN_HOME whoami
 
 #於 sudo 直接設定環境變數
 	sudo ZEBRA=true ${指令}
