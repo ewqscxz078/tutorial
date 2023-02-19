@@ -58,3 +58,7 @@
 		%logger{50} 表示logger名字最長50字符，否則按照句點分割
 		%msg 日誌消息
 		%n 換行
+
+https://www.baeldung.com/spring-boot-logging
+	但通常默認設定還不夠，通常使用外部 logback.xml 設定檔案捲動或同步非同步
+

@@ -1,17 +1,96 @@
-https://www.youtube.com/watch?v=M_WsdUDyKm4&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=24&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
 流程控制
 	指令按照代碼的順序執行控制
-	1.順序執行 : 代碼的先後順序以及語法的先後順序
-		1.正常順序
-			int i = 10;
-			int j = 20;
-			System.out.println( i+j ); // 30
-		2.不正常順序
-			int i;
-			int j;
-			System.out.println( i+j ); // 編譯錯誤
-			int i = 10;
-			int j = 20;
-	2.判斷執行
-	3.重複執行
+	https://www.youtube.com/watch?v=M_WsdUDyKm4&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=24&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+		1.順序執行 : 代碼的先後順序以及語法的先後順序
+			1.正常順序
+				int i = 10;
+				int j = 20;
+				System.out.println( i+j ); // 30
+			2.不正常順序
+				int i;
+				int j;
+				System.out.println( i+j ); // 編譯錯誤
+				int i = 10;
+				int j = 20;
+		2.判斷執行
+			https://www.youtube.com/watch?v=1HtPit8w1wM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=26&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			1.可選分支 if(....){}
+				System.out.println( "第1步" );
+				System.out.println( "第2步" );
+				int i = 10;
+				if(i == 10 ){
+					System.out.println( "分支" );
+				}
+				System.out.println( "第3步" );
+			https://www.youtube.com/watch?v=-DFNEWTSXh4&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=27&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			2.必選分支 if(....){} else {....}
+				System.out.println( "第1步" );
+				System.out.println( "第2步" );
+				int i = 10;
+				if(i == 10 ){
+					System.out.println( "分支1" );
+				} else {
+					System.out.println( "分支2" );
+				}
+				System.out.println( "第3步" );
+			https://www.youtube.com/watch?v=8zKJjgDwen4&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=28&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			3.多分支 if(....){} else if {....} else {....}
+				System.out.println( "第1步" );
+				System.out.println( "第2步" );
+				int i = 10;
+				if( i == 10 ){
+					System.out.println( "分支1" );
+				} else if ( i == 20 ) {
+					System.out.println( "分支2" );
+				} else {
+					System.out.println( "分支3" );
+				}
+				System.out.println( "第3步" );
+
+			https://www.youtube.com/watch?v=wwMJBra_aLU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=29&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			https://www.youtube.com/watch?v=IKLm15Mt1uk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=30&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			4.特殊分支
+				switch() { case ....  ; case ....; default ...;}
+					int i = 20;
+					switch(i){
+						case 10 :
+							System.out.println( "分支1" );
+						case 20 :
+							System.out.println( "分支2" );
+						case 30 :
+							System.out.println( "分支3" );
+					}
+					// 分支2
+					// 分支3
+
+					int i = 40;
+					switch(i){
+						case 10 :
+							System.out.println( "分支1" );
+						case 20 :
+							System.out.println( "分支2" );
+						case 30 :
+							System.out.println( "分支3" );
+						default :
+							System.out.println( "預設" );
+					}
+					// 預設
+
+				switch() { case .... break; case .... break; default ...;}
+					int i = 10;
+					switch(i){
+						case 10 :
+							System.out.println( "分支1" );
+							break;
+						case 20 :
+							System.out.println( "分支2" );
+							break;
+						case 30 :
+							System.out.println( "分支3" );
+							break;
+						default :
+							System.out.println( "預設" );
+					}
+					// 分支1
+		3.重複執行
