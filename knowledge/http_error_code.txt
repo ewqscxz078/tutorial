@@ -15,7 +15,10 @@ http status code
 			400的主要有兩種形式：
 				1、bad request意思是“錯誤的請求"；
 				2、invalid hostname意思是"不存在的域名”。
+		401 Unauthorized : 認證錯誤
+
 		403 Forbidden : 權限不足
+			如被 apache 拒絕
 
 		404 網頁找不到 : 客戶端輸入非預期網頁
 
