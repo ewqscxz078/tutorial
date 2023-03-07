@@ -1,0 +1,18 @@
+==========================================================================================
+================================== 查看當前 branch 資訊===================================
+==========================================================================================
+# 取得當前branch commit hash
+	git rev-parse HEAD
+
+# 取得當前branch 分支名稱
+	git rev-parse --abbrev-ref HEAD
+
+# 取得當前branch 分支完整名稱與路徑
+	git rev-parse --abbrev-ref --symbolic-full-name HEAD
+
+==========================================================================================
+================================== 查看 repo =============================================
+==========================================================================================
+https://stackoverflow.com/questions/15715825/how-do-you-get-the-git-repositorys-name-in-some-git-repository
+basename `git rev-parse --show-toplevel`
+current_repo=$(basename `git rev-parse --show-toplevel`)

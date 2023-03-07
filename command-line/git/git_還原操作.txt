@@ -1,0 +1,43 @@
+==========================================================================================
+========================================= 還原操作 =======================================
+==========================================================================================
+https://stackoverflow.com/questions/1628088/reset-local-repository-branch-to-be-just-like-remote-repository-head
+還原到遠端結果，會將已commit的未push移除，local尚未add的會留存
+	git fetch origin
+	git reset --hard origin/{targetBranch}
+	並且清除本機尚未add (untracked-files)，要到 git root dir 才會生效
+		git clean -fd
+
+untracked file (未存在遠端 repository)
+	尚未 add 情形
+		git clean -f // 將所有untracked file 的 file 移除
+		git clean -f [file] // 指定 untracked file 的 file 移除
+
+		git clean -f -d // 將所有untracked file 的 目錄和檔案 移除
+
+tracked file (已存在遠端 repository)
+	modify file 尚未 add(紅字) 或 已 add(綠字) 情形
+		git checkout -- <file> // 還原該 branch 的FILE
+		git checkout . // 還原該 branch 的所有FILE
+
+已 commit file
+	如何將某個 指定的檔案 還原到 指定的 Commit 的狀態
+		git log
+		git checkout <commitId> <file>
+
+	綠色字變紅字
+		git reset <commitId>
+
+	remove history log 模式
+		git reset <commId/tag:HEAD、master> --hard // 還原到 <commId/tag:HEAD、master> 並將目前節點到還原點 期間異動的程式移除清乾淨
+
+	add history log to remove 模式
+		git revert <commId/tag:HEAD、master>  // 增加節點回到環原點
+
+	移除其中一個commit
+		git revert --strategy resolve <sha-ish>
+			Given a git log of A--B--C--D--E you can remove commit C using:
+
+		git revert --strategy resolve <sha-of-C>
+			Which will produce:
+			A--B--C--D--E--REVERTC

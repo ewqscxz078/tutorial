@@ -7,6 +7,10 @@ find and grep 找出所有檔案有符合字串的檔案 // 常用
 find and egrep 找出字尾有space的檔案 // 透過正則表示法
 	find . -type f -exec egrep -l " +$" {} \;
 
+https://ithelp.ithome.com.tw/articles/10210474
+find 擁有者為指定的帳號
+	find . -user ${user} -exec ls -l {} \;
+
 找出為檔案且檔名
 	find . -type f -name [fileName]
 

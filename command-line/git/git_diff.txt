@@ -1,0 +1,40 @@
+==========================================================================================
+==================================== git diff ============================================
+==========================================================================================
+https://www.shellhacks.com/git-diff-staged-unstaged-files/
+# 顯示所有異動 (等於 git status)
+	git diff --name-only HEAD
+
+# 僅顯示 staged files of green
+	git diff --name-only --staged
+	git diff --name-only --cached
+
+# 僅顯示 unstaged files of red
+	git diff --name-only
+
+==========================================================================================
+==========================================差異操作========================================
+==========================================================================================
+git diff => 工作目錄 vs 索引
+git diff HEAD => 工作目錄 vs HEAD
+git diff --cached HEAD => 索引 vs HEAD
+git diff --cached => 索引 vs HEAD
+git diff HEAD^ HEAD => HEAD^ vs HEAD
+
+比對 branch diff
+	git diff <branchA>:<fileA> <branchB>:<fileB>,
+	or if you want to compare the same file git diff <branchA> <branchB> -- <file>
+		ex:  git diff issue/333 issue/342 -- ./RC/config/batchjob.xml
+	git diff <commid較舊> <commid新>
+
+與Head版本比對
+	git diff HEAD
+
+ex:
+	git diff master origin/master
+
+git diff [branchName] --exit-code
+	#有差異回1
+	#無差異回0
+
+git diff --name-status origin/master origin/issue/[redmineId]

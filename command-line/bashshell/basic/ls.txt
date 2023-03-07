@@ -18,3 +18,11 @@
 https://stackoverflow.com/questions/15345936/regular-expression-usage-with-ls
 	ls | egrep [pattern]
 		ex: ls -lt | egrep "*.[j|w]ar"
+
+===================================================================
+========================= show numeric permissions ================
+===================================================================
+https://stackoverflow.com/questions/1795976/can-the-unix-list-command-ls-output-numerical-chmod-permissions
+	stat -c '%a %n' *
+	stat -c '%a %n' /tmp /usr/bin/sudo
+	find . -printf "%m:%f\n"

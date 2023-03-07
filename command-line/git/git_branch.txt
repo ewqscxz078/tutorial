@@ -1,0 +1,44 @@
+==========================================================================================
+===================================== branch操作 =========================================
+==========================================================================================
+切換branch
+	git checkout [遠端/branchName]
+
+	git checkout [遠端/branchName] --track // 當名稱跑掉時
+
+建立local分支
+	git branch 	[branchName]
+
+建立local分支 base on 特定 branch
+	git checkout [特定branch]
+	git checkout -b DEVELOP/greenc108
+
+建立 branch by tag
+	git checkout -b <branchname> <tagname>
+
+刪除遠端分支
+	git push origin --delete [branchName]
+
+刪除local分支
+	git branch -D [branchName]
+
+==========================================================================================
+==================================== 查看 branch =========================================
+==========================================================================================
+
+查看 所有branch
+	git branch -a  // 顯示白色是本地端 紅色是遠端server；互相對應
+	git branch -av // 列出每個分支最後的提交commitId
+
+查看 目前所屬的branch
+	git branch | grep \* | cut -d ' ' -f2
+
+查看那些 branch 含該 commid
+	git branch --contain <commid>
+
+查看本機或遠端檔案清單
+	git ls-tree -r --name-only [branch]
+
+查看當前 branch 名稱
+	https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
+	git rev-parse --abbrev-ref HEAD

@@ -53,3 +53,41 @@ java_jvm
 
 反組譯class
 	javap org/bouncycastle/asn1/ASN1Primitive.class
+
+
+=====================================================================================
+=========================== javac(編譯)與 java(執行) ================================
+=====================================================================================
+https://www.tutorialspoint.com/what-is-the-difference-between-javac-java-commands
+https://www.baeldung.com/java-compile-multiple-files
+https://www.baeldung.com/java-jar-executable-manifest-main-class
+假設
+	/d/cmdTest/lib/a.jar
+			  /lib/b.jar
+			  /target
+	/d/cmdTest/src/sample.java
+
+	cd /d/cmdTest/
+	以下測試為 window 情境
+
+編譯
+	javac src/sample.java // 當前目錄將會產生 sample.class
+
+執行 class
+	java target/sample
+
+編譯 with other lib
+	// window use ; 分割
+	// unix use : 分割
+	javac -cp "lib/a.jar;lib/b.jar;" sample.java
+	javac -classpath "lib/a.jar;lib/b.jar;" sample.java
+	javac -classpath "lib/*" sample.java
+
+	指定編譯後的目錄位置
+		javac -classpath "lib/*" -d target sample.java
+
+	執行 class of main with other lib
+		java -cp "lib/*;target" sample
+
+	執行 class of main with 參數 with other lib
+		java -cp "lib/*;target" sample "參數1" "參數2"

@@ -18,7 +18,7 @@ tar.gz
 	#壓縮 test 資料夾變 test.tar.gz
 		tar -czf test.tar.gz test
 	#壓縮並保留權限
-			tar -czpf test.tar.gz test
+		tar -czpf test.tar.gz test
 
 	#解壓縮
 		tar -zxf test.tar.gz

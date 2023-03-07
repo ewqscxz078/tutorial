@@ -1,0 +1,31 @@
+==========================================================================================
+================================== merge =================================================
+==========================================================================================
+git merge [branchName] --no-edit --no-ff
+	https://stackoverflow.com/questions/24609146/stop-git-merge-from-opening-text-editor
+		--no-edit // 代表 merge 時不會跳出編輯器的畫面
+	https://medium.com/@fcamel/%E4%BD%95%E6%99%82%E8%A9%B2%E7%94%A8-git-merge-no-ff-d765c3a6bef5
+	https://stackoverflow.com/questions/9069061/what-effect-does-the-no-ff-flag-have-for-git-merge
+		--no-ff // 代表不 fastforward merge， ff 代表會縮減節點，讓節點比較乾淨而已
+
+當 binary檔(doc pdf jar) merge 後有衝突
+可使用
+
+<<<<<<< HEAD
+chocolate
+=======
+boycott
+>>>>>>> upstream
+
+# merge 後再下以誰為準指令
+git checkout --ours word.txt    # => chocolate {<<<<<<< HEAD .... =======}
+git checkout --theirs word.txt  # => boycott {======= .... >>>>>>> upstream}
+
+merge 常例
+	both modified
+	both add
+	deleted by them(一邊修改，一邊刪除)
+		https://stackoverflow.com/questions/1380670/how-do-i-fix-a-merge-conflict-due-to-removal-of-a-file-in-a-branch
+
+# 中斷 merge
+	git merge --abort

@@ -1,0 +1,163 @@
+==========================================================================================
+=================================== debug git ============================================
+==========================================================================================
+https://stackoverflow.com/questions/6178401/how-can-i-debug-git-git-shell-related-problems
+https://git-scm.com/book/en/v2/Git-Internals-Environment-Variables#Debugging
+set -x; GIT_TRACE=2 GIT_CURL_VERBOSE=2 GIT_TRACE_PERFORMANCE=2 GIT_TRACE_PACK_ACCESS=2 GIT_TRACE_PACKET=2 GIT_TRACE_PACKFILE=2 GIT_TRACE_SETUP=2 GIT_TRACE_SHALLOW=2 git pull origin master -v -v; set +x
+
+	Git has a fairly complete set of traces embedded which you can use to debug your git problems.
+	To turn them on, you can define the following variables:
+
+	GIT_TRACE for general traces,
+	GIT_TRACE_PACK_ACCESS for tracing of packfile access,
+	GIT_TRACE_PACKET for packet-level tracing for network operations,
+	GIT_TRACE_PERFORMANCE for logging the performance data,
+	GIT_TRACE_SETUP for information about discovering the repository and environment it’s interacting with,
+	GIT_MERGE_VERBOSITY for debugging recursive merge strategy (values: 0-5),
+	GIT_CURL_VERBOSE for logging all curl messages (equivalent to curl -v),
+	GIT_TRACE_SHALLOW for debugging fetching/cloning of shallow repositories.
+	Possible values can include:
+
+	true, 1 or 2 to write to stderr,
+	an absolute path starting with / to trace output to the specified file
+
+一般使用方式
+	GIT_CURL_VERBOSE=1 GIT_TRACE=1 git [操作]
+
+==========================================================================================
+=================================== 基本操作 =============================================
+==========================================================================================
+
+window 更新 git version
+	git update-git-for-windows
+
+初始 git
+	git init
+
+status -- 狀態確認
+	git status
+
+list add file when status too many
+	git diff --name-only --cached
+
+add -- 加入暫存區
+	指定單一支程式加入
+		git add xxxx [xxxx代表程式]
+
+	指定 sh 有執行權限
+		git update-index --add --chmod=+x <shell name>.sh
+
+	指定副檔名為java的都加入
+		git add *.java
+
+	全部檔案加入
+		git add .
+		git add --all
+
+commit	-- 紀錄到本機
+	git commit -m yyyy  [yyyy代表註解]
+	git commit --no-verify -m yyyy  [yyyy代表註解] [--no-verify代表不經過hook檢查]
+
+push	-- 紀錄到server
+	git push
+
+ git push origin HEAD:sris // commit 到遠端分支
+
+only local branch
+	git branch
+local and remote branch
+	git branch -a
+local update origin branch 資訊
+	git remote update origin --prune
+
+==========================================================================================
+================================== git url ===============================================
+==========================================================================================
+#取得 git url
+	git remote -v	// url=
+
+#驗證 url 是否有效
+	git ls-remote <url>
+
+==========================================================================================
+================================== 清 cache ==============================================
+==========================================================================================
+$ git pull
+Auto packing the repository in background for optimum performance.
+See 'git help gc' for manual housekeeping.
+Enumerating objects: 246601
+
+then
+	git gc
+	git prune
+就正常
+
+==========================================================================================
+================================== git object 操作 =======================================
+==========================================================================================
+https://stackoverflow.com/questions/56867629/how-to-read-file-content-from-git-objects
+	git cat-file -p <object name>
+	git ls-tree
+	git ls-files -s
+
+==========================================================================================
+==================================常見操作問題============================================
+==========================================================================================
+操作常見錯誤 當push後出現
+https://dotblogs.com.tw/wasichris/2017/09/19/014354
+
+Q:當push後出現
+	error: failed to push some refs to 'https://sris.pj/git/greenc.git'
+	hint: Updates were rejected because the remote contains work that you do
+	hint: not have locally. This is usually caused by another repository pushing
+	hint: to the same ref. You may want to first integrate the remote changes
+	hint: (e.g., 'git pull ...') before pushing again.
+	hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+
+A:原因:代表push的時候有其他人commit遠端最新版，造成本機最新版與遠端最新版有差異
+	盡可能push記得先pull，避免要額外處理以下動作
+	若忘記先pull，則會有以下兩種方法
+		方法一
+			1.git pull
+			2.commit merge(遠端最新與本機最新)後再
+			3.gi push
+		方法二
+			1.git pull --rebase
+			2.gi push
+
+Q:當push 上去發現其他額外警告訊息
+	ex:
+		== sris-rs-app[issue/546]: push ==
+		....
+		remote: - sris-rs-app -
+		remote: warning: The last gc run reported the following. Please correct the root cause
+		remote: and remove gc.log.
+		remote: Automatic cleanup will not be performed until the file is removed.
+		remote:
+
+		remote: warning: There are too many unreachable loose objects; run 'git prune' to remove them.
+		remote:
+		To https://sris.pj/git/ris/sris-rs-app.git
+	   7e808aa64..9676653b0  issue/546 -> issue/546
+
+A:https://stackoverflow.com/questions/37732141/whole-team-gets-too-many-unreachable-loose-objects-messages
+  https://confluence.atlassian.com/bitbucketserverkb/pushing-to-bitbucket-server-reports-there-are-too-many-unreachable-loose-objects-825788622.html
+  https://stackoverflow.com/questions/41771089/trigger-git-prune-automatically-on-git-pull
+		git prune
+		git gc
+
+Q: git clone git pull 出現 fatal: remote error: upload-pack: not our ref
+	大概是傳輸到遠端git時中斷，遠端git 紀錄一半
+	https://stackoverflow.com/questions/4111728/how-do-i-deal-with-corrupted-git-object-files
+	於遠端git
+		find . -size 0 -type f | grep objects | xargs ls -a
+		會發現 0k 的 object/xx/yyyyyy 的檔案
+
+		https://mirrors.edge.kernel.org/pub/software/scm/git/docs/user-manual.html#recovering-from-repository-corruption
+		check 是否有異常
+			git fsck --full --no-dangling
+			發現是 jenkins merge issue DEVELOP/main ref 空的
+A: cd 遠端 git
+	rm -rf refs/heads/DEVELOP/main
+	git pull
+	git remote update origin --prune

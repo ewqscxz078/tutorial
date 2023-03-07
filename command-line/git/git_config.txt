@@ -1,0 +1,81 @@
+==========================================================================================
+================================= git config =============================================
+==========================================================================================
+列舉設定
+	git config --list
+
+列舉設定與涵蓋原始目錄或類型
+	https://stackoverflow.com/questions/60202175/what-is-the-difference-between-global-and-local-configuration-in-git
+	顯示實際位置
+		git config --list  --show-origin
+	顯示配置類型(system、global、local)
+		git config --list  --show-scpoe
+
+	僅 system
+		System: These variables are available for every user in the system
+			[path]/etc/gitconfig.
+				ex: C:/Program Files/Git/etc/gitconfig
+					git config --list --system
+	僅 global
+		Global: Global configurations are available for the current users for all the projects
+			~/.gitconfig or ~/.config/git/config
+				ex: C:/Users/Username/.gitconfig
+					git config --list --global
+	僅 local
+		Local: Local configs are available for the current repository only. You can make git read
+			git config --list --local
+
+
+設定 commit 的作者與 email
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+改變預設 branch(master)
+	git config --global ${your setting name} ${your setting value}
+		ex:	git config --global init.defaultBranch main
+
+移除設定
+	git config --global --unset ${your setting name}
+	or edit online
+		git config --global --edit
+
+https://blog.miniasp.com/post/2018/05/28/Git-Credential-Howto
+	Git 儲存帳號、密碼
+		# 設定自動儲存帳號與密碼，下次不用再打密碼
+		git config --global credential.helper store
+
+		// https://blog.csdn.net/lrs1353281004/article/details/106289737
+		# 不同使用者在同一機器，同一目錄使用不同密碼登入
+		git config credential.helper 'store --file .git/.my-credentials'
+
+	Git 暫存帳號、密碼
+		# 設定自動暫存帳號與密碼（存在記憶體 15 分鐘）
+		git config --global credential.helper cache
+
+		# 指定暫存 1小時
+		git config credential.helper 'cache --timeout=3600'
+
+==========================================================================================
+================================== git config ============================================
+==========================================================================================
+列舉已設定
+	git config --list
+
+檢視部分key 內容
+	git config <key>
+
+編輯全域設定
+	git config --global --edit
+
+vi edit
+	Checkout Windows-style, commit Unix-style
+		core.autocrlf true
+	Checkout as-is, commit Unix-style
+		core.autocrlf input
+	Checkout as-is, commit as-is
+		core.autocrlf false
+
+cmd edit
+	git config --global core.autocrlf true
+	git config --global core.autocrlf input
+	git config --global core.autocrlf false
