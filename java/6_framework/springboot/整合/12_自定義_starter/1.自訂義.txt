@@ -2,6 +2,8 @@ https://www.youtube.com/watch?v=gFz5MLFSQKQ&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#features.developing-auto-configuration.custom-starter
 
+https://www.baeldung.com/spring-boot-custom-starter
+
 1.這個場景需要使用的依賴是什麼
 2.如何編寫自動配置
 
@@ -11,7 +13,7 @@ https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#f
 	@Bean 				// 給容器中增加組件
 
 	@ConfigurationProperties // 結合相關 xxxProperties 類來綁定相關的配置
-	@EnableConnfigurationProperties // 讓 xxxProperties 生效加入到容器中
+	@EnableConfigurationProperties // 讓 xxxProperties 生效加入到容器中
 
 	自動配置類要能加載
 		將需要啟動就加載的自動配置類，配置在
@@ -23,7 +25,7 @@ https://docs.spring.io/spring-boot/docs/current-SNAPSHOT/reference/htmlsingle/#f
 3.模式:
 啟動器(starter)
 	啟動器模塊是一個空 jar文件，僅提供輔助性依賴管理，這些依賴可能用於自動裝配或著其他類庫
-	命名規範:
+	專案命名規範:
 		官方命名空間
 			前墜: spring-boot-starter
 			模式: spring-boot-starter-模塊名

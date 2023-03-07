@@ -1,0 +1,59 @@
+
+ref https://juejin.cn/post/7011877028848910344
+	maven 預設自帶的 build.time 為 美國時區與格式，且未提供可複寫的方式，
+		套用第三方 plugin 複寫
+
+
+	pom.xml
+		<properties>
+			<build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
+
+			<spring-boot.version>2.6.2</spring-boot.version>
+		</properties>
+
+		<!-- 修改 maven build.time 預設時間格式與時區:UTC 美國 => 台灣 -->
+		<plugin>
+			<groupId>org.codehaus.mojo</groupId>
+			<artifactId>build-helper-maven-plugin</artifactId>
+			<version>${build-helper-maven-plugin.version}</version>
+			<executions>
+				<execution>
+					<id>timestamp-property</id>
+					<goals>
+						<goal>timestamp-property</goal>
+					</goals>
+					<configuration>
+						<name>build.time</name>
+						<pattern>yyyyMMdd-HHmmss</pattern>
+						<locale>zh_TW</locale>
+						<timeZone>GMT+8</timeZone>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+
+		<!-- spring boot 打包 jar -->
+		<plugin>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-maven-plugin</artifactId>
+			<version>${spring-boot.version}</version>
+			<configuration>
+				.....
+				<!-- 排除預設 build.time 因為預設是美國時區格式 -->
+				<excludeInfoProperties>
+					<infoProperty>time</infoProperty>
+				</excludeInfoProperties>
+				<!-- add custom build timestamp -->
+				<additionalProperties>
+					<customTimestamp>${build.time}</customTimestamp>
+				</additionalProperties>
+			</configuration>
+			<executions>
+				<execution>
+					<goals>
+						<goal>build-info</goal>
+						<goal>repackage</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>

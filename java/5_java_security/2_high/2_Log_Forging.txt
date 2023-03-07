@@ -19,3 +19,7 @@
 解決方法
 	1. 不要列印未受檢驗核可的 外部參數
 	2. 過濾外部參數後才可將其列印
+		取代方式
+		https://www.baeldung.com/jvm-log-forging
+		https://blog.csdn.net/riemann_/article/details/93358316
+	3. use StringEscapeUtils.escapeJava(....) 包裹打印到 log by 家銘告知的方式

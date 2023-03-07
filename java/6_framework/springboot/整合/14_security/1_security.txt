@@ -19,6 +19,7 @@ https://ithelp.ithome.com.tw/m/articles/10250502
 				return http.build();
 			}
 
+			https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/in-memory.html
 			@Bean
 			public UserDetailsService userDetailsService() {
 				UserDetails user =
@@ -40,3 +41,17 @@ https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-
 		預設使用 csrf 保護
 	開發的專案為後端服務
 		應該使用 csrf().disable()
+
+無登入入口
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(
+				....
+			)
+			.formLogin().disable().htpBasic();
+		return http.build();
+	}
+
+https://www.baeldung.com/spring-security-5-default-password-encoder
+https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/in-memory.html
+	有如何單元測試 spring security

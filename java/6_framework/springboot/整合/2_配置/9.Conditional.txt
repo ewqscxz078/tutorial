@@ -20,7 +20,8 @@
 
 自動配置類需要在一定的條件下才會生效
 
-application.properties
-	debug=true
+如何知道自動配那些生效那些沒生效
+	application.properties
+		debug=true
 
-console 會顯示那些自動配置類生效
+	console 會顯示那些自動配置類生效
