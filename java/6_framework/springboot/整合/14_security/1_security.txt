@@ -1,4 +1,6 @@
 https://spring.io/guides/gs/securing-web/
+https://www.baeldung.com/java-config-spring-security
+
 https://ithelp.ithome.com.tw/m/articles/10250502
 	記憶體帳密範例
 		@Configuration

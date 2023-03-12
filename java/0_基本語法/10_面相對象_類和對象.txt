@@ -1,0 +1,26 @@
+https://www.youtube.com/watch?v=msX-XmnkRCM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=39&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+類 : 結構體, 裡面包含了屬性(特徵)和方法(行為)
+	會有很多對象
+class : 關鍵字(全是小寫)
+類名 : 類的名稱，標示符。遵循規則。一般情況下，類名的首寫字母是大寫
+
+對象: 類的實例化(具象化)
+	new 類名()，下括號需要增加
+	new 也是關鍵字，表示創建一個具體的對象，而且使用一次創建一次，每次都是全新的
+
+一般 new 出來的對象賦值給變量，方便重複使用
+變量的類型就是對象的類型
+對象是將內存地址賦值給變量，所以變量其實引用了內存中的對象，所以稱之為引用變量
+而變量的類型稱之為引用數據類型
+User user = new User();
+
+https://www.baeldung.com/java-stack-heap
+	User user 紀錄在 jvm 裡的 棧(方法、變量)/stack
+	user 紀錄在 jvm 裡的 堆(對象)/heap
+	User() 紀錄在 jvm 裡的 元空間(類的訊息)/metadata
+		stack 透過 metadata 參考生成在 heap 對象
+
+特殊的對象 : 空對象(null)，沒有引用的對象，稱之為空對象，關鍵字對象
+所有引用類型變量的默認取值就是 null
+User user = null;

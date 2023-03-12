@@ -1,0 +1,122 @@
+https://www.youtube.com/watch?v=jzZfhKL0PDM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=37&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+面向物件/對象
+	分析問題時，以問題所涉及到的事或物為中心的分析方式
+
+	1. 類和對象
+		類表示歸納與整理
+		對象表示具體的事物
+
+		基本語法結構:
+			創建類
+				class 類名 {
+					特徵(屬性),
+					功能(方法)
+				}
+			創建對象
+				new 類名();
+
+
+		// 問題: 作一到菜, 紅燒排骨
+		// 類: 菜, 對象: 紅燒排骨
+
+		// TODO 1. 先聲明類
+		// TODO 2. 創建對象
+		// TODO 3. 聲明屬性 ；就是類中的變數
+		//			變數類型  變數名稱 = 變數值
+		//			屬性類型  屬性名稱 = 屬性值
+		// TODO 4. 聲明方法
+		//			void 方法名(參數){功能代碼}
+		// TODO 5. 執行方法
+		//			對象.方法名()
+		class Cooking {
+			// 特徵(屬性)
+			// 名字
+			String name;
+			// 菜的類型
+			String type = "紅燒"
+			// 食材
+			String food;
+			// 佐料
+			String relish = "大料"
+
+			// TO 執行
+			void execute(){
+				System.out.println("準備食材" + food);
+				System.out.println("準備佐料" + relish);
+				System.out.println("開始亨飪");
+				System.out.println(name + "亨飪完成");
+			}
+		}
+
+		// 引用數據類型
+		Cooking c = new Cooking();
+		c.name = "紅燒排骨";
+		c.food = "排骨";
+		c.execute();
+
+		Cooking c = new Cooking();
+		c.name = "紅燒魚";
+		c.food = "鯖魚";
+		c.execute();
+
+
+	https://www.youtube.com/watch?v=PtHWNsuINkc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=39&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+	案例分析
+		1. 對象 : 有貓、有狗
+			class Animal {
+				String type;
+				String name;
+				void run(){
+					System.out.println(type + " " + name + "跑開了");
+				}
+			}
+			Animal a1 = new Animal();
+			a1.type = "貓";
+			a1.name = "小黑";
+			a1.run();
+
+			Animal a2 = new Animal();
+			a2.type = "狗";
+			a2.name = "大黃";
+			a2.run();
+
+		2. 對象 : 狗 兩隻 : 小黑、小白
+			class Dog {
+				String color;
+				String name;
+				void run(){
+					System.out.println(color + " " + name + "跑開了");
+				}
+			}
+			Dog a1 = new Dog();
+			a1.color = "white";
+			a1.name = "小白";
+			a1.run();
+
+			Dog a2 = new Dog();
+			a2.color = "black";
+			a2.name = "小黑";
+			a2.run();
+
+		3. 對象 : 老師、學生
+			class Teacher {
+				String name;
+				void teach(){
+					System.out.println(name + "在講課");
+				}
+			}
+			class Student {
+				String name;
+				void study(){
+					System.out.println(name + "在聽課");
+				}
+			}
+
+			Teacher t = new Teacher();
+			t.name = "張三";
+			a1.teach();
+
+			Student s = new Student();
+			s.name = "李四";
+			s.study();

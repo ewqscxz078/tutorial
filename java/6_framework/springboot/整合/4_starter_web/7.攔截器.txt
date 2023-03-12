@@ -1,5 +1,11 @@
+filter vs 攔截器
+	https://www.readfog.com/a/1636486590853386240
+
+
 https://www.youtube.com/watch?v=PMaonqe9XCU&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=48&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
-spring 透過 aop 攔截目標 url，提供 執行目標方法前後與完成的複寫函數
+
+spring 透過 aop 攔截目標 url，提供 執行目標方法前後與完成的覆寫函數
+	好處 : 不依賴容器
 
 web filter > DispatcherServlet  > Interceptor 	> 			controller > service > ...
 											prehandle

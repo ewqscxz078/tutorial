@@ -1,0 +1,181 @@
+https://www.baeldung.com/java-testing-multithreaded
+
+	測試模擬
+		public class MyCounter {
+			private int count;
+			public void increment() {
+				int temp = count;
+				count = temp + 1;
+			}
+			// Getter for count
+		}
+
+		Testing Non-Concurrent Parts
+			@Test
+			public void testCounter() {
+				MyCounter counter = new MyCounter();
+				for (int i = 0; i < 500; i++) {
+					counter.increment();
+				}
+				assertEquals(500, counter.getCount());
+			}
+			非並行情況下皆正常
+
+		 First Attempt at Testing With Concurrency
+			@Test
+			public void testCounterWithConcurrency() throws InterruptedException {
+				int numberOfThreads = 10;
+				ExecutorService service = Executors.newFixedThreadPool(10);
+				CountDownLatch latch = new CountDownLatch(numberOfThreads);
+				MyCounter counter = new MyCounter();
+				for (int i = 0; i < numberOfThreads; i++) {
+					service.execute(() -> {
+						counter.increment();
+						latch.countDown();
+					});
+				}
+				latch.await();
+				assertEquals(numberOfThreads, counter.getCount());
+			}
+
+			並行情況下幾乎都失敗
+			if we start increasing the number of threads, say to 100, we will see that the test starts to fail most of the time.
+
+
+		A Better Attempt at Testing With Concurrency
+			public class MyCounter {
+				private int count;
+				public synchronized void increment() throws InterruptedException {
+					int temp = count;
+					wait(100);
+					count = temp + 1;
+				}
+				// Getter for count
+			}
+
+			@Test
+			public void testSummationWithConcurrency() throws InterruptedException {
+				int numberOfThreads = 2;
+				ExecutorService service = Executors.newFixedThreadPool(10);
+				CountDownLatch latch = new CountDownLatch(numberOfThreads);
+				MyCounter counter = new MyCounter();
+				for (int i = 0; i < numberOfThreads; i++) {
+					service.submit(() -> {
+						try {
+							counter.increment();
+						} catch (InterruptedException e) {
+							// Handle exception
+						}
+						latch.countDown();
+					});
+				}
+				latch.await();
+				assertEquals(numberOfThreads, counter.getCount());
+			}
+			我們只用兩個線程運行它，而且我們很可能能夠找到我們遺漏的缺陷。
+			我們在這裡所做的是嘗試實現特定的線程交錯，我們知道這會影響我們。
+			雖然有利於演示，但我們可能發現這對實際用途沒有用。
+
+	隨著線程數量的增加，它們交錯的可能方式數量呈指數級增長。
+	不可能弄清楚所有這些交錯並為它們進行測試。 我們必須依靠工具來為我們承擔相同或相似的努力。
+	幸運的是，有幾個可以讓我們的生活更輕鬆。
+	我們可以使用兩大類工具來測試並發代碼。 第一個使我們能夠對具有許多線程的並發代碼產生相當高的壓力。 壓力會增加罕見交錯的可能性，從而增加我們發現缺陷的機會。
+	第二個使我們能夠模擬特定的線程交錯，從而幫助我們更確定地發現缺陷。
+
+	專門的多執行緒測試工具，非置入性的測試
+		tempus-fugit : 第三方 java lib
+			併發10個thread、重複10次
+			public class MyCounterTests {
+				@Rule
+				public ConcurrentRule concurrently = new ConcurrentRule();
+				@Rule
+				public RepeatingRule rule = new RepeatingRule();
+				private static MyCounter counter = new MyCounter();
+
+				@Test
+				@Concurrent(count = 10)
+				@Repeating(repetition = 10)
+				public void runsMultipleTimes() {
+					counter.increment();
+				}
+
+				@AfterClass
+				public static void annotatedTestRunsMultipleTimes() throws InterruptedException {
+					assertEquals(counter.getCount(), 100);
+				}
+			}
+
+		Thread Weaver : 多線程測試 框架
+			允許我們以多種方式交錯執行兩個單獨的線程，而不必擔心如何交錯。 它還使我們有可能對我們希望線程交錯的方式進行細粒度控制。
+			public class MyCounterTests {
+				private MyCounter counter;
+
+				@ThreadedBefore
+				public void before() {
+					counter = new MyCounter();
+				}
+				@ThreadedMain
+				public void mainThread() {
+					counter.increment();
+				}
+				@ThreadedSecondary
+				public void secondThread() {
+					counter.increment();
+				}
+				@ThreadedAfter
+				public void after() {
+					assertEquals(2, counter.getCount());
+				}
+
+				@Test
+				public void testCounter() {
+					new AnnotatedTestRunner().runTests(this.getClass(), MyCounter.class);
+				}
+			}
+
+		MultithreadedTC : 多線程測試 框架
+			public class MyTests extends MultithreadedTestCase {
+				private MyCounter counter;
+				@Override
+				public void initialize() {
+					counter = new MyCounter();
+				}
+				public void thread1() throws InterruptedException {
+					counter.increment();
+				}
+				public void thread2() throws InterruptedException {
+					counter.increment();
+				}
+				@Override
+				public void finish() {
+					assertEquals(2, counter.getCount());
+				}
+
+				@Test
+				public void testCounter() throws Throwable {
+					TestFramework.runManyTimes(new MyTests(), 1000);
+				}
+			}
+
+		Java jcstress : 並發壓力測試
+			@JCStressTest
+			@Outcome(id = "1", expect = ACCEPTABLE_INTERESTING, desc = "One update lost.")
+			@Outcome(id = "2", expect = ACCEPTABLE, desc = "Both updates.")
+			@State
+			public class MyCounterTests {
+
+				private MyCounter counter;
+
+				@Actor
+				public void actor1() {
+					counter.increment();
+				}
+				@Actor
+				public void actor2() {
+					counter.increment();
+				}
+				@Arbiter
+				public void arbiter(I_Result r) {
+					r.r1 = counter.getCount();
+				}
+			}

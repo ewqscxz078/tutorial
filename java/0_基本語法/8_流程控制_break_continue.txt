@@ -1,0 +1,19 @@
+https://www.youtube.com/watch?v=nsR1noMB10E&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=35&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+流程控制
+	重複執行 break 中斷執行
+		for (int age = 0 ; age < 40 ; age++){
+			if( age == 4 ){
+				break; // 中斷迴圈
+			} else {
+				System.out.println( "年齡" + age );
+			}
+		}
+	重複執行 continue 跳過執行
+		for (int age = 0 ; age < 40 ; age++){
+			if( age == 4 ){
+				break; // 跳過 4 的執行
+			} else {
+				System.out.println( "年齡" + age );
+			}
+		}

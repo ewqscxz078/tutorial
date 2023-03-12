@@ -94,3 +94,34 @@
 					}
 					// 分支1
 		3.重複執行
+			https://www.youtube.com/watch?v=LAoe1MDfPOE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=32&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			while : 判斷條件表達式後循環
+				// while ( 條件表達式 ) { 循環代碼 }
+				// 當條件表達是 true ，則重複執行括號內代碼，反之跳出
+				int age = 40;
+				while ( age < 40 ){
+					System.out.println( "重複執行" );
+					age++;
+				}
+
+			https://www.youtube.com/watch?v=GBTS9o9rSH0&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=32&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			do .... while : 循環後判斷條件表達式，也就是至少執行一次
+				// do { 循環代碼 } while ( 條件表達式 )
+				int age = 40;
+				do {
+					System.out.println( "重複執行" );
+					age++;
+				} while ( age < 40 )
+
+			https://www.youtube.com/watch?v=pFBiXGXYr6Q&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=33&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+			for :
+				// for( 初始化表達式 ; 條件表達式 ; 更新表達式 ){ 循環代碼 }
+				int age = 30;
+				// 無限循環
+				for ( ; age < 40 ; ){
+					System.out.println( "重複執行" );
+				}
+				// 有限循環
+				for (int age = 0 ; age < 40 ; age++){
+					System.out.println( "重複執行" );
+				}
