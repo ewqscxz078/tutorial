@@ -1,7 +1,7 @@
 \t not wok in grep
 https://askubuntu.com/questions/53071/how-to-grep-for-tabs-without-using-literal-tabs-and-why-does-t-not-work
 
-
+https://www.hy-star.com.tw/tech/linux/filter/filter.html#egrep
 ===================================================================
 ========================= grep ====================================
 ===================================================================
@@ -81,3 +81,24 @@ grep 結果放在 loop
 	grep xyz abc.txt | while read -r line ; do
 		echo "Processing $line"
 	done
+
+要搜尋的字串有〝-〞就要用 grep -e 來區別說〝-〞接的不是選項,而是要搜尋有字元〝-〞的字串
+	$ cat my_file ←例如有檔案〝my_file〞內容如下:
+	Introduction to Linux
+	Linux is a muti-user & muti-task OS
+
+	$ grep -e '-user' my_file ←搜尋檔案〝my_file〞中的字串'-user'
+	Linux is a muti-user & muti-task OS
+
+多重字串搜尋
+	$ grep -ne 'mail' -ne 'news' /etc/passwd ←搜尋字串〝mail〞&〝news〞並列出行號
+	9:mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+	10:news:x:9:13:news:/etc/news:
+	27:mailnull:x:47:47::/var/spool/mqueue:/sbin/nologin
+
+grep -q 不顯示輸出(安靜模式)常用於腳本語言作程式的判斷用
+	grep -q 'google' re.txt && cp re.txt re.txt~ ←如果檔案〝reg.txt〞有字串〝google〞,就備份此檔
+
+grep -F 為不用正規表示法解讀 => fgrep // 針對非正則表示法時搜尋加速
+grep -E 為用延伸正規表示法來匹配 => egrep
+zgrep for 縮壓檔搜尋
