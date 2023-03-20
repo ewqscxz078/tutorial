@@ -1,0 +1,107 @@
+https://www.youtube.com/watch?v=6K1da4vzh1c&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=45&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+棧(heap) : 變數
+
+堆(stack) : 物件
+
+元空間/靜態方法區 : 類/靜態成員、靜態方法
+
+public void main(String[] args){
+	// 面向對象- 靜態方法
+
+	// 先有類才有對象
+	// 成員方法可以訪問靜態方法屬性與靜態方法
+	// 靜態方法不可以訪問成員方法屬性與成員方法
+
+	Test t = new Test();
+	t.sex = "女";
+	t.test();	// test....
+	t.test1();	// test1....
+	Test.test1();	// test1....
+
+	t.test2();		// test1....
+					// 女
+}
+
+class Test(){
+	String name;
+	static String sex;
+
+	void test(){
+		System.out.println("test....");
+	}
+
+	static void test1(){
+		System.out.println("test1....");
+	}
+
+	void test2(){
+		test1();
+		System.out.println(sex);
+	}
+
+	static void test2(){
+		test(); // 編譯錯誤
+		System.out.println(sex); // 編譯錯誤
+	}
+}
+
+========================================================================================================================
+
+public void main(String[] args){
+	// 面向對象- 靜態初始化
+
+	// 類的訊息加載完成後，會自動調用靜態初始區塊，可以完成靜態屬性的初始化功能
+
+	User08.test(); // 靜態初始區塊
+				   // test....
+
+	new User08();	// 靜態初始區塊
+}
+
+class User08(){
+	static {
+		// 靜態初始區塊
+		System.out.println("靜態初始區塊");
+	}
+	static void test(){
+		System.out.println("test....");
+	}
+}
+
+========================================================================================================================
+public void main(String[] args){
+	// 面向對象- 靜態初始化
+
+	// 類的訊息加載完成後，會自動調用靜態初始區塊，可以完成靜態屬性的初始化功能
+
+	new User08();	// 靜態初始區塊1
+					// 靜態初始區塊2
+}
+
+class User08(){
+	static {
+		// 靜態初始區塊1
+		System.out.println("靜態初始區塊1");
+	}
+	static {
+		// 靜態初始區塊2
+		System.out.println("靜態初始區塊2");
+	}
+}
+
+========================================================================================================================
+public void main(String[] args){
+	// 面向對象- 對象初始化
+
+	// 對象準備創建時，也會自動調用初始區塊，但不是靜態的，可以完成對象屬性的初始化功能
+
+	new User08();	// 初始區塊1
+}
+
+class User08(){
+	{
+		// 初始區塊1
+		System.out.println("初始區塊1");
+	}
+}

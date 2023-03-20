@@ -1,0 +1,43 @@
+https://www.youtube.com/watch?v=A26GtqP3SJI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=42&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public void main(String[] args){
+	// 面向對象- 方法
+	// 使用外部參數控制方法內部實現的操作, 使用的是參數語法實現，也叫方法參數
+	// 語法 : 方法名(參數類型 參數名稱)
+	// 參數列表
+	// 語法 : 方法名(參數類型1 參數名稱1, 參數類型2 參數名稱2)
+
+	User07 user = new User07();
+	user.sayHello("張三", 30);
+
+	// 當方法傳遞多個參數時, 需要注意:
+	// 1. 參數個數需要匹配
+	// 2. 參數類型需要匹配
+	// 3. 參數順序需要匹配
+
+	// 4. 當參數個數不確定，但是類型相同時，可以採用特殊的參數語法聲明: 可變參數
+	//    如果參數包含其他涵義的參數，那麼可變參數應該聲明在最後
+	// 語法 : 參數類型... 參數名稱
+	user.test();
+	user.test("張三");
+	user.test("張三", "李四");
+
+	user.test2(30);
+	user.test2(30, "張三");
+	user.test2(30, "張三", "李四");
+}
+
+class User07 {
+
+	void sayHello(String name , int age){
+		System.out.println("Hello" + name + ", " + age);
+	}
+
+	void test(String... name){
+		System.out.println("Hello" + name + age);
+	}
+
+	void test2(int age, String... name){
+		System.out.println("Hello" + name + age);
+	}
+}

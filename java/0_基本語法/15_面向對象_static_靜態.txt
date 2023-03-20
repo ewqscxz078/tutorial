@@ -1,0 +1,32 @@
+https://www.youtube.com/watch?v=l1Up4clCIow&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=45&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public void main(String[] args){
+	// 面向對象- 靜態
+	// 針對於具體對象的屬性稱之為 對象屬性/成員屬性/實例屬性
+	// 針對於具體對象的方法稱之為 對象方法/成員方法/實例方法
+	// 把和對象無關，只和類相關的稱之為靜態
+	// 和類相關的屬性稱之為 靜態屬性
+	// 和類相關的方法稱之為 靜態方法
+	// 靜態語法就是在屬性與方法前端前增加 static 關鍵字
+
+	Chinese c = new Chinese();
+	c.name = "張三";
+	System.out.println("hello " + c.name + ", " + c.nationally);
+
+	Bird.fly();
+	System.out.println(Bird.type);
+}
+
+class Bird(){
+	static String type = "鳥";
+
+	static void fly(){
+		System.out.println("飛....");
+	}
+}
+
+class Chinese(){
+	String name;
+
+	String nationally = "中國";
+}

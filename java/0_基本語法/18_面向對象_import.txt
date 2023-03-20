@@ -1,0 +1,30 @@
+https://www.youtube.com/watch?v=lYG-O8-19x8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=47&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+package test
+
+public class Java10_Object_import {
+
+	public void main(String[] args){
+		// 面向對象- import
+		// import 主要用於使用類前準備好了(想成告訴去哪個資料夾可以找到指定類)
+		// import 語句只能使用在 package 後，class 前
+		// import 關鍵字可以多次使用，導入多個類
+		// 如果同一個包中需要導入大量的類，可以使用星號來簡化操作
+		// ex : import java.*
+		// 如果 import 了不同包中相同的類，那麼還是需要使用完整包名路徑以利區別
+
+		// jdk 以內建嵌入常見 import，故可省略
+		java.lang.String name = "張三";
+		String name = "張三";
+
+		java.util.Date d = new java.util.Date();
+		new ArrayList();
+
+		// 同一個包內可以直接使用，包含內部類別
+		new User10();
+
+	}
+
+	class User10{
+	}
+}

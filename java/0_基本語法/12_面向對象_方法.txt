@@ -1,0 +1,45 @@
+https://www.youtube.com/watch?v=DMtQKmYHd4Q&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=41&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public void main(String[] args){
+	// 面向對象- 方法
+	// 聲明的語法 : void 方法名(){ 邏輯代碼 }
+	// 聲明的語法補充 : [方法的返回值類型]/[void] 方法名(){ 邏輯代碼 }
+	// 這裡的 void 表示方法的結果: 沒有結果
+
+	// 方法的調用方式 : 對象.方法名()
+
+	// 案例: 使用用戶帳戶和密碼進行登錄
+	// 名詞: 用戶、帳戶、密碼
+	// 動詞: 登錄
+
+	User06 user = new User06();
+	boolean registerResult = user.register();
+	if( registerResult ){
+		System.out.println("註冊成功");
+		boolean loginResult = user.login();
+		if( loginResult ){
+			System.out.println("登錄成功");
+		} else {
+			System.out.println("登錄失敗");
+		}
+	} else {
+		System.out.println("註冊失敗");
+	}
+}
+
+class User06 {
+	String account;
+	String password;
+
+	boolean register(){
+		System.out.println("用戶註冊");
+		// 返回結果
+		return true;
+	}
+
+	boolean login(){
+		System.out.println("用戶登錄");
+		// 返回結果
+		return false;
+	}
+}

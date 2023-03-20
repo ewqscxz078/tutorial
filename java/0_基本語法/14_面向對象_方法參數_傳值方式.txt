@@ -1,0 +1,38 @@
+https://www.youtube.com/watch?v=V8Rmn6o8nfE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=43&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public void main(String[] args){
+	// 面向對象- 方法參數 - 傳值方式
+	// Java 方法參數的傳遞為 : 值傳遞
+	// 基本型態類型 : 數值
+	// 引用數據類型 : 引用地址
+
+	int i = 10;	 				// heap([ main : int i =10; ])
+	test(i);	 				// heap([ test : i = 10; i = i +1;] [ main : int i =10; ]  )
+	System.out.println(i);  	// heap([ main : int i =10; System.out.println(i); ] ) => 所以印出 10
+
+	String s = "abc";	 		// heap([ main : String s; ]) stack([ s ref abc ])
+	test(s);	 				// heap([ test : s = "abc"; s = s +10;] ) stack([ s ref abc, new s ref abc10 ])
+	System.out.println(s);   	// heap([ main : String s; System.out.println(s); ] stack([ s ref abc ) => 所以印出 abc
+
+	User user = new User();		// heap([ main : User user; ]) stack([ user ref new User() ])
+	user.name = "張三";			// heap([ main : User user; user.name; ]) stack([ user ref new User(), user.name ref new User().name = 張三])
+	test(user);	 				// heap([ test : User s; s.name;] ) stack([ s ref new User(), s.name ref new User().name= 李四 ])
+	System.out.println(user);   // heap([ main : User user; user.name; System.out.println(s);] stack([ user ref new User(), s.name ref new User().name= 李四 ) => 所以印出 李四
+
+}
+
+public static void test(int i){
+	i = i + 1;
+}
+
+public static void test(String s){
+	s = s + 10;
+}
+
+public static void test(User s){
+	s.name = "李四";
+}
+
+class User(){
+	String name;
+}

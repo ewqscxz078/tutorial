@@ -1,0 +1,19 @@
+https://www.youtube.com/watch?v=XL-e3lZtAow&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=47&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+package ${通常小寫以利區別 class Name 駱駝式命名}
+
+public void main(String[] args){
+	// 面向對象- package - 包
+	// package 中包含類
+	// 基本語法 : package 包完整路徑;
+	// 路徑中的多個包使用點隔開
+	// 主要功能用於分類管理
+
+	// 一個類可以沒有包，但是 package 不可以在同一個源碼文件中使用多次
+	// 包名為了區分類名，所以一般全都是小寫
+	// ex : java.lang.Object
+
+	// java 中存在不同包的相同名稱的類，可以使用包進行分類
+	// 一般情況下，在使用類的情況下，我們都會使用類的全名(包名+類型)
+	new java.util.Date();
+}
