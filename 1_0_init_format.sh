@@ -6,7 +6,12 @@ func_2unix(){
   # unix : filename.txt: ASCII text
   # 使用「od」指令來查看檔案的十六進位表示，看是否包含「0d 0a」（即「CR+LF」）
   # od -c filename.txt
-  find -type f -name "*.txt" | xargs dos2unix
+  # find -type f -name "*.txt" | xargs dos2unix
+  result=`find . -type f -name "*.txt" -print0 | xargs -0 file | grep "CRLF" | awk -F ":" '{print $1}'`
+  #echo $result
+  for target in $result; do
+    dos2unix $target
+  done
 }
 
 func_replaceTailTab(){
@@ -30,16 +35,11 @@ main(){
   func_reqlaceTailSpace
 }
 
-check_non_unix_new_line(){
-  find . -type f -name "*.txt" -print0 | xargs -0 file | grep "CRLF"
-}
 check_tailTab(){
   egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js}
 }
 check_tailSpace(){
   egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js}
 }
-
-
 
 main
