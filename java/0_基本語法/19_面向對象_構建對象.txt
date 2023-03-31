@@ -1,0 +1,66 @@
+https://www.youtube.com/watch?v=RtcF36dfEFk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=49&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public class Java11_Object {
+
+	public void main(String[] args){
+		// 面向對象- 構建對象
+
+		// 構造方法 : 專門用於對象
+		// 如果一個類中沒有任何的構造方法，那JVM會自動添加一個公共的，無參的構造方法，方便對象的調用
+		// 基本語法 : 類名 (){}
+		// 1. 構造方法也是方法，但是沒有 void 關鍵字
+		// 2. 方法名和類完全相同
+		// 3. 如果類中沒有構造方法，那麼 JVM 會提供默認的構造方法
+		// 4. 如果類中有構造方法，那麼 JVM 不會提供默認的構造方法
+		// 5. 構造方法也是方法，所以也可以傳遞參數，但是一般傳遞參數的目的是用於對象屬性的賦值
+
+		// 驗證建構方法打印的時間點
+		System.out.println("before user11....");
+		User11 user = new User11();			// user11....
+		System.out.println("after user11....");
+		user.test();
+
+		// 驗證建構方法傳參後，對象可存取
+		User11 user2 = new User11("張三");					// user11 with name ....
+		System.out.println("user11 : " + user2.usuername);	// user11 : 張三
+
+		// 6. 代碼塊在構造對象之前執行的
+															// 1. before create user11 ....
+															// 2. before create user11 ....
+															// 3. before create user11 ....
+		System.out.println("before user11....");			// before user11....
+		User11 user = new User11();							// user11....
+		System.out.println("after user11....");				// after user11....
+	}
+
+}
+
+class User11{
+
+	String username;
+
+	{
+		System.out.println("1 before create user11 ....");
+	}
+
+	User11(){
+		System.out.println("user11....");
+	}
+
+	{
+		System.out.println("2 before create user11 ....");
+	}
+
+	User11(String name){
+		username = name;
+		System.out.println("user11 with name ....");
+	}
+
+	{
+		System.out.println("2 before create user11 ....");
+	}
+
+	void test(){
+		System.out.println("test....");
+	}
+}

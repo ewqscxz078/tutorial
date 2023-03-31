@@ -1,0 +1,45 @@
+https://www.youtube.com/watch?v=FN6PJtCcdrI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=53&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+
+public class Java24_Object {
+
+	public void main(String[] args){
+		// 面向對象- 多載/重載 overload
+
+		// 一個類中，不能重複聲明相同的方法，也不能聲明相同屬性
+		// 所謂相同的方法是指 方法名、參數列表相同，和返回類型無關
+		// 如果方法名相同，但是參數列表(個數、順序、類型)不相同，會認為是不同的方法，只不會名稱一樣
+		// 這個操作在 java 稱之為方法的重載
+
+		User u = new User();	// user....
+		u.login(111);			// 手機驗證碼登入
+		u.login("123");			// 第三方登入
+		u.login("act","mima");	// 帳密登入
+
+		User u1 = new User("張三");	// user.... 張三
+	}
+}
+
+class User{
+
+	User(){
+		System.out.println("user....");
+	}
+
+	User(String name){
+		System.out.println("user...."+ name);
+	}
+
+
+	void login(String account, String password){
+		System.out.println("帳密登入");
+	}
+
+	void login(int tel){
+		System.out.println("手機驗證碼登入");
+	}
+	void login(String secret){
+		System.out.println("第三方登入");
+	}
+
+}

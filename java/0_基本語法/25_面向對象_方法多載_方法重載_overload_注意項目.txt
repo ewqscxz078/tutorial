@@ -1,0 +1,141 @@
+https://www.youtube.com/watch?v=wo39XcsAuEk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=54&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+
+public class Java25_Object {
+	public void main(String[] args){
+		// 面向對象- 多載/重載 overload， 建構方法的重載
+
+		// 如果在一個構造方法中，想要調用其他的構造方法，那麼需要使用特殊的關鍵字: this
+		User u = new User();				// 張三, 男
+		User u1 = new User("張三");			// 張三, 男
+		User u2 = new User("張三","男");	// 張三, 男
+	}
+}
+
+class User{
+
+	User(){
+		this("張三");
+	}
+
+	User(String name){
+		this("張三","男");
+	}
+
+	User(String name, String sex){
+		System.out.println(name + ", " + sex);
+	}
+
+}
+============================================================================================================
+
+public class Java25_Object {
+
+	public void main(String[] args){
+		// 面向對象- 多載/重載 overload，基本數據類型方法的重載
+
+		byte b = 10;
+		test(b); // bbb
+
+		test1(b); // sss
+
+		test2(b); // iii
+
+		// byte => 8 精度
+		// short => 16 精度
+		// char => 16 精度
+		// int => 32 精度
+		// 基本數據類型在匹配方法時，可以在數值不變的情況下，擴大數據的精度
+		// byte 類型無法與 char 類型轉換，char 沒有負數，但是 byte 存在負數
+	}
+
+	static void test(byte b){
+		System.out.println("bbb");
+	}
+	static void test(short s){
+		System.out.println("sss");
+	}
+	static void test(char c){
+		System.out.println("ccc");
+	}
+	static void test(int i){
+		System.out.println("iii");
+	}
+
+	static void test1(short s){
+		System.out.println("sss");
+	}
+	static void test1(char c){
+		System.out.println("ccc");
+	}
+	static void test1(int i){
+		System.out.println("iii");
+	}
+
+	static void test2(char c){
+		System.out.println("ccc");
+	}
+	static void test2(int i){
+		System.out.println("iii");
+	}
+}
+
+
+============================================================================================================
+
+public class Java25_Object {
+
+	public void main(String[] args){
+		// 面向對象- 多載/重載 overload，引用數據類型方法的重載
+
+		AAA aaa = new AAA();
+		BBB bbb = new BBB();
+		AAA aaa1 = new BBB();
+
+		test(aaa);		// aaa
+		test(bbb);		// bbb
+
+		test1(aaa1);	// aaa
+
+		test2(aaa1);	// 編譯錯誤
+
+		test3(bbb);		// aaa
+
+		test4(aaa);		// object
+
+		// 多態其實就是約束了對象的使用場景
+		// 方法的重載: 方法名相同，參數列表不同(個數、順序、類型)
+		// AAA -> object
+		// BBB -> AAA -> object
+	}
+
+	static void test(AAA aaa){
+		System.out.println("aaa");
+	}
+	static void test(BBB bbb){
+		System.out.println("bbb");
+	}
+
+	static void test1(AAA aaa){
+		System.out.println("aaa");
+	}
+
+	static void test2(BBB bbb){
+		System.out.println("bbb");
+	}
+
+	static void test3(AAA aaa){
+		System.out.println("aaa");
+	}
+
+	static void test4(Object object){
+		System.out.println("object");
+	}
+}
+
+class AAA {
+}
+
+class BBB extends AAA {
+}

@@ -1,0 +1,28 @@
+https://www.youtube.com/watch?v=7JlhG4MGMII&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=51&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public class Java21_Object {
+
+	public void main(String[] args){
+		// 面向對象- Extends - 繼承
+
+		// 如果父類和子類含有相同的屬性，那麼可以採用特殊的關鍵字進行區分
+		// super / this
+		Child c = new Child();
+		// System.out.println(c.name);
+		c.test();
+	}
+}
+
+class Parent{
+	String name = "張三";
+}
+
+class Child extends Parent {
+	String name = "李四";
+
+	void test(){
+		System.out.println(super.name);
+		System.out.println(this.name);
+		System.out.println(name);
+	}
+}

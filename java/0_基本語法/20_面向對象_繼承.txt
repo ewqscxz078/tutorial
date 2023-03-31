@@ -1,0 +1,30 @@
+https://www.youtube.com/watch?v=ZVcEKHDbCLc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=49&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public class Java20_Object {
+
+	public void main(String[] args){
+		// 面向對象- Extends - 繼承
+
+		// 面向對象中有三個重要特徵 : 繼承、封裝、多型
+		// 類存在父子關係 : 子類可以執行存取到父類的成員屬性與成員方法
+		// 類的繼承只能是單一繼承，一個類只能一個父類，不能存在多個父類
+		// 一個父類可以有多個子類
+
+		// 繼承採用 extends 語法 : 子類 extends 父類
+		Child c = new Child();
+		System.out.println(c.name);
+		c.test();
+	}
+}
+
+class Parent{
+
+	String name = "張三";
+
+	void test(){
+		System.out.println("test....");
+	}
+}
+
+class Child extends Parent {
+}

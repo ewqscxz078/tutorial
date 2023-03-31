@@ -1,0 +1,46 @@
+https://www.youtube.com/watch?v=eE4nPI-l-oo&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=51&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public class Java23_Object {
+
+	public void main(String[] args){
+		// 面向對象- 多型/多態 Polymorphism
+
+		// 所謂的多態，其實就是一個對象在不同場景下表現出來的不同狀態和型態
+		// 多態語法其實就是對對象的使用場景進行了約束
+		// 一個對象可以使用的功能取決於引用變量的類型
+
+		Persion p = new Persion();
+		p.testPersion();			// test Persion....
+
+		Persion p1 = new Boy();
+		p1.testPersion();			// test Persion....
+		// p1.testBoy(); 編譯失敗因為看不到該 method
+
+		Persion p2 = new Girl();
+		p2.testPersion();			// test Persion....
+		// p1.testGirl(); 編譯失敗因為看不到該 method
+
+	}
+}
+
+class Persion{
+
+	void testPersion(){
+		System.out.println("test Persion....");
+	}
+
+}
+
+class Boy extends Persion {
+
+	void testBoy(){
+		System.out.println("test testBoy....");
+	}
+}
+
+class Girl extends Persion {
+
+	void testGirl(){
+		System.out.println("test testGirl....");
+	}
+}

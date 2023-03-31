@@ -1,0 +1,53 @@
+https://www.youtube.com/watch?v=eE4nPI-l-oo&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=51&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public class Java22_Object {
+
+	public void main(String[] args){
+		// 面向對象- Extends - 繼承
+
+		// 構造方法
+		// 父類對象是在子類對象創建前創建完成，創建子類對象前，會調用父類的構造方法完成父類的創建
+		// 默認情況下，子類對象創建時，會默認調用父類的構造方法完成父類對象的創建，使用的是 super 的方式，指不會 JVM 自動完成
+		// 如果父類提供有參數的構造方法，那麼 JVM 不會提供默認的構造方法，那麼子類應該顯示調用 super 方法構建父類對象
+
+		Child2 c1 = new Child2();
+		Child2 c2 = new Child2();
+		Child2 c3 = new Child2();
+
+		Child2 c4 = new Child2("老五");
+		Child2 c5 = new Child2("老六");
+		Child2 c6 = new Child2("老七");
+
+	}
+}
+
+class Parent2{
+	String username = "張三";
+
+	Parent2(){
+		System.out.println("parent2....");
+	}
+
+
+	Parent2(String name){
+		username = name;
+		System.out.println("parent2 with param ...." + name);
+	}
+
+}
+
+class Child2 extends Parent {
+	String name = "李四";
+
+	Child2(){
+		// 預設會嘗試呼叫 super()，所以通常沒寫
+		System.out.println("child2....");
+	}
+
+	Child2(String cName){
+		// 指定呼叫父類建構 super(name)
+		super(cName);
+		name = cName
+		System.out.println("child2 with param ...." + cName);
+	}
+}
