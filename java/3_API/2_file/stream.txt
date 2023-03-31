@@ -55,3 +55,32 @@ character 導向處理
 	Writer
 		BufferedWriter
 			FileWriter
+
+
+close 問題
+	1. 一般 class 實作 implemments Closeable ，應該於 finally close，避免未釋放資源問題
+	如 java 1.8 以前
+		InputSteam is = new Xxxx();
+		try {
+			....
+		} finally {
+			if(is != null){
+				is.close();
+			}
+			// 或是呼叫第三方關閉 apache 的 commons-io jar
+			// IOUtils.closeQuietly(is);
+		}
+	  java 1.8 以後，可簡化於 try 裡面自動關閉
+		try (InputSteam is = new Xxxx()){
+			....
+		}
+
+	2. bufferedreader inputstreamreader inputstream 互相包裝引用該如何 close
+		https://stackoverflow.com/questions/32042494/is-it-necessary-to-close-an-inputstreamreader-in-a-bufferedreader
+			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			....
+			if (in != null) {
+				in.close();
+			}
+
+			則可以僅關閉外層變數即可

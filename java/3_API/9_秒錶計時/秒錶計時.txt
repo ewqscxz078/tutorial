@@ -1,0 +1,118 @@
+https://www.gushiciku.cn/pl/g4KY/zh-tw
+
+用於計時程式執行時間，並輸出執行時間 API
+
+==========================================================================================
+========================================= 一般方法 =======================================
+==========================================================================================
+	public static void main(String[] args) {
+	  Long startTime = System.currentTimeMillis();
+	  // 你的業務程式碼
+	  Long endTime = System.currentTimeMillis();
+	  Long elapsedTime = (endTime - startTime) / 1000;
+	  System.out.println("該段總共耗時：" + elapsedTime + "s");
+	}
+
+==========================================================================================
+========================================= spring StopWatch ===============================
+==========================================================================================
+<dependency>
+    <groupid>org.springframework</groupid>
+    <artifactid>spring-core</artifactid>
+    <version>${spring.version}</version>
+</dependency>
+
+	注意事項
+		1.StopWatch物件不是設計為執行緒安全的，並且不使用同步。
+		2.一個StopWatch例項一次只能開啟一個task，不能同時start多個task
+		3.在該task還沒stop之前不能start一個新的task，必須在該task stop之後才能開啟新的task
+		4.若要一次開啟多個，需要new不同的StopWatch例項
+
+	public static void main(String[] args) throws InterruptedException {
+		StopWatch stopWatch = new StopWatch();
+
+		// 任務一模擬休眠3秒鐘
+		stopWatch.start("TaskOneName");
+		Thread.sleep(1000 * 3);
+		System.out.println("當前任務名稱：" + stopWatch.currentTaskName());
+		stopWatch.stop();
+
+		// 任務一模擬休眠10秒鐘
+		stopWatch.start("TaskTwoName");
+		Thread.sleep(1000 * 10);
+		System.out.println("當前任務名稱：" + stopWatch.currentTaskName());
+		stopWatch.stop();
+
+		// 任務一模擬休眠10秒鐘
+		stopWatch.start("TaskThreeName");
+		Thread.sleep(1000 * 10);
+		System.out.println("當前任務名稱：" + stopWatch.currentTaskName());
+		stopWatch.stop();
+
+		// 打印出耗時
+		System.out.println(stopWatch.prettyPrint());
+		System.out.println(stopWatch.shortSummary());
+		// stop後它的值為null
+		System.out.println(stopWatch.currentTaskName());
+
+		// 最後一個任務的相關資訊
+		System.out.println(stopWatch.getLastTaskName());
+		System.out.println(stopWatch.getLastTaskInfo());
+
+		// 任務總的耗時  如果你想獲取到每個任務詳情（包括它的任務名、耗時等等）可使用
+		System.out.println("所有任務總耗時：" + sw.getTotalTimeMillis());
+		System.out.println("任務總數：" + sw.getTaskCount());
+		System.out.println("所有任務詳情：" + sw.getTaskInfo());
+	}
+
+==========================================================================================
+========================================= Apache StopWatch ===============================
+==========================================================================================
+<dependency>
+    <groupid>org.apache.commons</groupid>
+    <artifactid>commons-lang3</artifactid>
+    <version>3.6</version>
+</dependency>
+
+	提供的這個任務執行監視器功能豐富強大，靈活性強
+
+	public static void main(String[] args) throws InterruptedException {
+		//建立後立即start，常用
+		StopWatch watch = StopWatch.createStarted();
+
+		Thread.sleep(1000);
+		System.out.println(watch.getTime());
+		System.out.println("統計從開始到現在執行時間：" + watch.getTime() + "ms");
+
+		Thread.sleep(1000);
+		watch.split();
+		System.out.println("從start到此刻為止的時間：" + watch.getTime());
+		System.out.println("從開始到第一個切入點執行時間：" + watch.getSplitTime());
+
+
+		Thread.sleep(1000);
+		watch.split();
+		System.out.println("從開始到第二個切入點執行時間：" + watch.getSplitTime());
+
+		// 復位後, 重新計時
+		watch.reset();
+		watch.start();
+		Thread.sleep(1000);
+		System.out.println("重新開始後到當前執行時間是：" + watch.getTime());
+
+		// 暫停 與 恢復
+		watch.suspend();
+		System.out.println("暫停2秒鐘");
+		Thread.sleep(2000);
+
+		// 上面suspend，這裡要想重新統計，需要恢復一下
+		watch.resume();
+		System.out.println("恢復後執行的時間是：" + watch.getTime());
+
+		Thread.sleep(1000);
+		watch.stop();
+
+		System.out.println("花費的時間》》" + watch.getTime() + "ms");
+		// 直接轉成s
+		System.out.println("花費的時間》》" + watch.getTime(TimeUnit.SECONDS) + "s");
+	}

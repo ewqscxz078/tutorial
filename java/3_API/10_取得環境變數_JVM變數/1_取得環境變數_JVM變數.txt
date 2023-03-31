@@ -1,0 +1,31 @@
+https://www.baeldung.com/java-system-get-property-vs-system-getenv
+
+==========================================================================================
+========================================= OS 變數 ========================================
+==========================================================================================
+Using System.getenv()
+	print all
+		System.getenv().forEach((k, v) -> {
+			System.out.println(k + ":" + v);
+		});
+	get 指定
+		String log_dir = System.getenv("log_dir");
+
+	add env when create a new process
+		ProcessBuilder pb = new ProcessBuilder(args);
+		Map<String, String> env = pb.environment();
+		env.put("log_dir", "/tmp/log");
+		Process process = pb.start();
+
+==========================================================================================
+========================================= JVM 變數 =======================================
+==========================================================================================
+Using System.getProperty()
+	actual execute
+		格式 : java -jar jarName -DpropertyName=value
+		範例 : java -jar app -Dfoo="bar"
+	get of default
+		String log_dir = System.getProperty("log_dir","/tmp/log");
+	set
+		System.setProperty("log_dir", "/tmp/log");
+

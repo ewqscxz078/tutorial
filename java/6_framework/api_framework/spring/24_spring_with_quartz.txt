@@ -1,0 +1,23 @@
+http://samchu.logdown.com/posts/297038-use-quartz-in-spring-boot
+
+
+How to pass instance variables into Quartz job?
+	https://stackoverflow.com/questions/12777057/how-to-pass-instance-variables-into-quartz-job
+
+
+Wait in Main Thread for Quartz Scheduler to Finish
+	https://stackoverflow.com/questions/16744865/wait-in-main-thread-for-quartz-scheduler-to-finish
+
+		@Autowired
+		private SchedulerFactoryBean schedulerFactoryBean
+
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				while (schedulerFactoryBean.getScheduler().getCurrentlyExecutingJobs().size() > 0) {
+					Thread.sleep(3000);
+				}
+				// schedulerFactoryBean.getScheduler().clear();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}));

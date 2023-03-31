@@ -1,0 +1,30 @@
+https://dotblogs.com.tw/grayyin/2016/07/04/113501
+
+編寫多執行緒程式是為了實作多工的同步執行，從而能夠更好地提高執行速度。一般有三種方法，
+Thread, Runnable, Callable
+
+Runnable和Callable的區別是
+	(1)Callable規定的方法是call(),Runnable規定的方法是run().
+	(2)Callable在執行後可返回值，而Runnable在執行後不能返回值
+	(3)call方法可以拋出異常，run方法不可以
+	(4)執行Callable會返回Future物件，表示非同步計算的結果。它提供了檢查計算是否完成的方法，
+	以等待計算的完成，並檢索計算的結果。通過Future物件可以瞭解執行情況，可取消執行，還可獲取執行結果。
+
+
+		Thread oneThread = new Thread( new Runnable(){
+		@override
+		public void run(){
+			  //do something here
+			}
+		});
+		oneThread.start()
+
+
+		public interface Callable<V> {
+			V call() throws Exception;
+		}
+		Callable<Integer> oneCallable = new SomeCallable<Integer>();
+		FutureTask<Integer> oneTask = new FutureTask<Integer>(oneCallable);
+		Thread oneThread = new Thread(oneTask);
+		oneThread.start()
+

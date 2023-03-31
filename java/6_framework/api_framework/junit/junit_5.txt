@@ -14,32 +14,3 @@ https://www.baeldung.com/junit-5-conditional-test-execution
 		Environment Variable Conditions
 			@EnabledIfEnvironmentVariable(named = "GDMSESSION", matches = "ubuntu")
 			@DisabledIfEnvironmentVariable(named = "LC_TIME", matches = ".*UTF-8.")
-
-
-https://www.baeldung.com/java-system-stubs
-	set os env variable
-		pom.xml
-			<!-- for JUnit 5 -->
-			<dependency>
-				<groupId>uk.org.webcompere</groupId>
-				<artifactId>system-stubs-jupiter</artifactId>
-				<version>1.1.0</version>
-				<scope>test</scope>
-			</dependency>
-
-		xxxxTest.java
-			@ExtendWith(SystemStubsExtension.class)
-			class xxxxTest {
-				....
-				@SystemStub
-				private EnvironmentVariables environmentVariables;
-				// 或是 private EnvironmentVariables environmentVariables = new EnvironmentVariables("ENV", "value1");
-				// 或是 private EnvironmentVariables environmentVariables = new EnvironmentVariables().set("ENV", "value1").set("ENV2", "value2");
-
-				@Test
-				void givenEnvironmentCanBeModified_whenSetEnvironment_thenItIsSet() {
-					environmentVariables.set("ENV", "value1");
-
-					assertThat(System.getenv("ENV")).isEqualTo("value1");
-				}
-			}

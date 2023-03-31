@@ -1,3 +1,8 @@
+temp file : 臨時文件建立與刪除
+	try (OutputStream out = Files.newOutputStream(Files.createTempFile("prefix-", ".suffix"))) {
+		// 使用臨時文件進行文件操作
+	} // 臨時文件在這裡被自動刪除
+
 nio2 path file
 	https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/282/#outline__1_1
 	https://stackoverflow.com/questions/189094/how-to-scan-a-folder-in-java
@@ -13,3 +18,13 @@ Path path = Paths.get(...)
 
 zip a file
 	https://mkyong.com/java/how-to-compress-files-in-zip-format/
+
+
+File to Path
+	File file = new File(....);
+	Path path = file.toPath();
+
+Path to File
+	File path.toFile();
+
+

@@ -1,0 +1,159 @@
+https://www.baeldung.com/spring-tests-override-properties
+	可覆寫 application.properties 裡面值的方法
+
+TestPropertySource
+	https://www.baeldung.com/spring-test-property-source
+
+========================================================================================
+========================================================================================
+========================================================================================
+
+example
+	src/main/resources/application.properties
+		example.firstProperty=defaultFirst
+		example.secondProperty=defaultSecond
+
+	PropertySourceResolver.java
+		@Component
+		public class PropertySourceResolver {
+
+			@Value("${example.firstProperty}") private String firstProperty;
+			@Value("${example.secondProperty}") private String secondProperty;
+
+			public String getFirstProperty() {
+				return firstProperty;
+			}
+
+			public String getSecondProperty() {
+				return secondProperty;
+			}
+		}
+
+	1.Overriding a Property File
+		src/test/resources/application.properties
+			example.firstProperty=file
+			example.secondProperty=file
+
+		unit test
+			@SpringBootTest
+			public class TestResourcePropertySourceResolverIntegrationTest {
+
+				@Autowired private PropertySourceResolver propertySourceResolver;
+
+				@Test
+				public void shouldTestResourceFile_overridePropertyValues() {
+					String firstProperty = propertySourceResolver.getFirstProperty();
+					String secondProperty = propertySourceResolver.getSecondProperty();
+
+					assertEquals("file", firstProperty);
+					assertEquals("file", secondProperty);
+				}
+			}
+
+	2.Spring Profiles
+		src/test/resources/application–test.properties
+			example.firstProperty=profile
+
+		unit test
+			@SpringBootTest
+			@ActiveProfiles("test")
+			public class ProfilePropertySourceResolverIntegrationTest {
+
+				@Autowired private PropertySourceResolver propertySourceResolver;
+
+				@Test
+				public void shouldProfiledProperty_overridePropertyValues() {
+					String firstProperty = propertySourceResolver.getFirstProperty();
+					String secondProperty = propertySourceResolver.getSecondProperty();
+
+					assertEquals("profile", firstProperty);
+					assertEquals("defaultSecond", secondProperty);
+				}
+			}
+
+	3.@SpringBootTest
+		unit test
+			@SpringBootTest(properties = { "example.firstProperty=annotation" })
+			public class SpringBootPropertySourceResolverIntegrationTest {
+
+				@Autowired private PropertySourceResolver propertySourceResolver;
+
+				@Test
+				public void shouldSpringBootTestAnnotation_overridePropertyValues() {
+					String firstProperty = propertySourceResolver.getFirstProperty();
+					String secondProperty = propertySourceResolver.getSecondProperty();
+
+					Assert.assertEquals("annotation", firstProperty);
+					Assert.assertEquals("defaultSecond", secondProperty);
+				}
+			}
+
+		unit test 或是
+			@TestPropertySource(properties = "example.firstProperty=annotation")
+			@SpringBootTest()
+			public class SpringBootPropertySourceResolverIntegrationTest {
+
+				@Autowired private PropertySourceResolver propertySourceResolver;
+
+				@Test
+				public void shouldSpringBootTestAnnotation_overridePropertyValues() {
+					String firstProperty = propertySourceResolver.getFirstProperty();
+					String secondProperty = propertySourceResolver.getSecondProperty();
+
+					Assert.assertEquals("annotation", firstProperty);
+					Assert.assertEquals("defaultSecond", secondProperty);
+				}
+			}
+
+	4.TestPropertySourceUtils 指定檔案覆寫
+		PropertyOverrideContextInitializer.java
+			public class PropertyOverrideContextInitializer
+			  implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+				static final String PROPERTY_FIRST_VALUE = "contextClass";
+
+				@Override
+				public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
+					TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
+					  configurableApplicationContext, "example.firstProperty=" + PROPERTY_FIRST_VALUE);
+
+					TestPropertySourceUtils.addPropertiesFilesToEnvironment(
+					  configurableApplicationContext, "context-override-application.properties");
+				}
+			}
+
+		src/test/resources/context-override-application.properties
+			example.secondProperty=contextFile
+
+		unit test
+			@SpringBootTest
+			@ContextConfiguration(
+			  initializers = PropertyOverrideContextInitializer.class,
+			  classes = Application.class)
+			public class ContextPropertySourceResolverIntegrationTest {
+
+				@Autowired private PropertySourceResolver propertySourceResolver;
+
+				@Test
+				public void shouldContext_overridePropertyValues() {
+					final String firstProperty = propertySourceResolver.getFirstProperty();
+					final String secondProperty = propertySourceResolver.getSecondProperty();
+
+					assertEquals(PropertyOverrideContextInitializer.PROPERTY_FIRST_VALUE, firstProperty);
+					assertEquals("contextFile", secondProperty);
+				}
+			}
+
+	5.Spring Boot TestConfigurer 接口
+		// https://juejin.cn/s/spring%20boot%20test%20add%20environment%20variables
+			@SpringBootTest(classes = MyApplication.class)
+			public class MyTests {
+				@TestConfiguration
+				static class TestConfig implements TestConfigurer {
+					@Override
+					public void configureTestProperties(Properties properties) {
+						properties.put("spring.datasource.url", "jdbc:h2:mem:testdb");
+						properties.put("spring.datasource.username", "sa");
+					}
+				}
+			}

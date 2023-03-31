@@ -1,0 +1,7 @@
+https://matthung0807.blogspot.com/2019/10/spring-beanutilscopyproperties-to-copy.html
+	BeanUtils.copyProperties(Object source, Object target)方法把JavaBean/POJO物件的properties值複製到另一個物件。
+
+	使用注意事項
+		1.由於是利用反射來達到複製的效果，因此效能上會比手動寫set方法來得差。
+		2.屬性的命名上必須統一，所以系統中各屬性的命名規則必須嚴格規範。
+		3.不好除錯，例如屬性中有Enum型態，但資料庫為字串等型態不一致，或是Entity類與DTO類命名不一致等也會造成屬性結果為null的情況。

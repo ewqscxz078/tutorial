@@ -87,10 +87,6 @@ MockBean vs SpyBean
 		SpyBean all method will real execute，部分造假 測試
 			doReturn("").when(testService).doSomething();
 
-
-TestPropertySource
-	可複寫 application.properties 裡面的值
-
 Integration Testing in Spring
 	https://www.baeldung.com/integration-testing-in-spring
 Spring Boot MockMVC Example
@@ -113,7 +109,22 @@ Spring Boot MockMVC Example
 				.flashAttr("customObj", customObj)).andReturn();
 
 
-spring test util
+spring test util : ReflectionTestUtils
 	強制覆值 給 spring ioc bean instance variables Non-Public
 		https://www.baeldung.com/spring-reflection-test-utils
 			ReflectionTestUtils.setField(${spring ioc bean}, 欄位, 值)
+	強制取得 private static 值
+        Field field = ReflectionUtils.findField(MyClass.class, "MY_FIELD");
+        ReflectionUtils.makeAccessible(field);
+        String fieldValue = (String) ReflectionUtils.getField(field, null);
+
+	強制呼叫 private static method
+		method 無參數
+			Method method = ReflectionUtils.findMethod(MyClass.class, "myPrivateStaticMethod");
+			ReflectionUtils.makeAccessible(method);
+			ReflectionUtils.invokeMethod(method, null);
+
+		method 有參數
+			Method method = ReflectionUtils.findMethod(MyClass.class, "myPrivateStaticMethod", paramType.class);
+			ReflectionUtils.makeAccessible(method);
+			ReflectionUtils.invokeMethod(method, null, param);

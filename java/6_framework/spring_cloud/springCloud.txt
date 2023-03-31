@@ -5,6 +5,7 @@ Spring cloud data flow
 	spring cloud task
 
 Spring Cloud Sleuth 實現分散式追蹤
+	https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
 	https://www.tpisoftware.com/tpu/articleDetails/2682
 	https://www.baeldung.com/spring-cloud-sleuth-single-application
 
@@ -13,6 +14,7 @@ Spring Cloud Sleuth 實現分散式追蹤
 
 	概念圖
 	https://developer.okta.com/blog/2021/07/26/spring-cloud-sleuth
+
 
 Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
 	https://www.tpisoftware.com/tpu/articleDetails/1390

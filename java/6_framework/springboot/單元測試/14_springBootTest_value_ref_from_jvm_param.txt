@@ -1,0 +1,29 @@
+https://www.baeldung.com/spring-value-annotation
+
+
+執行期增加 jvm params，非用程式動態增加
+	例如增加:
+		-Druntime.jvm.param.add="something"
+
+	client.java
+		@Value("${systemProperties['runtime.jvm.param.add'] ?: 'NONE'}")
+		private String runtimeJvmParamAdd;		// will get something
+
+
+執行期增加 jvm params，使用 JUnit Pioneer 程式動態增加，System.setProperty in junit 5 無效果
+	https://dev.to/beatngu1101/handling-system-properties-in-junit-5-4iom
+
+	unit test
+		public class XXXXTest{
+
+			@Test
+			@SetSystemProperty(key = "runtime.jvm.param.add", value = "something")
+			public void testXXXX(){
+				assertEquals("new value", System.getProperty("runtime.jvm.param.add"))
+			}
+		}
+
+	client.java
+		@Value("#{systemProperties['runtime.jvm.param.add']} ?: 'something'") // With SpEL get jvm params
+		private String runtimeOsEnvAdd;		// will get something
+

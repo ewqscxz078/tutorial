@@ -1,0 +1,122 @@
+ref 自己測試結果
+
+執行期增加 os env，非用程式動態增加
+	例如增加:
+		RUNTIME_OS_ENV_ADD="something"
+
+		// spring boot 會嘗試將 RUNTIME_OS_ENV_ADD 轉小寫、_ 變 .，也就是 runtime.os.env.add，並將其覆寫，參考外部檔案覆寫順序
+
+	application.yml
+		runtime.os.env.add: NONE
+
+	client.java
+		@Value("${runtime.os.env.add}")
+		private String runtimeOsEnvAdd2;	// will get something
+
+		@Autowired
+		private Environment environment;
+
+		String runtimeOsEnvAdd2 = environment.getProperty("RUNTIME_OS_ENV_ADD"); // will get something
+		String runtimeOsEnvAdd3 = environment.getProperty("runtime.os.env.add"); // will get something
+
+
+
+執行期增加 os env，使用 SystemStub 程式動態增加
+	1.無法與 spring boot @Value 有效整合
+	2.SystemStub EnvironmentVariables 僅與 System.getEnv、 Spring Environment 可有效搭配
+		https://www.baeldung.com/java-system-stubs
+			// Environment and Property Overrides for JUnit 5 Spring Tests
+				junit 5 與 spring 整合 os env 置入的方式
+					// sets the environment before Spring even starts
+					@SystemStub
+					private EnvironmentVariables environmentVariables;
+
+					1. in junit @BeforeAll，缺點無法依 method 置入
+						this.environmentVariables.set($key, $value)
+
+					2. 建構函數時設定好環境變數，缺點無法依 method 置入
+						private EnvironmentVariables environmentVariables = new EnvironmentVariables($key, $value);
+						private static EnvironmentVariables environmentVariables = new EnvironmentVariables($key, $value);
+
+					在 method 裡額外置入環境變數
+						this.environmentVariables.set($key, $value);
+						this.environmentVariables.set($key, $value).execute(() ->{
+							....
+						});
+						//	spring boot 處理部分不全，因為與 spring 處理環境變數的時間有關係
+						//		@Value 不會吃到
+						//		Spring Environment 可取到
+
+	unit test
+		import uk.org.webcompere.systemstubs.jupiter.SystemStub
+		import uk.org.webcompere.systemstubs.jupiter.SystemStubExtension
+
+		@ExtendWith(SystemStubExtension.class)
+		....
+		public class XXXXTest{
+
+			@SystemStub
+			private EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
+			@Test
+			public void testXXXX(){
+				....
+				this.environmentVariables.set("RUNTIME_OS_ENV_ADD","something")
+				....
+			}
+		}
+
+	application.yml
+		runtime.os.env.add: ${RUNTIME_OS_ENV_ADD:NONE} // 因為執行載入的點不同，造成 will NONE
+
+
+	client.java
+		@Value("${RUNTIME_OS_ENV_ADD:NONE}")
+		private String runtimeOsEnvAdd;		// will get NONE
+
+		@Value("${runtime.os.env.add:NONE}")
+		private String runtimeOsEnvAdd2;	// will get NONE
+
+		@Autowired
+		private Environment environment;
+
+		String runtimeOsEnvAdd2 = environment.getProperty("RUNTIME_OS_ENV_ADD"); // will get something
+		String runtimeOsEnvAdd3 = environment.getProperty("runtime.os.env.add"); // will get something
+
+執行期增加 os env，程式動態增加 其他說明
+	https://www.appsloveworld.com/springboot/100/24/how-to-set-environment-varibles-for-junit-tests-with-spring-framework
+		1. Use Power Mock
+		2. Before class load
+			@BeforeClass
+			public static void setupEnvironment() {
+			   // set the environment here
+			}
+		3. 巢狀測試 : 外層 class 宣告靜態 EnvironmentVariables 設定通用環境變數、內層測試方法設定方法用的環境變數
+			@ExtendWith(SystemStubsExtension.class)
+			public class SpringAppWithDynamicPropertiesTest {
+				private static WireMockServer wireMock = new WireMockServer(Options.DYNAMIC_PORT);
+
+				// sets the environment before Spring even starts
+				@SystemStub
+				private static EnvironmentVariables environmentVariables;
+
+				@BeforeAll
+				static void beforeAll() {
+					// we can manipulate the env vars here
+					environmentVariables.set("SERVER_URL", "something");
+				}
+
+				@Nested
+				@SpringBootTest(classes = {RestApi.class, App.class},
+					webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+				class InnerSpringTest {
+					@LocalServerPort
+					private int serverPort;
+
+					@Test
+					void someTest() {
+						// the spring app is testable with the given env
+
+					}
+				}
+			}

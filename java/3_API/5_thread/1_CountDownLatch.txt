@@ -1,3 +1,5 @@
+https://ithelp.ithome.com.tw/articles/10208081
+
 當需要等待其他thread 完成後才執行當前thread
   public static void main(String args[]) {
     ExecutorService es = Executors.newFixedThreadPool(5);

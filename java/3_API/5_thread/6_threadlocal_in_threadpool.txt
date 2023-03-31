@@ -1,0 +1,147 @@
+https://blog.csdn.net/goldenfish1919/article/details/81978506
+
+	import java.util.concurrent.Callable;
+	import java.util.concurrent.ExecutorService;
+	import java.util.concurrent.Executors;
+	import java.util.concurrent.Future;
+	import java.util.function.Consumer;
+	import java.util.function.Supplier;
+	/**
+	 * 关于ThreadLocal参数传递问题可以参考：https://github.com/alibaba/transmittable-thread-local
+	 * */
+	public class ThreadPoolUtil {
+
+		private final ExecutorService executor;
+
+		private static ThreadPoolUtil instance = new ThreadPoolUtil();
+
+		private ThreadPoolUtil() {
+			this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+		}
+
+		public static ThreadPoolUtil getInstance() {
+			return instance;
+		}
+
+		public static <T> Future<T> execute(final Callable<T> runnable) {
+			return getInstance().executor.submit(runnable);
+		}
+
+		public static Future<?> execute(final Runnable runnable) {
+			return getInstance().executor.submit(runnable);
+		}
+
+		public static abstract class ParamRunnable<T> implements Runnable{
+			private T param;
+			private Consumer<T> paramConsumer;
+			public ParamRunnable(Supplier<T> paramSupplier, Consumer<T> paramConsumer) {
+				if(paramSupplier != null) {
+					this.param = paramSupplier.get();
+				}
+				this.paramConsumer = paramConsumer;
+			}
+			@Override
+			public void run() {
+				paramConsumer.accept(param);
+				run(param);
+			}
+			public abstract void run(T param);
+		}
+
+		public static abstract class ParamCallable<R,P> implements Callable<R>{
+			private P param;
+			private Consumer<P> paramConsumer;
+			public ParamCallable(Supplier<P> paramSupplier,  Consumer<P> paramConsumer) {
+				if(paramSupplier != null) {
+					this.param = paramSupplier.get();
+				}
+				this.paramConsumer = paramConsumer;
+			}
+			@Override
+			public R call() {
+				paramConsumer.accept(param);
+				return call(param);
+			}
+			public abstract R call(P param);
+		}
+		/********************test*********************/
+		public static class User{
+			private int id;
+			public User() {}
+			public User(int id) {
+				this.id= id;
+			}
+			public String toString() {
+				return "User [id=" + id + "]";
+			}
+		}
+		public static class UserProvider{
+			private static ThreadLocal<User> userHolder = new  ThreadLocal<User>();
+			public static void setUser(User user) {
+				userHolder.set(user);
+			}
+			public static User getUser() {
+				return userHolder.get();
+			}
+		}
+		public static void main(String[] args)throws Exception {
+			UserProvider.setUser(new User(1));
+			System.out.println("1"+UserProvider.getUser());
+			ThreadPoolUtil.execute(new ParamCallable<Void,User>(UserProvider::getUser, UserProvider::setUser) {
+				@Override
+				public Void call(User user) {
+					System.out.println("1"+user);
+					System.out.println("1"+UserProvider.getUser());
+					ThreadPoolUtil.execute(new ParamCallable<Void, User>(UserProvider::getUser, UserProvider::setUser) {
+						@Override
+						public Void call(User user) {
+							System.out.println("3"+user);
+							System.out.println("3"+UserProvider.getUser());
+							return null;
+						}
+					});
+					return null;
+				}
+			});
+			UserProvider.setUser(new User(2));
+			System.out.println("2"+UserProvider.getUser());
+			ThreadPoolUtil.execute(new ParamCallable<Void, User>(UserProvider::getUser, UserProvider::setUser) {
+				@Override
+				public Void call(User user) {
+					System.out.println("2"+user);
+					System.out.println("2"+UserProvider.getUser());
+					return null;
+				}
+			});
+			System.in.read();
+		}
+	}
+
+
+=============================================================================================
+============== ThreadLocal VS InheritableThreadLocal VS TransmittableThreadLocal ============
+=============================================================================================
+https://blog.csdn.net/yangshangwei/article/details/119296005
+	ThreadLocal
+		提供執行緒內的傳遞
+
+		缺點 : ThreadLocal 無法在父子線程之間傳遞，看源碼我們知道了，都是在當前 thread 處理 Thread.currentThread.
+
+	InheritableThreadLocal
+		支持子線程訪問在父線程的核心思想是在創建線程的時候將父線程中的本地變量值複製到子線程，即復制的時機為創建子線程時。
+
+		缺點 :
+			若線程池能夠復用線程，減少線程的頻繁創建與銷毀，
+				如果使用 InheritableThreadLocal，那麼線程池中的線程拷貝的數據來自於第一個提交任務的外部線程，
+				即後面的外部線程向線程池中提交任務時，子線程訪問的本地變量都來源於第一個外部線程，造成線程本地變量混亂
+
+	TransmittableThreadLocal
+		里巴巴開源的專門解決 InheritableThreadLocal 的局限性，實現線程本地變量在線程池的執行過程中，
+		能正常的訪問父線程設置的線程變量
+
+		從InheritableThreadLocal 不支持線程池的根本原因是 InheritableThreadLocal 是在父線程創建子線程時復制的，
+		由於線程池的複用機制，“子線程”只會復制一次。
+
+		要支持線程池中能訪問提交任務線程的本地變量，其實只需要在父線程在向線程池提交任務時復制父線程的上下環境，
+		那在子線程中就能夠如願訪問到父線程中的本地遍歷，實現本地環境變量在線程調用之中的透傳，實現鏈路跟踪，
+		這也就是 TransmittableThreadLocal 最本質的實現原理

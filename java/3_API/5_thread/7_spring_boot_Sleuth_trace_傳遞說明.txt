@@ -1,0 +1,5 @@
+https://blog.csdn.net/F_Hello_World/article/details/107508416
+	springclou中 Sleuth 異步中 trace 傳遞解釋
+
+spring boot sleuth for quartz
+https://github.com/spring-cloud/spring-cloud-sleuth/blob/3.1.x/spring-cloud-sleuth-instrumentation/src/main/java/org/springframework/cloud/sleuth/instrument/quartz/TracingJobListener.java

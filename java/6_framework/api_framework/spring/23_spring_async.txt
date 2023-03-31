@@ -1,0 +1,4 @@
+https://www.baeldung.com/spring-async
+https://ithelp.ithome.com.tw/articles/10278638
+https://matthung0807.blogspot.com/2020/06/spring-boot-async-methods-example.html
+

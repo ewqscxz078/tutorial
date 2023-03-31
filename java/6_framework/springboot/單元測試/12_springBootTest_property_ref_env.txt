@@ -1,0 +1,51 @@
+https://www.baeldung.com/spring-boot-properties-env-variables
+
+Use Environment Variables in the application.properties File
+	java.home=${JAVA_HOME}
+	environment.name=${OS}
+
+	baeldung.presentation=${HELLO_BAELDUNG}. Java is installed in the folder: ${JAVA_HOME}
+
+Use Our Environment Specific Properties in Code
+	1.Inject the Value With @Value
+		@Value("${baeldung.presentation}")
+		private String baeldungPresentation;
+
+	2.Get It From Spring Environment
+		@Autowired
+		private Environment environment;
+
+		environment.getProperty("baeldung.presentation")
+
+	3.Group Properties With @ConfigurationProperties
+		@Component
+		@ConfigurationProperties(prefix = "baeldung")
+		public class BaeldungProperties {
+
+			private String presentation;
+
+			public String getPresentation() {
+				return presentation;
+			}
+
+			public void setPresentation(String presentation) {
+				this.presentation = presentation;
+			}
+		}
+
+		client java
+			@Autowired
+			private BaeldungProperties baeldungProperties;
+
+			baeldungProperties.getPresentation()
+
+
+較常將 env 整合到 property 統一處理與覆蓋
+	application.yml
+		project:
+		  setting: ${OTHER_OS_ENV:default}
+
+	client.java
+		@Value(project.setting)
+		private String projectSetting;
+

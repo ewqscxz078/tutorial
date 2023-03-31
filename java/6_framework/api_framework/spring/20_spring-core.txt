@@ -13,6 +13,27 @@ Access a File from the Classpath in a Spring Application
 		@Value("classpath:data/resource-data.txt")
 		Resource resourceFile;
 
+		https://www.baeldung.com/spring-value-defaults
+		with default
+			@Value("${some.key:my default value}")
+			private String stringWithDefaultValue;
+
+			@Value("${some.key:true}")
+			private boolean booleanWithDefaultValue;
+
+			@Value("${some.key:42}")
+			private int intWithDefaultValue;
+
+			@Value("${some.key:one,two,three}")
+			private String[] stringArrayWithDefaults;
+
+			@Value("${some.key:1,2,3}")
+			private int[] intArrayWithDefaults;
+
+		Using SpEL
+			@Value("#{systemProperties['some.key'] ?: 'my default system property value'}")
+			private String spelWithDefaultValue;
+
 	3. Using ResourceLoader
 		// lazily load resource
 		@Autowired
