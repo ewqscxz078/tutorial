@@ -1,0 +1,6 @@
+https://blog.poychang.net/get-powershell-version/
+
+1.(Get-Host).Version
+2.$host.Version
+3.$PSVersionTable.PSVersion（建議用此方法）
+4.查看 Registry 註冊表

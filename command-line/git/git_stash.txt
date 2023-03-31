@@ -18,25 +18,25 @@ Changes not staged for commit:
 自訂名稱放到暫存
 	git stash save 'my_stash'
 
-列舉暫存
+列舉暫存清單
 	git stash list
-列舉暫存與檔案異動簡要清單
+
+列舉暫存清單與檔案異動簡要清單
 	https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/How-to-list-and-show-the-git-stash-history
 		git stash list --stat
 
-將最新暫存apply到當前branch
+將最新暫存 apply 到當前 branch
 	git stash apply
 
-指定 stash apply 到當前branch
+指定 stash apply 到當前 branch
 	git stash apply stash@{2}
 
 包含 untracked file 都加入 stash
 	git stash save '自訂 stash name' --include-untracked
 
 // https://stackoverflow.com/questions/5506339/how-can-i-git-stash-a-specific-file
-指定檔案 存到 stash，如果檔案有 untracked，要先git add 後再執行如下指令
+指定檔案 存到 stash，如果檔案有 untracked，要先 git add 後再執行如下指令
 	git stash push -m 'assign file 1 3' test1 test3
-
 
 簽出指定 stash，並移除指定 stash
 	git stash pop stash@{?}
@@ -96,9 +96,10 @@ stash track and untrack to patch
 	https://stackoverflow.com/questions/22818155/git-stash-to-patch-with-untracked-files
 
 	// track stash
-	git stash show -p stash@{?} > patch
+		git stash show -p stash@{?} > patch
 	// untrack stash
-	git diff 4b825dc642cb6eb9a060e54bf8d69288fbee4904 stash^3 >> patch
+		git diff 4b825dc642cb6eb9a060e54bf8d69288fbee4904 stash^3 >> patch
 
-	cd /new/project/dir
-	git apply /old/project/dir/[patchName]
+	// apply patch to 當前 branch
+		cd /new/project/dir
+		git apply /old/project/dir/[patchName]

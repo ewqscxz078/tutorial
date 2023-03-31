@@ -1,0 +1,12 @@
+// 強制將 protocol 改成較高的安全演算法，預設可能是 Ssl3, Tls
+https://blog.miniasp.com/post/2019/01/12/PowerShell-Invoke-WebRequest-use-TLS-v12
+// 確認當前協定
+[System.Net.ServicePointManager]::SecurityProtocol
+
+// 當前 powershell 設定
+[System.Net.ServicePointManager]::SecurityProtocol = "tls12, tls11"
+
+// 略過 ssl/tls 檢查
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true} ;
+
+Invoke-WebRequest -Uri $url -Method Get
