@@ -1,0 +1,22 @@
+https://openhome.cc/zh-tw/java/object/unicode/
+
+Unicode 對字元給予編號以便進行管理，真正要儲存字元時，通常採用 UTF-8、UTF-16 等編碼為位元組。
+
+
+Unicode 父字元集合 > 兼容各個編碼轉換 > utf8  編碼
+									  > utf16 編碼
+									  > ASCII 編碼
+									  > BIG5  編碼
+									  > EUC   編碼
+									  > MS950 編碼
+
+https://ithelp.ithome.com.tw/articles/10082051?sc=rss.iron
+	java 字串打 \uxxxx， xxxx 為 unicode 碼
+		則會自動轉換 unicode 碼到真正的字
+		 public static void main(String[] args) {
+			 System.out.println((int)'幫');					 // 10進制 24171
+			 System.out.println(Integer.toHexString(24171)); // 16進制 6211
+			 System.out.println(Integer.toHexString('幫'));	 // 16進制 6211
+			 System.out.println("\u6211");					 // 幫
+			 System.out.println("iT \u90A6 \u5e6b \u5fd9");
+		 }
