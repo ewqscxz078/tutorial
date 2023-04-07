@@ -1,0 +1,166 @@
+https://www.youtube.com/watch?v=5sq2VPFGaQE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=56&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+
+public class Java27_Object {
+	public void main(String[] args){
+		// 面向對象- 覆寫/重寫
+
+		// 一個對象能使用什麼方法，取決於引用變數的類型
+		// 一個對象能使用什麼屬性，取決於引用變數的類型
+		// 一個對象的方法具體使用(直接或間接)是需要看具體的對象的
+		// 一個對象的屬性具體使用是不需要看具體的對象的，屬性在哪裡聲明在哪裡使用
+		
+		CCC ccc = new CCC();
+		System.out.println(ccc.sum());	// 20
+		
+		DDD ddd = new DDD();
+		System.out.println(ddd.sum());	// 40
+		
+		CCC eee = new DDD();
+		System.out.println(eee.sum());	// 40
+	}
+}
+
+class CCC{
+
+	int i = 10;
+
+	int sum(){
+		return i +10;
+	}
+}
+
+class DDD extends CCC{
+
+	int i = 20;
+
+	int sum(){
+		return i +20;
+	}
+}
+============================================================================================================
+public class Java27_Object {
+	public void main(String[] args){
+		// 面向對象- 覆寫/重寫
+
+		// 一個對象能使用什麼方法，取決於引用變數的類型
+		// 一個對象能使用什麼屬性，取決於引用變數的類型
+		// 一個對象的方法具體使用(直接或間接)是需要看具體的對象的
+		// 一個對象的屬性具體使用是不需要看具體的對象的，屬性在哪裡聲明在哪裡使用
+		
+		CCC ccc = new CCC();
+		System.out.println(ccc.sum());	// 20
+		
+		DDD ddd = new DDD();
+		System.out.println(ddd.sum());	// 20
+		
+		CCC eee = new DDD();
+		System.out.println(eee.sum());	// 20
+	}
+}
+
+class CCC{
+
+	int i = 10;
+
+	int sum(){
+		return i +10;
+	}
+}
+
+class DDD extends CCC{
+	int i = 20;
+}
+============================================================================================================
+public class Java27_Object {
+	public void main(String[] args){
+		// 面向對象- 覆寫/重寫
+
+		// 一個對象能使用什麼方法，取決於引用變數的類型
+		// 一個對象能使用什麼屬性，取決於引用變數的類型
+		// 一個對象的方法具體使用(直接或間接)是需要看具體的對象的
+		// 一個對象的屬性具體使用是不需要看具體的對象的，屬性在哪裡聲明在哪裡使用
+		
+		CCC ccc = new CCC();
+		System.out.println(ccc.sum());	// 20
+		
+		DDD ddd = new DDD();
+		System.out.println(ddd.sum());	// 40
+		
+		CCC eee = new DDD();
+		System.out.println(eee.sum());	// 40
+	}
+}
+
+class CCC{
+
+	int i = 10;
+
+	int sum(){
+		return getI() +10;
+	}
+	
+	int getI(){
+		return i;
+	}
+}
+
+class DDD extends CCC{
+
+	int i = 20;
+
+	@Override
+	int sum(){
+		return getI() +20;
+	}
+	
+	@Override
+	int getI(){
+		return i;
+	}
+}
+
+============================================================================================================
+public class Java27_Object {
+	public void main(String[] args){
+		// 面向對象- 覆寫/重寫
+
+		// 一個對象能使用什麼方法，取決於引用變數的類型
+		// 一個對象能使用什麼屬性，取決於引用變數的類型
+		// 一個對象的方法具體使用(直接或間接)是需要看具體的對象的
+		// 一個對象的屬性具體使用是不需要看具體的對象的，屬性在哪裡聲明在哪裡使用
+
+		CCC ccc = new CCC();
+		System.out.println(ccc.sum());	// 20
+		
+		DDD ddd = new DDD();
+		System.out.println(ddd.sum());	// 30
+		
+		CCC eee = new DDD();
+		System.out.println(eee.sum());	// 30
+	}
+}
+
+class CCC{
+
+	int i = 10;
+
+	int sum(){
+		return getI() +10;
+	}
+	
+	int getI(){
+		return i;
+	}
+}
+
+class DDD extends CCC{
+
+	int i = 20;
+	
+	@Override
+	int getI(){
+		return i;
+	}
+}

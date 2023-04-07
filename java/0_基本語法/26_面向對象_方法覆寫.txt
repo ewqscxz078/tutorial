@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=m1lXdBCn7fA&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=55&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+
+public class Java26_Object {
+	public void main(String[] args){
+		// 面向對象- 覆寫/重寫
+
+		// 方法的重寫: 父類對象的方法其實主要體現通用性，無法在特殊的場合下使用
+		// 				如果子類對象需要在特殊的場合下使用，那麼就需要重寫方法邏輯，這個操作在 java 中稱之為方法的重寫
+		// 這裡的重寫，並不意味著父類的方法被覆蓋掉，只是在當前場合不使用，如果使用 super 關鍵字還是可以訪問
+		// 方法的重寫要求，子類的方法與父類的方法，方法名相同，返回值類型相同，參數列表要相同
+		
+		child c = new child();
+		c.test();
+			// parent test...
+			// child test...
+	}
+}
+
+class Parent{
+
+	String name = "張三";
+
+	void test(){
+		System.out.println("parent test...");
+	}
+}
+
+class child extends Parent{
+
+	String name = "李四";
+
+	@Override
+	void test(){
+		// System.out.println(this.name);
+		// System.out.println(super.name);
+		super.test();
+		System.out.println("child test...");
+	}
+}
+============================================================================================================
