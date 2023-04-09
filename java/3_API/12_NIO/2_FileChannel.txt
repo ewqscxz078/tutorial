@@ -1,0 +1,21 @@
+https://www.baeldung.com/java-filechannel
+
+https://www.lilinchao.com/archives/2091.html
+
+相較於一般 inputStream 僅讀、outputStream 僅寫，且操作大檔案要自行實作 buffer 操作檔案
+FileChannel 支持讀和寫操作與其他進階操作，且支援大檔案操作(因為一定要使用 buffer 操作檔案)
+
+
+https://stackoverflow.com/questions/2036921/get-filechannel-without-using-java-io-use-pure-nio
+如何 new FileChannel
+	1.Java 6 only has FileInputStream.getChannel(), FileOutputStream.getChannel(), and RandomAccessFile.getChannel()
+		FileChannel input = new FileInputStream(source).getChannel();
+
+		FileChannel output = new FileOutputStream(destination).getChannel();
+
+		FileChannel reader = new RandomAccessFile(file, "r").getChannel();
+
+	2.Java 7 has java.nio.channels.FileChannel.open(...) and java.nio.Files.newByteChannel(...)
+		FileChannel fileChannel = FileChannel.open(path, OpenOption... options);
+
+		SeekableByteChannel sbc = Files.newByteChannel(pathMerged, StandardOpenOption.APPEND);

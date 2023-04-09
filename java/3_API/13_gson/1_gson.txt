@@ -1,0 +1,68 @@
+https://mkyong.com/java/how-do-convert-java-object-to-from-json-format-gson-api/
+
+<dependency>
+	<groupId>com.google.code.gson</groupId>
+	<artifactId>gson</artifactId>
+</dependency>
+
+public class Staff {
+
+    private String name;
+    private int age;
+    private String[] position;              // array
+    private List<String> skills;            // list
+    private Map<String, BigDecimal> salary; // map
+
+    //getters and setters
+}
+
+Convert Java objects to JSON
+	Gson gson = new Gson();
+
+	Staff obj = new Staff();
+
+	// 1. Java object to JSON file
+	gson.toJson(obj, new FileWriter("C:\\projects\\staff.json"));
+
+	// 2. Java object to JSON string
+	String jsonInString = gson.toJson(obj);
+
+Convert JSON to Java objects
+	Gson gson = new Gson();
+
+	// 1. JSON file to Java object
+	Staff staff = gson.fromJson(new FileReader("C:\\projects\\staff.json"), Staff.class);
+
+	// 2. JSON string to Java object
+	String json = "{'name' : 'mkyong'}";
+	Staff staff = gson.fromJson(json, Staff.class);
+
+	// 3. JSON file to JsonElement, later String
+	JsonElement json = gson.fromJson(new FileReader("C:\\projects\\staff.json"), JsonElement.class);
+    String result = gson.toJson(json);
+
+
+Java Objects to JSON
+    public static void main(String[] args) {
+
+        Gson gson = new Gson();
+
+        Staff staff = createStaffObject();
+
+        // Java objects to String
+        // String json = gson.toJson(staff);
+
+        // Java objects to File
+        try (FileWriter writer = new FileWriter("C:\\projects\\staff.json")) {
+            gson.toJson(staff, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+enable the pretty print mode :
+	import com.google.gson.Gson;
+	import com.google.gson.GsonBuilder;
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();

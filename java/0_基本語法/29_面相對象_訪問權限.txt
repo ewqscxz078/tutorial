@@ -1,0 +1,136 @@
+https://www.youtube.com/watch?v=-kmCiP1VPNM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=58&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 29
+public class Java29_Object {
+
+	private String name;
+	public String username;
+	String sex;
+	protected int age;
+
+	public void main(String[] args){
+		// 面向對象- 訪問權限
+
+		// public : 公共的，訪問權限修飾符
+		// 		java 源碼中，公共類只能有一個，而且必須和源碼文件名相同
+		//		main 方法 : 由 jvm 呼叫用，jvm 呼叫應該可以任意呼叫，而不用考慮權限問題
+
+		// Java 訪問權限主要分 4 種
+		//   1.private : 私有的，同一類中可以使用
+		//   2.(default) : 默認權限，當不設定任何權限時，jvm 會默認權限，同包/package(路徑) 權限、同類可訪問
+		//   3.protected : 受保護的權限，子類可以訪問、同包可訪問、同類可訪問
+		//   4.public : 公共的，任意訪問
+
+		User user = new User();
+
+		// System.out.println(user.name); 私有的訪問不了
+		System.out.println(user.username); // 公共的，任意訪問
+		System.out.println(user.sex);	// 默認權限，同包可訪問
+		System.out.println(user.age);	// protected，同包可訪問
+	}
+
+}
+
+class User {
+	private String name;
+	public String username;
+	String sex;
+	protected int age;
+
+	void test(){
+		System.out.println(name); // 自己皆可訪問的到
+		System.out.println(username); // 自己皆可訪問的到
+		System.out.println(sex); // 自己皆可訪問的到
+		System.out.println(age); // 自己皆可訪問的到
+	}
+}
+
+class ChildUser extends User {
+
+	void test2() {
+		// System.out.println(this.name); // 父類私有不可訪問
+		System.out.println(this.username); // 公共類皆可訪問
+		System.out.println(this.sex); // 同包父類可訪問
+		System.out.println(this.age); // 父類可訪問到
+	}
+}
+
+============================================================================================================
+====================================== 測試子包訪問 ========================================================
+============================================================================================================
+pacakge 29.sub
+
+import 29
+
+public class Java29_sub_Object {
+
+	public void main(String[] args){
+
+		Java29_Object user = new Java29_Object();
+
+		// System.out.println(user.name); 私有的訪問不了
+		System.out.println(user.username); // 公共的可訪問
+		// System.out.println(user.sex);	// 默認權限，不同包不可訪問
+		// System.out.println(user.age);	// protected 不同包不可訪問
+	}
+
+}
+============================================================================================================
+====================================== 測試子包 繼承訪問 ===================================================
+============================================================================================================
+pacakge 29.sub
+
+import 29
+
+public class Java29_sub_Object extends Java29_Object{
+
+	public void main(String[] args){
+
+		Java29_sub_Object user = new Java29_sub_Object();
+
+		// System.out.println(user.name); 私有的訪問不了
+		System.out.println(user.username); // 公共的可訪問
+		// System.out.println(user.sex);	// 默認權限，不同包不可訪問
+		System.out.println(user.age);	// protected 子類可訪問
+	}
+
+}
+============================================================================================================
+====================================== 測試不同包訪問 ======================================================
+============================================================================================================
+pacakge 29_diff
+
+import 29
+
+public class Java29_diff_Object {
+
+	public void main(String[] args){
+
+		Java29_sub_Object user = new Java29_sub_Object();
+
+		// System.out.println(user.name); 私有的訪問不了
+		System.out.println(user.username); // 公共的可訪問
+		// System.out.println(user.sex); // 默認權限，不同包不可訪問
+		// System.out.println(user.age); // protected，不同類不可訪問
+	}
+}
+============================================================================================================
+====================================== 測試不同包之繼承訪問 ================================================
+============================================================================================================
+pacakge 29_diff
+
+import 29
+
+public class Java29_diff_Object extends Java29_Object{
+
+	public void main(String[] args){
+
+		Java29_sub_Object user = new Java29_sub_Object();
+
+		// System.out.println(user.name); 私有的訪問不了
+		System.out.println(user.username); // 公共的可訪問
+		// System.out.println(user.sex); // 默認權限，不同包不可訪問
+		System.out.println(user.age); // protected，可訪問父類、可讓子類可訪問
+	}
+}

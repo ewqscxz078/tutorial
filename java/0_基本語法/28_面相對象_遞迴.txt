@@ -1,0 +1,39 @@
+https://www.youtube.com/watch?v=jxRK2pmt0rE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=57&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+public class Java28_Object {
+	public void main(String[] args){
+		// 面向對象- 遞迴
+
+		// 所謂遞迴 : 方法呼叫自身，稱之為遞迴方法
+		// 1 + 3 + 5 + 7 + 9 .... + 19
+		int result = computeAP( 10 );
+		System.out.println(result);
+
+		// 階乘 : 5! => (4,3,2,1) => 5 * 4 * 3 * 2 * 1
+		// 0的階乘為1
+		// 一個大於1的數的階乘等於這個數乘以這個數減一的階乘
+		int result2 = computeFactorial( 5 );
+		System.out.println(result2);
+
+		// 1.遞迴方法應該有跳出的邏輯: stackOverflowError
+		// 2.呼叫自己時，傳遞的參數需要有規律
+		//    345623423 + 2343 + 23232 + 32323
+	}
+
+	public static init computeFactorial(int num){
+		if( num <= 1){
+			return 1;
+		} else {
+			return num * computeAP( num - 1 );
+		}
+	}
+
+	public static init computeAP(int num){
+		num = num % 2 == 0 ? num -1 : num;
+		if( num == 1){
+			return 1;
+		} else {
+			return num + computeAP( num - 2 );
+		}
+	}
+}

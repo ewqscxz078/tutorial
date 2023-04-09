@@ -1,0 +1,109 @@
+https://medium.com/@clu1022/java-nio-buffer-c98b52fd93ca
+
+java.nio.Buffer
+	Buffer
+		IntBuffer
+		FloatBuffer
+		CharBuffer
+		DoubleBuffer
+		ShortBuffer
+		LongBuffer
+		ByteBuffer
+
+最常用 ByteBuffer
+	Allocation : 分配
+		1.指定容量 (capacity): allocation, allocateDirect
+				ByteBuffer 分為兩種: direct 與 non-direct.
+				Direct buffer 基本上是映射在 java heap 之外的, 而且可以直接讓作業系統存取, 因此其速度是比使用陣列的 non-direct buffer 要來得快的.
+				Non-direct buffer 是透過 allocate() 來建立的, 且其基本
+
+					allocation :
+						// Create buffer : allocate 一個容量為100 byte 的 buffer
+							ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+
+					allocateDirect :
+						ByteBuffer byteBuffer = ByteBuffer.allocateDirect(100);
+
+		2.事先提供建立好的陣列: wrapping
+			// Wrapping 這種方式下, 你要先提供一個用來儲存資料的陣列
+				byte[] backingArray = new byte[100];
+				ByteBuffer byteBuffer = ByteBuffer.wrap(backingArray)
+
+	buffer state : capacity 、 limit 、 position 、 mark
+		capacity
+			可以持有的資料的最大上限
+			建立後就不會再改變
+
+		limit
+			 zero-based 的索引
+			 用來辨別第一個 ”不應該” 被讀取/寫入的資料
+				決定資料可否從 buffer 中被讀取
+					介於索引 0 與 limit 之間(不包含 limit 值) 的資料是可以被讀取的
+					介於索引 limit (包含) 與 capacity 的資料則是垃圾 (不會被讀到的)
+
+		position
+			zero-based 的索引
+			辨別下一個資料是否可以被讀取/寫入
+			資料從 buffer 中被讀取或是被寫入 buffer 時, position 索引會遞增
+
+		Mark
+			被記憶住的位置
+			當呼叫 mark() 方法時, 會把 position 的值設定給 mark
+			呼叫 reset() 方法時, 會把 mark 的值設定給 position
+			Mark 的值要設定才會有
+
+		四個特性的關係:
+			0 <= mark <= position <= limit <= capacity
+
+		java.nio.Buffer
+			int position()
+			int limit()
+			int capacity()
+
+			remaining() 計算可供消耗的資料數量
+				依據為: limit() - position()
+				是否還有可供消耗的資料, 也可使用 hasRemaining()
+
+	// flipping, marking 以及 rewinding
+
+	Reading Data
+		相對操作 : 每操作一次 position 會遞增(+1)，position 大於 limit 時拋出 BufferUnderflowException
+			public abstract byte get();
+		絕對操作 : 不會影響 buffer 的 position，傳入的 index 超出界線了, 就有可能拋出 java.lang.IndexOutOfBoundsException
+			public abstract byte get(int index);
+
+	Writing Data
+		相對操作 : 每操作一次 position 會遞增(+1)，position 遞增過頭時拋出 BufferOverflowException
+			public abstract ByteBuffer put(byte b);
+		絕對操作 : 不會影響 buffer 的 position，傳入的 index 超出界線了, 就有可能拋出 java.lang.IndexOutOfBoundsException
+			public abstract ByteBuffer put(int index, byte b);
+
+	Buffer Life Cycle: Fill、Flip、Drain、Clear
+		Filling Mode(填滿中): 由一個生產者 (producer) 寫入至 buffer.
+		Draining Mode(排水中): 由一個消耗者 (consumer) 從 buffer 中讀取.
+
+			翻轉到排水模式
+				Buffer.flip() : change Filling Mode to Draining Mode
+			已排水完
+				Buffer.clear() : change Draining Mode to Filling Mode
+
+			public void manipulateByteBuffer() {
+				// Crate buffer
+				ByteBuffer byteBuffer = ByteBuffer.allocate(6);
+
+				// Add one byte
+				byteBuffer.put((byte) 9);
+
+				// Add another three bytes
+				byteBuffer.put((byte) 4).put((byte) 8).put((byte) 7);
+
+				byteBuffer.flip();
+
+				System.out.println(byteBuffer.get());
+
+				while (byteBuffer.hasRemaining()) {
+					System.out.println(byteBuffer.get());
+				}
+
+				byteBuffer.clear();
+			}
