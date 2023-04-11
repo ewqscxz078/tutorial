@@ -3,7 +3,7 @@ https://www.youtube.com/watch?v=m1lXdBCn7fA&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 ============================================================================================================
 
 public class Java26_Object {
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 覆寫/重寫
 
 		// 方法的重寫: 父類對象的方法其實主要體現通用性，無法在特殊的場合下使用

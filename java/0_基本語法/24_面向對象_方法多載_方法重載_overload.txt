@@ -3,7 +3,7 @@ https://www.youtube.com/watch?v=FN6PJtCcdrI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 public class Java24_Object {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 多載/重載 overload
 
 		// 一個類中，不能重複聲明相同的方法，也不能聲明相同屬性

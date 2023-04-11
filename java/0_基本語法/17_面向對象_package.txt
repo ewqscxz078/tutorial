@@ -2,7 +2,7 @@ https://www.youtube.com/watch?v=XL-e3lZtAow&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 package ${通常小寫以利區別 class Name 駱駝式命名}
 
-public void main(String[] args){
+public static void main(String[] args){
 	// 面向對象- package - 包
 	// package 中包含類
 	// 基本語法 : package 包完整路徑;

@@ -9,7 +9,7 @@ public class Java29_Object {
 	String sex;
 	protected int age;
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 訪問權限
 
 		// public : 公共的，訪問權限修飾符
@@ -18,8 +18,8 @@ public class Java29_Object {
 
 		// Java 訪問權限主要分 4 種
 		//   1.private : 私有的，同一類中可以使用
-		//   2.(default) : 默認權限，當不設定任何權限時，jvm 會默認權限，同包/package(路徑) 權限、同類可訪問
-		//   3.protected : 受保護的權限，子類可以訪問、同包可訪問、同類可訪問
+		//   2.(default) : 默認權限(當不設定任何權限時，jvm 會默認權限)，同包/package(路徑) 權限、同類可訪問
+		//   3.protected : 受保護的權限，同包可訪問、同類可訪問、子類可以訪問
 		//   4.public : 公共的，任意訪問
 
 		User user = new User();

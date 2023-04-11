@@ -3,7 +3,7 @@ https://www.youtube.com/watch?v=wo39XcsAuEk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 ============================================================================================================
 
 public class Java25_Object {
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 多載/重載 overload， 建構方法的重載
 
 		// 如果在一個構造方法中，想要調用其他的構造方法，那麼需要使用特殊的關鍵字: this

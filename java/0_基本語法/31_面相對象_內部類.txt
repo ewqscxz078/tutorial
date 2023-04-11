@@ -1,0 +1,29 @@
+https://www.youtube.com/watch?v=RAgqef5n5_U&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=60&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 31
+public class Java31_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 外部類 - 內部類
+
+		// Java 不允許外部類使用 private、protected 修飾
+		// 		外部類 : 公共類只能有一個，而且必須和源碼文件名相同，default 類 可以多個
+		// 所謂外部類，就是在源碼中直接聲明的類
+		// 所謂內部類，就是類中聲明的類
+
+		// 內部類就當成是外部類的屬性使用即可
+
+		// 因為內部類可以當作外部類的屬性，所以需要構建外部類對象才可使用
+
+		OuterClass outer = new OuterClass();
+		OuterClass.InnerClass inner = OuterClass.new InnerClass();
+	}
+
+}
+
+class OuterClass {
+	public/(default)/private/protected class InnerClass {
+
+	}
+}

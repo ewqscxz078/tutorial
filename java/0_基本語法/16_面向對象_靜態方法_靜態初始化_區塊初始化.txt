@@ -6,7 +6,7 @@ https://www.youtube.com/watch?v=6K1da4vzh1c&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 元空間/靜態方法區 : 類/靜態成員、靜態方法
 
-public void main(String[] args){
+public static void main(String[] args){
 	// 面向對象- 靜態方法
 
 	// 先有類才有對象

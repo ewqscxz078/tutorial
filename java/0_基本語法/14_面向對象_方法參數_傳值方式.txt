@@ -1,6 +1,6 @@
 https://www.youtube.com/watch?v=V8Rmn6o8nfE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=43&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-public void main(String[] args){
+public static void main(String[] args){
 	// 面向對象- 方法參數 - 傳值方式
 	// Java 方法參數的傳遞為 : 值傳遞
 	// 基本型態類型 : 數值

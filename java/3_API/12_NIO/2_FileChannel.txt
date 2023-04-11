@@ -2,9 +2,15 @@ https://www.baeldung.com/java-filechannel
 
 https://www.lilinchao.com/archives/2091.html
 
-相較於一般 inputStream 僅讀、outputStream 僅寫，且操作大檔案要自行實作 buffer 操作檔案
-FileChannel 支持讀和寫操作與其他進階操作，且支援大檔案操作(因為一定要使用 buffer 操作檔案)
-
+相對比較差異
+	相較於一般 inputStream 僅讀、outputStream 僅寫，且操作大檔案要自行實作 buffer 操作檔案
+	FileChannel 支持讀和寫操作與其他進階操作，且支援大檔案操作(因為一定要使用 buffer 類參數 操作檔案)
+FileChannel的優點
+	在文件中的特定位置讀取和寫入
+	將文件的一部分直接加載到內存中，這樣可以更高效
+	可以以更快的速度將文件數據從一個通道傳輸到另一個通道
+	可以鎖定文件的一部分以限制其他線程的訪問
+	為避免數據丟失，可以強制將文件更新立即寫入存儲
 
 https://stackoverflow.com/questions/2036921/get-filechannel-without-using-java-io-use-pure-nio
 如何 new FileChannel
@@ -17,5 +23,86 @@ https://stackoverflow.com/questions/2036921/get-filechannel-without-using-java-i
 
 	2.Java 7 has java.nio.channels.FileChannel.open(...) and java.nio.Files.newByteChannel(...)
 		FileChannel fileChannel = FileChannel.open(path, OpenOption... options);
+			FileChannel channell = FileChannel.open(
+				Paths.get("data","test","c.txt"),    // 路径:data/test/c.txt
+				StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE
+			);
+
+			FileChannel channel2 = FileChannel.open(
+				new File("a.txt").toPath(),
+				StandardOpenOption.CREATE_NEW,
+				StandardOpenOption.WRITE,StandardOpenOption.READ
+			);
+			public enum StandardOpenOption implements OpenOption {
+				READ, // 讀
+				WRITE, // 寫
+				APPEND, // 在寫模式下，進行追加寫
+				TRUNCATE_EXISTING, // 如果文件已經存在，並且它被打開以進行WRITE訪問，那麼它的長度將被截斷為0。如果文件僅以READ訪問方式打開，則忽略此選項。
+				CREATE, // 如果文件不存在，請創建一個新文件。如果還設置了CREATE_NEW選項，則忽略此選項。與其他文件系統操作相比，檢查文件是否存在以及創建文件(如果不存在)是原子性的。
+				CREATE_NEW, // 創建一個新文件，如果文件已經存在則失敗。與其他文件系統操作相比，檢查文件是否存在以及創建文件(如果不存在)是原子性的。
+				DELETE_ON_CLOSE, // 關閉時刪除文件
+				SPARSE, // 稀疏文件。當與CREATE_NEW選項一起使用時，此選項將提示新文件將是稀疏的。當文件系統不支持創建稀疏文件時，該選項將被忽略。
+				SYNC, // 要求對文件內容或元數據的每次更新都以同步方式寫入底層存儲設備。
+				DSYNC; // 要求對文件內容的每次更新都以同步方式寫入底層存儲設備。
+			}
 
 		SeekableByteChannel sbc = Files.newByteChannel(pathMerged, StandardOpenOption.APPEND);
+
+讀取
+	將數據讀取到單個緩衝區
+		try(FileChannel channel = FileChannel.open(Paths.get("a.txt"), StandardOpenOption.READ);){
+			ByteBuffer buf = ByteBuffer.allocate(5);
+			while(channel.read(buf)!=-1){
+				buf.flip();
+				System.out.print(new String(buf.array()));
+				buf.clear();
+			}
+		}
+	讀取到多個緩衝區
+		try(ScatteringByteChannel channel = FileChannel.open(Paths.get("a.txt"), StandardOpenOption.READ);){
+			ByteBuffer key = ByteBuffer.allocate(5), value=ByteBuffer.allocate(10);
+			ByteBuffer[] buffers = new ByteBuffer[]{key, value};
+			while(channel.read(buffers)!=-1){
+				key.flip();
+				value.flip();
+				System.out.println(new String(key.array()));
+				System.out.println(new String(value.array()));
+				key.clear();
+				value.clear();
+			}
+		}
+
+寫入
+	單個緩衝區寫入
+		try(FileChannel channel = FileChannel.open(Paths.get("a.txt"), StandardOpenOption.WRITE);){
+			ByteBuffer buf = ByteBuffer.allocate(5);
+			byte[] data = "Hello, Java NIO.".getBytes();
+			for (int i = 0; i < data.length; ) {
+				buf.put(data, i, Math.min(data.length - i, buf.limit() - buf.position()));
+				buf.flip();
+				i += channel.write(buf);
+				buf.compact();
+			}
+			channel.force(false);
+		}
+
+	從多個緩衝區寫入
+		FileChannel 實現了 GatherringByteChannel 接口，與 ScatteringByteChannel 相呼應。可以一次性將多個緩衝區的數據
+
+		try(FileChannel channel = FileChannel.open(Paths.get("a.txt"), StandardOpenOption.WRITE);){
+			ByteBuffer key = ByteBuffer.allocate(10), value = ByteBuffer.allocate(10);
+			byte[] data = "017 Robothy".getBytes();
+			key.put(data, 0, 3);
+			value.put(data, 4, data.length-4);
+			ByteBuffer[] buffers = new ByteBuffer[]{key, value};
+			key.flip();
+			value.flip();
+			channel.write(buffers);
+			channel.force(false); // 將資料寫入硬碟
+		}
+		資料寫入
+				為了減少存取硬碟的次數，透過檔案通道對檔案進行操作之後可能不會立即寫入硬碟，
+			這時如果系統當機，就會導致資料遺失。為了減少這種風險，在進行了重要資料的操作後，應該呼叫 force() 方法強制將資料寫入硬碟。
+			不論是否對檔案進行過修改操作，即使檔案通道是以唯讀模式打開的，只要呼叫了 force(metaData) 方法，
+			就會進行一次 I/O 操作。參數 metaData 指定是否將元資料（例如：存取時間）也寫入硬碟。

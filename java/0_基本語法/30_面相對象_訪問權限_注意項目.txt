@@ -1,0 +1,24 @@
+https://www.youtube.com/watch?v=lsWdBj7qek4&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=59&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 30
+public class Java30_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 訪問權限
+
+		// 所謂訪問權限，就是訪問屬性、方法的權力與限制
+		// 誰訪問? Java30_Object -> super -> java.lang.Object
+		// 訪問誰的? User -> super -> java.lang.Object(clone)
+
+		User user = new User();
+		// user.clone();  編譯失敗，因為無法靜態類無法訪問受保護的實例方法
+	}
+
+}
+
+class User {
+	void test() throw Exception{
+		clone();	// protected native Object.clone(); 實例的方法可訪問
+	}
+}

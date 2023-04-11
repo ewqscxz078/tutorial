@@ -3,7 +3,7 @@ https://www.youtube.com/watch?v=5sq2VPFGaQE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 ============================================================================================================
 
 public class Java27_Object {
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 覆寫/重寫
 
 		// 一個對象能使用什麼方法，取決於引用變數的類型

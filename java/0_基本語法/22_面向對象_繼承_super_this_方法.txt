@@ -2,7 +2,7 @@ https://www.youtube.com/watch?v=eE4nPI-l-oo&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 public class Java22_Object {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- Extends - 繼承
 
 		// 構造方法

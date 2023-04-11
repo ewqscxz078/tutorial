@@ -1,7 +1,7 @@
 https://www.youtube.com/watch?v=jxRK2pmt0rE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=57&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
 public class Java28_Object {
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 遞迴
 
 		// 所謂遞迴 : 方法呼叫自身，稱之為遞迴方法

@@ -4,7 +4,7 @@ package test
 
 public class Java10_Object_import {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- import
 		// import 主要用於使用類前準備好了(想成告訴去哪個資料夾可以找到指定類)
 		// import 語句只能使用在 package 後，class 前

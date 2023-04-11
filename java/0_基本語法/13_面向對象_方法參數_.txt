@@ -1,6 +1,6 @@
 https://www.youtube.com/watch?v=A26GtqP3SJI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=42&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-public void main(String[] args){
+public static void main(String[] args){
 	// 面向對象- 方法
 	// 使用外部參數控制方法內部實現的操作, 使用的是參數語法實現，也叫方法參數
 	// 語法 : 方法名(參數類型 參數名稱)

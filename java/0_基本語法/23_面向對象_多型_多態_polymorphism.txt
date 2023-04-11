@@ -2,7 +2,7 @@ https://www.youtube.com/watch?v=eE4nPI-l-oo&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 public class Java23_Object {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 多型/多態 Polymorphism
 
 		// 所謂的多態，其實就是一個對象在不同場景下表現出來的不同狀態和型態

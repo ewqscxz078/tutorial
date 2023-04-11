@@ -2,7 +2,7 @@ https://www.youtube.com/watch?v=ZVcEKHDbCLc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 public class Java20_Object {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- Extends - 繼承
 
 		// 面向對象中有三個重要特徵 : 繼承、封裝、多型

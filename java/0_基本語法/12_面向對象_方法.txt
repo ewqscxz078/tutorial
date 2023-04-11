@@ -1,6 +1,6 @@
 https://www.youtube.com/watch?v=DMtQKmYHd4Q&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=41&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-public void main(String[] args){
+public static void main(String[] args){
 	// 面向對象- 方法
 	// 聲明的語法 : void 方法名(){ 邏輯代碼 }
 	// 聲明的語法補充 : [方法的返回值類型]/[void] 方法名(){ 邏輯代碼 }

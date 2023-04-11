@@ -2,7 +2,7 @@ https://www.youtube.com/watch?v=RtcF36dfEFk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 public class Java11_Object {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- 構建對象
 
 		// 構造方法 : 專門用於對象

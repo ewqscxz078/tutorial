@@ -2,7 +2,7 @@ https://www.youtube.com/watch?v=7JlhG4MGMII&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8
 
 public class Java21_Object {
 
-	public void main(String[] args){
+	public static void main(String[] args){
 		// 面向對象- Extends - 繼承
 
 		// 如果父類和子類含有相同的屬性，那麼可以採用特殊的關鍵字進行區分

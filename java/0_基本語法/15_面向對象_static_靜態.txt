@@ -1,6 +1,6 @@
 https://www.youtube.com/watch?v=l1Up4clCIow&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=45&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-public void main(String[] args){
+public static void main(String[] args){
 	// 面向對象- 靜態
 	// 針對於具體對象的屬性稱之為 對象屬性/成員屬性/實例屬性
 	// 針對於具體對象的方法稱之為 對象方法/成員方法/實例方法
