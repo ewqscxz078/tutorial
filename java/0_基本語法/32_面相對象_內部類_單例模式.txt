@@ -1,0 +1,36 @@
+https://www.youtube.com/watch?v=hxGnYaIubho&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=61&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 32
+public class Java32_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 外部類 - 內部類 - 單例模式(生成模式僅有一個)
+
+		// JVM 默認會給類提供的構造方法，其實就是公共的，無參的構造方法
+		// 1. 類的創建過程複雜
+		// 2. 類的對象消耗資源
+
+		// User user = new User(); 無法建構因為改成 private讓其無法自建
+		User user1 = User.getInstance();
+		User user2 = User.getInstance();
+		System.out.println(user1 == user2);
+		System.out.println(user1.equals(user2));
+	}
+
+}
+
+class User {
+
+	public static user = null;
+
+	private User (){
+	}
+
+	public static User getInstance(){ // 但在 multi thread 下其實會有問題
+		if(user == null){
+			user = new User();
+		}
+		return user;
+	}
+}

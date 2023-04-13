@@ -1,0 +1,73 @@
+https://www.youtube.com/watch?v=xO71lu2UIBc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=62&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 33
+public class Java33_Object {
+
+	public static void main(String[] args){
+		// 面向對象- final
+
+		// Java 中提供了一個語法，可以在數據初始化後不再被修改，使用關鍵字 final
+		// final 可以修飾變量，變量的值一但初始化後無法修改
+		// final 可以修飾屬性，那麼 JVM 無法自動進行初始化，需要自己進行初始化，屬性值不能發生變化
+		// 一般將 final 修飾的變量稱之為常量，或著叫不可變變量
+		// final 可以修飾方法，這個方法不能被子類重寫
+		// final 可以修飾類，這樣類就沒有子類了
+		// final 不可修飾構造方法
+		// final 可以修改方法的參數，一旦修飾，參數就無法修改
+
+		User user = new User();
+		// user1.name = "1234"; 無法編譯
+
+		User1 user1 = new User1("1234");
+
+	}
+
+}
+
+// final 可以修飾變量，變量的值一但初始化後無法修改
+class User {
+
+	public final String name;
+
+}
+
+// final 可以修飾屬性，那麼 JVM 無法自動進行初始化，需要自己進行初始化，屬性值不能發生變化
+class User1 {
+
+	public final String name;
+
+	public User1(String name){
+		this.name = name;
+	}
+}
+
+// final 可以修飾屬性，那麼 JVM 無法自動進行初始化，需要自己進行初始化，屬性值不能發生變化
+class User2 {
+
+	public final void test(){
+	}
+}
+class Child2 extends User2 {
+	//public final void test(){ // 編譯錯誤
+	//}
+}
+
+// final 可以修飾類，這樣類就沒有子類了
+class final User3 {
+}
+//class Child3 extends User3 { 無法繼承
+//}
+
+// final 不可修飾構造方法
+class  User4 {
+	// public final User4(){ 無法建構，編譯錯誤
+	// }
+}
+
+// final 可以修改方法的參數，一旦修飾，參數就無法修改
+class  User4 {
+	public void test(final String name){
+		// name = "1234"; 編譯錯誤，參數無法修改
+	}
+}
