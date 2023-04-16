@@ -89,7 +89,7 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 			● 需要開啟或者禁用某個Endpoint。
 				配置模式為  management.endpoint.<endpointName>.enabled = true
 
-			● 或者禁用所有的Endpoint然後手動開啟指定的Endpoint
+			● 或者禁用所有的Endpoint然後手動開啟指定的Endpoint，enabled-by-default 預設僅 info、health
 				management:
 				  endpoints:
 					enabled-by-default: false
@@ -98,6 +98,13 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					  enabled: true
 					health:
 					  enabled: true
+			● 開啟所有的Endpoints 排除部分
+				management:
+				  endpoints:
+					web:
+					  exposure:
+						include: '*'
+						exclude: threaddump,heapdump
 
 	暴露 Endpoints
 		支持的暴露方式
@@ -297,3 +304,13 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 		場景：開發ReadinessEndpoint來管理程序是否就緒，或者LivenessEndpoint來管理程序是否存活；
 		當然，這個也可以直接使用 https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-kubernetes-probes
+
+針對 api 增加監控執行時間
+	https://www.baeldung.com/timed-metrics-aspectj
+
+	metrics
+		於 java class method
+			@Timed(value = "my.api.timer", description = "Time taken by my API")
+
+		api 經過後會有執行紀錄
+			http://loclahost:8080/metrics/my.api.timer

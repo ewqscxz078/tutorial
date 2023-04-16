@@ -1,5 +1,10 @@
 https://www.youtube.com/watch?v=yFI4QwPZMew&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=80&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
+https://www.baeldung.com/spring-boot-admin
+https://cloud.tencent.com/developer/article/1936666
+https://docs.spring-boot-admin.com/2.7.10/#_securing_spring_boot_admin_server
+
+
 說明文件
 	https://codecentric.github.io/spring-boot-admin/current/
 
@@ -16,12 +21,8 @@ Spring Boot Admin server
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-	application.properties
-		server.port=8888
-
 	SpringBootAdminApplication.java
-		@Configuration
-		@EnableAutoConfiguration
+		@SpringBootApplication
 		@EnableAdminServer
 		public class SpringBootAdminApplication {
 			public static void main(String[] args) {
@@ -42,11 +43,10 @@ Spring Boot Admin Client
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-	application.properties
-		# 註冊 spring boot admin server url
-		spring.boot.admin.client.url=http://localhost:8080
-		management.endpoints.web.exposure.include=*
-		management.endpoint.health.show-details=always
+	application.yml
+		# open all endpoints actuator/**
+		management.endpoints.web.exposure.include: *
+		management.endpoint.health.show-details: always
 
 	SecurityPermitAllConfig.java
 		@Configuration
@@ -61,13 +61,13 @@ Spring Boot Admin Client
 開啟 Spring Boot Admin server 啟動
 	http://localhost:8888/
 
-
+https://www.baeldung.com/spring-boot-admin
 Security Configuration
 	Spring Boot Admin server
 		pom.xml
 			<dependency>
 				<groupId>de.codecentric</groupId>
-				<artifactId>spring-boot-admin-server-ui-login</artifactId>
+				<artifactId>spring-boot-admin-server-ui</artifactId>
 				<!-- <version>1.5.7</version> -->
 			</dependency>
 			<dependency>
@@ -81,9 +81,11 @@ Security Configuration
 			@EnableWebSecurity
 			public class WebSecurityConfig {
 				private final AdminServerProperties adminServer;
+				private SecurityProperties security;
 
-				public WebSecurityConfig(AdminServerProperties adminServer) {
+				public WebSecurityConfig(AdminServerProperties adminServer, SecurityProperties security) {
 					this.adminServer = adminServer;
+					this.security = security;
 				}
 
 				@Bean
@@ -122,20 +124,74 @@ Security Configuration
 							.tokenValiditySeconds(1209600);
 					return http.build();
 				}
+				@Bean
+				InMemoryUserDetailsManager userDetailsService(final PasswordEncoder passwordEncoder) throws Exception {
+					final UserDetails user = User.withUsername(this.security.getUser().getName()) //
+							.password(passwordEncoder.encode(this.security.getUser().getPassword())).roles("USER").build();
+					return new InMemoryUserDetailsManager(user);
+				}
+				@Bean
+				PasswordEncoder passwordEncoder() {
+					return new BCryptPasswordEncoder();
+				}
 			}
 
 	Spring Boot Admin Client
-		application.properties
-			spring.boot.admin.client.url=http://localhost:8080
+		application.yml
+			# 影響 spring boot admin server 看到的字眼
 			spring.application.name=${SYS_NAME}
-			spring.boot.admin.client.username=${spring.security.server.user.name}
-			spring.boot.admin.client.password=${spring.security.server.password}
+
+			spring.security:
+			  user:
+				name: ${client-可以存取 actuator/** 的帳號}
+				password: ${client-可以存取 actuator/** 的密碼}
+
+			spring.boot.admin.client:
+			# spring boot admin client where to connect to spring boot admin server url
+			  url: http://localhost:8888/admin
+			# spring boot admin client how to login spring boot admin server
+			  username: ${admin-server-username}
+			  password: ${admin-server-password}
+
+			# 如何讓 spring boot admin server 登入到 spring boot admin client instance ?
+			  instance:
+				prefer-ip: true # 使用ip註冊不然預設使用當前機器名稱，影響 spring boot admin server 開啟的 url
+				metadata:
+				  user:
+					name: ${spring.security.user.name}
+					password: ${spring.security.user.password}
 
 	Spring Boot Admin server
-		application.properties
-			# 告訴 Admin server 如何去 client 登入抓取監控指標
-			spring.security.user.name=client
-			spring.security.user.password=client
+		application.yml
+			server.port=8888
 
-			spring.boot.admin.client.instance.metadata.user.name=${spring.security.user.name}
-			spring.boot.admin.client.instance.metadata.user.password=${spring.security.user.password}
+			spring.security:
+			  user:
+				name: ${admin-server-username}
+				password: ${admin-server-password}
+
+			spring.boot.admin:
+			  ui.title: SB Admin title
+			  contextPath: admin
+			# 讓 admin server access client 帳密
+			  instance-auth:
+				enabled: true
+				default-user-name: ${client-user-name}
+				default-password: ${client-password}
+
+logger 建議處理
+	admin server
+		error level
+	admin client
+		1.error level
+		2.若 debug = true
+			org.springframework.web = error // 避免 server 打 client 過度 log
+
+1.優點
+	動態修改 log level
+	instance
+		download thread dump
+		view actuator/info、health 資訊
+2.缺點
+	要維護 admin server url
+		   client 存取的認證帳密
