@@ -59,3 +59,7 @@ from open ai
 				start ${path_file}
 			#開啟指定目錄下的檔案
 				start ${絕對路徑\檔案}
+
+		#指定用什麼程式開啟檔案
+			start chrome ${絕對路徑\檔案}
+			start firefox ${絕對路徑\檔案}

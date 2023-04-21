@@ -1,0 +1,4 @@
+https://www.shellhacks.com/windows-watch-command-equivalent-cmd-powershell/
+
+while (1) {<command>; sleep 5}
+	while (1) {Test-NetConnection 223.200.155.71 -Port 443; sleep 5}
