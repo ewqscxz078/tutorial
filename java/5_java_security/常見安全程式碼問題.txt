@@ -43,7 +43,8 @@ https://snyk.io/blog/10-java-security-best-practices/
 		10. Centralize logging and monitoring
 
 Critical 嚴重風險(from fortify)
-
+	Privacy Violation
+	Weak Encryption: Insecure Mode of Operation
 
 High 高風險(from fortify)
 	Unreleased Resource: Streams

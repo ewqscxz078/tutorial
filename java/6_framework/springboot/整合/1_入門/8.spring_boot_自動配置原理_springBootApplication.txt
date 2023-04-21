@@ -214,6 +214,9 @@
 		■ https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#common-application-properties
 		■ 自己分析。 xxxxProperties綁定了配置文件的哪些。
 	  ○ 自定義加入或者替換組件
-		■ @Bean、@Component。 。 。
-	  ○ 自定義器  XXXXXCustomizer；
+		■ @Bean、@Component
+	  ○ 自定制器  xxxxxConfigurer：
+		Spring Boot 中的元件擴展和定制，如 : 數據庫連接池、日誌記錄器、消息隊列
+	  ○ 自定義器  XXXXXCustomizer：
+		Spring Boot 中 "內建" 元件擴展和定制，如 : 嵌入式Tomcat服務器、Actuator端點、Spring Boot的配置機制
 	  ○ ......

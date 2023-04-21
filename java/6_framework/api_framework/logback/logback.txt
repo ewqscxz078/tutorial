@@ -119,6 +119,13 @@ Layouts
 	%logger{36} – the name of the logger, truncated to 35 characters
 	%msg%n – the log messages followed by the platform dependent line separator character
 
+	%d{yyyy-MM-dd HH:mm:ss.SSS}：輸出日誌的時間戳，格式為 年-月-日 小時:分鐘:秒.毫秒。
+	%p：輸出日誌的優先級，例如 DEBUG、INFO、WARN、ERROR 等。
+	%t：輸出執行緒的名稱。
+	%c：輸出日誌的類別名稱。
+	%m：輸出日誌的內容。
+	%n：輸出一個新行。
+
 指定部分 java package log level
 	<logger name="tw.gov.moi" level="DEBUG" />
 

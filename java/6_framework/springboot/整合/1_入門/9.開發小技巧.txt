@@ -100,3 +100,38 @@
 		自動依據選取的場景建立基本專案
 			1.建立場景的基本依賴
 			2.springboot 主程序
+
+	4.4 application.yml/properties 提示 spring boot 內建與 自訂配置檔的提示
+		https://www.baeldung.com/spring-boot-configuration-metadata
+
+		讓 application.yml/properties 也會出現自訂配置檔的提示
+			pom.xml add
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-configuration-processor</artifactId>
+					<optional>true</optional>
+				</dependency>
+
+				排除打包不含 輔助用的 spring-boot-configuration-processor
+				<build>
+					<plugins>
+						<plugin>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-maven-plugin</artifactId>
+							<configuration>
+								<excludes>
+									<exclude>
+										<groupId>org.springframework.boot</groupId>
+										<artifactId>spring-boot-configuration-processor</artifactId>
+									</exclude>
+								</excludes>
+							</configuration>
+						</plugin>
+					</plugins>
+				</build>
+
+			mvn clean install -Dmaven.skip.test 或
+			eclipse / ${yourproject}右鍵 / run as / Maven build ... / clean install and 勾選 skip test
+
+			則在 ${yourproject}\target\classes\META-INF\
+				會自動生成 spring-configuration-metadata.json

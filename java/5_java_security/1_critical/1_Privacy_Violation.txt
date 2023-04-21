@@ -1,0 +1,14 @@
+Privacy Violation
+	打印 log 客戶 解密後的敏感資料
+		案例1.
+			pass = getPassword();
+			...
+			dbmsLog.println(id+":"+pass+":"+type+":"+tstamp);
+
+		案例2.
+			final String decryptMetaJson = decrypt(metaEncryptJsonByte);
+			LOGGER.debug("extract metadata json : {}", decryptMetaJson);
+
+
+		改善方式
+			不要印 log

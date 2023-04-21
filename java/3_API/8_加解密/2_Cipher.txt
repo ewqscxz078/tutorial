@@ -1,0 +1,78 @@
+https://bigzuo.github.io/2019/03/27/java-cipher-tutorial/
+https://www.twblogs.net/a/5bb29bab2b71770e645df272
+
+
+
+轉換模式（transformation）
+	Cipher 實例化的一個核心參數。 transformation 參數的格式是：
+		算法/工作模式/填充模式(algorithm/mode/padding)，如上述示例中AES/ECB/PKCS5Padding。
+
+	SecretKeySpec keySpec = new SecretKeySpec(byte[] key, String algorithm); // 代表固定 key
+	String transformation = algorithm + mode + padding;
+	Cipher cipher = Cipher.getInstance(transformation);
+		固定 key
+			例如加密: 固定 key + 預設演算法 AES + 預設 transformation : AES(則預設會依據 provder 取得其 mode、padding ，JDK 預設 mode/padding = ECB/PKCS5Padding )
+				// 較不推薦的寫法
+				SecretKeySpec keySpec = new SecretKeySpec("key".getBytes(StandardCharsets.UTF_8), "AES");
+				String transformation = "AES";
+				Cipher cipher = Cipher.getInstance(transformation);
+				cipher.init(Ciphter.ENCRYPT,keySpec);
+				cipher.doFinal( 明文的Bytes )
+
+			例如加密: 固定 key + 預設演算法 AES + 指定 transformation : AES/ECB/PKCS5Padding )
+				SecretKeySpec keySpec = new SecretKeySpec("key".getBytes(StandardCharsets.UTF_8), "AES");
+				String transformation = "AES/ECB/PKCS5Padding";
+				Cipher cipher = Cipher.getInstance(transformation);
+				cipher.init(Ciphter.ENCRYPT,keySpec);
+				cipher.doFinal( 明文的Bytes )
+
+算法(Algorithm)
+	指具體使用到的加解密算法的名稱，且必須為英文字符串，如”AES”, “RSA”, “SHA-256” 等。
+
+工作模式(Mode)
+	指分組密碼工作模式。分組密碼工作模式允許使用同一組分組密碼秘鑰對於多於一塊的數據進行加密，並保證其安全性。
+	簡單說就是將需要加密的原始信息分成固定長度的數據塊，然後用分組密碼對這些數據塊進行加密。使用分組加密一般有如下場景：
+
+	當需要加密的明文長度比較大，比如文件內容，由於硬件或者性能原因所以需要分組加密；
+	多次使用相同的密鑰對多個分組加密，會引發一些安全問題；
+
+		模式					名稱							描述																						典型應用
+		電子密碼本(ECB)			Electronic CodeBook				用相同的密鑰分別對明文分組獨立加密															單個數據的安全傳輸(例如一個加密密鑰)
+		密碼分組鏈接(CBC)		Cipher Block Chaining			加密算法的輸入是上一個密文組合下一個明文組的異或											面向分組的通用傳輸或者認證
+		密文反饋(CFB)			Cipher FeedBack					一次處理s位，上一塊密文作為加密算法的輸入，產生的偽隨機數輸出與明文異或作為下一單元的密文	面向分組的通用傳輸或者認證
+		輸出反饋(OFB)			Output FeedBack					與CFB類似，只是加密算法的輸入是上一次加密的輸出，並且使用整個分組							噪聲信道上的數據流的傳輸(如衛星通信)
+		計數器(CTR)				Counter							每個明文分組都與一個經過加密的計數器相異或。對每個後續分組計數器遞增						面向分組的通用傳輸或者用於高速需求
+
+填充模式(Padding)
+	Algorithm Name				Description
+		NoPadding				No padding.
+		ISO10126Padding			This padding for block ciphers is described in 5.2 Block Encryption Algorithms in the W3C's "XML Encryption Syntax and Processing" document.
+		OAEPPadding, 			OAEPWith<digest>And<mgf>Padding	Optimal Asymmetric Encryption Padding scheme defined in PKCS1, where <digest> should be replaced by the message digest and <mgf> by the mask generation function. Examples: OAEPWithMD5AndMGF1Padding and OAEPWithSHA-512AndMGF1Padding.
+								If OAEPPadding is used, Cipher objects are initialized with a javax.crypto.spec.OAEPParameterSpec object to supply values needed for OAEPPadding.
+
+		PKCS1Padding			The padding scheme described in PKCS #1, used with the RSA algorithm.
+		PKCS5Padding			The padding scheme described in RSA Laboratories, "PKCS #5: Password-Based Encryption Standard," version 1.5, November 1993.
+		SSL3Padding				The padding scheme defined in the SSL Protocol Version 3.0, November 18, 1996, section 5.2.3.2 (CBC block cipher):
+
+	不是所有都支援 Padding ，需謹慎使用
+
+https://stackoverflow.com/questions/54066489/is-it-possible-to-check-for-a-specific-cipher-block-mode-support-without-providi
+取得支援 ciphter Algorithm list
+	Provider[] provs = Security.getProviders();
+	for (Provider prov : provs) {
+		Set<Service> services = prov.getServices();
+		for (Service service : services) {
+			if (!service.getType().matches("(?i)Cipher")) {
+				break;
+			}
+			String algo = service.getAlgorithm();
+			if (algo.matches("(?i).*/GCM/.*")) {
+				System.out.println(service);
+			}
+		}
+	}
+
+https://stackoverflow.com/questions/6258047/java-default-crypto-aes-behavior
+	For Oracle JDK 7 (tested), the default cipher for AES is AES/ECB/PKCS5Padding
+
+		Cipher cipher = Cipher.getInstance("AES");

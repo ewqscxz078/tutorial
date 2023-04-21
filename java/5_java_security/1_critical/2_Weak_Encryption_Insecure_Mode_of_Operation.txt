@@ -1,0 +1,14 @@
+Weak Encryption Insecure Mode of Operation
+	區塊編碼器的作業模式是一種演算法，它描述如何一再套用密碼的單一區塊作業來安全地轉換超過一個區塊的資料量
+	。有些作業模式包含了電子程式碼籍 (ECB)、加密區塊鏈結 (CBC)、加密回饋 (CFB) 和計數器 (CTR)。
+	在本質上，ECB 模式的安全性較低，因為它會為完全相同的純文字區塊產生一樣的加密文字。CBC 模式容易遭受
+	Padding oracle 攻擊。CTR 模式則無這些弱點，因此為優先選用的模式。
+	範例 1：以下程式碼使用 AES 加密搭配 ECB 模式：
+		SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS7Padding", "BC");
+		cipher.init(Cipher.ENCRYPT_MODE, key);
+
+		改善方式
+			SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
+			Cipher cipher = Cipher.getInstance("AES/GCM/PKCS5Padding", "BC");
+			cipher.init(Cipher.ENCRYPT_MODE, key);
