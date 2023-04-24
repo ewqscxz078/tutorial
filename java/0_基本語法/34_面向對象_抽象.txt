@@ -1,0 +1,44 @@
+https://www.youtube.com/watch?v=s9d8Py2LHfA&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=63&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+https://www.youtube.com/watch?v=8wvovVO_eMM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=64&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 34
+public class Java34_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 抽象 - abstract
+
+		// 抽象類	: 不完整的類，就是抽象類
+		//			abstract class 類名
+		//			因為不完整，所以無法直接構造對象
+		// 抽象方法	: 只有聲明，沒有實現的方法
+		//			abstract 返回值類型 方法名(參數)
+
+		// 分析問題: 對象(具體) => 類(抽象)
+		// 編寫代碼: 類(抽象) => 對象(具體)
+
+		// 如果一個類中含有抽象方法，那麼這個類就是抽象類
+		// 如果一個類是抽象類，它的方法不一定是抽象方法
+		// 抽象類無法直接構造對象，但是可以通過子類間接構造對象
+		// 如果抽象類中含有抽象方法，那麼子類繼承抽象類，需要重寫抽象方法，將方法補充完整
+
+		// abstract 關鍵字不能和 final 同時使用
+		// Person21 persion21 = new Person21();
+		Chinese21 c = new Chinese21();
+		c.eat();
+	}
+
+}
+
+abstract class Person21 {
+	public abstract void eat();
+	public void test(){
+	}
+}
+
+class Chinese21 extends Person21{
+	@Override
+	public void eat(){
+		System.out.println("使用筷子吃飯")
+	}
+}

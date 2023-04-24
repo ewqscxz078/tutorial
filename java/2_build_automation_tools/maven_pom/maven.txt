@@ -79,9 +79,12 @@ https://cloud.tencent.com/developer/article/1756145
 ============================== parent、modules ===================================================
 ==================================================================================================
 https://stackoverflow.com/questions/40213901/eclipse-cant-open-sub-project-of-maven-parent-project
+https://www.cnblogs.com/davenkin/p/advanced-maven-multi-module-vs-inheritance.html
 1.當於 project 點擊 parent 可到 parent pom.xml
 2.當於 parent pom.xml 點擊 modules 可到 modules pom.xml
 3.import existed maven project pom.xml 若有 modules 的 pom.xml 則會有階層效果訊問是否要將其連帶的 modules import 進來
+4.當於 parent project 執行 mvn clean package 則連同 modules 下的相關 module 一起執行
+5.有 modules 的 pom.xml 較容易了解一群的整體關係
 
 parent
 	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">

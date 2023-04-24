@@ -1,0 +1,67 @@
+https://www.youtube.com/watch?v=golaKZ8rpVc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=67&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 37
+public class Java37_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 匿名類
+
+		// 在模型場合下，類的名字不重要，我們指向使用類中的方法或功能，那麼此時我們可以采用特殊的語法，匿名類
+		// 所謂的匿名類，就是沒有名字的的類
+
+		Me me = new Me();
+		me.sayHello(new Zhangsan());
+		me.sayHello(new Lisi());
+		me.sayHello(new Person24(){	// 匿名類
+			public String name(){
+				System.out.println("wangwu");
+			}
+		});
+		me.sayHello(new Person24(){ // 匿名類
+			public String name(){
+				System.out.println("zhaoliu");
+			}
+		});
+		
+		new Bird24().fly();
+		
+		new Fly(){ // 匿名類
+			public void fly(){
+				System.out.println("使用飛行器飛翔");
+			}
+		}.fly();
+	}
+
+}
+
+abstract class Person24{
+	public abstract String name();
+}
+
+class Me {
+	public void sayHello(Person24 person24){
+		System.out.println("Hello" + person24.name());
+	}
+}
+
+class Zhangsan extends Person24{
+	public abstract String name(){
+		System.out.println("Zhangsan");
+	}
+}
+class Lisi extends Person24{
+	public abstract String name(){
+		System.out.println("Lisi");
+	}
+}
+
+interface Fly{
+	public void fly();
+}
+
+class Bird24 implements Fly{
+	public void fly(){
+		System.out.println("使用翅膀飛翔");
+	}
+}

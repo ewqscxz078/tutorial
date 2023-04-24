@@ -1,0 +1,49 @@
+https://www.youtube.com/watch?v=BZayRxzClR0&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=68&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 38
+public class Java38_Object {
+
+	public static void main(String[] args){
+		// 面向對象- bean 規範
+		// 1. 主要用於編寫邏輯
+		// 2. 主要用於建立數據類型(Bean)
+		
+		// Bean 類設計規範
+		// 1. 類要求必須有無參、公共的構造方法
+		// 2. 屬性必須私有化，然後提供公共的 set get 方法
+
+		User user = new User();
+		user.setAccount("admin");
+		user.setPassword("admin");
+		System.out.prinlnt(login(user));
+	}
+	
+	public static boolean login(User user){
+		if(user.getAccount().equals("admin") && user.getPassword().equals("admin")){
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
+
+
+class User {
+	private String account;
+	private String password;
+
+	public String getAccount(){
+		return accout;
+	}
+	public String getPassword(){
+		return password;
+	}
+
+	public String setAccount(){
+		return accout;
+	}
+	public String setPassword(){
+		return password;
+	}
+}

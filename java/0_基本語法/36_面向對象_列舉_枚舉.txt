@@ -1,0 +1,53 @@
+https://www.youtube.com/watch?v=Xs8530V4yP8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=66&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 36
+public class Java36_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 列舉/枚舉
+
+		// 列舉是一個特殊的類，其中包含了一組特定的對象，這些對象不會發生改變，一般都使用大寫的表示
+		// 列舉使用 enum 關鍵字使用
+		// 列舉類會將對象放置在最前面，那麼和後面的語法需要使用分號隔開
+		// 列舉不能創建對象，它的對象是在內部自行創建
+		System.out.println(City.TAIPAI.name);
+		System.out.println(City.TAIPAI.code);
+		System.out.println(MyCity.TAIPAI.name);
+		System.out.println(MyCity.TAIPAI.code);
+
+		// new MyCity(); 編譯失敗
+
+	}
+
+}
+
+class MyCity{
+	public String name;
+	public int code;
+
+	private MyCity(String name, int code){
+		this.code = code;
+		this.name = name;
+	}
+
+	public static final MyCity TAIPAI = new MyCity("台北", 65000);
+	public static final MyCity TAICHUNG = new MyCity("台中", 63000);
+}
+
+enum City{
+
+  TAIPAI("台北", 65000),
+  TAICHUNG("台中", 63000),
+  ;
+
+  City(String name, int code){
+	this.code = code;
+	this.name = name;
+  }
+
+  public String name;
+
+  public int code;
+
+}

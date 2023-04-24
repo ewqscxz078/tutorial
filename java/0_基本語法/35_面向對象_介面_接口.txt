@@ -1,0 +1,60 @@
+https://www.youtube.com/watch?v=K-kJOx4-zqs&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=65&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+============================================================================================================
+pacakge 35
+public class Java35_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 介面/接口
+
+		// 所謂的介面，可以簡單理解為規則
+		// 基本語法: interface 接口名稱 { 規則屬性，規則行為 }
+		// 接口其實是抽象的
+		// 規則的屬性必須為固定值，而且不能修改
+		// 屬性和行為的訪問權限必須為公共的
+		// 屬性應該是靜態的
+		// 行為應該是抽象的
+		// 接口和類是兩個層面的東西
+		// 接口可以繼承其他接口
+		// 類的對象須要遵循接口，在 java 中，這個遵循稱之為實現(implements)，類需要實現接口，而且可以實現多個接口
+		Computer c = new Computer();
+		Light light = new Light();
+		c.usb1 = light;
+
+		Light light1 = new Light();
+		c.usb2 = light1;
+
+		c.powerSupply();
+	}
+
+}
+
+interface USBInterface{
+}
+
+interface USBSupply extends USBInterface {
+  public void powerSupply();
+}
+
+interface USBReceive extends USBInterface {
+  public void powerReceive();
+}
+
+class Computer implements USBSupply {
+  public USBReceive usb1;
+  public USBReceive usb2;
+
+  @Override
+  public void powerSupply(){
+	System.out.println("電腦提供電源");
+	usb1.powerReceive();
+	usb2.powerReceive();
+  }
+}
+
+class Light implements USBReceive {
+
+  @Override
+  public void powerReceive(){
+	System.out.println("電燈接收電源");
+  }
+}
