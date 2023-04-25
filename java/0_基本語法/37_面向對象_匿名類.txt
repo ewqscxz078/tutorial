@@ -23,9 +23,9 @@ public class Java37_Object {
 				System.out.println("zhaoliu");
 			}
 		});
-		
+
 		new Bird24().fly();
-		
+
 		new Fly(){ // 匿名類
 			public void fly(){
 				System.out.println("使用飛行器飛翔");

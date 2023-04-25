@@ -1,0 +1,56 @@
+https://www.youtube.com/watch?v=oNn10NxXUw8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=69&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 39
+public class Java39_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 作用域
+
+		User user = new User();
+		user.test();
+
+		User.test2();
+	}
+
+}
+
+class Person {
+	public String name = "zhangsan";
+
+	public static String NAME = "zhangsan static";
+}
+class User extends Person {
+	public String name = "lisi";
+
+	public static String NAME = "lisi static";
+
+	public void test(){
+		String name = "wangwu";
+
+		// 如果屬性和(局部)變量的名稱相同，訪問時如果不加修飾符，優先訪問變量
+		System.out.println(name); // wangwu
+
+		// 有修飾詞 super 則找其父類對象的屬性
+		System.out.println(super.name); // zhangsan
+		// 有修飾詞 this 則找其當前類對象的屬性
+		System.out.println(this.name); // lisi
+
+		// 有修飾詞 super 則找其父類對象的靜態屬性，但會有警告，不應該這樣訪問，應該 Person.NAME 訪問的方式
+		System.out.println(super.NAME); // NAME : zhangsan static
+		// 有修飾詞 this 則找其當前類對象的靜態屬性，但會有警告，不應該這樣訪問，應該 User.NAME 訪問的方式
+		System.out.println(this.NAME); // NAME : lisi static
+
+		// 找其當前類靜態屬性
+		System.out.println(NAME); // lisi static
+	}
+
+	public static void test2() { // static 下 不能訪問父類的屬性
+		System.out.println(NAME); // lisi static
+
+		System.out.println(User.NAME); // lisi static
+		// System.out.println(super.NAME); // 無法訪問
+		System.out.println(Person.NAME); // zhangsan static
+	}
+}
+

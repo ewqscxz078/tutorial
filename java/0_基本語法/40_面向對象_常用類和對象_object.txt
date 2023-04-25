@@ -1,0 +1,50 @@
+https://www.youtube.com/watch?v=sY75xHz_LfY&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=70&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 40
+public class Java40_Object {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象_object
+
+		// java.lang.Object 對象
+		Object obj = new Person();
+
+		// 將對象轉成字串
+		// toString 默認打印的對象就是內存地址，所以為了能夠更直觀的理解對象內容，可以重寫該方法
+		String s = obj.toString(); // 含16進制的 hashcode
+		System.out.println(s);
+
+		int i = obj.hashCode();
+		System.out.println(s); // 10進制的 hashCode
+
+		// equals 判斷兩個對象是否相等，相等 : true ；反之 : false
+		// 默認比較內存地址
+		Person otherPerson = new Person();
+		System.out.println(otherPerson.hashCode());
+		System.out.println(obj.equals(otherPerson));
+
+		//
+		Class<?> clazz = obj.getClass();
+		System.out.println(clazz.getSimpleName());
+		System.out.println(clazz.getPackageName());
+	}
+
+}
+
+class Person {
+	public String name = "zhangsan";
+//	@Override
+//	public String toString(){
+//		return "Person[" +name+ "]";
+//	}
+
+	@Override
+	public boolean equals(Object obj){
+		return true;
+	}
+}
+class User extends Person {
+
+}
+
