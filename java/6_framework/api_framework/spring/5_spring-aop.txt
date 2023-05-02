@@ -1,7 +1,85 @@
 https://stackoverflow.com/questions/51811372/why-aop-does-not-work-in-my-spring-boot-application
+為何 aop 沒有生效，檢查如下表列
 	1.use @EnableAspectJAutoProxy without (proxyTargetClass = true)
 	2.be sure your @Aspect annotation is scaned. you can use @ComponentScan("myAspectPackageContainer.*")
 	3.you don't need @Component annotation when use @Aspect anymore.
 	4.use method modifier in your expression "execution( public * com.example.demo..."
 	5.at the end of your expression use "myPackage.*.*(..)"
 	6.check with dependencies
+
+AOP(Aspect-Oriented Programming)
+	針對執行直線式執行程式方的方式，提供橫向式跨程式的統一附加寫法，與原始程式解偶的方法，常見於 log、監控、交易、統一附加處理...等等
+		切面（Aspect）
+		連線點（Joinpoint）
+		通知（Advice）
+		切入點（Pointcut）
+
+範例
+
+	1. add @EnableAspectJAutoProxy(proxyTargetClass = true)
+		@SpringBootApplication
+		@EnableAspectJAutoProxy(proxyTargetClass = true)
+		public class DemoApplication {
+
+			public static void main(String[] args) {
+				SpringApplication.run(DemoApplication.class, args);
+			}
+		}
+
+	2.切入方式
+		https://ithelp.ithome.com.tw/articles/10279178
+			@Aspect
+			@Component
+			public class MessageAspect {
+				// 設定切入點
+				@Pointcut("execution(* com.example.iThomeIronMan.controller..*(..))")
+					public void pointcut() {
+				}
+
+				@Before("pointcut()")
+				public void before(JoinPoint joinPoint) {
+					System.out.println("=====Before advice starts=====");
+
+					logger.info("訪問 " + joinPoint.getSignature().getName());
+					Arrays.stream(joinPoint.getArgs()).forEach(System.out::println);
+
+					System.out.println("=====Before advice ends=====");
+				}
+
+				@Around("pointcut()")
+				public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+					System.out.println("=====Around advice starts=====");
+
+					long startTime = System.currentTimeMillis();
+
+					// 呼叫proceed() 方法開始執行原方法
+					Object result = joinPoint.proceed();
+					long spentTime = System.currentTimeMillis() - startTime;
+					logger.info("訪問 " + joinPoint.getSignature().getName() + " Time spent: " + spentTime);
+
+					System.out.println("=====Around advice ends=====");
+
+					return result;
+				}
+
+				@After("pointcut()")
+				public void after(JoinPoint joinPoint) {
+					System.out.println("=====After advice starts=====");
+
+					logger.info("訪問 /" + joinPoint.getSignature().getName());
+					Arrays.stream(joinPoint.getArgs()).forEach(System.out::println);
+
+					System.out.println("=====After advice ends=====");
+				}
+			}
+
+
+	3.執行後相對參考log結果
+		@RestController
+		public class MessageController {
+
+			@RequestMapping(value = "/")
+			public String mainMethod() {
+				return "result from mainMethod";
+			}
+		}

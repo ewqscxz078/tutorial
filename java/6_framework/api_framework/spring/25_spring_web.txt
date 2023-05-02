@@ -1,0 +1,53 @@
+
+https://www.tpisoftware.com/tpu/articleDetails/2383
+RestTemplate : 發送 http 請求
+	最快速簡易請求
+		public ResponseObject demoRestTemplate(String url, RequestObject requestObject) {
+			RestTemplate restTemplate = new RestTemplate();
+			ResponseObject responseObject = restTemplate.postForObject(url, requestObject, ResponseObject.class);
+			return responseObject;
+		}
+
+	添加額外表頭 in httpEntity by call exchange
+		public ResponseObject demoRestTemplate2(String url, RequestObject requestObject) {
+			RestTemplate restTemplate = new RestTemplate();
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.add("token", "NlXEt66fejIrQvIGampcPnLVdmIYVo0wdZf8T5H");
+
+			HttpEntity<RequestObject> httpEntity = new HttpEntity<RequestObject>(requestObject, headers);
+			ResponseEntity<ResponseObject> responseEntity =
+					restTemplate.exchange(url, HttpMethod.POST, httpEntity, ResponseObject.class);
+
+			ResponseObject responseObject = responseEntity.getBody();
+			return responseObject;
+		}
+
+	使用uri變量
+		public User getUser(String id) {
+			RestTemplate restTemplate = new RestTemplate();
+			User user = restTemplate.getForObject("http://demo/user/{id}", User.class, id);
+			return user;
+		}
+
+	多個uri變量
+		public User getUser(String id, String name) {
+			RestTemplate restTemplate = new RestTemplate();
+
+			Map<String, String> uriVariables = new HashMap<String, String>();
+			uriVariables.put("id", id);
+			uriVariables.put("name", name);
+
+			User user = restTemplate.getForObject("http://demo/user/{id}/{name}", User.class, uriVariables);
+			return user;
+		}
+
+	設定timeout
+		private SimpleClientHttpRequestFactory getClientHttpRequestFactory() {
+			SimpleClientHttpRequestFactory clientHttpRequestFactory = new SimpleClientHttpRequestFactory();
+			clientHttpRequestFactory.setConnectTimeout(1000);// 1秒
+			return clientHttpRequestFactory;
+		}
+
+		private RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory());

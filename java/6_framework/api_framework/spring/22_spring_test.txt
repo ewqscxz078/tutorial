@@ -51,3 +51,17 @@ ReflectionTestUtils
 
 		EmployeeService employeeService = new EmployeeService();
 		ReflectionTestUtils.setField(employeeService, "hrService", hrService);
+
+ref open AI
+模擬 http server 要求與回應
+	// 創建一個模擬的HTTP服務器
+	MockHttpServletRequest request = new MockHttpServletRequest();
+	MockHttpServletResponse response = new MockHttpServletResponse();
+
+	// 設置請求參數
+	request.setParameter("param1", "value1");
+
+	// 模擬HTTP服務器的響應
+	RestTemplate restTemplate = new RestTemplate();
+	when(restTemplate.postForObject(eq(url), eq(request), eq(String.class)))
+		.thenReturn("expectedResponse");

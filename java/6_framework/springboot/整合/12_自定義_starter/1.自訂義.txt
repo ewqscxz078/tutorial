@@ -132,3 +132,8 @@ https://www.baeldung.com/spring-boot-custom-starter
 						atguigu.hello.suffix=我是後墜
 					5.localhost:8080/hello
 						我是前墜-haha我是後墜
+
+
+
+https://www.amitph.com/spring-boot-nested-configuration-properties/
+巢狀配置方式
