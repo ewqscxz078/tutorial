@@ -37,7 +37,12 @@ https://www.baeldung.com/spring-boot-custom-starter
 			模式: 模塊名-spring-boot-starter
 			舉例: mybatis-spring-boot-starter
 
-	xxx-starter -> xxx-starter-autoconfigure
+	xxx-starter(client 引入 pom 用) -> xxx-starter-autoconfigure(存放可設定化元件:常見有xxxAutoConfiguration、xxxProperties)
+											可能會引用 xxx(常見含有xxxBuilder、xxxCustomizer)
+
+	有 yml 覆蓋方式
+	有 透過提供 xxxCustomizer 程式碼額外時做覆蓋方式
+
 
 	3.1 建立專案 xxx-starter
 		依賴 xxx-starter-autoconfigure 專案

@@ -1,4 +1,33 @@
 ==================================================================================================
+============================== type ==============================================================
+==================================================================================================
+https://www.baeldung.com/maven-packaging-types
+	jar
+		<packaging>jar</packaging>
+
+		default goal-to-build-phase bindings for the jar:
+			resources: resources
+			compiler: compile
+			resources: testResources
+			compiler: testCompile
+			surefire: test
+			jar: jar
+			install: install
+			deploy: deploy
+	war
+		jar with web application resource
+	ear
+		由一個或多個模塊組成，這些模塊可以是 Web 模塊（打包為 war 文件）或 EJB 模塊（打包為 jar 文件）或兩者
+	pom
+		create aggregators and parent projects
+	maven-plugin
+
+	Other Packaging Types
+		ejb
+		rar
+		....
+
+==================================================================================================
 ============================== optional ==========================================================
 ==================================================================================================
 https://cloud.tencent.com/developer/article/1756145
@@ -49,6 +78,27 @@ https://cloud.tencent.com/developer/article/1756145
   表示此jar檔有系統提供。跟provided 相似，這是以外部JAR檔的形式提供。
   而在maven repository 是無法找到它的。
   需指定位置，配合 systemPath 來使用
+
+6.import
+	This scope is only supported on a dependency of type pom in the <dependencyManagement> section.
+	It indicates the dependency is to be replaced with the effective list of dependencies in the specified POM's <dependencyManagement> section.
+	Since they are replaced, dependencies with a scope of import do not actually participate in limiting the transitivity of a dependency.
+
+	僅限 dependencyManagement 裡可使用，不依賴傳遞。
+	如若 不使用 spring-boot parent 時，dependencyManagement 的用法
+		<dependencyManagement>
+			<dependencies>
+				<dependency>
+					<!-- Import dependency management from Spring Boot -->
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-dependencies</artifactId>
+					<version>2.6.6</version>
+					<type>pom</type>
+					<scope>import</scope>
+				</dependency>
+			</dependencies>
+		</dependencyManagement>
+	將 dependencyManagement 下的 dependencies 插入到當前工程的 dependencyManagement
 
 ==================================================================================================
 ============================== properties ========================================================
