@@ -13,7 +13,42 @@ https://www.baeldung.com/spring-boot-custom-starter
 	@Bean 				// 給容器中增加組件
 
 	@ConfigurationProperties // 結合相關 xxxProperties 類來綁定相關的配置
-	@EnableConfigurationProperties // 讓 xxxProperties 生效加入到容器中
+	@EnableConfigurationProperties // 讓 xxxProperties 生效加入到容器中，
+		1.properties 類別就可以於每個 ioc 物件建構參數傳入
+			....
+			@EnableConfigurationProperties(XXXXProperties.class)
+			public class XXXXAutoConfiguration {
+				@Bean
+				@ConditionalOnMissingBean
+				public SomethinObject somethinObject(XXXXProperties properties) {
+					....
+				}
+		2.或是當作 auto-configuration 的建構參數 : 適何當注入的每個 ioc 物件參數已過多時的替代方式
+			@AutoConfiguration
+			@ConditionalOnClass(KafkaTemplate.class)
+			@EnableConfigurationProperties(KafkaProperties.class)
+			@Import({ KafkaAnnotationDrivenConfiguration.class, KafkaStreamsAnnotationDrivenConfiguration.class })
+			public class KafkaAutoConfiguration {
+
+				private final KafkaProperties properties;
+
+				public KafkaAutoConfiguration(KafkaProperties properties) {
+					this.properties = properties;
+				}
+
+				@Bean
+				@ConditionalOnMissingBean(KafkaTemplate.class)
+				public KafkaTemplate<?, ?> kafkaTemplate(ProducerFactory<Object, Object> kafkaProducerFactory,
+						ProducerListener<Object, Object> kafkaProducerListener,
+						ObjectProvider<RecordMessageConverter> messageConverter) {
+					PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+					KafkaTemplate<Object, Object> kafkaTemplate = new KafkaTemplate<>(kafkaProducerFactory);
+					....
+					map.from(this.properties.getTemplate().getDefaultTopic()).to(kafkaTemplate::setDefaultTopic);
+					map.from(this.properties.getTemplate().getTransactionIdPrefix()).to(kafkaTemplate::setTransactionIdPrefix);
+					return kafkaTemplate;
+				}
+
 
 	自動配置類要能加載
 		將需要啟動就加載的自動配置類，配置在
@@ -40,9 +75,12 @@ https://www.baeldung.com/spring-boot-custom-starter
 	xxx-starter(client 引入 pom 用) -> xxx-starter-autoconfigure(存放可設定化元件:常見有xxxAutoConfiguration、xxxProperties)
 											可能會引用 xxx(常見含有xxxBuilder、xxxCustomizer)
 
-	有 yml 覆蓋方式
-	有 透過提供 xxxCustomizer 程式碼額外時做覆蓋方式
-
+	client 覆蓋方式
+		by yml
+		by 透過提供 @FunctionalInterface interface xxxCustomizer (xxxBuilder) 程式碼額外時做覆蓋方式
+			example
+				TaskExecutorCustomizer
+				TaskSchedulerCustomizer
 
 	3.1 建立專案 xxx-starter
 		依賴 xxx-starter-autoconfigure 專案
@@ -142,3 +180,26 @@ https://www.baeldung.com/spring-boot-custom-starter
 
 https://www.amitph.com/spring-boot-nested-configuration-properties/
 巢狀配置方式
+
+
+
+預設自動化配置常見寫法
+	綁定 properties 若有設定
+		LdapAutoConfiguration
+			@AutoConfiguration
+			@ConditionalOnClass(ContextSource.class)
+			@EnableConfigurationProperties(LdapProperties.class)
+			public class LdapAutoConfiguration {
+				@Bean
+				@ConditionalOnMissingBean
+				public LdapContextSource ldapContextSource(LdapProperties properties, Environment environment,
+						ObjectProvider<DirContextAuthenticationStrategy> dirContextAuthenticationStrategy) {
+					LdapContextSource source = new LdapContextSource();
+					....
+					PropertyMapper propertyMapper = PropertyMapper.get().alwaysApplyingWhenNonNull();
+					propertyMapper.from(properties.getUsername()).to(source::setUserDn);
+					....
+					propertyMapper.from(properties.getBaseEnvironment())
+						.to((baseEnvironment) -> source.setBaseEnvironmentProperties(Collections.unmodifiableMap(baseEnvironment)));
+					return source;
+				}

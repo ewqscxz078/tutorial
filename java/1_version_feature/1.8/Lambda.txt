@@ -1,0 +1,263 @@
+https://magiclen.org/java-8-lambda/
+
+Lambda
+	在不同領域，對於Lambda的定義可能不太相同，但概念都是Lambda為一個函數，可以根據輸入的值，決定輸出的值
+	Lambda並不需要替函數命名(如F(X) = X + 2, G(X) = F(X) + 3中的F、G便是函數的名稱)，所以我們常常把 Lambda 形容為「匿名的」(Anonymous)。
+	Lambda表示式 : 用來表示一個「只擁有一個方法的介面」所實作出來的匿名類別，但這樣講也是不太正確，在文章之後會進行觀念的改正，現在姑且先將其認知成這樣
+
+===================================================================================================================================================
+匿名類別
+	匿名範例
+		class ClassA {
+
+		}
+
+		public class MainClass{
+		   public static void main(String[] args) {
+			  ClassA a = new ClassA() { //實體化匿名類別
+				 public void function1(int x, int y) {
+					System.out.println(x + y);
+				 }
+
+				 public int function2(int x) {
+					return x + 1;
+				 }
+			  };
+		   }
+		}
+	非匿名範例
+		class ClassA {
+
+		}
+
+		class ClassB extends ClassA { //在另外的地方宣告class，並且繼承或是實作ClassA
+
+			public void function1(int x, int y) {
+
+			}
+
+			public int function2(int x) {
+				return x + 1;
+			}
+		}
+
+		public class MainClass{
+		   public static void main(String[] args) {
+			   ClassA a = new ClassB();
+		   }
+		}
+
+===================================================================================================================================================
+檔案
+	class A {
+
+		class B {
+
+		}
+	}
+		會得到 A.class 與 A$B.class 兩個檔案
+
+	class C{
+
+	}
+
+	class A {
+
+		class B {
+
+		}
+
+		public void f2(){
+			C c = new C(){
+
+			};
+		}
+
+		public void f1() {
+			B c = new B(){
+
+			};
+		}
+	}
+		會得到 C.class、A.class、A$B.class、A$1.class 與 A$2.class 五個檔案
+
+===================================================================================================================================================
+Lambda語法結構
+
+	input -> body
+		input 和 body 都各有多種撰寫方式，以下分別舉例。
+			input
+				不輸入
+					()
+				單個輸入
+					x // 任意字符代表
+				多個輸入(不省略型態)
+					(int x,int y)
+				多個輸入(省略型態)
+					(x,y)
+			body
+				什麼都不做
+					{}
+				單行不回傳值
+					System.out.println("NO"); // 也就是一般java 語法一行
+				多行不回傳值
+					{
+						System.out.println("NO");
+						System.out.println("NO2");
+					}
+				單行回傳值
+					x+y
+				多行回傳值
+					{
+						x++;
+						y-=x;
+						return x+y;
+					}
+		特殊語法結構，可以省略掉 input 和 ->，因為會使程式碼較不易閱讀，不建議使用
+
+===================================================================================================================================================
+Lambda實際應用與效能比較
+	取代 Functional Interface 產出的匿名類別
+		Java中，許多只有一個方法的介面，如果要使用這些介面，往往需要使用到至少4行程式碼才有辦法達成
+			Runnable runnbale = new Runnable() {
+				public void run() {
+					System.out.println("run me!");
+				}
+			};
+		簡化程式碼，甚至還可以提升效能
+			Runnable runnbale = () -> System.out.println("run me!");
+
+		縮短程式碼，在編譯的過程中，也可以避免掉產生新的.class檔案出來，執行的時候，也不會再重新new出一個物件實體，
+		而是直接將Lambda的body程式碼存放在記憶體，直接以類似call function的方式去執行，大大的提升程式的執行效能。
+
+	比對編譯出來.class檔案的bytecode()
+		不使用Lambda
+			0: new #2
+			3: dup
+			4: invokespecial #3
+		使用Lambda
+			0: invokedynamic #2, 0
+
+	差異比對
+		Runnable r1 = () -> System.out.println("r1: " + this.getClass());
+
+		Runnable r2 = new Runnable(){
+			public void run(){
+			System.out.println("r2: " + this.getClass());
+			}
+		};
+
+		new Thread(r1).start();
+		new Thread(r2).start();
+			兩個執行緒都是呼叫this.getClass()，但print出來的結果卻不一樣。
+			而且可以知道使用Lambda的r1，this所指的物件就是此行Lambda語法所在的物件，
+			並不會像沒使用Lambda的r2一樣變成一個匿名類別的物件。
+
+===================================================================================================================================================
+Lambda 與 Collection 的關係
+	走訪
+		過去 list
+			for (String s : list) {
+				System.out.print(s);
+			}
+		Lambda list
+			list.forEach(s -> System.out.print(s));
+
+		過去 map
+			Set<String> keySet = map.keySet();
+			for (String s : keySet) {
+				System.out.print(s + ":" + map.get(s));
+			}
+		Lambda map
+			map.forEach((k, v) -> System.out.print(k + ":" + v));
+
+	過濾和基本運算
+		List<String> list = new ArrayList<String>();
+		list.add("1");
+		list.add("2");
+		list.add("3");
+		list.add("5");
+		list.add("4");
+		list.stream().filter(s -> Integer.valueOf(s) < 3).forEach(s -> System.out.print(s)); // 將 list 小於3 的過濾出後列印
+			輸出「12」
+
+		List<String> list = new ArrayList<String>();
+		list.add("1");
+		list.add("2");
+		list.add("3");
+		list.add("5");
+		list.add("4");
+		List<String> list2 = list.stream().filter(s -> Integer.valueOf(s) < 3).collect(Collectors.toList()); // 將 list 小於3 的過濾出結果收集到 list2
+		list2.add("7");
+		list2.forEach(s -> System.out.print(s));
+			輸出「127」
+
+		List<String> list = new ArrayList<String>();
+		list.add("1");
+		list.add("2");
+		list.add("3");
+		list.add("5");
+		list.add("4");
+		System.out.println(list.stream().mapToInt(s->Integer.valueOf(s)).sum());	// 將 list 裡所有元素加總列印
+		System.out.println(list.stream().filter(s -> Integer.valueOf(s) < 3).mapToInt(s->Integer.valueOf(s)).average().getAsDouble()); // 將 list 小於3 的過濾結果並算出期平均轉double
+			輸出
+			「
+			15
+			1.5
+			」
+===================================================================================================================================================
+Lambda特殊精簡語法結構
+	方法名稱
+		Lambda允許這種類型的語法存在，但必須要明確指定方法名稱是在哪個類別或是哪個物件之下，而且最後一個「.」要改成「::」
+
+			範例一
+				List<String> list = new ArrayList<String>();
+				list.add("1");
+				list.add("2");
+				list.add("3");
+				list.add("5");
+				list.add("4");
+				list.forEach(System.out::print);
+
+			範例二 : 程式變得非常精簡，卻也不易閱讀
+				interface B {
+
+					public void doStringWork(String s);
+				}
+
+				interface C {
+
+					public double doComputeWork(float x, float y);
+				}
+
+				public class A {
+
+					public A() {
+						B b = this::printOnce;
+						b.doStringWork("哈囉");
+					}
+
+					public static void main(String[] args) {
+						B b = A::printTwice;
+						b.doStringWork("嗨");
+						new A();
+
+						C c = Math::pow;
+						b.doStringWork(String.valueOf(c.doComputeWork(2.5f, 2)));
+					}
+
+					public static void printTwice(String s) {
+						System.out.print(s);
+						System.out.println(s);
+					}
+
+					public void printOnce(String s) {
+						System.out.println(s);
+					}
+				}
+					以上輸出結果為：
+					「
+					嗨嗨
+					哈囉
+					6.256.25
+					」
