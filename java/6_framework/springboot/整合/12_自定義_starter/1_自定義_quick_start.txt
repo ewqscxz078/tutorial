@@ -13,42 +13,7 @@ https://www.baeldung.com/spring-boot-custom-starter
 	@Bean 				// 給容器中增加組件
 
 	@ConfigurationProperties // 結合相關 xxxProperties 類來綁定相關的配置
-	@EnableConfigurationProperties // 讓 xxxProperties 生效加入到容器中，
-		1.properties 類別就可以於每個 ioc 物件建構參數傳入
-			....
-			@EnableConfigurationProperties(XXXXProperties.class)
-			public class XXXXAutoConfiguration {
-				@Bean
-				@ConditionalOnMissingBean
-				public SomethinObject somethinObject(XXXXProperties properties) {
-					....
-				}
-		2.或是當作 auto-configuration 的建構參數 : 適何當注入的每個 ioc 物件參數已過多時的替代方式
-			@AutoConfiguration
-			@ConditionalOnClass(KafkaTemplate.class)
-			@EnableConfigurationProperties(KafkaProperties.class)
-			@Import({ KafkaAnnotationDrivenConfiguration.class, KafkaStreamsAnnotationDrivenConfiguration.class })
-			public class KafkaAutoConfiguration {
-
-				private final KafkaProperties properties;
-
-				public KafkaAutoConfiguration(KafkaProperties properties) {
-					this.properties = properties;
-				}
-
-				@Bean
-				@ConditionalOnMissingBean(KafkaTemplate.class)
-				public KafkaTemplate<?, ?> kafkaTemplate(ProducerFactory<Object, Object> kafkaProducerFactory,
-						ProducerListener<Object, Object> kafkaProducerListener,
-						ObjectProvider<RecordMessageConverter> messageConverter) {
-					PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-					KafkaTemplate<Object, Object> kafkaTemplate = new KafkaTemplate<>(kafkaProducerFactory);
-					....
-					map.from(this.properties.getTemplate().getDefaultTopic()).to(kafkaTemplate::setDefaultTopic);
-					map.from(this.properties.getTemplate().getTransactionIdPrefix()).to(kafkaTemplate::setTransactionIdPrefix);
-					return kafkaTemplate;
-				}
-
+	@EnableConfigurationProperties // 讓 xxxProperties 生效加入到容器中
 
 	自動配置類要能加載
 		將需要啟動就加載的自動配置類，配置在

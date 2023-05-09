@@ -1,0 +1,213 @@
+=================================================================================================================================================================
+======================================== @ConfigurationProperties ===============================================================================================
+=================================================================================================================================================================
+// 結合相關 XXXXProperties 設定代碼類來綁定相關的配置，以利與後續的 XXXXAutoConfiguration 自動配置類結合
+	1.
+		@ConfigurationProperties(prefix = "spring.batch")
+		public class XXXXProperties {
+
+			private final String name = "xxx default";
+
+			// get set method
+
+			// 巢狀設定
+			private final Jdbc jdbc = new Jdbc();
+
+			public Job getJob() {
+				return this.job;
+			}
+
+			public static class Job {
+
+				private String names = "";
+
+				public String getNames() {
+					return this.names;
+				}
+
+				public void setNames(String names) {
+					this.names = names;
+				}
+				....
+			}
+			....
+		}
+=================================================================================================================================================================
+======================================== @EnableConfigurationProperties =========================================================================================
+=================================================================================================================================================================
+// 讓 XXXXProperties 生效加入到容器中
+	1.XXXXProperties 類別就可以於每個 ioc 物件建構參數傳入
+		....
+		@EnableConfigurationProperties(XXXXProperties.class)
+		public class XXXXAutoConfiguration {
+			@Bean
+			@ConditionalOnMissingBean
+			public SomethinObject somethinObject(XXXXProperties properties) {
+				....
+			}
+	2.或是當作 auto-configuration 的建構參數 : 適何當注入的每個 ioc 物件參數已過多時的替代方式
+		@AutoConfiguration
+		@ConditionalOnClass(KafkaTemplate.class)
+		@EnableConfigurationProperties(KafkaProperties.class)
+		@Import({ KafkaAnnotationDrivenConfiguration.class, KafkaStreamsAnnotationDrivenConfiguration.class })
+		public class KafkaAutoConfiguration {
+
+			private final KafkaProperties properties;
+
+			public KafkaAutoConfiguration(KafkaProperties properties) {
+				this.properties = properties;
+			}
+
+			@Bean
+			@ConditionalOnMissingBean(KafkaTemplate.class)
+			public KafkaTemplate<?, ?> kafkaTemplate(ProducerFactory<Object, Object> kafkaProducerFactory,
+					ProducerListener<Object, Object> kafkaProducerListener,
+					ObjectProvider<RecordMessageConverter> messageConverter) {
+				PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
+				KafkaTemplate<Object, Object> kafkaTemplate = new KafkaTemplate<>(kafkaProducerFactory);
+				....
+				map.from(this.properties.getTemplate().getDefaultTopic()).to(kafkaTemplate::setDefaultTopic);
+				map.from(this.properties.getTemplate().getTransactionIdPrefix()).to(kafkaTemplate::setTransactionIdPrefix);
+				return kafkaTemplate;
+			}
+
+=================================================================================================================================================================
+======================================== 自動配置類生效條件 =====================================================================================================
+=================================================================================================================================================================
+https://reflectoring.io/spring-boot-conditionals/
+// 在指定條件成立的情況下自動配置類生效
+	在 spring.boot.autoconfigure-${version}.jar 下
+		org.springframework.boot.autoconfigure.condition
+
+		1.@ConditionalOnClass
+			通常會宣告在其 XXXXAutoConfiguration 限制哪些類別有存在 classpath 才生效其配置
+				@ConditionalOnClass({ Servlet.class, StandardServletMultipartResolver.class, MultipartConfigElement.class })
+				....
+				@EnableConfigurationProperties(MultipartProperties.class)
+				public class MultipartAutoConfiguration {
+					....
+				}
+		2.@ConditionalOnMissingClass
+			通常會宣告在其 XXXXAutoConfiguration 限制哪些類別有不存在 classpath 才生效其配置
+				@ConditionalOnMissingClass(value = "this.clazz.does.not.Exist")
+				class OnMissingClassModule {
+				  ...
+				}
+
+		3.@ConditionalOnBean // 限制有哪些 ioc bean 才生效其配置
+			@ConditionalOnBean(OtherModule.class)
+			class DependantModule {
+			  ...
+			}
+
+		4.@ConditionalOnMissingBean // 限制不存在哪些 ioc bean 才生效其配置
+			class OnMissingBeanModule {
+				@Bean
+				@ConditionalOnMissingBean
+				DataSource dataSource() {
+					return new InMemoryDataSource();
+				}
+			}
+
+		5.@ConditionalOnProperty // 綁定使用者是否有其相關設定才生效其配置
+			通常會宣告在其 XXXXAutoConfiguration 限制是否設定那些或是沒設定才生效
+				@ConditionalOnClass({ Servlet.class, StandardServletMultipartResolver.class, MultipartConfigElement.class })
+				@ConditionalOnProperty(prefix = "spring.servlet.multipart", name = "enabled", matchIfMissing = true)
+				....
+				@EnableConfigurationProperties(MultipartProperties.class)
+				public class MultipartAutoConfiguration {
+					....
+				}
+		6.@ConditionalOnWebApplication // 當為 WEB 應用才生效其配置
+			通常會宣告在其 XXXXAutoConfiguration
+				@ConditionalOnClass({ Servlet.class, StandardServletMultipartResolver.class, MultipartConfigElement.class })
+				@ConditionalOnProperty(prefix = "spring.servlet.multipart", name = "enabled", matchIfMissing = true)
+				@ConditionalOnWebApplication(type = Type.SERVLET)
+				@EnableConfigurationProperties(MultipartProperties.class)
+				public class MultipartAutoConfiguration {
+					....
+				}
+
+		7.@ConditionalOnResource // 限制有哪些 資源 才生效其配置
+			@ConditionalOnResource(resources = "/logback.xml")
+			class LogbackModule {
+			  ...
+			}
+
+		8.@ConditionalOnExpression // 模組複雜條件時才生效其配置
+			@ConditionalOnExpression(
+				"${module.enabled:true} and ${module.submodule.enabled:true}"
+			)
+			class SubModule {
+				....
+			}
+
+		@ConditionalOnJndi
+		@ConditionalOnJava
+		@ConditionalOnSingleCandidate
+		@ConditionalOnNotWebApplication
+		@ConditionalOnCloudPlatform
+		....
+
+=================================================================================================================================================================
+======================================== 自動配置類 自定 生效條件 ===============================================================================================
+=================================================================================================================================================================
+Custom Conditions
+	class OnUnixCondition implements Condition {
+
+	  @Override
+		public boolean matches(
+			ConditionContext context,
+			AnnotatedTypeMetadata metadata) {
+		  return SystemUtils.IS_OS_LINUX;
+		}
+	}
+		// client 套用方式
+		@Bean
+		@Conditional(OnUnixCondition.class)
+		UnixBean unixBean() {
+		  return new UnixBean();
+		}
+
+Combining Conditions with OR
+	class OnWindowsOrUnixCondition extends AnyNestedCondition {
+
+	  OnWindowsOrUnixCondition() {
+		super(ConfigurationPhase.REGISTER_BEAN);
+	  }
+
+	  @Conditional(OnWindowsCondition.class)
+	  static class OnWindows {}
+
+	  @Conditional(OnUnixCondition.class)
+	  static class OnUnix {}
+
+	}
+		// client 套用方式
+		@Bean
+		@Conditional(OnWindowsOrUnixCondition.class)
+		WindowsOrUnixBean windowsOrUnixBean() {
+		  return new WindowsOrUnixBean();
+		}
+
+Combining Conditions with AND
+	@Bean
+	@ConditionalOnUnix
+	@Conditional(OnWindowsCondition.class)
+	WindowsAndUnixBean windowsAndUnixBean() {
+	  return new WindowsAndUnixBean();
+	}
+
+Defining a Custom @ConditionalOn… Annotation
+	@Target({ ElementType.TYPE, ElementType.METHOD })
+	@Retention(RetentionPolicy.RUNTIME)
+	@Documented
+	@Conditional(OnLinuxCondition.class)
+	public @interface ConditionalOnUnix {}
+
+		// client 套用方式
+		@Bean
+		@ConditionalOnUnix
+		LinuxBean linuxBean(){
+		  return new LinuxBean();
+		}
