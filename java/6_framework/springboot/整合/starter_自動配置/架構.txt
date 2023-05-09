@@ -1,0 +1,37 @@
+依賴關係
+	spring-boot-dependencies
+		spring-boot-starter-parent
+
+
+	spring-boot-starter
+		spring-boot // 通用底層 class
+		spring-boot-autoconfigure // 通用自動配置 ref spring-boot
+		spring-boot-starter-logging // 跨模組通用 logging
+		jakarta.annotation-api
+		spring-core
+		snakeyaml
+
+	spring-boot-starter-web
+		spring-boot-starter
+		spring-boot-starter-json
+		spring-boot-starter-tomcat
+		spring-web
+		spring-webmvc
+
+	spring-boot-starter-actuator
+		spring-boot-starter
+		spring-boot-actuator-autoconfigure
+			spring-boot-actuator
+			spring-boot
+			spring-boot-autoconfigure
+		micrometer-core
+	....
+
+	分兩種模式
+		1.一群 spring boot 已提供的共用自動配置類
+			spring-boot-starter
+				spring-boot // 通用底層 class
+				spring-boot-autoconfigure // 通用自動配置 ref spring-boot
+
+		2.使用者是否引入的場景啟動器 spring-boot-starter-xxxx
+			一定會依賴  spring-boot-starter
