@@ -234,3 +234,8 @@ This command build the project, runs all the test cases and run any checks on th
 			maven-archiver folder
 			maven-status folder
 			xxxxxxx-SNAPSHOT.jar
+
+================================================================================
+========================= 確認有效 pom =========================================
+================================================================================
+	mvn help:effective-pom

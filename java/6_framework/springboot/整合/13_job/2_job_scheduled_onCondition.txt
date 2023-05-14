@@ -1,0 +1,50 @@
+https://www.baeldung.com/spring-scheduled-tasks
+
+
+
+https://www.baeldung.com/spring-scheduled-enabled-conditionally
+Scheduled job 啟用與控制啟用方式
+	1.Using a Boolean Flag
+		@Configuration
+		@EnableScheduling
+		public class ScheduledJobs {
+		  @Value("${jobs.enabled:true}")
+		  private boolean isEnabled;
+
+		  @Scheduled(fixedDelay = 60000)
+		  public void cleanTempDirectory() {
+			if(isEnabled) {
+			  // do work here
+			}
+		  }
+		}
+
+	2.Using @ConditionalOnProperty
+		public class ScheduledJob {
+			@Scheduled(fixedDelay = 60000)
+			public void cleanTempDir() {
+				// do work here
+		  }
+		}
+		@Configuration
+		@EnableScheduling
+		public class ScheduledJobs {
+			@Bean
+			@ConditionalOnProperty(value = "jobs.enabled", matchIfMissing = true, havingValue = "true")
+			public ScheduledJob scheduledJob() {
+				return new ScheduledJob();
+			}
+		}
+
+	3.Using Spring Profiles
+		@Profile("prod")
+		@Bean
+		public ScheduledJob scheduledJob() {
+			return new ScheduledJob();
+		}
+
+	4.Value Placeholder in Cron Expression
+		@Scheduled(cron = "${jobs.cronSchedule:-}")
+		public void cleanTempDirectory() {
+			// do work here
+		}

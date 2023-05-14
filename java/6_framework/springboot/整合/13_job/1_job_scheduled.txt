@@ -1,46 +1,143 @@
-https://www.baeldung.com/spring-scheduled-enabled-conditionally
-Scheduled job 啟用與控制啟用方式
-	1.Using a Boolean Flag
-		@Configuration
-		@EnableScheduling
-		public class ScheduledJobs {
-		  @Value("${jobs.enabled:true}")
-		  private boolean isEnabled;
+https://www.baeldung.com/spring-scheduled-tasks
 
-		  @Scheduled(fixedDelay = 60000)
-		  public void cleanTempDirectory() {
-			if(isEnabled) {
-			  // do work here
-			}
-		  }
+Enable Support for Scheduling
+	@Configuration
+	@EnableScheduling
+	public class SpringConfig {
+		...
+	}
+
+	等於 <task:annotation-driven>
+
+Fixed Delay
+	@Component
+	public class ScheduledJobs {
+
+		// fixedDelay 屬性確保任務執行的完成時間和任務下一次執行的開始時間之間有 n 毫秒的延遲。
+		@Scheduled(fixedDelay = 1000)
+		public void scheduleFixedDelayTask() {
+			System.out.println(
+			  "Fixed delay task - " + System.currentTimeMillis() / 1000);
 		}
 
-	2.Using @ConditionalOnProperty
-		public class ScheduledJob {
-			@Scheduled(fixedDelay = 60000)
-			public void cleanTempDir() {
-				// do work here
-		  }
-		}
-		@Configuration
-		@EnableScheduling
-		public class ScheduledJobs {
-			@Bean
-			@ConditionalOnProperty(value = "jobs.enabled", matchIfMissing = true, havingValue = "true")
-			public ScheduledJob scheduledJob() {
-				return new ScheduledJob();
-			}
+	}
+
+fixed Rate
+	@Component
+	public class ScheduledJobs {
+
+		// fixedRate 屬性每 n 毫秒運行一次計劃任務。 它不檢查任務的任何先前執行。
+		// 當任務的所有執行都是獨立的時，這很有用。 如果我們不希望超過內存和線程池的大小，fixedRate 應該非常好用。
+		// 如果傳入的任務沒有快速完成，它們可能會以“內存不足異常”結束。
+		@Scheduled(fixedRate = 1000)
+		public void scheduleFixedDelayTask() {
+			System.out.println(
+			  "Fixed delay task - " + System.currentTimeMillis() / 1000);
 		}
 
-	3.Using Spring Profiles
-		@Profile("prod")
+	}
+
+parallel behavior in scheduled tasks
+	@Configuration
+	@EnableAsync
+	public class SpringConfig {
+		...
+	}
+
+	public class ScheduledFixedRateExample {
+		@Async
+		@Scheduled(fixedRate = 1000)
+		public void scheduleFixedRateTaskAsync() throws InterruptedException {
+			System.out.println(
+			  "Fixed rate task async - " + System.currentTimeMillis() / 1000);
+			Thread.sleep(2000);
+		}
+
+	}
+
+With Initial Delay
+	// 任務會在initialDelay值後第一次執行，之後會按照fixedDelay繼續執行
+	// 當任務具有需要完成的設置時，此選項很方便
+	@Scheduled(fixedDelay = 1000, initialDelay = 1000)
+	public void scheduleFixedRateWithInitialDelayTask() {
+
+		long now = System.currentTimeMillis() / 1000;
+		System.out.println(
+		  "Fixed rate task with one second initial delay - " + now);
+	}
+
+Using Cron Expressions
+	@Scheduled(cron = "0 15 10 15 * ?")
+	public void scheduleTaskUsingCronExpression() {
+
+		long now = System.currentTimeMillis() / 1000;
+		System.out.println(
+		  "schedule tasks using cron jobs - " + now);
+	}
+
+	zone attribute to change this timezone if want
+		@Scheduled(cron = "0 15 10 15 * ?", zone = "Europe/Paris")
+
+Parameterizing the Schedule
+	// 外部參數控制定時器執行方式
+	@Scheduled(fixedDelayString = "${fixedDelay.in.milliseconds}")
+	@Scheduled(fixedRateString = "${fixedRate.in.milliseconds}")
+	@Scheduled(cron = "${cron.expression}")
+
+Setting Delay or Rate Dynamically at Runtime
+	@Configuration
+	@EnableScheduling
+	public class DynamicSchedulingConfig implements SchedulingConfigurer {
+
+		@Autowired
+		private TickService tickService;
+
 		@Bean
-		public ScheduledJob scheduledJob() {
-			return new ScheduledJob();
+		public Executor taskExecutor() {
+			return Executors.newSingleThreadScheduledExecutor();
 		}
 
-	4.Value Placeholder in Cron Expression
-		@Scheduled(cron = "${jobs.cronSchedule:-}")
-		public void cleanTempDirectory() {
-			// do work here
+		@Override
+		public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+			taskRegistrar.setScheduler(taskExecutor());
+			taskRegistrar.addTriggerTask(
+			  new Runnable() {
+				  @Override
+				  public void run() {
+					  tickService.tick();
+				  }
+			  },
+			  new Trigger() {
+				  @Override
+				  public Date nextExecutionTime(TriggerContext context) {
+					  Optional<Date> lastCompletionTime =
+						Optional.ofNullable(context.lastCompletionTime());
+					  Instant nextExecutionTime =
+						lastCompletionTime.orElseGet(Date::new).toInstant()
+						  .plusMillis(tickService.getDelay());
+					  return Date.from(nextExecutionTime);
+				  }
+			  }
+			);
 		}
+	}
+
+
+Running Tasks in Parallel
+	默認情況下，Spring 使用本地單線程調度程序來運行任務。
+	因此，即使我們有多個 @Scheduled 方法，它們每個都需要等待線程完成執行前一個任務。
+		@Bean
+		public TaskScheduler  taskScheduler() {
+			ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+			threadPoolTaskScheduler.setPoolSize(5);
+			threadPoolTaskScheduler.setThreadNamePrefix("ThreadPoolTaskScheduler");
+			return threadPoolTaskScheduler;
+		}
+
+	Using Spring Boot setting
+		spring.task.scheduling.pool.size=5
+
+
+同場加碼
+	task async scheduled with logback mdc
+	https://salahuddin-s.medium.com/mdc-logging-with-async-scheduled-threads-in-spring-boot-6675c2b4a074

@@ -135,3 +135,9 @@
 
 			則在 ${yourproject}\target\classes\META-INF\
 				會自動生成 spring-configuration-metadata.json
+
+			application.yml/properties 輸入關鍵字前墜和.後，按下 alt + /，則會依據當前附檔名格式化選擇到的自動完成項目
+			若點擊其上一步自動完成項目，會跳到其 XXXXproperties.java
+
+		官網關於 Configuration Metadata 細節
+			https://docs.spring.io/spring-boot/docs/current/reference/html/configuration-metadata.html#appendix.configuration-metadata.annotation-processor

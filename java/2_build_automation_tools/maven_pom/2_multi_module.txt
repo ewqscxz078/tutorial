@@ -1,0 +1,66 @@
+https://matthung0807.blogspot.com/2018/12/maven-multi-module.html
+https://blog.miniasp.com/post/2022/09/13/Multi-Module-Project-with-Apache-Maven
+https://www.cnblogs.com/davenkin/p/advanced-maven-multi-module-vs-inheritance.html
+最大的好處可以在多模組父工程，執行 mvn clean install
+	則會依據子模組之間先後關係依序執行避免找不到對應或最新的jar
+
+	myapp1
+	  |
+	  +--web module
+	  |   |
+	  |   +-pom.xml(myapp1.web.pom.xml)
+	  |
+	  +--service module
+	  |   |
+	  |   +-pom.xml(myapp1.service.pom.xml)
+	  |
+	  +--dao module
+	  |   |
+	  |   +-pom.xml(myapp1.dao.pom.xml)
+	  |
+	  +--util module
+	  |   |
+	  |   +-pom.xml(myapp1.util.pom.xml)
+	  |
+	  +--common-util module
+	  |   |
+	  |   +-pom.xml(myapp1.common-util.pom.xml)
+	  |
+	  +--pom.xml(myapp1.pom.xml) // 聚合上述 module
+
+	myapp2
+	  |
+	  +--web module
+	  |   |
+	  |   +-pom.xml(myapp2.web.pom.xml)
+	  |
+	  +--service module
+	  |   |
+	  |   +-pom.xml(myapp2.service.pom.xml)
+	  |
+	  +--dao module
+	  |   |
+	  |   +-pom.xml(myapp2.dao.pom.xml)
+	  |
+	  +--util module
+	  |   |
+	  |   +-pom.xml(myapp2.util.pom.xml)
+	  |
+	  +--common-util module
+	  |   |
+	  |   +-pom.xml(myapp1.common-util.pom.xml)
+	  |
+	  +--pom.xml module
+
+因此常見模式結構為
+	xxxx-dependencies (dependencyManagement 相關專案 version) pom
+		xxx-parent (通用 properties、plugins) pom
+			xxx-Y系統-多模組-project pom (統一於此下 mvn clean install 則其下多模組會一起打包到本機 respoisty local)
+				xxx-Y系統-A模組-project jar
+				xxx-Y系統-B模組-project jar
+				xxx-共用模組-project jar
+
+			xxx-X系統-多模組-project pom (統一於此下 mvn clean install 則其下多模組會一起打包到本機 respoisty local)
+				xxx-X系統-A模組-project jar
+				xxx-X系統-B模組-project jar
+				xxx-共用模組-project jar

@@ -1,0 +1,29 @@
+public class ModifyMethodAnnotation {
+	public static void main(final String[] args) throws NoSuchMethodException, NoSuchFieldException, SecurityException,
+			IllegalArgumentException, IllegalAccessException {
+		// 獲取方法對象
+		final Method method = MyClass.class.getMethod("myMethod");
+
+		// 獲取註解對象
+		Greeter annotation = method.getAnnotation(Greeter.class);
+		System.out.println(annotation.value());
+
+		final InvocationHandler h = Proxy.getInvocationHandler(annotation);
+		final Field hField = h.getClass().getDeclaredField("memberValues");
+		hField.setAccessible(true);
+
+		final Map memberValues = (Map) hField.get(h);
+		memberValues.put("value", "modify value");
+
+		// 驗證修改結果
+		annotation = method.getAnnotation(Greeter.class);
+		System.out.println(annotation.value()); // 輸出：Modified Value
+	}
+
+	class MyClass {
+		@Greeter("Original Value")
+		public void myMethod() {
+		}
+	}
+
+}
