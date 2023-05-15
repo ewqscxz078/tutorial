@@ -1,0 +1,90 @@
+https://www.baeldung.com/mdc-in-log4j-2-logback
+https://developer.aliyun.com/article/1141101
+
+https://www.cnblogs.com/mylibs/p/using-mdc-to-trace-log.html#%E7%BA%BF%E7%A8%8B%E6%B1%A0
+	於 logback 增加格子便於上下文追蹤
+	如 %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [uniqid-%X{traceId}] %logger{50}-%line - %m%n
+	其中 %X{traceId} 可透過 mdc 存取進去
+		置入
+			MDC.put("traceId", traceId);
+
+		移除
+			MDC.remove("traceId");
+
+	mdc 內部使用到 ThreadLocal 存取所以會遇到 執行緒之間傳遞的問題
+
+	多線程情況下的 MDC 實現問題
+		當我們處於多個線程之間進行傳遞 traceId 的時候，可能就會存在 ThreadLocal 的問題了。那麼如果要破除 ThreadLocal 只對當前線程有線的方法：
+		1. （針對於跨線程傳遞的問題）可以採用JDK自帶的、ThreadLocal的擴展類InheritableThreadLocal，子線程會拷貝父線程中的變量值
+		2. （針對於線程池線程復用的問題）引入alibaba包的TransmittableThreadLocal實現
+		3. （針對於線程池線程復用的問題）自己封裝一個線程池去處理線程池所存在的問題。
+
+	針對於線程池線程復用的問題 : for @Async
+		如果使用的是 Spring 的線程池 ThreadPoolTaskExecutor
+		那麼就可以採用 TaskDecorator 的線程任務裝飾器方式為線程池的線程提供 traceId 的傳遞操作，例如以下代碼。
+		定義線程裝飾器
+		此處我採用的是logback，如果是log4j或者log4j2還是有一些區別的，比如說 MDC.getCopyOfContextMap()
+
+			// 透過 MDCTaskDecorator 於 thread 與 task thread 之間的傳遞(複製傳遞方式)
+			public class MDCTaskDecorator implements TaskDecorator {
+				@Override
+				public Runnable decorate(Runnable runnable) {
+					// 此時獲取的是父線程的上下文數據
+					Map<String, String> contextMap = MDC.getCopyOfContextMap();
+					return () -> {
+						try {
+							if (contextMap != null) {
+							   // 內部為子線程的領域範圍，所以將父線程的上下文保存到子線程上下文中，而且每次submit/execute調用都會更新為最新的上                     // 下文對象
+								MDC.setContextMap(contextMap);
+							}
+							runnable.run();
+						} finally {
+							// 清除子線程的，避免內存溢出，就和ThreadLocal.remove()一個原因
+							MDC.clear();
+						}
+					};
+				}
+			}
+
+			@Bean("taskExecutor")
+			public Executor taskExecutor() {
+				ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+				//配置核心線程數
+				executor.setCorePoolSize(5);
+				//配置最大線程數
+				executor.setMaxPoolSize(10);
+				//配置隊列大小
+				executor.setQueueCapacity(100);
+				//配置線程池中的線程的名稱前綴
+				executor.setThreadNamePrefix("mdc-trace-");
+				// 異步MDC
+				executor.setTaskDecorator(new MDCTaskDecorator());
+				//執行初始化
+				executor.initialize();
+				return executor;
+			}
+
+https://salahuddin-s.medium.com/mdc-logging-with-async-scheduled-threads-in-spring-boot-6675c2b4a074
+	針對 @Async 與 @Scheduled 處理
+		@Aspect
+		@Component
+		public class TaskSchedularInterceptor {
+
+			private final TaskDecorator taskDecorator;
+
+			@Pointcut("within(org.springframework.scheduling.TaskScheduler+)")
+			void taskScheduler() {
+				// empty
+			}
+
+			@Around("taskScheduler() && args(run,..)")
+			Object around(ProceedingJoinPoint pjp, Runnable run) throws Throwable {
+				Object[] args = pjp.getArgs();
+
+				if (!(run instanceof MyTaskDecorator.MDCDecoratedRunnable))
+					args[0] = taskDecorator.decorate(run);
+
+				return pjp.proceed(args);
+			}
+
+		}
