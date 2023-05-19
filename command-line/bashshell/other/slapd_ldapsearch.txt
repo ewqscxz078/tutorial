@@ -1,0 +1,49 @@
+https://devconnected.com/how-to-search-ldap-using-ldapsearch-examples/
+
+Search LDAP using ldapsearch
+	ldapsearch -x -b <search_base> -H <ldap_host>
+		ldapsearch -x -b "dc=devconnected,dc=com" -H ldap://192.168.178.29
+
+Search LDAP with admin account
+	// you may be exposed to user encrypted passwords, so make sure that you run your query privately
+	ldapsearch -x -b <search_base> -H <ldap_host> -D <bind_dn> -W
+		ldapsearch -x -b "dc=devconnected,dc=com" -H ldap://192.168.178.29 -D "cn=admin,dc=devconnected,dc=com" -W
+
+Running LDAP Searches with Filters
+	ldapsearch <previous_options> "(object_type)=(object_value)" <optional_attributes>
+
+Finding all objects in the directory tree
+	ldapsearch -x -b <search_base> -H <ldap_host> -D <bind_dn> -W "objectclass=*"
+
+Finding user accounts using ldapsearch
+	ldapsearch -x -b <search_base> -H <ldap_host> -D <bind_dn> -W "objectclass=account"
+
+	//  if you are interested only in the user CN, UID, and home directory, you would run the following LDAP search
+	ldapsearch -x -b <search_base> -H <ldap_host> -D <bind_dn> -W "objectclass=account" cn uid homeDirectory
+
+AND Operator using ldapsearch
+	// multiple filters separated by “AND” operators
+	ldapsearch <previous_options> "(&(<condition_1>)(<condition_2>)...)"
+		ldapsearch <previous_options> "(|(objectclass=account)(objectclass=organizationalRole))"
+
+Negation Filters using ldapsearch
+	ldapsearch <previous_options> "(!(<condition_1>)(<condition_2>)...)"
+	// if you want to match all entries NOT having a “cn” attribute of value “john”
+		ldapsearch <previous_options> "(!(cn=john))"
+
+Finding LDAP server configuration using ldapsearch
+	ldapsearch -Y EXTERNAL -H ldapi:/// -b cn=config
+	// If you want to restrict your search to database configurations, you can specify the “olcDatabaseConfig” object class with ldapsearch.
+		ldapsearch -Y EXTERNAL -H ldapi:/// -b cn=config "(objectclass=olcDatabaseConfig)"
+
+Using Wildcards in LDAP searches
+	ldapsearch <previous_options> "(object_type)=*(object_value)"
+	// want to find all entries having an attribute “uid” starting with the letter “j”.
+		ldapsearch <previous_options> "uid=jo*"
+
+Advanced Options
+	Supercharging default operators
+		// 預設大小寫不分
+		ldapsearch <previous_options> "<object_type>=<object_value>"
+	// want to search for all entries have a “cn” that is equal to “john,” you would run the following command，且大小寫敏感
+		ldapsearch <previous_options> "cn:=john"
