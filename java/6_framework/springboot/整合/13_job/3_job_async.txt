@@ -1,0 +1,121 @@
+https://www.baeldung.com/spring-async
+
+Async : 讓執行目標的函數用非同步方式執行程式
+Executor : 專門執行非同步的執行緒
+========================================================================================================================
+================================= Async ================================================================================
+========================================================================================================================
+
+1.Enable Async Support
+	@Configuration
+	@EnableAsync
+	public class SpringAsyncConfig { ... }
+
+2. 限制
+	1. It must be applied to public methods only.
+		必須套用在公開的方法
+	2. Self-invocation — calling the async method from within the same class — won't work.
+		不能自我呼叫到同一個 class
+
+3.Return Type
+	1. With Void
+		@Async
+		public void asyncMethodWithVoidReturnType() {
+			System.out.println("Execute method asynchronously. "
+			  + Thread.currentThread().getName());
+		}
+	2.With Return Type
+		@Async
+		public Future<String> asyncMethodWithReturnType() {
+			System.out.println("Execute method asynchronously - "
+			  + Thread.currentThread().getName());
+			try {
+				Thread.sleep(5000);
+				return new AsyncResult<String>("hello world !!!!");
+			} catch (InterruptedException e) {
+				//
+			}
+			return null;
+		}
+			public void testAsyncAnnotationForMethodsWithReturnType()
+			  throws InterruptedException, ExecutionException {
+				System.out.println("Invoking an asynchronous method. "
+				  + Thread.currentThread().getName());
+				Future<String> future = asyncAnnotationExample.asyncMethodWithReturnType();
+
+				while (true) {
+					if (future.isDone()) {
+						System.out.println("Result from asynchronous process - " + future.get());
+						break;
+					}
+					System.out.println("Continue doing something else. ");
+					Thread.sleep(1000);
+				}
+			}
+
+4.The Executor
+	預設使用 SimpleAsyncTaskExecutor to run these methods asynchronously.
+	SimpleAsyncTaskExecutor 不是執行緒池，不重複使用執行緒，高併發時會有很大效能瓶頸
+
+		override the defaults at two levels: 可透過兩種方式覆寫
+			the application level
+			the individual method level.
+
+		1.Method Level
+			@Configuration
+			@EnableAsync
+			public class SpringAsyncConfig {
+
+				@Bean(name = "threadPoolTaskExecutor")
+				public Executor threadPoolTaskExecutor() {
+					return new ThreadPoolTaskExecutor();
+				}
+			}
+
+			@Async("threadPoolTaskExecutor")
+			public void asyncMethodWithConfiguredExecutor() {
+				System.out.println("Execute method with configured executor - "
+				  + Thread.currentThread().getName());
+			}
+
+		2.Application Level
+			@Configuration
+			@EnableAsync
+			public class SpringAsyncConfig implements AsyncConfigurer {
+			   @Override
+				public Executor getAsyncExecutor() {
+					ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+					threadPoolTaskExecutor.initialize();
+					return threadPoolTaskExecutor;
+				}
+			}
+
+5. Exception Handling
+	return type is a Future, exception handling is easy. Future.get() method will throw the exception
+
+	if the return type is void, exceptions will not be propagated to the calling thread
+		public class CustomAsyncExceptionHandler
+		  implements AsyncUncaughtExceptionHandler {
+
+			@Override
+			public void handleUncaughtException(
+			  Throwable throwable, Method method, Object... obj) {
+
+				System.out.println("Exception message - " + throwable.getMessage());
+				System.out.println("Method name - " + method.getName());
+				for (Object param : obj) {
+					System.out.println("Parameter value - " + param);
+				}
+			}
+
+		}
+
+		@Configuration
+		@EnableAsync
+		public class SpringAsyncConfig implements AsyncConfigurer {
+			....
+			@Override
+			public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+				return new CustomAsyncExceptionHandler();
+			}
+		}
