@@ -12,7 +12,15 @@ logback xml setting
     <groupId>org.slf4j</groupId>
     <artifactId>slf4j-api</artifactId>
     <version>1.7.30</version>
-    <scope>test</scope>
+</dependency>
+
+<dependency>
+	<groupId>ch.qos.logback</groupId>
+	<artifactId>logback-core</artifactId>
+</dependency>
+<dependency>
+	<groupId>ch.qos.logback</groupId>
+	<artifactId>logback-classic</artifactId>
 </dependency>
 
 ========================================================================================================================
@@ -34,6 +42,11 @@ logback xml setting
 	scanPeriod：檢測配置文件是否有修改的時間間隔，如果沒有給出時間單位，默認為毫秒，當scan=true時這個值生效，默認時間間隔為1分鐘
 	debug：當被設置為true時，將打印出logback內部日誌信息，實時查看logback運行信息，默認為false
 
+auto reload in prod
+	<configuration scan="true" scanPeriod="15 seconds">
+	  ...
+	</configuration>
+
 ========================================================================================================================
 ================================= <logger>與<root> =====================================================================
 ========================================================================================================================
@@ -49,13 +62,19 @@ logback xml setting
 <root>
 	也是<logger>元素，但是它是根logger，只有一個level屬性，因為它的name就是ROOT
 
+
+指定部分 java package log level
+	<logger name="tw.gov.moi" level="DEBUG" />
+
+<root> 設定基本 level，指定那些 appender-ref ref="OTHER-APPENDER" 沿用
+	<root level="DEBUG">
+		<if condition='property("stdout.enable")'.contains("Y")><then><appender-ref ref="STDOUT"></then></if>
+		<appender-ref ref="FILE-ROLL">
+	</root>
+
 ========================================================================================================================
-================================= 慣例用法 =============================================================================
+================================= Variable Substitution ================================================================
 ========================================================================================================================
-auto reload in prod
-	<configuration scan="true" scanPeriod="15 seconds">
-	  ...
-	</configuration>
 
 Variable Substitution
 	<property name="LOG_DIR" value="/var/log/application" />
@@ -66,6 +85,11 @@ Variable Substitution
 			<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
 		</encoder>
 	</appender>
+
+========================================================================================================================
+================================= Appender =============================================================================
+========================================================================================================================
+https://logback.qos.ch/manual/appenders.html
 
 ConsoleAppender
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -108,7 +132,24 @@ RollingFileAppender
 		</encoder>
 	</appender>
 
-Layouts
+SocketAppender
+SSLSocketAppender
+SMTPAppender
+DBAppender
+SyslogAppender
+SiftingAppender
+AsyncAppender
+
+
+TimeBasedRollingPolicy
+SizeBasedTriggeringPolicy
+SizeAndTimeBasedRollingPolicy
+FixedWindowRollingPolicy
+
+========================================================================================================================
+================================= Layouts =============================================================================
+========================================================================================================================
+
 	<encoder>
 		<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
 	</encoder>
@@ -126,19 +167,36 @@ Layouts
 	%m：輸出日誌的內容。
 	%n：輸出一個新行。
 
-指定部分 java package log level
-	<logger name="tw.gov.moi" level="DEBUG" />
+========================================================================================================================
+================================= additivity ===========================================================================
+========================================================================================================================
 
-<root> 設定基本 level，指定那些 appender-ref ref="OTHER-APPENDER" 沿用
-	<root level="DEBUG">
-		<if condition='property("stdout.enable")'.contains("Y")><then><appender-ref ref="STDOUT"></then></if>
-		<appender-ref ref="FILE-ROLL">
-	</root>
+additivity :
+	可加性，預設 true
+	當為 false : 不希望在某些場景下列印重複的紀錄檔，不受 level 設定的影響，通常搭配於獨立 log
+	指定那些 <logger> 之 appender-ref 不沿用 <root>
+		<logger name="PROFILER" level="TRACE" additivity="false"><appender-ref ref="FILE-ROLL-PROFILER"><logger/>
+		...
 
-指定那些 <logger> 之 appender-ref 不沿用 <root>
-	<logger name="PROFILER" level="TRACE" additivity="false"><appender-ref ref="FILE-ROLL-PROFILER"><logger/>
-	...
-
+	https://github.dev/qos-ch/logback/blob/master/logback-classic/src/main/java/ch/qos/logback/classic/Logger.java
+    /**
+     * Invoke all the appenders of this logger.
+     *
+     * @param event The event to log
+     */
+    public void callAppenders(ILoggingEvent event) {
+        int writes = 0;
+        for (Logger l = this; l != null; l = l.parent) {
+            writes += l.appendLoopOnAppenders(event);
+            if (!l.additive) {
+                break;
+            }
+        }
+        // No appenders in hierarchy
+        if (writes == 0) {
+            loggerContext.noAppenderDefinedWarning(this);
+        }
+    }
 
 ========================================================================================================================
 ================================= MDC ==================================================================================

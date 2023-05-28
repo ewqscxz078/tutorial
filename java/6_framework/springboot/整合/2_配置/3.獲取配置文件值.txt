@@ -105,5 +105,29 @@ pom.xml
 		5.複雜類型封裝:不支援 map、list、object
 
 	yml、properties都能會取到值
-		如果說只是在某些業務邏輯中獲取一下配置文件值，使用@valuee
+		如果說只是在某些業務邏輯中獲取一下配置文件值，使用@value
 		如果說專門寫了一個javaBean來和配置文件對應，使用@ConfigurationProperties
+
+
+========================================================================================================================
+================================= ConfigurationProperties ==============================================================
+========================================================================================================================
+https://www.baeldung.com/configuration-properties-in-spring-boot
+
+1.設定檔與 Properties 綁定
+2.載入到 spring boot ioc
+	@EnableConfigurationProperties(ConfigProperties.class)，缺點一個一個注入
+
+	after Spring Boot 2.2
+		可使用 @ConfigurationPropertiesScan : finds and registers @ConfigurationProperties classes via classpath scanning.
+			掃描 當前 package 下或 指定 package 下
+				@ConfigurationProperties(prefix = "mail")
+				@ConfigurationPropertiesScan
+				public class ConfigProperties {
+
+					private String hostName;
+					private int port;
+					private String from;
+
+					// standard getters and setters
+				}
