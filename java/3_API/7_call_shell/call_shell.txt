@@ -30,21 +30,32 @@ processbuilder
 
 			final ProcessBuilder builder = new ProcessBuilder(commands).directory(workdir);
 			process = builder.start();
+
+			// start 之後、process.waitFor() 之前 要先處理 stream 否則會有卡住問題
+			// https://stackoverflow.com/questions/5483830/process-waitfor-never-returns
+			// https://docs.oracle.com/javase/8/docs/api/java/lang/Process.html
+
+			List<String> cmdResultFilter = new ArrayList<String>();
+			String errStr = "";
+			try (InputStream inputStream = process.getInputStream(); //
+				final InputStream errorStream = process.getErrorStream();) {
+				// if 正常回饋
+				final List<String> readLines = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
+				cmdResultFilter = readLines.stream()//
+						.filter(data -> StringUtils.isNotBlank(data))//
+						.collect(Collectors.toList());
+				LOGGER.info("cmdResultFilter : {}", cmdResultFilter);
+
+				// if error
+				final List<String> errorReadLines = IOUtils.readLines(errorStream, StandardCharsets.UTF_8.name());
+				errStr = errorReadLines.stream().collect(Collectors.joining("\n"));
+			}
+
 			final int exitCode = process.waitFor();
 			if (exitCode != 0) {
-				final InputStream errorStream = process.getErrorStream();
-				final List<String> errorReadLines = IOUtils.readLines(errorStream, StandardCharsets.UTF_8.name());
-				final String errStr = errorReadLines.stream().collect(Collectors.joining("\n"));
 				throw new LnLdapMgrException(LnLdapMgrEvent.TX_SH10_E, errStr);
 			} else {
-				try (InputStream inputStream = process.getInputStream();) {
-					final List<String> readLines = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
-					final List<String> cmdResultFilter = readLines.stream()//
-							.filter(data -> StringUtils.isNotBlank(data))//
-							.collect(Collectors.toList());
-					LOGGER.info("cmdResultFilter : {}", cmdResultFilter);
-					return cmdResultFilter;
-				}
+				return cmdResultFilter;
 			}
 		}
 

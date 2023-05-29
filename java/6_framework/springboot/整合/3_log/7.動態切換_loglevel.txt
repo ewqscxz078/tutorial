@@ -1,3 +1,17 @@
 https://www.baeldung.com/spring-boot-changing-log-level-at-runtime
 1. by actuator
+	本機為 http://localhost:8080，若在sit、uat、prod 則修改成對應的 https:/${hostname:port}
+
+	check log level
+		curl -u "neidmonitor:neid2wsx#EDC" http://localhost:8080/${system.id}/actuator/loggers/${package path}
+			ex:
+				curl http://localhost:8080/sapk1/actuator/loggers/tw.gov.moi
+				will output 該 package path 的當前 loglevel 類似如下
+					{"configuredLevel":null,"effectiveLevel":"DEBUG"}
+
+	change log level
+		curl -i -u "neidmonitor:neid2wsx#EDC" -X POST -H 'Content-Type: application/json' -d '{"configuredLevel": "TRACE"}' http://localhost:8080/${system.id}/actuator/loggers/${package path}
+			ex:	將 log level 改成 trace
+				curl -i -X POST -H 'Content-Type: application/json' -d '{"configuredLevel": "TRACE"}' http://localhost:8080/sapk1/actuator/loggers/tw.gov.moi
+
 2. Spring Boot Admin

@@ -1,0 +1,82 @@
+
+使用 RandomAccessFile 迴圈到目標位置的取得其檔尾 byte
+    public static String tailSha256_RandomAccessFile(final File sourceFile) {
+        try (final RandomAccessFile file = new RandomAccessFile(sourceFile, "r")) {
+            final long length = file.length();
+
+            long position = length - 100000;
+            if (position < 0) {
+                position = 0;
+            }
+            file.seek(position);
+            final byte[] bytes = new byte[100000];
+            int bytesRead = 0;
+            int totalBytesRead = 0;
+            while (totalBytesRead < 100000) {
+                bytesRead = file.read(bytes);
+                if (bytesRead == -1) {
+                    break;
+                }
+                totalBytesRead += bytesRead;
+            }
+            final String tailSha256 = new String(bytes, 0, totalBytesRead);
+            return tailSha256;
+        } catch (final FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+使用 ByteBuffer 到目標位置的取得其檔尾 byte (效果同上 RandomAccessFile )
+    public static String tailSha256_ByteBuffer(final File sourceFile) {
+        try (RandomAccessFile file = new RandomAccessFile(sourceFile, "r");//
+                FileChannel channel = file.getChannel();) {
+
+            long position = channel.size() - 100000;
+            if (position < 0) {
+                position = 0;
+            }
+            final ByteBuffer buffer = ByteBuffer.allocate(100000);
+            channel.read(buffer, position);
+            buffer.flip();
+            final String tailSha256 = new String(buffer.array(),StandardCharsets.UTF_8);
+            return tailSha256;
+
+        } catch (final FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+使用 MappedByteBuffer 將目標範圍先存到內存再取得其檔尾 byte (效果最快、但跟機器的內存上下限有關，小檔適合 )
+    public static String tailSha256_MappedByteBuffer(final File sourceFile) {
+        try (RandomAccessFile file = new RandomAccessFile(sourceFile, "r"); //
+                final FileChannel channel = file.getChannel();) {
+
+            final long length = file.length();
+            long position = length - 100000;
+            if (position < 0) {
+                position = 0;
+            }
+            final MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, position, 100000);
+            final byte[] bytes = new byte[100000];
+            buffer.get(bytes);
+            final String tailSha256 = new String(bytes);
+            return tailSha256;
+        } catch (final FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
