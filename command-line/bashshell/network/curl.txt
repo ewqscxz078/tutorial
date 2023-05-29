@@ -48,3 +48,10 @@ curl post with data
 	https://stackoverflow.com/questions/29423320/spring-rest-controller-post-request
 		curl -k -i -X POST -H "Content-Type:application/x-www-form-urlencoded" -d name=value http://localhost:8080/yourcontext/apipath
 
+=====================================================================================================================================
+======================================= POST data with 中文 by file content =========================================================
+=====================================================================================================================================
+https://everything.curl.dev/http/post/url-encode
+	假設有個檔案內容 echo "測試" > post.data
+	curl -i -X POST -H "Content-Type:application/x-www-form-urlencoded; charset=utf-8" -d name@post.data http://localhost:8080/yourcontext/apipath
+

@@ -6,8 +6,10 @@
 	Linux kernel version
 		uname -r
 
+https://blog.gtwang.org/linux/how-to-shutdown-linux/
 馬上關機
 	sudo shutdown now
+重開機
 	sudo reboot
 
 看 hosts
