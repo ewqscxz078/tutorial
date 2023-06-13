@@ -1,7 +1,7 @@
 https://www.baeldung.com/spring-classpath-file-access
 
 取得資源方式
-	1.ClassPathResource
+	1.專案下 : ClassPathResource
 		public Resource loadEmployeesWithClassPathResource() {
 			// 等於 return new ClassPathResource("data/employees.dat", this.getClass().getClassLoader());
 			return new ClassPathResource("data/employees.dat");
@@ -10,10 +10,10 @@ https://www.baeldung.com/spring-classpath-file-access
 			// return new ClassPathResource("data/employees.dat", Employee.class.getClassLoader());
 		}
 
-
 	2. Using @Value
 		@Value("classpath:data/resource-data.txt")
 		Resource resourceFile;
+			// 並可將佔位正確解析
 
 	3. Using ResourceLoader
 		延遲載入 If we want to lazily load our resource

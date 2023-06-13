@@ -5,3 +5,35 @@ https://stackoverflow.com/questions/45793226/cannot-make-filter-foreach-collect-
    .filter(f -> f.exist())
    .map(f -> f.getName())
    .collect(Collectors.toList());
+
+==================================================================================================================
+========================================== map 與 flatMap  =======================================================
+==================== https://www.baeldung.com/java-difference-map-and-flatmap ====================================
+==================== chatGPT open ai =============================================================================
+==================================================================================================================
+map
+	該函數將應用於流中的每個元素，並將其映射為一個新的元素。
+	它將每個輸入元素轉換為相應的輸出元素，保持流中元素的順序不變。
+	因此，最終的流大小與原始流大小相同
+
+		List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+		List<Integer> squaredNumbers = numbers.stream()
+											 .map(n -> n * n)
+											 .collect(Collectors.toList());
+		System.out.println(squaredNumbers);  // 输出：[1, 4, 9, 16, 25]
+
+flatMap
+	接受一個函數作為參數，但該函數的返回值是一個流。它將每個輸入元素轉換為一個流，
+	並將這些流的內容合併為一個單獨的流。因此，它扁平化了多個流，
+	最終生成一個包含所有扁平化元素的流。
+
+		List<List<Integer>> numberLists = Arrays.asList(
+			Arrays.asList(1, 2),
+			Arrays.asList(3, 4),
+			Arrays.asList(5, 6)
+		);
+		List<Integer> flattenedNumbers = numberLists.stream()
+			.flatMap(Collection::stream)
+			.collect(Collectors.toList());
+
+		System.out.println(flattenedNumbers);  // 输出：[1, 2, 3, 4, 5, 6]

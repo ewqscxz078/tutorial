@@ -1,0 +1,8 @@
+
+ref charGPT openai
+	StringUtils.cleanPath(String path)
+		用於清理和規範化路徑字符串。它可以處理各種路徑字符串，包括文件系統路徑、URL路徑等，
+		並具有一定的平台和環境兼容性。它廣泛用於Spring應用程序中，
+		尤其是在處理配置文件、資源路徑等方面
+
+		功能類似於 java 裡的 path.normalize()，但較全面

@@ -116,9 +116,9 @@ https://www.baeldung.com/configuration-properties-in-spring-boot
 
 1.設定檔與 Properties 綁定
 2.載入到 spring boot ioc
-	@EnableConfigurationProperties(ConfigProperties.class)，缺點一個一個注入
+	1. @EnableConfigurationProperties(ConfigProperties.class)，缺點一個一個注入
 
-	after Spring Boot 2.2
+	2. after Spring Boot 2.2
 		可使用 @ConfigurationPropertiesScan : finds and registers @ConfigurationProperties classes via classpath scanning.
 			掃描 當前 package 下或 指定 package 下
 				@ConfigurationProperties(prefix = "mail")
@@ -131,3 +131,25 @@ https://www.baeldung.com/configuration-properties-in-spring-boot
 
 					// standard getters and setters
 				}
+	3.@Component with @ConfigurationProperties
+		@Component
+		@ConfigurationProperties(prefix="xxx")
+		public class ConfigProperties {
+
+			private String hostName;
+			private int port;
+			private String from;
+
+			// standard getters and setters
+		}
+
+	4.綁定在特定 bean 上
+		@Configuration
+		public class DataSourceConfig {
+
+			@Bean(name="primaryDataSource")
+			@ConfigurationProperties(prefix="xxx")
+			public DataSource primaryDataSource(){
+				return DataSourceBuilder.create().build();
+			}
+		}

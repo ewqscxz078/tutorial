@@ -1,2 +1,24 @@
 https://www.baeldung.com/constructor-injection-in-spring
 Constructor Dependency Injection
+
+預設單例
+	java
+		@Configuration
+		public class RS_TABLES {
+
+			private static final String RSDFZ = "rsdfz.+";
+			@Bean
+			public TableConversionRule RS_TABLES_RSDFZ() {
+				final AliasTableConversionRule rule = new AliasTableConversionRule();
+				....
+				return rule;
+			}
+		}
+
+	xml
+		RS_TABLES.xml
+			<beans>
+				<bean id="RS_TABLES_RSDFZ" class="com.iisigroup.ude.tools.codegen.db.rule.TableConversionRule">
+					....
+				<bean/>
+			</beans>

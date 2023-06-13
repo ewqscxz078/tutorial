@@ -1,0 +1,59 @@
+==================================================================================================================
+========================================== applicationContext Ioc ================================================
+========================= https://www.baeldung.com/spring-get-current-applicationcontext =========================
+==================================================================================================================
+
+ApplicationContext Bean
+	@Component
+	public class MyBean {
+
+		@Autowired
+		private ApplicationContext applicationContext;
+
+		public ApplicationContext getApplicationContext() {
+			return applicationContext;
+		}
+	}
+	@Test
+	void whenGetApplicationContext_thenReturnApplicationContext(){
+		assertNotNull(myBean);
+		ApplicationContext context = myBean.getApplicationContext();
+		assertNotNull(context);
+	}
+
+==================================================================================================================
+========================================== ApplicationContextAware  ==============================================
+========================= https://www.baeldung.com/spring-get-current-applicationcontext =========================
+==================================================================================================================
+	@Component
+	public class ApplicationContextProvider implements ApplicationContextAware {
+		private static ApplicationContext applicationContext;
+
+		@Override
+		public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+			ApplicationContextProvider.applicationContext = applicationContext;
+		}
+
+		public static ApplicationContext getApplicationContext() {
+			return applicationContext;
+		}
+	}
+
+	@Test
+	void whenGetApplicationContext_thenReturnApplicationContext() {
+		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+		assertNotNull(context);
+	}
+
+	@Service
+	public class ItemService {
+		// ...
+	}
+	@Test
+	void whenGetBean_thenReturnItemServiceReference() {
+		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+		assertNotNull(context);
+
+		ItemService itemService = context.getBean(ItemService.class);
+		assertNotNull(context);
+	}

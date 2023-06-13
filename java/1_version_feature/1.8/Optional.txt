@@ -1,0 +1,77 @@
+https://shoujhengduan.medium.com/java-optional-%E7%94%A8%E6%B3%95-c861b4733a68
+
+Optional
+	1.為了省去繁瑣的 null check 流程
+	2.用來表示 method 的回傳值可能會是空的
+
+========================================================================================================================
+================================= 常用用法 =============================================================================
+========================================================================================================================
+chatGPT open ai
+	建立 Optional 物件：
+		Optional.of(value): 建立一個包含非空值的 Optional 物件。
+		Optional.empty(): 建立一個空的 Optional 物件。
+		Optional.ofNullable(value): 建立一個包含可能為空值的 Optional 物件。如果傳入的值為 null，則回傳空的 Optional 物件。
+
+	檢查是否存在值：
+		isPresent(): 判斷 Optional 物件是否包含值。
+		isEmpty(): 判斷 Optional 物件是否為空。
+
+	取得值：
+		get(): 取得 Optional 物件中的值。如果值為空，則拋出 NoSuchElementException 例外。注意：在使用 get() 前最好先使用 isPresent() 進行檢查，以避免例外情況發生。
+
+	處理值的存在與缺失：
+		ifPresent(Consumer): 如果 Optional 物件包含值，則執行給定的操作。
+		orElse(defaultValue): 如果 Optional 物件為空，則返回給定的預設值。
+		orElseGet(Supplier): 如果 Optional 物件為空，則使用給定的供應函式生成一個值。
+		orElseThrow(ExceptionSupplier): 如果 Optional 物件為空，則拋出給定的例外。
+
+	轉換值：
+		map(Function): 如果 Optional 物件包含值，則對值進行映射操作，並返回包含映射結果的新 Optional 物件。
+		flatMap(Function): 如果 Optional 物件包含值，則將其進行平鋪操作，並返回平鋪後的新 Optional 物件。
+
+========================================================================================================================
+================================= 常見使用錯誤方式 =====================================================================
+========================================================================================================================
+https://ithelp.ithome.com.tw/articles/10310210
+
+	1.使用 orElseThrow ，而不要用 Optional.isPresent()、Optional.get()
+		public Student readById(String id) {
+			Optional<Student> student = studentService.readById(id);
+			if (student.isPresent()) {
+				return student.get();
+			} else {
+				throw new NotFoundException(id);
+			}
+		}
+			=>
+		public Student readById(String id) {
+			return studentService.readById(id).orElseThrow(() -> new NotFoundException(id));
+		}
+
+	2.一定有值，卻依然使用 Optional
+		public Optional<Student> readTopScoreStudent() {
+			// ...
+		}
+	3.使用 Optional 作為參數，反而更複雜
+		public void setName(Optional<String> name) {
+			if (name.isPresent()) {
+				this.name = name.get();
+			} else {
+				this.name = "無名氏";
+			}
+		}
+
+	4.作為 class field
+		public class Student {
+			private Optional<String> name;
+			// ...
+		}
+
+		Optional 並沒有實作序列化 Serializable 介面，在特定狀況下需要物件序列化時將會出現問題
+
+	5.Collection and Optional
+		如果真的沒有回傳值，那就回傳一個空的容器就好了
+
+	6.Map and Optional
+		不要將 Optional 放入 Map
