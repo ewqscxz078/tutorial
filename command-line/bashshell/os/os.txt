@@ -21,7 +21,11 @@ https://blog.gtwang.org/linux/how-to-shutdown-linux/
 	vi /etc/group
 
 看最近重新開機時間
-	last reboot
+	last -x reboot
+看最近關機時間
+	last -x shutdown
+看最近開關機時間:較完整
+	journalctl --list-boots
 
 看開機多久
 	uptime

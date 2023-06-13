@@ -20,15 +20,6 @@ find 擁有者為指定的帳號
 找出為檔案且檔名[keyword] 有符合字串的檔案
 	find . -type f -name "*ReportJob.java" -exec egrep -nR --color "[A-Z]{2,}" {} +
 
-使用正則表示法找出檔名或目錄 // 注意目錄下有個文件"abar9"，如果你用"ab.*9"來match，將找不到結果，應使用".*ab.*9"或者".*/ab.*9"
-	find . -regex ".*/[0-9]*/.c" -print
-
-	若想用類似 egrep 則
-		find . -regextype "posix-egrep" -regex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
-
-	不分大小寫
-		find . -regextype "posix-egrep" -iregex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
-
 find and replace 取代 \t 變四個空白
 	find . -iname '*.js' -type f -exec sed -i 's/\t/    /g' {} +
 	find . -iname '*.css' -type f -exec sed -i 's/\t/    /g' {} +
@@ -48,6 +39,31 @@ https://superuser.com/questions/913390/how-to-search-for-a-file-in-war-ear-and-j
 
 	jar內搜尋檔案
 		find . -name \*.jar -exec sh -c 'jar tf {} \; | grep {keyworkd}'
+
+===================================================================
+========================= find 與搜尋深度有關方式 =================
+===================================================================
+僅搜尋下一層的目錄
+	find . -mindepth 1 -maxdepth 1 -type d
+
+===================================================================
+========================= find 與正則表示法有關方式 ===============
+===================================================================
+使用正則表示法找出檔名或目錄 // 注意目錄下有個文件"abar9"，如果你用"ab.*9"來match，將找不到結果，應使用".*ab.*9"或者".*/ab.*9"
+	find . -regex ".*/[0-9]*/.c" -print
+
+	若想用類似 egrep 則
+		find . -regextype "posix-egrep" -regex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
+
+	不分大小寫
+		find . -regextype "posix-egrep" -iregex ".*/(RCDFZ609|RCDFZ608)\.csv" -print
+
+搜尋當前目錄名稱前墜有 centos 或 ubuntu
+	find . -type d -regex '\./\(centos\|ubuntu\).*'
+
+搜尋完整目錄名稱前墜有 centos 或 ubuntu
+	find ${all_path} -type d -regex '.*\(centos\|ubuntu\).*'
+
 
 ===================================================================
 ========================= find 與檔案大小有關方式 =================
