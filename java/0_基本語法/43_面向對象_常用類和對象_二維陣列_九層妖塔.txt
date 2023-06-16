@@ -1,0 +1,63 @@
+https://www.youtube.com/watch?v=n0zeASUsJ3Y&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=74&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 43
+public class Java43_Array {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象_2維 Array 九層妖塔
+
+		/*
+
+		九層妖塔
+		   *
+		  ***
+		 *****
+		*******
+
+		*/
+		// 行跟列的關係
+		// 1行row => 1列column
+		// 2行row => 3列column
+		// 3行row => 5列column
+		// 4行row => 7列column
+
+		// 找到中心線關係
+		// 1行row => 在第0列column => 在 row -1
+		// 2行row => 在第1列column => 在 row -1
+		// 3行row => 在第2列column => 在 row -1
+		// 4行row => 在第3列column => 在 row -1
+
+		// 當前第0行row => 第8列
+		// 當前第1行row => 第678列
+		// 當前第2行row => 第678910列
+
+		int row = 9;
+		int col = 2 *(row -1) + 1;
+
+		String[][] nineTower = new String[row][col];
+
+		for(int i = 0; i < row; i++ ){
+			for(int j = 0; j < col; j++ ){
+				if( j >= (row - 1) -i && j <= (row -1) + i){
+				  namess[i][j] = "*";
+				} else {
+				  namess[i][j] = " ";
+				}
+
+			}
+		}
+
+		for(int i = 0; i < row; i++ ){
+			for(int j = 0; j < col; j++ ){
+				System.out.print(namess[row][col]);
+			}
+			System.out.println();
+		}
+
+	}
+
+}
+
+
+
