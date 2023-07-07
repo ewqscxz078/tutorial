@@ -1,0 +1,11 @@
+https://matam-kirankumar.medium.com/fortify-issues-path-manipulation-3ac42c1d1e9a
+風險原因
+	若直接從參數取得路徑值，應該做白名單或是排除 ../ 路徑攻擊動作
+	public static void main(String[] args){
+		String path = args[0];
+		File f=new File(path); // <＝這邊有弱點
+	}
+
+建議方式
+	Stirng normalizedpath = FilenameUtils.normalize("/foo/../bar/../baz");
+    File f=new File(filepath); // way

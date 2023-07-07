@@ -1,0 +1,9 @@
+https://www.masterspringboot.com/spring-boot-actuator/how-to-get-a-thread-dump-in-spring-boot/
+
+2.x spring boot actuator threaddump
+	預設回應 JSON format ，要加 -H 'Accept: text/plain'
+	curl 'http://localhost:8080/actuator/threaddump' -i GET -H 'Accept: text/plain'
+
+1.x spring boot actuator threaddump
+	沒有支援有效顯示的方式，糊在一起的json，建議從 2.x 複製其關鍵程式讓其叫好看
+	curl 'http://localhost:8080/actuator/dump'

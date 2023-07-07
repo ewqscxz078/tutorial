@@ -1,0 +1,61 @@
+ref openAI
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+
+public class GenerateRandomTextFileExample {
+    public static void main(String[] args) {
+        // 指定文件路徑
+        String filePath = "/path/to/output.txt";
+        // 指定文件大小（以字節為單位）
+        long fileSize = 10 * 1024 * 1024; // 10MB
+
+        try (FileChannel channel = new FileOutputStream(filePath).getChannel()) {
+            long bytesWritten = 0;
+
+            Random random = new Random();
+            StringBuilder stringBuilder = new StringBuilder();
+
+            while (bytesWritten < fileSize) {
+                // 生成隨機字符串
+                String randomString = generateRandomString();
+                stringBuilder.append(randomString);
+
+                // 將字符串轉換為字節數組
+                byte[] bytes = randomString.getBytes(StandardCharsets.UTF_8);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+                // 寫入文件通道
+                channel.write(buffer);
+
+                // 更新已寫入字節數
+                bytesWritten += bytes.length;
+            }
+
+            System.out.println("生成的文件大小為：" + bytesWritten / (1024 * 1024) + "MB");
+            System.out.println("文件生成完成");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 生成隨機字符串的方法示例
+    private static String generateRandomString() {
+        // 根據需求自定義隨機字符串生成邏輯
+        // 這裡簡單示範生成長度為100的隨機字符串
+        String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder stringBuilder = new StringBuilder();
+
+        Random random = new Random();
+        for (int i = 0; i < 100; i++) {
+            int index = random.nextInt(characters.length());
+            stringBuilder.append(characters.charAt(index));
+        }
+
+        return stringBuilder.toString();
+    }
+}

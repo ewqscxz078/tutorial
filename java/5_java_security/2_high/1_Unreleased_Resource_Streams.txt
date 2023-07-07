@@ -1,0 +1,6 @@
+1.8 以前
+	fininaly 沒有 close 裡
+	如 inputStream、outputStream
+1.8 以後
+	沒有將需要 close 的包在 try 裡
+	如 inputStream、outputStream

@@ -13,6 +13,10 @@ https://www.youtube.com/watch?v=6Wiz3BuvoE0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 	如何使用
 		● 引入場景
 		● 訪問 http://localhost:8080/actuator/**
+			2.x spring boot actuator 預設為 ${context-path}/actuator
+			1.x spring boot actuator 預設為專案下後路徑
+				可透過 application.yml 修改預設路徑
+					management.context-path=/actuator
 		● 暴露所有監控信息為HTTP
 			management:
 			  endpoints:
@@ -314,3 +318,12 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 		api 經過後會有執行紀錄
 			http://loclahost:8080/metrics/my.api.timer
+
+
+curl actuator pretty-printing 好看格式
+	https://stackoverflow.com/questions/36119852/spring-boot-actuator-pretty-print-json
+	application.yml
+		spring.jackson.serialization.INDENT_OUTPUT=true
+
+	curl -i http://localhost:8080/${contextPath}/actuator
+		=> 顯示出較人性化方便查看格式

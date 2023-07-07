@@ -49,6 +49,8 @@ Critical 嚴重風險(from fortify)
 High 高風險(from fortify)
 	Unreleased Resource: Streams
 	Access Specifier Manipulation
+	Privacy Violation: Heap Inspection
+	Path Manipulation
 
 Medium 中風險(from fortify)
 

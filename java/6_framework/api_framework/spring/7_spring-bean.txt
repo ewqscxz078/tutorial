@@ -1,0 +1,42 @@
+
+========================================================================================================================
+================================= ObjectProvider =======================================================================
+================================= https://www.jianshu.com/p/f4817641aa88 ===============================================
+========================================================================================================================
+在Spring4.3之後，引入了一個新特性：當構造方法只有一個參數時，可以不使用@ Autowired註解。
+	@Service
+	public class FooService {
+		private  FooRepository fooRepository;
+		public FooService(FooRepository fooRepository){
+			this.fooRepository=fooRepository;
+		}
+	}
+	在SpringBoot的自動裝配類中，這種形式被大量使用。
+
+在Spring4.3版本，引入了ObjectProvider接口。
+ObjectProvider的作用
+	1.如果注入實例為空時，使用ObjectProvider則避免了強依賴導致的依賴對像不存在異常；
+	2.如果有多個實例，ObjectProvider的方法會根據Bean實現的Ordered接口或@Order註解指定的先後順序獲取一個Bean。
+	  從而了提供了一個更加寬鬆的依賴注入方式。
+	可以看做是依賴注入的懶加載，異常將從啟動階段轉移到業務運行的階段。
+		@Service
+		public class FooService {
+			private FooRepository fooRepository;
+			public FooService(ObjectProvider<FooRepository> fooRepositoryObjectProvider){
+				this.fooRepository=fooRepositoryObjectProvider.getIfAvailable();
+			}
+		}
+	在Spring5.1版本後提供了基於orderedStream方法來獲取有序的Stream方法。
+		@Service
+		public class FooService {
+			private FooRepository fooRepository;
+			public FooService(ObjectProvider<FooRepository> fooRepositoryObjectProvider){
+				//可以靈活的選擇注入的bean
+				this.fooRepository=fooRepositoryObjectProvider.orderedStream().findFirst().get();
+			}
+		}
+
+========================================================================================================================
+=================================  =======================================================================
+=================================  ===============================================
+========================================================================================================================

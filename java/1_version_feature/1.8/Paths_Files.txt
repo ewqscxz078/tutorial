@@ -3,7 +3,8 @@ temp file : 臨時文件建立與刪除
 		// 使用臨時文件進行文件操作
 	} // 臨時文件在這裡被自動刪除
 
-nio2 path file
+========================================================================================================================
+================================= nio2 Path ============================================================================
 	https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/282/#outline__1_1
 	https://stackoverflow.com/questions/189094/how-to-scan-a-folder-in-java
 	https://docs.oracle.com/javase/tutorial/essential/io/walk.html
@@ -11,18 +12,36 @@ nio2 path file
 	https://jakubstas.com/paths_in_nio_2/#.Yag_UNBBw5v
 	https://www.baeldung.com/java-io-vs-nio
 	https://ithelp.ithome.com.tw/articles/10102562
-	https://programdoubledragon.blogspot.com/2018/12/java-nio2.html
-Files.
+	https://programdoubledragon.blogspot.com/2018/12/java-nio2.html=
+========================================================================================================================
+get Path by string
+	Path path = Paths.get(...)
 
-Path path = Paths.get(...)
+https://www.baeldung.com/java-file-directory-exists
+Path check is exists
+	Path path = Paths.get("does-not-exist.txt");
+	assertFalse(Files.exists(path));
 
-zip a file
-	https://mkyong.com/java/how-to-compress-files-in-zip-format/
+	Path tempFile = Files.createTempFile("baeldung", "exist-article");
+	assertTrue(Files.exists(tempFile));
 
+	Path tempDirectory = Files.createTempDirectory("baeldung-exists");
+	assertTrue(Files.exists(tempDirectory));
 
-File to Path
-	File file = new File(....);
-	Path path = file.toPath();
+Path 是否為目錄
+	Files.isDirectory(path);
+
+Path 是否為檔案
+	Files.isRegularFile(path);
+
+Path 檔案大小
+	Files.size();
+
+Path 路經階層
+	int levels = path.getNameCount();
+
+取得上一層
+	path.getParent();
 
 Path to File
 	File path.toFile();
@@ -37,3 +56,59 @@ Path 標準正常化 : 要目的是消除路徑中的冗餘部分，並將其轉
 
 	注意事項: 只進行路徑的規範化處理，並不檢查路徑是否存在或是否有效。它僅對路徑字符串進行處理，並不對底層文件系統進行任何操作
 	功能類似於 spring 裡的 StringUtils.cleanPath，但功能略於它
+
+取得 Path 其兄弟路徑
+	siblingFileName = sourcePath.getFileName() + "xxxx";
+	Path siblingPath = sourcePath.resolveSibling(siblingFileName);
+
+取得 Path 其延伸路徑
+	extendDir = "xxxx";
+	Path extendPath = sourcePath.resolve(extendDir);
+
+類似 rm -rf ${path}，但不是離開程序後才刪除，不適用於單元測試
+	public class DirectoryRemover {
+		public static void main(String[] args) throws IOException {
+			String directoryPath = "/path/to/directory";
+			removeDirectory(directoryPath);
+		}
+
+		private static void removeDirectory(String directoryPath) throws IOException {
+			Path directory = Paths.get(directoryPath);
+
+			if (!Files.exists(directory)) {
+				System.out.println("Directory does not exist: " + directoryPath);
+				return;
+			}
+
+			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					Files.delete(file);
+					System.out.println("Deleted file: " + file);
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					Files.delete(dir);
+					System.out.println("Deleted directory: " + dir);
+					return FileVisitResult.CONTINUE;
+				}
+			});
+
+			System.out.println("Directory and its contents have been removed: " + directoryPath);
+		}
+	}
+	等於 org.springframework.util.FileSystemUtils.deleteRecursively(path)
+
+
+========================================================================================================================
+================================= nio2 Files ===========================================================================
+========================================================================================================================
+File to Path
+	File file = new File(....);
+	Path path = file.toPath();
+
+========================================================================================================================
+zip a file
+	https://mkyong.com/java/how-to-compress-files-in-zip-format/

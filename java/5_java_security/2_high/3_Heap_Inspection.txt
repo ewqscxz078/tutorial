@@ -1,0 +1,12 @@
+ref fortify
+
+風險原因
+	敏感資訊存放到 不可變 String，若被竊取 heap 會被拿走問題
+		final char[] password = pf.getPassword();
+		...
+		String passwordAsString = new String(password);
+
+建議方式
+	final char[] password = pf.getPassword();
+	// erase when finished
+	Arrays.fill(password, ' ');
