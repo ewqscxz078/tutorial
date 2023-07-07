@@ -1,0 +1,56 @@
+https://www.youtube.com/watch?v=UOv5zxTjDxk&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=71&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 41
+public class Java41_Array {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象_Array
+
+		// 陣列的聲明方式: 類型[] 變數;
+		// 陣列的創建: new 類型[容量];
+		String[] names = new String[3];
+		// 給陣列的小格子添加資料，添加的方式為；陣列變數[索引] = 資料
+		// 添加資料和訪問資料時，索引是不能超過指定的範圍( 0 ~ length-1 )
+		// 如果重複給相同的索引添加資料，那麼等同於修改資料
+		names[0]="張三";
+		names[0]="李四";
+		names[1]="王五";
+		names[2]="趙六";
+		// names[3]="李四"; fail
+
+		// 訪問資料，訪問的方式為 : 陣列變數[索引]
+		// System.out.println(names[0]);
+		// System.out.println(names[1]);
+		// System.out.println(names[2]);
+		System.out.println("=================");
+		for(int i = 0; i < 3; i++){
+			System.out.println(names[i]);
+		}
+
+		// User1 user1 = new User1();
+		// User1 user2 = new User1();
+		// User1 user3 = new User1();
+		// User1 user3 = new User1();
+		// user1.test();
+		// user2.test();
+		// user3.test();
+		// user4.test();
+
+		User1 users = new User1[5];
+		for(int i = 0; i < users.length; i++){
+			user1[i] = new User1();
+		}
+		for(int i = 0; i < users.length; i++){
+			user1[i].test();
+		}
+	}
+
+}
+
+class User1 {
+	public void test(){
+		System.out.println("test....");
+	}
+}
+

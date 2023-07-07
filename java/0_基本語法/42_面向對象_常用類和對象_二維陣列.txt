@@ -1,0 +1,54 @@
+https://www.youtube.com/watch?v=MDaEkFWGG4c&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=72&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 42
+public class Java42_Array {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象_2維 Array
+
+		// 陣列初始為給予對應型別的初始值
+		// int[] nums = new int[3]
+		// nums[0] = 1;
+		// for(int num : nums){
+		// 	System.out.println(num);
+		// }
+		// Object[] nums = new Object[3]
+		// nums[0] = "1";
+		// for(Object num : nums){
+		// 	System.out.println(num);
+		// }
+		// String[] nums = new String[3]
+		// nums[0] = "1";
+		// for(String num : nums){
+		// 	System.out.println(num);
+		// }
+
+		// 建構時，給予初始值
+		String[] names = {"張三","李四","王五"};
+		System.out.println(numes);
+		for(String num : nums){
+			System.out.println(num);
+		}
+		System.out.println(numes.length);
+
+		// 二維陣列
+		// String[][] names = {{"張三","李四","王五"},{"張三","李四"},{"張三"}};
+
+		// 標準的二維陣列
+		String[][] namess = new String[3][3];
+		namess[0][1] = "張三";
+		//System.out.println(namess[1][1]);
+		for(int row = 0; row < 3; row++ ){
+			for(int col = 0; col < 3; col++ ){
+				System.out.print(namess[row][col] + " ");
+			}
+			System.out.println();
+		}
+
+	}
+
+}
+
+
+
