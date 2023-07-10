@@ -8,6 +8,12 @@
 			spring
 				spring Framework
 				spring boot 2
+					actuator
+					web
+					application.yml
+					autoconfigration
+					logger
+
 				spring boot data
 				spring cloud
 				spring boot 2 react
