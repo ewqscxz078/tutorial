@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=guGwbOZuoRY&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=85&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 55
+public class Java55_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 包裝類
+
+		// 基本資料類型
+		// byte short int long
+		// float double
+		// char
+		// boolean
+
+		// 對應包裝類
+		Byte b = null;
+		Short s = null;
+		Integer i = null;
+		Long lon = null;
+		Float f = null;
+		Double d = null;
+		Character = null;
+		Boolean bln = null;
+
+		// 基本類轉包裝物件類
+		int i = 10;
+		Integer i1 = new Integer(i);
+
+		// 自動裝箱 autobox
+		Integer i2 = Integer.valueOf(i);
+		Integer i3 = i;
+
+		// 自動拆箱
+		int i4 = i1.initValue();
+		int i5 = i1;
+
+
+	}
+
+}
+

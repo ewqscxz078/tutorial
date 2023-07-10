@@ -1,0 +1,94 @@
+https://www.youtube.com/watch?v=-onPNlD0pBo&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=89&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 59
+public class Java59_Tool {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 封裝工具類思維
+
+		System.out.println(StringUtil.isEmpty(null));
+		System.out.println(StringUtil.isEmpty(""));
+		System.out.println(StringUtil.isEmpty("  "));
+		System.out.println(StringUtil.isEmpty("abc"));
+
+		System.out.println(StringUtil.makeString());
+		System.out.println(StringUtil.makeString("abcdef123456",6));
+
+		System.out.println(StringUtil.parseDate("2023-07-06","yyyy-MM-dd"));
+		System.out.println(StringUtil.formatDate(new Date(),"yyyy-MM-dd"));
+	}
+
+}
+
+// 封裝字串工具類 為例
+// 1. 工具類不應該創建對象才使用，也就意味著可以直接使用類中的屬性和方法，一般都聲明為靜態
+// 	 常見 class 宣告 final 不可在繼承修改
+//   常見 建構式宣告 private 不可創建
+// 2. 工具類對外提供的屬性或方法都應該是公共的
+// 3. 為了使用者開發方便，應該盡量提供豐富的方法和屬性
+
+public final class StringUtil {
+	// 非空判斷
+	public static boolean isEmpty(String str){
+		// 如果字串為 null, 為空
+		// if(str == null){
+		// 	return true;
+		// }
+		// 如果字串為空字串, 為空
+		// if("".equals(str)){
+		// 	return true;
+		// }
+		// 如果字串全都是空格, 為空
+		// if("".equals(str.trim())){
+		// 	return true;
+		// }
+
+		if(str ==null || "".equals(str.trim())){
+			return true;
+		}
+
+		return false;
+	}
+	public static boolean isNotEmpty(String str){
+		return !isEmpty(str);
+	}
+	// 生成隨機字串
+	public static String makeString(){
+		return UUID.randomUUID().toString();
+	}
+	public static String makeString(String from, int len){
+		if(len < 1){
+			return "";
+		} else {
+			char[] chars = from.toCharArray();
+			StringBuilder sb = new StringBuilder();
+			for(int i = 0; i < len; i++){
+				Random random = new Random();
+				int j = random.getNextInt(chars.length);
+				char c = chars[j];
+				str.append(c);
+			}
+			return str.toString();
+		}
+	}
+
+	// 轉換字串編碼
+	public static String transFrom(String source, String encodeFrom, String encodeTo){
+		byte[] bytes = source.getBytes(encodeFrom);
+		return new String(bytes,encodeTo);
+	}
+
+	// string to date of format
+	public static Date parseDate(String dateString, String format){
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		return sdf.parse(dateString);
+	}
+
+	// date to string of format
+	public static String formatDate(Date date, String format){
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		return sdf.format(date);
+	}
+
+}

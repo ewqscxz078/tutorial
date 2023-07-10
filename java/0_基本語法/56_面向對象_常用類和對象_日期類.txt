@@ -1,0 +1,48 @@
+https://www.youtube.com/watch?v=qwCpYTHO7BI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=87&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 56
+public class Java56_Date {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 日期類
+
+		// 時間戳
+		System.out.println(System.out.currentTimeMillis());
+
+		// 日期類 : Date
+		// 日曆類 : Calendar
+		Date date = new Date();
+		System.out.println(date); // 預設英文格式
+
+		// java 格式化日期格式:
+		// y(Y) -> 年 -> yyyy
+		// m(M) -> MM : 月份 , mm : 分鐘
+		// d(D) -> dd : 一個月中的日期, D: 一年中的日期
+		// h(H) -> h : 12 進制 , HH : 24 進制
+		// s(S) -> s : 秒 , S : 毫秒
+
+		// Date -> String 格式化
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+		String dateString = sdf.format(date);
+		System.out.println(dateString);
+
+		// String -> Date
+		String stringDate = "2023-07-06 03:51:01.111";
+		Date parseDate = sdf.parse(stringDate);
+		System.out.println(parseDate);
+
+		// 根據時間戳建構指定的日期對象
+		date.setTime(System.out.currentTimeMillis()); // 通常用於時間戳的計算
+		// 獲取時間戳
+		date.getTime();
+
+		// 比較日期誰先誰後
+		System.out.println(parseDate.before(date));
+		System.out.println(parseDate.after(date));
+
+		date.getXXX // 會發現很多都不建議使用，而是建議改用 Calendar 取得具體的部分 年、月、日、小時、分鐘、秒
+	}
+
+}
+

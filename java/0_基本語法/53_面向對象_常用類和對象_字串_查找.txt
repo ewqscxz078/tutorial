@@ -1,0 +1,39 @@
+https://www.youtube.com/watch?v=ennqL2FWxO8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=83&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 53
+public class Java53_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字串操作 - 查找
+		String s = "Hello World World";
+
+		char[] chars = s.toCharArray();
+		byte[] bytes = s.getBytes("UTF-8")
+
+		// charAt 可以傳遞索引定位字串中指定位置的字
+		System.out.println(s.charAt(1));
+
+		// indexOf 方法可以用於獲取資料在字串中第一次出現的位置
+		System.out.println(s.indexOf("Hello"));
+
+		// lastIndexOf 方法可以用於獲取資料在字串中最後一次出現的位置
+		System.out.println(s.lastIndexOf("World"));
+
+		// 是否包含指定的字串，返回邏輯類型
+		System.out.println(s.contain("Hello"));
+
+		// 判斷字串是否以指定的資料開頭，返回邏輯類型
+		System.out.println(s.startWith("Hello"));
+
+		// 判斷字串是否以指定的資料結尾，返回邏輯類型
+		System.out.println(s.endWith("World"));
+
+		// 判斷字串是否為空，空格其實是一個特殊的字串，看不到，但是不為空
+		System.out.println(" ".isEmpty());
+	}
+
+}
+

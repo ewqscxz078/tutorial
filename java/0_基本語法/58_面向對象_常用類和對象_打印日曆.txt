@@ -1,0 +1,54 @@
+https://www.youtube.com/watch?v=c09-iKhPiDs&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=89&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 58
+public class Java58_Calendar {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 日曆類
+
+		System.out.println("周一\t周二\t周三\t周四\t周五\t周六\t周日");
+
+		// 獲取當前日期的日曆對象
+		Calendar firstDate = Calendar.getInstance();
+
+		// 把日曆對象設定位當月的第一天
+		firstDate.set(Calendar.DAY_OF_MONTH,1);
+
+		// 獲取當前月最大的日期
+		int maxDayOfMounth = firstDate.getMaximum(Calendar.DAY_OF_MONTH);
+
+		for(int i=0; i < maxDayOfMounth; i++){
+			// 當前日期周幾
+			int weekX = firstDate.get(Calendar.DAY_OF_WEEK);
+			// 當前日期幾號
+			int mountY = firstDate.get(Calendar.DAY_OF_MONTH);
+			if( i == 0){
+				if(weekX == Calendar.SUNDAY){
+					// 週日前面有五個 \t
+					for(int j=0; j < 6; j++){
+						System.out.print("\t");
+					}
+					System.out.println(mountY);
+				} else {
+					// 注意 : 週日是1,周一是2...週六是7
+					for(int j=0; j < weekX -2 ; j++){
+						System.out.print("\t");
+					}
+					System.out.print(mountY);
+					System.out.print("\t");
+				}
+			} else {
+				// 非一號的場合
+				if(weekX == Calendar.SUNDAY){
+					System.out.println(mountY);
+				} else {
+					System.out.print(mountY);
+					System.out.print("\t");
+				}
+			}
+		}
+	}
+
+}
+

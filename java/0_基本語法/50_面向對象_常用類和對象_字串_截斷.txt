@@ -1,0 +1,37 @@
+https://www.youtube.com/watch?v=bQKMk4F0-As&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=80&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 50
+public class Java50_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字串操作 - 截斷
+		String s = "Hello World";
+
+		// 子字串
+		// substring 方法用於截取字串，需要傳遞兩個參數
+		//   第一個參數表示截取字串的起始位置(索引，包含)
+		//   第二個參數表示截取字串的結束位置(索引，不包含)
+		System.out.println(s.substring(0,3));
+		System.out.println(s.substring(0,"Hello".length()));
+		System.out.println(s.substring(6,s.length()));
+		// substring 方法如果只傳遞一個參數，那麼就表示從指定位置開始截取字串，然後截取到最後
+		System.out.println(s.substring(6));
+
+		// 分解字串 : 根據指定的規則對字串進行分解，可以將一個完整的字串，分解成幾個部分
+		String tmp = "Hello,World,張三,李四";
+		String[] s1 = tmp.split(",");
+		System.out.println(s1.length());
+		for(String s2 : s1){
+			System.out.println(s2);
+		}
+
+		// trim : 去掉字串首尾的空格
+		String tmp2 = "  Hello World  !";
+		System.out.println("!" + tmp2.trim() + "!");
+	}
+
+}
+

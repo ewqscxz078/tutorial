@@ -1,4 +1,5 @@
 SpringBoot Actuator
+https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#overview
 https://www.baeldung.com/spring-boot-actuator-enable-endpoints
 
 https://www.youtube.com/watch?v=6Wiz3BuvoE0&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=77&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1

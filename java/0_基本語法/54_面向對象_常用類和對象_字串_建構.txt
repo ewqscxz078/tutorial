@@ -1,0 +1,35 @@
+https://www.youtube.com/watch?v=IAfCCgBP088&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=84&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 54
+public class Java54_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字串操作 - 有效率的建構字串
+
+		// 效率差
+		String s = "";
+		for(int i = 0; i < 100; i++){
+			s = s + i; // 不斷地建構
+		}
+		System.out.println(s); // 012345678910...
+
+		// 效率高，
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < 100; i++){
+			sb.append(i); // 因為尚未建構
+		}
+		System.out.println(sb.toString()); // 012345678910...
+
+		StringBuilder sb2 = new StringBuilder();
+		sb2.append("abc");
+		System.out.println(sb2.toString());
+		System.out.println(sb2.length()));
+		System.out.println(sb2.reverse())); // 反轉
+		System.out.println(sb2.insert(1,"d")));
+	}
+
+}
+

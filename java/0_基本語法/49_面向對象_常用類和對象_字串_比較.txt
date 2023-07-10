@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=fc4Dhb33d8s&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=79&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 49
+public class Java49_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字串操作 - 比較
+		String a = "a";
+		String b = "A";
+
+		// 相等
+		System.out.println(a.equals(b));
+		// 忽略大小寫相等
+		System.out.println(a.equalsIgnoreCase(b));
+
+		byte b1 = (byte)'A';
+		byte b2 = (byte)'a';
+		System.out.println("A = " + b1);
+		System.out.println("a = " + b2);
+
+		// i = 正數, a > b
+		// i = 負數, a < b
+		// i = 0, a = b
+		int i = a.compareTo(b);
+		System.out.println(i);
+
+		int i1 = "1".compareTo("2");
+		System.out.println(i1);
+
+		int i2 = "1".compareTo("1");
+		System.out.println(i2);
+
+		// 忽略大小寫比較
+		int i3 = "a".compareToIgnoreCase("A");
+		System.out.println(i3);
+	}
+
+}
+

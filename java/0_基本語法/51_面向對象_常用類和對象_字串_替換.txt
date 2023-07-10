@@ -1,0 +1,21 @@
+https://www.youtube.com/watch?v=vKF6u-uKUic&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=81&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 51
+public class Java51_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字串操作 - 替換
+		String s = "Hello World 張三";
+
+		// 僅純粹替換
+		System.out.println(s.replace("World", "java"));
+
+		// replaceAll 按照指定的規則進行替換(正則表示法)
+		System.out.println(s.replaceAll("World|張三", "java"));
+	}
+
+}
+

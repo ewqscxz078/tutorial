@@ -1,0 +1,24 @@
+https://www.youtube.com/watch?v=qwCpYTHO7BI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=87&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 57
+public class Java57_Calendar {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 日曆類
+
+		// 取得當前時間的日曆
+		Calendar instance = Calendar.getInstance();
+		System.out.println(instance); // 預設非一般可見格式
+
+		System.out.println(instance.get(Calendar.YEAR));
+		System.out.println(instance.get(Calendar.Mounth)); // 預設為0 開始算，所以通常取得後再+1
+		System.out.println(instance.get(Calendar.Date));
+		// System.out.println(instance.get(Calendar.DAY_OF_XXX)); // 可取得各種層面 DAY 結果(DAY_OF_YEAR、DAY_OF_MOUNTH、.....)
+
+		instance.setTime(new Date());
+		instance.add(Calendar.YEAR, -1); // 當前日曆年 -1 操作
+	}
+
+}
+

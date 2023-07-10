@@ -1,0 +1,35 @@
+curl -i http://localhost:8080/${contextPath}/actuator/env/${env.var.name}
+
+動態修改 env
+	https://matthung0807.blogspot.com/2019/12/spring-boot-change-environment.html
+
+	@RestController
+	public class DemoController {
+
+		@Autowired
+		private ConfigurableEnvironment configEnv;
+
+		@Autowired
+		private Environment env;
+
+		@GetMapping("/system/name")
+		public String getSystemName() {
+			String oldSystemName = env.getProperty("demo.system.name");
+			System.out.println(oldSystemName);
+			return oldSystemName;
+		}
+
+		@GetMapping("/system/name/update/{systemName}")
+		public String updateSystemName(@PathVariable String systemName) {
+
+			MutablePropertySources propertySources = configEnv.getPropertySources();
+			Map<String, Object> map = Collections.singletonMap("demo.system.name", systemName);
+			propertySources.addFirst(new MapPropertySource("new", map));
+
+			String newSystemName = env.getProperty("demo.system.name");
+			System.out.println(newSystemName);
+			return newSystemName;
+
+		}
+
+	}

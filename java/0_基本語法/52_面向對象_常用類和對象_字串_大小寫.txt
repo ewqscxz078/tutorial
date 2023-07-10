@@ -1,0 +1,23 @@
+https://www.youtube.com/watch?v=BBNktiJ7aDc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=82&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 52
+public class Java52_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字串操作 - 大小寫
+		String s = "Hello World";
+
+		System.out.println(s.toLowerCase());
+		System.out.println(s.toUpperCase());
+
+		String className = "user"; // u + ser
+		String s1 = className.substring(0,1);
+		String s2 = className.substring(1);
+		System.out.println(s1.toUpperCase() + s2);
+	}
+
+}
+

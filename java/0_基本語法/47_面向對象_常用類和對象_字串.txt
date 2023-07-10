@@ -1,0 +1,35 @@
+https://www.youtube.com/watch?v=ouuoxtnsLng&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=77&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+pacakge 47
+public class Java47_String {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 String
+
+		// 字符串連續字符組成形成的資料整體
+		// java.lang.String
+		// 字串、字元、字節的關係
+		String name = "張三";
+		String name1 = new String("張三");
+
+		char[] cs = {'a','中','國'};
+		byte[] bs = {-28,-72,-83,-27,-101,-67};
+
+		String s = new String(cs);
+		String s1 = new String(bs,"UTF-8");
+		System.out.println(s);
+		System.out.println(s1);
+
+		String a = "\"";
+		// 轉義字符/跳脫字元: \" => 文字內容的雙引號
+		// \', \t, \n, \\
+		System.out.println(a);
+		System.out.println("\'");
+		System.out.println("a\tb");
+		System.out.println("c\nb");
+		System.out.println("e\tf");
+
+	}
+
+}
