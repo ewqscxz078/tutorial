@@ -1,0 +1,34 @@
+https://www.youtube.com/watch?v=jPRzkQTDODU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=91&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 61
+public class Java61_Exception {
+
+	public static void main(String[] args){
+		// 異常錯誤
+
+		// 1.類型轉換出現了錯誤
+		String s = "123";
+		// Integer i = (Integer)s; // 編譯器跳出錯誤
+		Integer i = Integer.parseInt(s);
+
+		// 2. 遞迴沒有跳出的邏輯: StackOverflowError
+		// 盡量避免
+		// test();
+
+		// 3. 訪問一個為空物件的成員方法時，出現了錯誤 java.lang.NullPointerException(異常)
+		//   java 中異常分2打類:
+		//   3.1 可以通過代碼恢復正常邏輯執行的異常，稱之為執行期異常，RuntimeException
+		//   3.2 不可以通過代碼恢復正常邏輯執行的異常，稱之為編譯期異常，Exception
+		User user = null;
+		System.out.println(user.toString());
+
+	}
+
+	public static void test(){
+		test();
+	}
+}
+
+class User {
+}

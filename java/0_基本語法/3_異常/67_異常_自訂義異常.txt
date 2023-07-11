@@ -1,0 +1,51 @@
+https://www.youtube.com/watch?v=r5yaU0_ue_g&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=97&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 67
+public class Java67_Exception {
+
+	public static void main(String[] args) throws Exception{
+		// 異常錯誤
+
+		String account = "asdb";
+		String password = "123";
+		try {
+			login(account,password);
+		}catch(AccountException e1){
+			System.out.println("帳號不正確，需要確認")
+		}catch(PasswordException e2){
+			System.out.println("密碼不正確，需要確認")
+		}catch(LoginException e3){
+			System.out.println("其他登錄相關錯誤，需要確認")
+		}
+
+	}
+
+	public static void login(String account, String password){ // 若 LoginException extends Exception，則要補上 throw AccountException, PasswordException 或 LoginException
+		if(!"admin".equals(account)){
+		  throw new AccountException("帳號不正確");
+		}
+		if(!"admin".equals(password)){
+		  throw new PasswordException("密碼不正確");
+		}
+		System.out.println("登入成功");
+	}
+}
+
+class AccountException extends LoginException {
+	public AccountException(String message) {
+		super(message);
+	}
+}
+class PasswordException extends LoginException {
+	public PasswordException(String message) {
+		super(message);
+	}
+}
+class LoginException extends RuntimeException {
+	public LoginException(String message) {
+		super(message);
+	}
+}
+
+

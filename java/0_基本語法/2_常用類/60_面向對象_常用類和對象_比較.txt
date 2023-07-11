@@ -1,0 +1,67 @@
+https://www.youtube.com/watch?v=Q6okeuD3g_g&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=91&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 60
+public class Java60_Tool {
+
+	public static void main(String[] args){
+		// 面向對象- 常用類和對象 比較
+
+		// 基本數據類型，雙等號比較數值
+		int i = 10;
+		int j = 10;
+		System.out.println(i == j); // true
+		double d = 10.0;
+		System.out.println(i == d); // true
+
+		// 引用數據類型，雙等號比較變量的內存地址
+		String s = "abc"; // 字符串常量池
+		String s1 = "abc";
+		String s2 = new String("abc");
+		System.out.println(s == s1); // true
+		System.out.println(s == s2); // false 因為 new 的方式是另外一個內存記憶
+		System.out.println(s.equals(s2)); // true
+
+		User9 user1 = new User9();
+		User9 user2 = new User9();
+		System.out.println(user1 == user1); // false 因為 new 的方式是另外一個內存記憶
+		System.out.println(user1.equals(user1)); // false  因為預設未覆寫是 equals 是內存比較
+
+		User10 user11 = new User10();
+		User10 user12 = new User10();
+		System.out.println(user11 == user12); // true hashCode()相等
+		System.out.println(user11.equals(user12)); // true equals()相等
+
+		// 包裝類類型
+		// int => Integer => JVM 為了操作方便，簡化了很多操作
+		// Integer 緩存: -128 ~ 127
+		Integer i1 = Integer.valueOf(100); // 或是 100
+		Integer i2 = Integer.valueOf(100); // 或是 100
+		System.out.println(i1 == i2); // true 緩存範圍內相等
+		System.out.println(i1.equals(i2)); // true 值相等
+
+		Integer i3 = 128;
+		Integer i4 = 128;
+		System.out.println(i3 == i4); // false 超出緩存範圍
+		System.out.println(i3.equals(i4)); // true 值相等
+
+
+		// 因此基本資料類型用 雙等號比較
+		// 物件類型用 equals 比較
+	}
+
+}
+
+class User9 {
+}
+
+class User10 {
+  @Override
+  public int hashCode(){
+	return 1;
+  }
+  @Override
+  public boolean equals(Object obj){
+	return true;
+  }
+}

@@ -1,0 +1,49 @@
+https://www.youtube.com/watch?v=b9QX3Zha5Ws&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=92&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 62
+public class Java62_Exception {
+
+	public static void main(String[] args){
+		// 異常錯誤
+
+		/*
+		異常處理語法
+
+		TODO try : 嘗試
+		TODO catch : 捕捉
+
+		try{
+		  可能會出現異常的代碼
+		  如果出現異常，那麼jvm會將異常進行封裝，形成一個具體的異常類，然後將這個異常拋出
+		  所有的異常對象都可以被拋出
+		} catch ( 拋出的異常對象 對象參考){
+			異常的處理方案
+		} catch (另外的拋出的異常對象 對象參考){
+		    異常的處理方案
+		} finally {
+			最終執行代碼邏輯
+		}
+
+		*/
+
+		int i = 0;
+		int j = 0;
+
+		try {
+		  j = 10 / i;
+		} catch (ArithmeticException e){
+		  // e.getMessage(); 簡化的錯誤訊息
+		  // e.getCause();
+		  // e.printStackTrace();
+		  i = 10;
+		  j = 10 / i;
+		} finally {
+			System.out.println("最終執行的代碼");
+		}
+		System.out.println(j);
+	}
+
+}
+
+

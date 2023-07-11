@@ -1,0 +1,34 @@
+https://www.youtube.com/watch?v=70cSxuQiSq0&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=93&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 63
+public class Java63_Exception {
+
+	public static void main(String[] args){
+		// 異常錯誤
+
+		// 1.除數為0的算術異常: java.lang.ArithmeticException (RuntimeException)
+		// 運行期異常
+		// int i = 0;
+		// if( i != 0){
+		//   int j = 10 / i;
+		// }
+
+		// 2.空指針異常: java.lang.NullPointerException
+		//   調用了一個為空(null) 對象的成員屬性或成員方法，就會發生異常
+		User3 user = null;
+		//if( user != null ){
+		//  System.out.println(user.toString());
+		//}
+
+		try {
+		  // System.out.println(user.toString());
+		  System.out.println(user.name);
+		} catch (NullPointerException e){
+		  System.out.println("對象為空，需要分析資料為空的原因");
+		}
+	}
+
+}
+
+

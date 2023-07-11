@@ -1,0 +1,34 @@
+https://www.youtube.com/watch?v=YMSNwIFStF8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=96&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 66
+public class Java66_Exception {
+
+	public static void main(String[] args) throws Exception{
+		// 異常錯誤
+
+		User8 user = new User();
+		int i = 10;
+		int j = 0;
+		try {
+		  user.test(i,j);
+		} catch(Exception e){
+		  e.printStackTrace();
+		}
+	}
+
+}
+
+class User8 {
+  // 如果方法中可能會出現問題，那麼需要提前聲明，告訴其他人，我的方法可能會出現問題
+  // 此時需要使用關鍵字 throws
+  // 如果程序中需要手動拋出異常對象，那麼需要使用 throw 關鍵字，然後 new 出異常錯誤
+  public static void test(int i, int j) throws Exception{
+    try{
+	  System.out.println( i/j );
+	} catch (ArithmeticException e ){
+	  throw new Exception();
+	}
+  }
+}
+
