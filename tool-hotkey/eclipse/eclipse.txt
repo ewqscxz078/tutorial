@@ -1,2 +1,37 @@
-跳行
-    ctrl + l
+導覽
+	跳到引用的檔案
+		ctrl + 滑鼠右鍵
+
+	跳到指定行數
+		ctrl + l
+
+	上一次編輯的地方
+		ctrl + q
+
+搜尋
+	選取關鍵字搜尋下一個 match
+		ctrl + k
+
+	選取關鍵字搜尋上一個 match
+		ctrl + shift + k
+
+	開啟搜尋 resource 資源
+		ctrl + shift + r
+
+	開啟搜尋 java 類型(type)
+		ctrl + shift + t
+
+重構
+	萃取選取項目的程式碼變成 local variable
+		ctrl + shift + l
+
+	萃取選取項目的程式碼變成 method
+		ctrl + shift + m
+
+專案
+	maven update
+		alt + F5
+
+	編譯
+		ctrl + b
+
