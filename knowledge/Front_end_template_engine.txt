@@ -1,0 +1,13 @@
+java 前端常用模板引擎
+
+1.Thymeleaf：
+	Thymeleaf 是一個流行的 Java 模板引擎，特別與 Spring Framework 集成得很好。它允許你在 HTML 文件中使用屬性標籤來渲染數據，並且支援多種表達式語法。Thymeleaf 不僅可用於服務器端渲染，還支援客戶端渲染。
+
+2.FreeMarker：
+	FreeMarker 是另一個受歡迎的 Java 模板引擎，具有良好的性能和模板語法。它提供了許多功能，如條件語句、循環和宏，使得處理模板變得更加靈活和強大。
+
+3.Velocity：
+	Velocity 是一個簡單且輕量的 Java 模板引擎，廣泛用於 Web 開發和電子郵件生成。它提供了一套簡單的語法，使得處理模板變得容易。
+
+4.JSP（JavaServer Pages）：
+	雖然 JSP 不是嚴格意義上的模板引擎，但它也可用於在 Java Web 應用中生成動態內容。JSP 使用 Java 代碼和標籤插入到 HTML 中，讓你可以方便地生成動態頁面。
