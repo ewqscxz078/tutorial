@@ -1,0 +1,36 @@
+https://www.youtube.com/watch?v=G4a7VOkpn8o&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=106&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 75
+public class Java75_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - 泛型
+
+		// 用於約束外部對象的使用場景，就是類型 : Outer class
+		// 用於約束內部對象的使用場景，就是泛型 : inner of class
+
+		// 泛型語法 :
+		// 泛型與類型的區別
+		// 有時，也把泛型稱之為類型參數
+		MyContainer<User7> myContainer = new MyContainer();
+		myContainer.data = new Object();
+
+		test(myContainer); // 編譯錯誤
+
+		// 1. 類型存在多態的使用
+		// 2. 泛型沒有多態
+	}
+
+	public static void test(MyContainer<Object> myContainer){
+		System.out.println( myContainer);
+	}
+}
+
+// 容器類
+class MyContainer<C> {
+	public C data;
+}
+
+class User7{
+}

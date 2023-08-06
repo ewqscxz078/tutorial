@@ -1,0 +1,36 @@
+https://www.youtube.com/watch?v=sPF4fqKoKEw&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=109&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 79
+public class Java79_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - Set
+
+		// ArrayList: 資料/容量設計
+		// LinkedList: 無容量設計
+		// HashSet : Hash + Set
+		// Hash : 哈希算法/散列算法
+		HashSet set = new HashSet();
+
+		// 增加資料
+		set.add("張三");
+
+		ArrayList arrayalist = new ArrayList();
+		list.add("張三");
+		list.add("李四");
+		list.add("王武");
+		set.addAll(arrayalist);
+
+		Object[] object  = set.toArray();
+		set.isEmply();
+		set.clear();
+		set.contains("張三");
+		System.out.println(set.size());
+		Object clone = set.clone();
+		System.out.println(clone);
+
+		System.out.println(set);
+	}
+
+}

@@ -1,0 +1,35 @@
+https://www.youtube.com/watch?v=BeFz9aGH2kU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=112&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 82
+public class Java82_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection - HashMap
+
+		// HashMap : Hash + Map
+		Map map = new HashMap();
+
+		// 鍵值對
+		// 資料存取無序
+		// 依key 相同則覆蓋其值
+
+		// 添加資料
+		map.put("張三","1");
+		// 修改資料
+		System.out.println(map.put("張三","4"));
+		map.put("李四","2");
+		map.put("王武","3");
+
+		// 查詢資料
+		System.out.println(map.get("張三"));
+
+		// 刪除資料
+		map.remove("張三");
+
+
+
+		System.out.println(map);
+	}
+
+}

@@ -1,0 +1,18 @@
+https://www.youtube.com/watch?v=hTRNgA32Vgg&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=107&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 77
+public class Java77_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection
+
+		// 增加第一條資料，LinkedList 會比 ArrayList 快
+		// 增加第二條資料，ArrayList 會比 LinkedList 快
+		// 增加第三條資料，ArrayList 會比 LinkedList 快
+		// 增加第四條資料(超過容量)，LinkedList 會比 ArrayList 快 ，因為 ArrayList 預設建構三個空間，超過要再擴容
+		// 插入資料， LinkedList 會比 ArrayList 快
+
+	}
+
+}

@@ -1,0 +1,59 @@
+https://www.youtube.com/watch?v=-haA_6V4p7Q&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=102&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 71
+public class Java71_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - ArrayList
+
+		//  ArrayList 常用方法
+		ArrayList list = new ArrayList();
+		list.add("張三");
+		list.add("李四");
+		list.add("王五");
+
+		// add 方法可以傳遞兩個參數，第一個參數表示資料資料增加的位置(索引)，第二個參數為資料
+		list.add(1,"趙六")
+
+		ArrayList otherlist = new ArrayList();
+		otherlist.add("1");
+		otherlist.add("2");
+		otherlist.add("3");
+		list.addAll(otherlist);
+
+		// size 方法表示集合內資料的數量
+		System.out.println(list.Size());
+
+		// 清空集合中的資料
+		// list.clear();
+		// 刪除指定集合中的資料
+		// list.removeAll(otherlist)
+
+		// 判斷集合中的資料是否為空
+		System.out.println(list.isEmpty());
+
+		// 用於判斷集合中是否存在某調資料，返回邏輯布林值
+		System.out.println(list.contains("張三"));
+
+		// 用於判斷集中資料在索引中的第一個位置，當資料不存在，那麼返回 -1
+		System.out.println(list.indexOf("張三"));
+
+		// 用於判斷集中資料在索引中的最後一個位置，當資料不存在，那麼返回 -1
+		System.out.println(list.lastIndexOf("張三"));
+
+		// 集合轉成陣列
+		Object[] objects = list.toArray();
+
+		// 複製成新集合
+		Object clone = list.clone();
+		ArrayList list1 = (ArrayList)clone;
+
+		// 列印集合資訊
+		System.out.println(list);
+		System.out.println(list1);
+
+
+	}
+
+}

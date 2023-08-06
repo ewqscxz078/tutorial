@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=QNThPdcbNxc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=114&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 85
+public class Java85_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection - map
+
+		HashMap<String,Integer> map = new HashMap<String,Integer>();
+		map.put("a",1);
+		map.put("b",2);
+		map.put("c",3);
+
+		Set<String> keys = map.keySet();
+
+		// 走訪時不可刪除:為了保護原始資料
+		for(String key : keys){
+		  if("b".equals(key)){
+		    map.remove(key); // 出現錯誤
+		  }
+
+		  System.out.println(map.get(key));
+		}
+
+		// 走訪時可以刪除
+		// 迭代器:可通知集合修改了
+		Iterator<String> iterator = key.iterator();
+		// hasNext用於判斷 是否存在下一條資料
+		while(iterator.hasNext()){
+			String key = iterator.next();
+			if("b".equals(key)){
+				// remove 方法只能對當前資料刪除
+				iterator.remove(); // 透過迭代器刪除
+			}
+			System.out.println(map.get(key));
+		}
+
+		System.out.println(table);
+	}
+
+}

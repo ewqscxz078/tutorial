@@ -1,0 +1,49 @@
+https://www.youtube.com/watch?v=2fBq_oEGxBI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=104&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 73
+public class Java73_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - LinkedList
+
+		//  LinkedList 常用方法
+		LinkedList list = new LinkedList();
+
+		// 追加資料
+		list.add("張三");
+		list.add("李四");
+		list.add("王五");
+
+		// 指定位置增加資料
+		list.add(1,"趙六");
+		list.addFirst("1");
+		list.addLast("2");
+		LinkedList list2 = new LinkedList();
+		list2.add("張三2");
+		list2.add("李四2");
+		list2.add("王五2");
+		list.addAll(list2);
+
+		System.out.println(list.remove(1));
+		System.out.println(list.remove()); // 刪除第一個
+		System.out.println(list.removeFirst()); // 刪除第一個
+		System.out.println(list.removeLast()); // 刪除最後一個
+
+		System.out.println(list.size());
+		System.out.println(list.isEmpty());
+		list.clear();
+		list.contains("1");
+		list.element(); //獲得第一個資料
+		list.indexOf("");
+		list.lastIndexOf("");
+		list.push("aaa"); // 添加第一個資料
+		System.out.println(list.pop()); // 拿出第一個資料
+
+		// 列印集合資訊
+		System.out.println(list);
+
+
+	}
+
+}

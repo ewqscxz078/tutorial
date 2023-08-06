@@ -50,6 +50,8 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 		loggers				顯示和修改應用程序中日誌的配置。
 		liquibase			顯示已應用的所有Liquibase數據庫遷移。需要一個或多個Liquibase組件。
 		metrics				顯示當前應用程序的“指標”信息。
+			actuator/metrics/hikaricp.connections.active // connection pool active check
+			actuator/metrics/hikaricp.connections.max // connection pool max check
 		mappings			顯示所有@RequestMapping路徑列表。
 		scheduledtasks		顯示應用程序中的計劃任務。
 		sessions			允許從Spring Session支持的會話存儲中檢索和刪除用戶會話。需要使用Spring Session的基於Servlet的Web應用程序。
@@ -319,7 +321,6 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 		api 經過後會有執行紀錄
 			http://loclahost:8080/metrics/my.api.timer
-
 
 curl actuator pretty-printing 好看格式
 	https://stackoverflow.com/questions/36119852/spring-boot-actuator-pretty-print-json

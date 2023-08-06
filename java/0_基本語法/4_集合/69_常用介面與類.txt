@@ -1,0 +1,23 @@
+https://www.youtube.com/watch?v=N_DVm9sdafc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=100&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 69
+public class Java69_Collection {
+
+	public static void main(String[] args){
+		// 集合
+
+		// 1.Collection介面
+		//	常用的子介面
+		//	List : 按照插入順序保存資料，資料可以重複的
+		//		具體實現類: ArrayList, LinkedList
+		//	Set	 : 集，無序保存，資料不重複
+		//		具體實現類: HashSet
+		//	Queue: 隊列
+		//		具體實現類: ArrayBlockingQueue
+		// 2.Map介面
+		//	舉體實現類: HashMap,Hashtable
+
+	}
+
+}

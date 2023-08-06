@@ -1,0 +1,38 @@
+https://www.youtube.com/watch?v=trDYYMXsplE&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=106&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 76
+public class Java76_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection 排序/比較器
+
+		// Sort 排序
+		ArrayList list = new ArrayList();
+		list.add(1);
+		list.add(3);
+		list.add(2);
+
+		// 1,3,2 => 3,1,2 => 3,2,1
+		// 3,2,1
+
+		// 排序需要傳遞一個實現了比較器接口的對象
+		list.sort();
+
+		System.out.prinlnt(list);
+	}
+
+}
+
+class NumberComparator implements Comparator<Interger>{
+	@Override
+	public int compare(Interger o1, Integer o2){
+		// 如果第一個數比第二個數要大，那麼返回結果為正數，表示正序
+		// return o1 - o2;
+		// 如果第一個數比第二個數要小，那麼返回結果為正數，表示正序
+		// return o2 - o1;
+		// 如果第一個數比第二個數一樣大，那麼返回結果為0
+		return 0;
+	}
+
+}

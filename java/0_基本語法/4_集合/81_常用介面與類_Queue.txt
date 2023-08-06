@@ -1,0 +1,63 @@
+https://www.youtube.com/watch?v=K-NhxjUdyXU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=112&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 81
+public class Java81_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection - Queue
+
+		// ArrayBlockingQueue : Array + Blocking(阻塞，堵住) + queue
+		// 隊伍排隊: 資料要排排站才知道彼此之間順序
+		// LinkedBlockingQueue : Linked + Blocking(阻塞，堵住) + queue
+		// 銀行抽號碼牌: 資料不用在一起沒關係，有關連線知道彼此之間順序
+		ArrayBlockingQueue queue = new ArrayBlockingQueue(3);
+
+		// 新增，超出容量則往外發出例外
+		// add 方法如果增加資料增加不了，直接發生錯誤
+		// queue.add("張三");
+		// queue.add("李四");
+		// queue.add("王武");
+		// queue.add("兆六"); // 發生錯誤, Queue full
+
+		// 新增，超出容量則阻塞
+		// queue.put("張三");
+		// System.out.println("第1人掛號");
+		// queue.put("李四");
+		// System.out.println("第2人掛號");
+		// queue.put("王武");
+		// System.out.println("第3人掛號");
+		// queue.put("兆六"); // 阻塞 waiting 裡面其中處理完才會繼續跑
+		// System.out.println("第4人掛號");
+
+		// 新增，超出容量則不阻塞
+		boolean isOK1 = queue.offer("張三");
+		System.out.println(isOK1);
+		boolean isOK2 = queue.offer("李四");
+		System.out.println(isOK2);
+		boolean isOK3 = queue.offer("王武");
+		System.out.println(isOK3);
+		boolean isOK4 = queue.offer("兆六");
+		System.out.println(isOK4);
+
+		// 拿出不阻塞
+		//System.out.println(queue.poll()); // 拿出 queue 第一個
+		//System.out.println(queue.poll());
+		//System.out.println(queue.poll());
+		//System.out.println(queue.poll()); // 空的 不阻塞
+
+		// 拿出阻塞
+		System.out.println(queue.take());
+		System.out.println(queue.take());
+		System.out.println(queue.take());
+		System.out.println(queue.take()); // 阻塞
+
+		//queue.size();
+		//queue.isEmpty();
+		//queue.clear();
+		//queue.contains();
+
+		System.out.println(queue);
+	}
+
+}

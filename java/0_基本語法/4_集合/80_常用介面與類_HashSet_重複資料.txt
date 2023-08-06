@@ -1,0 +1,65 @@
+https://www.youtube.com/watch?v=83CWrPoKNfI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=110&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 80
+public class Java80_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - Set
+
+		HashSet set = new HashSet();
+
+		User9 user1 = new User9();
+		user1.id=1001;
+		user1.name="張三";
+		System.out.println(user1.hashCode());
+		User9 user2 = new User9();
+		user2.id=1001;
+		user2.name="張三";
+		System.out.println(user1.hashCode());
+
+		User9 user3 = new User9();
+		user3.id=1002;
+		user3.name="李四";
+
+		set.add(user1);
+		set.add(user2);
+		set.add(user3);
+
+		System.out.println(set);
+	}
+
+}
+class User9{
+	public int id;
+	public String name;
+
+	@Override
+	public String toString()[
+		retrun "User["+id+", "+name+"]";
+	}
+
+	// 若要判斷集合中是否一樣物件需要複寫 hashCode、equals
+	// 類似於記憶體位置
+	@Override
+	public int hashCode()[
+		retrun id;
+	}
+
+	@Override
+	public boolean equals(Object obj)[
+		if(obj instanceof User9){
+			User9 otherUser = (User9)obj;
+			if(otherUser.id = this.id){
+				if( otherUser.name.equals(this.name)){
+					return true;
+				}
+			}
+			return false;
+		} else {
+			return false;
+		}
+	}
+
+
+}

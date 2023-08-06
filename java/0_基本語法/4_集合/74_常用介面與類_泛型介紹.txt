@@ -1,0 +1,48 @@
+https://www.youtube.com/watch?v=YpxF8mAI8kg&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=105&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 74
+public class Java74_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - 泛型
+
+		// 泛型語法 : 限定集合中的類型 <xxxx>
+		ArrayList<Person6> list = new ArrayList();
+
+		// Person6 user = new User6();
+		// user.testUser();
+		// user.testPerson();
+
+		Person6 person = new Person6();
+		User6 user = new User6();
+
+		list.add(person);
+		//list.add(user);
+
+		//list.remove(0);
+
+		// 從集合中獲取的對象類行為 object
+		//Object o = list.get(0);
+		// 如果想要執行對象的方法，那麼需要進行強制進行類型轉換
+		//Person6 p = (Person6)o;
+		//p.testPerson();
+
+		Person6 person6 = list.get(0);
+		person6.testPerson();
+
+	}
+
+}
+
+class Person6 {
+	public void testPerson(){
+		System.out.println("person...");
+	}
+}
+
+class User6 extends Person6{
+	public void testUser(){
+		System.out.println("user...");
+	}
+}

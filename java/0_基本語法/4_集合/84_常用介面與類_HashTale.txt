@@ -1,0 +1,32 @@
+https://www.youtube.com/watch?v=QNThPdcbNxc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=114&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 84
+public class Java84_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection - HashTable
+
+		// 幾乎等於 HashMap
+		// 鍵值對
+		// 資料存取無序
+		// 依key 相同則覆蓋其值
+		// 1.實現方式不同:繼承父類不同
+		// 2.底層結構容量不同: HashMap(16), HashTable(11)
+		// 3.HashMap 的 key value 都可以為 null
+		//    HashTable 的 key value 不能為 null
+		// 4.HashMap的資料定位採用的Hash算法；HashTalbe採用的是hashcode
+		// 5.HashMap 性能較高(non-thread-safe)，但是Hashtable較低(thread-safe)
+
+		HashMap map = new HashMap();
+		map.put(null,null);
+
+
+		// HashTable
+		HashTable table = new HashTable();
+		table.put(null,null); // 會 exception
+
+		System.out.println(table);
+	}
+
+}

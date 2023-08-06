@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=PKs-DeXOthY&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=103&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 72
+public class Java72_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - LinkedList
+
+		//  LinkedList 常用方法
+		LinkedList list = new LinkedList();
+		list.add("張三");
+		list.addFirst("李四");
+		list.add(1,"王五");
+
+		// 取得資料
+		System.out.println(list.getFirst());
+		System.out.println(list.getLast());
+
+		// 依索引取得資料
+		System.out.println(list.get(1));
+		// 走訪集合
+		for(int i=0; i <list.size(); i++){
+			System.out.println(list.get(i));
+		}
+		for(Object obj : list){
+			System.out.println(obj);
+		}
+
+		// 修改資料
+		list.set(1,"趙六");
+
+		// 刪除資料
+		list.remove("張三");
+
+		// 列印集合資訊
+		System.out.println(list);
+
+
+	}
+
+}

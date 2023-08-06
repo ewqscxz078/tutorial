@@ -1,0 +1,35 @@
+https://www.youtube.com/watch?v=2mDG7VePk_w&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=108&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 78
+public class Java78_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - Set
+
+		// ArrayList: 資料/容量設計
+		// LinkedList: 無容量設計
+		// HashSet : Hash + Set
+		// Hash : 哈希算法/散列算法
+		HashSet set = new HashSet();
+
+		// 增加資料
+		set.add("張三");
+		set.add("李四");
+		set.add("張三");
+		set.add("王五");
+
+		// 修改資料:僅能刪除後增加資料
+
+		// 刪除資料
+		set.remove("王五");
+
+		// 查詢資料:不能直接查詢僅能走訪所有資料
+		for(Object o : set){
+			System.out.println(o);
+		}
+
+		System.out.println(set);
+	}
+
+}

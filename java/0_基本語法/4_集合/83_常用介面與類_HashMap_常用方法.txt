@@ -1,0 +1,64 @@
+https://www.youtube.com/watch?v=TGirEZcoUPA&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=113&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 83
+public class Java83_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection - HashMap
+
+		// HashMap : Hash + Map
+		Map<String,String> map = new HashMap();
+
+		// 新增資料/修改資料:返回上一次的值
+		map.put("a","0");
+		Object oldval = map.put("a","1");
+		System.out.println(oldval);
+
+		// 若不存在才新增
+		map.putIfAbsent("b","2");
+		map.putIfAbsent("b","3");
+
+		// 修改資料:返回上一次的值
+		Object oldval2 = map.replace("b","4");
+		System.out.println(oldval2);
+
+		// 存在才修改:返回上一次的值
+		Object oldval3 = map.replace("c","4");
+		System.out.println(oldval3);
+
+		map.clear();
+		map.put("張三",1);
+		map.put("李四",2);
+		map.put("王武",3);
+
+		// 走訪集合 : 獲取map集合中所有的key
+		Set set = map.keySet();
+		for(Object k : set){
+			System.out.println(map.get(k));
+		}
+		System.out.println(map.containKey("張三"));
+
+		Collection values = map.values();
+		map.containValue("1");
+
+		// 獲取鍵值對象
+		Set<Map.Entry<String,String>> entries = map.entrySet();
+		for(Map.Entry<String,String> entry : entries){
+			System.out.println(entry.getKey() + "=" + entry.getValue());
+		}
+
+		// 考慮 map 不考慮 value
+		//map.remove("張三");
+		// 考慮 map、value
+		map.remove("張三", "1111"); // 僅刪除 key + value 符合
+
+		// map.size()
+		// map.isEmpty()
+		// map.clear();
+		// map.clone();
+
+		System.out.println(map);
+	}
+
+}

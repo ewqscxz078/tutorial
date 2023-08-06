@@ -1,0 +1,61 @@
+https://www.youtube.com/watch?v=LnP5Vpvr7uA&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=101&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 70
+public class Java70_Collection {
+
+	public static void main(String[] args){
+		// 集合 - Collection - List
+
+		// ArrayList : Array + List
+		//   List : 列表. 清單
+		//   按照資料插入順序進行儲存
+		//   Array: 陣列
+
+		// 建立第一個集合對象: ArrayList
+		ArrayList list = new ArrayList();
+		// 1. 不需要傳遞建構參數，直接 new 就可以，底層正列為空陣列
+		// 2. 建構參數需要傳遞一個 int 類型的值，用於設定底層陣列長度
+		// 3. 建構參數需要傳遞一個 Collection 集合類型的值，用於將其他集合中的資料放置在當前集合中
+
+		// 增加資料
+		// add 方法可以增加資料，只要將資料作為參數傳遞到add方法即可
+		// 增加資料時，如果集合中沒有任何的資料，那麼底層會建立長度為10的陣列
+		list.add("張三");
+		list.add("李四");
+		list.add("王五");
+		list.add("趙六");
+		list.add("張三");
+
+		// 訪問集合中的資料
+		// 獲取集合中資料的長度
+		System.out.println(list.size());
+		// 獲取指定位置的資料，可以採用索引的方式
+		System.out.println(list.get(1));
+		// 走訪集合中的資料
+		for(int i =0; i < list.size(); i++){
+		  System.out.println("集合中的資料: " + list.get(i));
+		}
+		// 如果循環遍歷集合資料時，不關心資料位置，那麼可以採用特殊的 for 循環
+		// for(循環對象: 集合)
+		for(Object obj : list){
+		  System.out.println("集合中的資料: " + obj);
+		}
+
+		// 修改資料
+		// 將指定位置的資料進行修改，set方法需要傳遞兩個參數，第一個參數表示資料的位置，第二個參數資料的值
+		// 方法會返回結果，這個結果就是更新前的值
+		Object oldVal = list.set(1,"李四")
+		System.out.println("修改前的值: " + oldVal);
+
+		// 刪除資料
+		// 將指定位置的資料進行修改，set方法需要傳遞1個參數，參數表示資料的位置
+		// 方法會返回結果，這個結果就是刪除的值
+		Object removeVal = list.remove(1)
+		System.out.println("刪除的值: " + removeVal);
+
+		// 列印集合資訊
+		System.out.println(list)
+	}
+
+}
