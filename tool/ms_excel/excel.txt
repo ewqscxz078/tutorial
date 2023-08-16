@@ -19,3 +19,6 @@ excel function
 	=INDEX(A2:C10,MATCH(E2,B2:B10,0),1)
 
 office365 新增 xlookup
+
+計算重複次數
+	COUNTIF(範圍,值)
