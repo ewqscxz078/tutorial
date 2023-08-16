@@ -29,9 +29,12 @@ https://www.796t.com/content/1541710042.html
 https://terryl.in/zh/linux-sed-command/
 
 依據行數範圍擷取檔案內容
-	sed -n '8,12p' [yourfile]
-		-n 安靜模式，不顯示任何輸出
-		p 輸出前面指定的東西
+	顯示第8-12行
+		sed -n '8,12p' [yourfile]
+			-n 安靜模式，不顯示任何輸出
+			p 輸出前面指定的東西
+	僅顯示第8行
+		sed -n '8 p' [yourfile]
 
 https://www.796t.com/content/1549896493.html
 https://www.hy-star.com.tw/tech/linux/sed/sed.html

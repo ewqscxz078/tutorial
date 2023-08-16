@@ -458,7 +458,7 @@ test EXPRESSION
 	fi
 
 ===================================================================
-======================== if regular expression ====================
+======================== 字串的正則表示法 if regular expression ===
 ===================================================================
 https://stackoverflow.com/questions/18709962/regex-matching-in-a-bash-if-statement
 

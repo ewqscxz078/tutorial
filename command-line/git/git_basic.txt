@@ -143,6 +143,7 @@ Q:當push 上去發現其他額外警告訊息
 A:https://stackoverflow.com/questions/37732141/whole-team-gets-too-many-unreachable-loose-objects-messages
   https://confluence.atlassian.com/bitbucketserverkb/pushing-to-bitbucket-server-reports-there-are-too-many-unreachable-loose-objects-825788622.html
   https://stackoverflow.com/questions/41771089/trigger-git-prune-automatically-on-git-pull
+  https://stackoverflow.com/questions/67630383/git-gc-and-git-prune-warnings-when-git-fetch-origin-is-run
 		git prune
 		git gc
 

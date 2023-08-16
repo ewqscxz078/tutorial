@@ -1,0 +1,9 @@
+https://www.ltsplus.com/linux/touch-change-file-directory-atime-mtime-ctime-empty-file
+
+建立一個空檔案
+	touch [filename]
+
+
+將一個存在檔案修改為指定的日期時間
+	touch -t [[CC]YY]MMDDhhmm[.ss] [exist-filename]
+		touch -t 202308101200.00 filename

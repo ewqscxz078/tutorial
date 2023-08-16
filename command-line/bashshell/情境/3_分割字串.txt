@@ -1,0 +1,7 @@
+https://www.delftstack.com/zh-tw/howto/linux/split-string-in-bash/
+
+1. tr 命令拆分字串
+2. IFS 拆分字串
+3. read 命令拆分字串
+4. 引數擴充套件拆分字串
+5. cut 命令拆分字串

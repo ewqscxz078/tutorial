@@ -292,6 +292,10 @@ docker system df
 # login Docker registry
 	docker login localhost:8080
 
+# login Docker registry with 帳號密碼  -u 用户名 -p 密码
+	docker login -u 用户名 -p 密码 [server]
+		例如 docker login -u xxx -p yyy localhost:8080
+
 # logout Docker registry
 	docker logout localhost:8080
 
