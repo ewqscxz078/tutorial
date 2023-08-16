@@ -1,0 +1,18 @@
+
+MODE 有哪些可參考
+	ref org.h2.engine.Mode.ModeEnum
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MSSQLServer;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    username: test
+    password:
+    driverClassName: org.h2.Driver
+
+  sql:
+    init: # ref SqlInitializationProperties
+      schema-locations: classpath:db/schema/*.sql
+      data-locations: classpath:db/data/*.sql
+      platform: sqlserver # 確保使用什麼資料庫平台初始化 schema-locations、data-locations 語法正確
+		# schema-${platform}.sql 指定載入
+		# data-${platform}.sql 指定載入

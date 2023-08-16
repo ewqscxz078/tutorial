@@ -24,5 +24,24 @@ Predicate
 	long count = Stream.of(fileNames)
 					   .filter(name -> name.endsWith("txt"))
 					   .count();
+
+		底層
+			private void assertChunkCount(Predicate<Integer> predicate){
+				int actualChunkCount = 123; // 經過某種運算，這邊假定模擬算出來123
+				assertTrue(predicate.test(actualChunkCount))
+			}
+		呼叫端
+			int expectedChunkCount = 123;
+			Predicate<Integer> isEqual  = actualChunkCount - > {
+				return expectedChunkCount == actualChunkCount;
+			};
+			assertChunkCount(isEqual);
+
+			int expectedChunkCount = 10;
+			Predicate<Integer> isGreaterThan = actualChunkCount - > {
+				return expectedChunkCount < actualChunkCount;
+			};
+			assertChunkCount(isGreaterThan);
+
 Supplier
 	不接受任何引數，然後傳回值

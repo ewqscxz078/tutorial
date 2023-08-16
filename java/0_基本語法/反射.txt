@@ -1,0 +1,9 @@
+https://stackoverflow.com/questions/27049170/simple-code-to-get-java-lang-reflect-type
+get Type of java.lang.reflect.type
+	import com.google.gson.reflect.TypeToken
+
+	Type typeOfSrc = new TypeToken<Collection<Foo>>(){}.getType();
+
+	Type typeOfSrc = new TypeToken<String>(){}.getType();
+
+https://www.jyt0532.com/2020/03/04/reflection/

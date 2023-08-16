@@ -295,6 +295,7 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 				}
 
 	4、定制 Endpoint
+		ref https://www.baeldung.com/spring-boot-actuators
 		新增制定 Endpoint
 			@Component
 			@Endpoint(id = "container")
@@ -311,6 +312,7 @@ https://www.youtube.com/watch?v=p8V2S8LHtRw&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 
 		場景：開發ReadinessEndpoint來管理程序是否就緒，或者LivenessEndpoint來管理程序是否存活；
 		當然，這個也可以直接使用 https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-kubernetes-probes
+
 
 針對 api 增加監控執行時間
 	https://www.baeldung.com/timed-metrics-aspectj

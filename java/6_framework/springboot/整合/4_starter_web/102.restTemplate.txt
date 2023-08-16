@@ -1,0 +1,139 @@
+https://www.tutorialspoint.com/spring_boot/spring_boot_rest_template.htm
+
+=================================================================================================================
+https://www.baeldung.com/rest-template
+
+Use GET to Retrieve Resources
+	Get Plain JSON
+		RestTemplate restTemplate = new RestTemplate();
+		String fooResourceUrl = "http://localhost:8080/spring-rest/foos";
+		ResponseEntity<String> response = restTemplate.getForEntity(fooResourceUrl + "/1", String.class);
+		Assertions.assertEquals(response.getStatusCode(), HttpStatus.OK);
+
+		驗證 response 細項
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode root = mapper.readTree(response.getBody());
+			JsonNode name = root.path("name");
+			Assertions.assertNotNull(name.asText());
+
+	Retrieving POJO Instead of JSON
+		public class Foo implements Serializable {
+			private long id;
+			private String name;
+			// standard getters and setters
+		}
+		Foo foo = restTemplate.getForObject(fooResourceUrl + "/1", Foo.class);
+		Assertions.assertNotNull(foo.getName());
+		Assertions.assertEquals(foo.getId(), 1L);
+
+Use HEAD to Retrieve Headers
+	HttpHeaders httpHeaders = restTemplate.headForHeaders(fooResourceUrl);
+	Assertions.assertTrue(httpHeaders.getContentType().includes(MediaType.APPLICATION_JSON));.
+
+
+Use POST to Create a Resource
+	The postForObject() API
+		RestTemplate restTemplate = new RestTemplate();
+
+		HttpEntity<Foo> request = new HttpEntity<>(new Foo("bar"));
+		Foo foo = restTemplate.postForObject(fooResourceUrl, request, Foo.class);
+		Assertions.assertNotNull(foo);
+		Assertions.assertEquals(foo.getName(), "bar");
+
+	The postForLocation() API
+		HttpEntity<Foo> request = new HttpEntity<>(new Foo("bar"));
+		URI location = restTemplate.postForLocation(fooResourceUrl, request);
+		Assertions.assertNotNull(location);
+
+	The exchange() API
+		RestTemplate restTemplate = new RestTemplate();
+		HttpEntity<Foo> request = new HttpEntity<>(new Foo("bar"));
+		ResponseEntity<Foo> response = restTemplate.exchange(fooResourceUrl, HttpMethod.POST, request, Foo.class);
+
+		Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
+
+		Foo foo = response.getBody();
+
+		Assertions.assertNotNull(foo);
+		Assertions.assertEquals(foo.getName(), "bar");
+
+	Submit Form Data
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+		MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+		map.add("id", "1");
+
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+		ResponseEntity<String> response = restTemplate.postForEntity(fooResourceUrl+"/form", request , String.class);
+		Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
+
+Use OPTIONS to Get Allowed Operations
+	Set<HttpMethod> optionsForAllow = restTemplate.optionsForAllow(fooResourceUrl);
+	HttpMethod[] supportedMethods = {HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE};
+	Assertions.assertTrue(optionsForAllow.containsAll(Arrays.asList(supportedMethods)));
+
+
+Use PUT to Update a Resource
+	Simple PUT With exchange()
+		Foo updatedInstance = new Foo("newName");
+		updatedInstance.setId(createResponse.getBody().getId());
+		String resourceUrl = fooResourceUrl + '/' + createResponse.getBody().getId();
+		HttpEntity<Foo> requestUpdate = new HttpEntity<>(updatedInstance, headers);
+		restTemplate.exchange(resourceUrl, HttpMethod.PUT, requestUpdate, Void.class);
+
+	PUT With exchange() and a Request Callback
+		RequestCallback requestCallback(final Foo updatedInstance) {
+			return clientHttpRequest -> {
+				ObjectMapper mapper = new ObjectMapper();
+				mapper.writeValue(clientHttpRequest.getBody(), updatedInstance);
+				clientHttpRequest.getHeaders().add(
+				  HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+				clientHttpRequest.getHeaders().add(
+				  HttpHeaders.AUTHORIZATION, "Basic " + getBase64EncodedLogPass());
+			};
+		}
+
+		ResponseEntity<Foo> response = restTemplate.exchange(fooResourceUrl, HttpMethod.POST, request, Foo.class);
+		Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
+
+		Foo updatedInstance = new Foo("newName");
+		updatedInstance.setId(response.getBody().getId());
+		String resourceUrl = fooResourceUrl + '/' + response.getBody().getId();
+		restTemplate.execute(
+		  resourceUrl,
+		  HttpMethod.PUT,
+		  requestCallback(updatedInstance),
+		  clientHttpResponse -> null);
+
+Use DELETE to Remove a Resource
+	String entityUrl = fooResourceUrl + "/" + existingResource.getId();
+	restTemplate.delete(entityUrl);
+
+Configure Timeout
+	RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory());
+
+	private ClientHttpRequestFactory getClientHttpRequestFactory() {
+		int timeout = 5000;
+		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory
+		  = new HttpComponentsClientHttpRequestFactory();
+		clientHttpRequestFactory.setConnectTimeout(timeout);
+		return clientHttpRequestFactory;
+	}
+
+	或是更細節的設定方式
+	private ClientHttpRequestFactory getClientHttpRequestFactory() {
+		int timeout = 5000;
+		RequestConfig config = RequestConfig.custom()
+		  .setConnectTimeout(timeout)
+		  .setConnectionRequestTimeout(timeout)
+		  .setSocketTimeout(timeout)
+		  .build();
+		CloseableHttpClient client = HttpClientBuilder
+		  .create()
+		  .setDefaultRequestConfig(config)
+		  .build();
+		return new HttpComponentsClientHttpRequestFactory(client);
+	}
+=================================================================================================================

@@ -17,3 +17,10 @@ mock method
 	https://www.baeldung.com/mockito-mock-methods
 		MyList listMock = mock(MyList.class);
 		when(listMock.add(anyString())).thenReturn(false);
+
+mock 參數
+	常見於 mockbean.method 傳遞參數
+		import static org.mockito.ArgumentMatchers.any
+		import static org.mockito.ArgumentMatchers.anySring
+			如 anyString()
+			   any(XXXX.class)
