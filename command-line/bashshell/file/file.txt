@@ -1,0 +1,4 @@
+
+check file 編碼
+	file <source_file>
+	file -i <source_file>
