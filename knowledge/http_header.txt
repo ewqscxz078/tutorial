@@ -5,3 +5,21 @@ x-requested-with 代表從 ajax 異步 ，反之沒有代表傳統請求(同步)
 HttpOnly 瀏覽器會限制 cookie 只能經由 HTTP(S) 協定來存取 session cookie，間接防範 xss 盜用使用者的身份
 
 https://tech-blog.cymetrics.io/posts/jo/zerobased-secure-samesite-httponly/
+
+
+https://notfalse.net/40/http-representation
+
+表示表頭欄位 (Representation header fields) 用來描述: 如何解釋包含在酬載主體(payload body)中的 表示資料。
+	資源、表示、URI：
+		表示 (representation) [rɛprɪzɛnˋteʃən] (確切來說為 資源 的 表示)，
+		旨在透過協議容易傳達的格式 (位元組 bytes)，並伴隨 元資料 (metadata)，
+		以反映出 資源「現在」「過去」或「預期」的 『狀態 (state)』。
+			內容類型 (Content-Type)
+			內容編碼 (Content-Encoding)
+			內容語言 (Content-Language)
+			內容位置 (Content-Location)
+			....
+			表示表頭欄位 (Representation header fields)。
+
+payload body
+	就是 Message Body 有資料
