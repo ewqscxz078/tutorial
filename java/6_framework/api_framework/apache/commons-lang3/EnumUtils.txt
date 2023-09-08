@@ -1,0 +1,11 @@
+
+取得指定類的列舉類別清單
+	List<XXXX的列舉類別> enums = EnumUtils.getEnumList(XXXX.class)
+
+依指定類、列舉名稱取得該類的列舉類別
+	E enum = EnumUtils.getEnum(XXXX.class, String enumName);
+
+依指定類、列舉名稱取得是否為該類有效列舉別
+	boolean isValid = EnumUtils.isValidEnum(XXXX.class, String enumName);
+
+

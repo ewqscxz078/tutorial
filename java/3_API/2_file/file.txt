@@ -25,4 +25,30 @@ character 處理
 			LineIterator.closeQuietly(it);
 		}
 
+1.2
+	建立暫存檔
+		File.createTempFile(prefixStr,suffixStr); // 依據 -Djava.io.tmpdir的位置
+		File.createTempFile(prefixStr,suffixStr,fileDir); // 依據 fileDir 指定位置
 
+1.6
+	應用程式離開後自動刪除檔案；通常單元測試用
+		file.deleteOnExit();
+		// 目錄先刪除再來是檔案刪除，才會真正將目錄刪除，順序很重要
+			fileParentDir.deleteOnExit();
+			file.deleteOnExit();
+
+	// 小檔適合
+	// write byte[] to file by apache.commons.io.FileUtils
+	//	FileUtils.writeByteArrayToFile(file,byte[]);
+	// read file to byte[]
+	//  FileUtils.readFileToByteArray(file);
+1.8
+	建立暫存檔
+		Path path = Files.createTempFile(prefixStr,suffixStr); // 依據 -Djava.io.tmpdir的位置
+		Path path = Files.createTempFile(PathDir, prefixStr,suffixStr); // 依據 PathDir 指定位置
+
+	// 小檔適合
+		write byte[] to file
+			Files.write(Path,byte[],StandardOpenOption.CREATE)
+		read file to byte[]
+			Files.readAllBytes(Path)

@@ -1,0 +1,70 @@
+Forward (轉發):
+
+轉發是指將當前請求交給伺服器內部的另一個資源進行處理，而客戶端並不知道這個過程。在轉發過程中，URL 不會變化，客戶端的瀏覽器也不會收到新的回應。在 Spring Boot 中，轉發是通過 RequestDispatcher 來實現的。
+	主要特點：
+		轉發是在伺服器內部進行的，客戶端瀏覽器並不知道實際的處理過程。
+		URL 不會改變，客戶端的瀏覽器地址欄保持原樣。
+		請求和回應對象都在同一個請求上下文中，可以共享資料。
+		Redirect (重定向):
+
+重定向是指伺服器返回一個特定的回應給客戶端瀏覽器，告訴瀏覽器應該發起一個新的請求去訪問另一個 URL。客戶端的瀏覽器會收到一個 3xx 狀態碼，然後發起新的請求到新的 URL。在 Spring Boot 中，重定向是通過返回特定的視圖名或 URL 來實現的。
+
+	主要特點：
+		客戶端瀏覽器會發起一個新的請求，URL 會發生變化。
+		伺服器返回的是一個新的回應，客戶端瀏覽器需要處理這個新的回應。
+		重定向可以用於將請求導向到其他資源，例如不同的頁面或其他服務。
+
+選擇使用的情況：
+
+	使用轉發時，適合在伺服器內部的不同組件之間共享資料，實現邏輯的拆分與複用。
+	使用重定向時，適合在不同的頁面或資源之間進行導航，例如使用者登錄後跳轉到首頁、處理 POST 請求後避免刷新頁面時再次提交表單等。
+	總之，轉發和重定向各自適合不同的使用場景。在選擇使用時，需要根據實際需求和業務邏輯來決定哪種方式更為合適。
+
+
+=================================================================================================================
+https://www.baeldung.com/spring-redirect-and-forward
+https://matthung0807.blogspot.com/2021/02/spring-boot-redirect-url.html
+
+轉址/重定向 : 客戶端瀏覽器網址重定向
+	1.使用 RedirectView 可重新導向到指定的url
+		@Controller
+		public class DemoController {
+
+			@GetMapping("/redirect")
+			public RedirectView redirect() {
+				String url = "https://www.google.tw"
+				return new RedirectView(url); // 重新導向到指定的url
+			}
+
+		}
+
+	2.ModelAndView傳入 "redirect:" 前墜加上要導向的url字串。
+		@Controller
+		public class DemoController {
+			@GetMapping("/redirect")
+			public ModelAndView redirect() {
+				String url ="https://matthung0807.blogspot.com";
+				return new ModelAndView("redirect:" + url); // 重新導向到指定的url
+			}
+		}
+	3.回傳"redirect:"前墜加上要導向的url字串
+		// 效果為僅轉址傳的 url，header、params 參數未在傳遞
+		@Controller
+		public class DemoController {
+			@GetMapping("/redirect")
+			public String redirect() {
+				String url ="https://matthung0807.blogspot.com";
+				return "redirect:" + url; // 重新導向到指定的url
+			}
+		}
+	4.透過HttpServletResponse設定response header的Location值為重新導向的url及HTTP狀態碼為302 Found(RFC 7231 - 6.4.3)。
+		@Controller
+		public class DemoController {
+			@GetMapping("/redirect")
+			public void redirect(HttpServletResponse response) {
+				String url = "https://matthung0807.blogspot.com";
+				response.setHeader("Location", url); // 重新導向的url
+				response.setStatus(HttpServletResponse.SC_FOUND); // 302 Found
+			}
+		}
+=================================================================================================================

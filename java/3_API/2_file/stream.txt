@@ -29,10 +29,10 @@ byte 導向處理
 		try (
 			BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(inFile)))
 			BufferedOutputStream bos = new BufferedOutputStream(new ByteArrayOutputStream(outFile))) ) {
-			int = len;
+			int len;
 			byte[] buffer = new byte[DEFAULT_WRITE_BUF_SIZE]; // 32 KB
-			while( (len = bis.read(buf, 0, buf.length)) > 0 ){
-				bos.write(buf, 0, len);
+			while( (len = bis.read(buffer, 0, buffer.length)) > 0 ){
+				bos.write(buffer, 0, len);
 			}
 			bos.flush(); // 將緩衝區資料寫出
 		}

@@ -1,0 +1,87 @@
+httpclient 屬於 thread safe
+
+======================================================================================================
+https://www.baeldung.com/httpclient-multipart-upload
+https://www.tutorialspoint.com/apache_httpclient/apache_httpclient_multipart_upload.htm
+
+======================================================================================================
+關於 connection 與釋放的詳細說明
+	https://juejin.cn/post/7078658461407379463
+		httpClient.close
+			在結束使用的時候httpClient.close()，在close()的時候，會對內部的pool進行shutdowm()，
+			關閉所有的可用連接、正在進行的連接，釋放所有的資源。
+				public void shutdown() throws IOException {
+					if (this.isShutDown) {
+						return ;
+					}
+					this.isShutDown = true;
+					this.lock.lock();
+					try {
+						for (final E entry: this.available) {
+							entry.close();
+						}
+						for (final E entry: this.leased) {
+							entry.close();
+						}
+						for (final RouteSpecificPool<T, C, E> pool: this.routeToPool.values()) {
+							pool.shutdown();
+						}
+						this.routeToPool.clear();
+						this.leased.clear();
+						this.available.clear();
+					} finally {
+						this.lock.unlock();
+					}
+				}
+
+	如何高效獲取和使用httpClient
+		獲取HttpClient主要有以下三種方式：
+
+		1.使用時生成
+			使用 HttpClients.createDefault() 建立物件
+		2.連接池獲取
+
+		3.全域共享
+			private static RequestConfig requestConfig;
+
+			private static CloseableHttpClient httpClient;
+
+			static {
+
+				// 配置請求參數，請求時長，連接時長，讀取數據時長
+				requestConfig = RequestConfig.custom()
+						.setConnectTimeout(5*1000)
+						.setConnectionRequestTimeout(5*1000)
+						.setSocketTimeout(5*1000)
+						.build();
+
+				// 配置連接池關聯
+				PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+				connectionManager.setMaxTotal(100);
+				connectionManager.setDefaultMaxPerRoute(10);
+				// 初始化客戶端
+				httpClient = HttpClients.custom()
+						.setConnectionManager(connectionManager)
+						.setConnectionTimeToLive(1, TimeUnit.MINUTES)
+						.build();
+			}
+
+	請求數量少，間隔時間長
+		場景：單線程（主線程調用）或多線程少量；很長時間才請求一次的話，
+			對於請求的響應等要求不高；不與用戶操作相關聯（不用考慮及時反饋）
+		策略：可以不用考慮請求資源的複用
+			可以用使用時生成，結束的時候，關閉httpClient，回收所有資源，等待下次使用。
+
+	請求數量多，間隔事件短
+		場景：多線程請求；請求時間間隔短，對於請求的響應要求高；與用戶操作相關聯（需要及時反饋）
+		策略：考慮資源的複用與回收
+			全局共享方式來使用HttpClient，降低創建、銷毀連接的開銷
+
+	httpClient 若為共享且使用connecitonPool 則不用特別呼叫 httpClient.close() 關閉，反之要
+
+		回應的部分僅需要用 try CloseableHttpResponse 包裹使用 1.8 內建自動釋放資源 HttpEntity、InputStream
+		try(CloseableHttpResponse response = httpclient.execute(postRequest);){
+			HttpEntity entity = response.getEntity();
+			InputStream is = entity.getContent();
+		}
+

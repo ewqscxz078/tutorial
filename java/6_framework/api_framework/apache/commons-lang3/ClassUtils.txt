@@ -1,0 +1,5 @@
+
+依指定類的字串取得實際類別
+	Class<?> clazz = ClassUtils.getClass(String className);
+
+
