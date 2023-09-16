@@ -1,9 +1,6 @@
 https://stackoverflow.com/questions/12797560/command-line-tool-to-find-java-heap-size-and-memory-used-linux
 https://www.itread01.com/article/1537335856.html
 
-jps
-	jps |grep -v Jps | awk '{ print $1}'
-
 
 jcmd
 	https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr006.html
@@ -24,10 +21,5 @@ jstat
 
 	will present information about memory pool generation and space capabilities.
 		jstat -gccapacity [jps-pid]
-
-
-jstack 看 thread dump
-	jstack -l [pid]
-	jstack -l `jps |grep -v Jps | awk '{ print $1}'`  |less
 
 jconsole by jvm gui check 記憶體，需要選擇 jps 的 jpid

@@ -1,0 +1,4 @@
+ref openAI
+
+以 16進制方式 看檔案
+	Format-Hex ${file}

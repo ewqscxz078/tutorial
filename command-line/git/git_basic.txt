@@ -58,6 +58,13 @@ commit	-- 紀錄到本機
 	git commit -m yyyy  [yyyy代表註解]
 	git commit --no-verify -m yyyy  [yyyy代表註解] [--no-verify代表不經過hook檢查]
 
+修改最後一次提交（commit）的 Git 命令，它的主要作用是在不創建新的提交記錄的情況下，將新的更改合併到上一次提交中。
+這可以用於修改提交信息、添加遺漏的文件、或者更正之前提交中的錯誤。
+	需要注意的是，如果你已經將上一次的提交推送到遠程存儲庫，請小心使用 git --amend，因為它會修改提交的歷史記錄，可能會導致其他人的工作出現問題。
+	在這種情況下，最好與團隊討論如何處理這種情況
+		git commit --amend
+
+
 push	-- 紀錄到server
 	git push
 
