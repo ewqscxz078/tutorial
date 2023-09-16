@@ -1,0 +1,21 @@
+https://www.youtube.com/watch?v=H8Ni3uD_Vhw&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=125&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 95
+public class Java95_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 執行緒的程序(process)
+
+		// 透過一直執行來觀察cpu 處理的程序
+		while(true){
+			System.out.println("Hello");
+		}
+
+		// 透過 jps 取得執行中的 java process pid
+
+		1.程序就是一個進程
+		2.進程的名字就是執行的類別名稱
+	}
+
+}

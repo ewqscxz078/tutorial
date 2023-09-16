@@ -1,0 +1,72 @@
+https://www.youtube.com/watch?v=Cudeaey_L64&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=131&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 101
+public class Java101_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 建立運行
+		//MyThread3 t3 = new MyThread3();
+		//t3.start();
+		//MyThread3 t4 = new MyThread4();
+		//t4.start();
+
+		//MyThread5 t51 = MyThread5("t51");
+		//MyThread5 t52 = MyThread5("t52");
+		//t51.start();
+		//t52.start();
+
+		// 建構執行緒物件時，可以只把邏輯傳遞到這個物件
+		// 傳遞邏輯時，需要遵循規則 () -> {}
+		//Thread t6 = new Thread(() -> {
+		//	System.out.println("執行緒行6");
+		//});
+		//Thread t7 = new Thread(() -> {
+		//	System.out.println("執行緒行7");
+		//});
+
+		// 建構執行緒物件時，可以傳遞實現了 runnable 介面的類物件，一般使用匿名類
+		Thread t8 = new Thread( new Runnable() -> {
+			@Override
+			public void run(){
+				System.out.println("執行緒行8");
+			}
+
+		});
+		t8.start();
+
+		System.out.println("main 執行緒");
+	}
+
+}
+
+// 自定義執行緒
+// 1.繼承執行緒(父類)
+// 2.重寫 run 方法
+class MyThread3 extends Thread {
+	@Override
+	public void run(){
+		System.out.println("t3 執行緒執行");
+	}
+}
+
+class MyThread4 extends Thread {
+	@Override
+	public void run(){
+		System.out.println("t4 執行緒執行");
+	}
+}
+
+class MyThread5 extends Thread {
+
+	pirvate String threadName;
+
+	public MyThread5(String name){
+		threadName = name;
+	}
+
+	@Override
+	public void run(){
+		System.out.println(name + " 執行緒執行");
+	}
+}

@@ -1,0 +1,57 @@
+https://www.youtube.com/watch?v=sHqz6Y9iD-E&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=122&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 92
+public class Java92_IO {
+
+	public static void main(String[] args){
+		// IO資料流處理 - 字串
+
+		// ascii編碼範圍 : 0~127
+		// byte範圍 -127~128
+		// unicode編碼 : 三個byte 組合一個字
+
+		// FileInputStream.read() 一次讀取一個
+		// BufferedReader.readLine() 一次讀取一行
+
+		String srcFilePath = "${path}\\src.txt";
+		File srcfile = new File(srcFilePath);
+		System.out.println(srcfile); // 僅顯示檔案路徑
+
+		String destFilePath = "${path}\\dest.txt"
+		File destfile = new File(destFilePath);
+		System.out.println(destfile); // 僅顯示檔案路徑
+
+		BufferedReader reader = null;
+		PrintWriter writer = null;
+
+		try {
+			reader = new BufferedReader(new FileReader(srcfile));
+			writer = new PrintWriter(destfile);
+
+			String line;
+			while( (line = reader.readline()) != null){
+				writer.println(line);
+			}
+
+			// 將尚在記憶體的強制寫入
+			writer.flush();
+
+		} catch(IOException){
+			throw new RuntimeException(e);
+		} finally {
+			if(reader != null){
+				try {
+					reader.close();
+				} catch(IOException){
+					throw new RuntimeException(e);
+				}
+			}
+			if(writer != null){
+				writer.close();
+			}
+		}
+
+	}
+
+}

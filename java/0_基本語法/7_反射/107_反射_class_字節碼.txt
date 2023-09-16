@@ -1,0 +1,69 @@
+https://www.youtube.com/watch?v=qjJXAEYI7ZU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=138&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 107
+public class Java107_Reflect {
+
+	public static void main(String[] args) throw Exception{
+		// 反射 - class_字節碼
+
+		User user = new Child();
+		user.test1();
+		// user.test2(); 方法找不到
+		Class<? extend User> aClass = user.getClass();
+
+		// 使用 16進制 開啟 xxx.class 可以看到前面的魔術數字與 java 編譯的底層號碼
+		// 如用 powershell 執行 Format-Hex ${className.class} 可看到第一行類似如下訊息
+		// 00000000   CA FE BA BE 00 00 00 34 00 14 07 00 02 01 00 39  Êþº¾...4.......9
+		// 00000010   63 6F 6D 2F 62 61 73 69 63 2F 61 64 6D 69 6E 2F  com/basic/admin/
+		// 其中 CA FE BA BE 為魔術數字 代表為 class，其後面八個數字為 java 底層版本號碼編譯 00 00 00 34 = 3*16+4 = 52
+		// ref https://code2care.org/java/list-of-java-major-minor-version-numbers
+
+		// 獲取類的名稱
+		System.out.prinlnt(aClass.getName()); // 獲取類的完整名稱(包含package 路徑)
+		System.out.prinlnt(aClass.getSimpleName()); // 獲取類的名稱
+		System.out.prinlnt(aClass.getPackageName()); // 獲取類的package名稱
+
+		// 獲取父類
+		Class<?> superclass = aClass.getSuperclass()
+		System.out.prinlnt(superclass);
+
+		// 獲取類的介面
+		Class<?> interfaces = aClass.getInterfaces();
+		System.out.prinlnt(interfaces.length);
+
+		// 獲取類的屬性
+		Field f = aClass.getField("xxxxx"); // public
+		Field f1 = aClass.getDeclaredField("xxxxx"); // 所有權限
+		Field[] fields = aClass.getFields(); // public
+		Field[] declaredFields = aClass.getDeclaredFields(); // 所有權限
+
+		// 獲取類的方法
+		Method method = aClass.getMethod("test2"); // public 權限的方法
+		Method xxx = aClass.getDeclaredMethod("xxxx"); // 所有權限的方法
+		Method[] methods = aClass.getMethods();// all 權限的方法
+		Method[] declaredMethods = aClass.getDeclaredMethodS(); // all 所有權限的方法
+
+		// 獲取建構方法
+		Constructor<? extends User> constructor = aClass.getConstructor();
+		Constructor<?>[] constructor aClass.getConstructors();
+		aClass.getDeclaredConstructor(); // 所有權限的建構方法
+
+		// 獲取權限(修飾詞): 多個修飾詞融合成一個int 值
+		int modifiers = aClass.getModifiers();
+		boolean aPrivate = Modifier.isPrivate(modifiers);
+
+	}
+
+}
+class User {
+	public void test1(){
+		System.out.println("test1...");
+	}
+}
+
+class Child extends User {
+	public void test2(){
+		System.out.println("test2...");
+	}
+}

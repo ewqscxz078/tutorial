@@ -1,0 +1,43 @@
+https://www.youtube.com/watch?v=KfbbCww7AZs&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=138&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 108
+public class Java108_Reflect {
+
+	public static void main(String[] args) throw Exception{
+		// 反射 - 類加載器
+
+		// 加載類
+		// Java 種的類主要分三種
+		// 1. Java 核心庫種的類: String, Object
+		// 2. JVM 軟體平台開發商
+		// 3. 自己寫的類，User, child
+
+		// 類加器也有三種
+		// 1. BootClassLoader : 啟動類加載器 => Java 核心庫種的類: String, Object
+			加載類時，採用操作系統平台語言實現
+		// 2. PlatformClassLoader : 平台類加載器 => JVM 軟體平台開發商
+
+		// 3. ApppClassLoader : 應用類加載器 => 自己寫的類，User, child
+
+		// 獲取類的訊息
+		Class<Student> studentClass = Student.class;
+		// 獲取類的加載器
+		ClassLoader classLoader = studentClass.getClassLoader();
+		System.out.println(classLoader);
+
+		Class<String> stringClass = String.class;
+		// 獲取類的加載器
+		ClassLoader classLoader1 = stringClass.getClassLoader();
+		System.out.println(classLoader1); // null
+
+		// 加載 java 核心類庫 > 平台類庫 > 自己類
+		System.out.println(classLoader.getParent());
+		System.out.println(classLoader.getParent().getParent()); // null
+
+	}
+
+}
+class Student{
+
+}

@@ -1,0 +1,42 @@
+https://www.youtube.com/watch?v=-NMhwHbzrXU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=117&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 87
+public class Java87_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection - Exception
+
+		// 容量
+		ArrayList list = new ArrayList(10);
+		list.add("a");
+		list.add("b");
+		list.add("c");
+		// 如果訪問的集合是陣列，那麼索引值範圍就是0~到陣列長度是-1
+		// 如果訪問的集合是list，那麼索引值範圍就是0~到資料長度是-1
+		list.get(4); // Exception: IndexOut
+
+		// NoSuchElementException
+		LinkedList list1 = new LinkedList();
+		System.out.println(list1.getFirst()); // NoSuchElementException
+		list1.add("a");
+		System.out.println(list1.getFirst());
+
+		// HashMap 一旦循環走訪時，那麼如果新增或刪除資料，就會發生錯誤
+		// 修改資料仍正常
+		HashMap map = new HashMap();
+		map.put("a","1");
+		map.put("b","2");
+		map.put("c","3");
+		for(Object o : map.keySet()){
+			if("b".equals(o)){
+				map.put(0,"4")
+				map.remove(0); // ConcurrentModificationException，因為數量改變
+				若要刪除或新增操作應該用迭代器走訪操作
+			}
+			System.out.println(map.get(0));
+		}
+
+	}
+
+}

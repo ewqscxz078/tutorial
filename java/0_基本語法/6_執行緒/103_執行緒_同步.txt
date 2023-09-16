@@ -1,0 +1,73 @@
+https://www.youtube.com/watch?v=tBkQrXtqW5U&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=133&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 103
+public class Java103_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 同步
+
+		// join 是加入到目標執行緒裡
+
+		// synchronized 同步關鍵字
+		// 多個執行緒訪問同一個方法時，只能一個執行緒訪問，同步操作
+		// new HashTable<>{};
+		// synchronized 關鍵字還可以修飾物件(同步代碼快)
+		/**
+		  synchronized(用於同步的物件){
+			處理邏輯
+		  }
+		 */
+
+		Num num = new Num();
+		User user = new User(num);
+		user.start();
+
+		Bank bank = new Bank(num);
+		bank.start();
+
+		System.out.println("main 執行緒");
+	}
+
+}
+
+class Num {
+}
+class Bank extends Thread {
+	private Num num;
+	public Bank(Num num){
+		this.num =num;
+	}
+	public void run(){
+		synchronized( num ){
+			try{
+				Thread.sleep(2000);
+			} catch( InterruptedException e){
+				throw new RuntimeExcetion(e);
+			}
+			System.out.println("9:00，開門，開始叫號");
+			num.notifyAll();
+
+		}
+	}
+}
+class User extends Thread {
+	//public synchronized void test(){
+	//}
+	private Num num;
+	public User(Num num){
+		this.num =num;
+	}
+	public void run(){
+		synchronized( num ){
+			System.out.println("我是號碼1,銀行還沒開門，我需要等一會");
+			try{
+				num.wait();
+			} catch( InterruptedException e){
+				throw new RuntimeExcetion(e);
+			}
+
+			System.out.println("叫到我號碼了，該我辦業務了");
+		}
+	}
+}

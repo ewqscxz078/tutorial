@@ -1,0 +1,66 @@
+https://www.youtube.com/watch?v=_sgTmsCpvn8&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=140&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 110
+public class Java110_Reflect {
+
+	public static void main(String[] args) throw Exception{
+		// 反射 - 常見例外
+
+		// 員工的登錄功能
+
+		// 1. ClassNotFoundException, 類找不到異常
+		// 2. NoSuchMethodException, 沒有方法的異常
+		// 3. IllegalArgumentException, 參數異常
+		// 4. NoSuchFileFieldException, 沒有欄位的異常
+		// 5. IllegalAccessException, 訪問權限異常
+		// 6. InvocationTargetException, 調用目標異常
+
+		// 3種 建構方法對象
+		Class empClass = Emp.class;
+		// Class<? extends Emp> empClass = new Emp().getClass();
+		// Class<?> aClass = Class.forName("110.Emp");
+
+		Constructor declaredConstructor = empClass.getDeclaredConstructor();
+
+		// 建構物件
+		Object emp = declaredConstructor.newInstance();
+
+		// 獲取對象的屬性
+		Field acount = empClass.getField("account");
+		Field password = empClass.getField("password");
+
+		// 給屬性值
+		acount.set(emp, "張三");
+		password.set(emp, "張三");
+
+		// 獲取登陸方法
+		Method methodlogin = empClass.getMethod("login");
+
+		// 呼叫方法
+		Object result = methodlogin.invoke(emp);
+		System.out.println(result);	// false
+
+
+		acount.set(emp, "admin");
+		password.set(emp, "admin");
+		Object result = methodlogin.invoke(emp);
+		System.out.println(result); // true
+
+	}
+
+}
+
+// 員工
+class Emp{
+	public String account;
+	public String password;
+
+	public boolean login(){
+		if("admin".equals(account) && "admin".equals(password)){
+			return true;
+		} else {
+			return false;
+		}
+	}
+}

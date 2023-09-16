@@ -1,0 +1,31 @@
+https://www.youtube.com/watch?v=5SylTvd4oW0&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=128&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 97
+public class Java97_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 進程中的執行緒(流水線)
+
+		// main
+		Thread.currentThreadd().getName();
+
+		// 建立執行緒
+		MyThread t = new MyThread();
+		// 啟動執行緒
+		t.start();
+
+		// main
+		Thread.currentThreadd().getName();
+	}
+
+}
+
+// 聲明自定義執行緒
+class MyThread extends Thread {
+	// 重寫運行指令
+
+	public void run(){
+		System.out.println("MyThread:" +Thread.currentThreadd().getName()) ;
+	}
+}

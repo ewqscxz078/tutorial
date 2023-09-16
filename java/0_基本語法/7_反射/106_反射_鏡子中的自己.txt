@@ -1,0 +1,27 @@
+https://www.youtube.com/watch?v=HRDRCX77ABU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=137&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 106
+public class Java106_Reflect {
+
+	public static void main(String[] args){
+		// 反射 - 鏡子中的自己
+
+		User user = new Child();
+		user.test1();
+		// user.test2(); 方法找不到
+		Class<? extend User> aClass = user.getClass();
+	}
+
+}
+class User {
+	public void test1(){
+		System.out.println("test1...");
+	}
+}
+
+class Child extends User {
+	public void test2(){
+		System.out.println("test2...");
+	}
+}

@@ -1,0 +1,65 @@
+https://www.youtube.com/watch?v=3h2OBUX31zM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=123&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 93
+public class Java93_IO {
+
+	public static void main(String[] args){
+		// IO資料流處理 - 序列化
+
+		String srcFilePath = "${path}\\src.txt";
+		File srcfile = new File(srcFilePath);
+		System.out.println(srcfile); // 僅顯示檔案路徑
+
+		String destFilePath = "${path}\\dest.txt"
+		File destfile = new File(destFilePath);
+		System.out.println(destfile); // 僅顯示檔案路徑
+
+		// 物件轉寫到檔案流
+		ObjectOutputStream objectOut = null;
+		FileOutputStream out = null;
+
+		// 讀取物件檔案流
+		ObjectInputStream objectIn = null;
+		FileInputStream int = null;
+
+		try {
+			// out = new FileOutputStream(destfile);
+			// objectOut = new ObjectOutputStream(out);
+
+			// java 中只有增加了特殊標記的類，才能再寫文件中時進行序列化操作
+			// 標記其實就是一個介面 (implements Serializable)
+			// User user = new User();
+			// objectOut.writeObject(user);
+			// objectOut.flush();
+
+			in = new FileOutputStream(destfile);
+			objectIn = new ObjectOutputStream(in);
+			Object o = objectIn.readObject();
+			System.out.println(o);
+
+		} catch(IOException){
+			throw new RuntimeException(e);
+		} finally {
+			//if(objectOut != null){
+			//	try {
+			//		objectOut.close();
+			//	} catch(IOException){
+			//		throw new RuntimeException(e);
+			//	}
+			//}
+			if(objectIn != null){
+				try {
+					objectIn.close();
+				} catch(IOException){
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+	}
+
+}
+
+class User implements Serializable{
+}

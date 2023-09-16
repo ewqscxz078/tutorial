@@ -1,0 +1,24 @@
+https://www.youtube.com/watch?v=eVH3YvaMmac&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=118&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 88
+public class Java88_IO {
+
+	public static void main(String[] args) throws Exception{
+		// IO資料流處理
+
+		// Java 資料 + 流(轉) 操作
+		// 資料從哪裡來，哪裡去
+		// I : Input 輸入(in)
+		// O : Output 輸出(out)
+		// Stream : 管子/管道
+
+		// java 管道 不是只有一個
+		// java 管道 不是一樣的
+		資料來源 (in) => stream1 => stream2 => (out) 資料目的地
+
+
+		資料來源(in) => 閥門 =>  => stream1 => stream2 => 閥門 => (out) 資料目的地
+	}
+
+}

@@ -1,0 +1,22 @@
+https://www.youtube.com/watch?v=01DTx7elfCM&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=126&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 96
+public class Java96_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 進程中的執行緒(流水線)
+
+
+		// Thread 執行緒類
+		// currentThreadd 獲取當前正在運行執行緒
+		// getName 方法用於獲取執行緒名稱
+		// main 方法運行在 main 執行緒中
+		Thread.currentThreadd().getName();
+
+		// 1.java 程序在運行的時候默認就會產生一個進程
+		// 2.這個進程會有一個主執行緒
+		// 3.代碼都在主執行緒中執行
+	}
+
+}

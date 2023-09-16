@@ -1,0 +1,64 @@
+https://www.youtube.com/watch?v=iFZjS5Xph1U&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=122&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 91
+public class Java91_IO {
+
+	public static void main(String[] args){
+		// IO資料流處理 - 緩衝流
+
+		String srcFilePath = "${path}\\src.txt";
+		File srcfile = new File(srcFilePath);
+		System.out.println(srcfile); // 僅顯示檔案路徑
+
+		String destFilePath = "${path}\\dest.txt"
+		File destfile = new File(destFilePath);
+		System.out.println(destfile); // 僅顯示檔案路徑
+
+		FileInputStream in = null;
+		FileInputStream out = null;
+
+		BufferedInputStream buffin = null;
+		BufferedOutputStream buffout = null;
+
+		byte[] cache = new byte[1024]
+		try {
+			in = new FileInputStream(srcfile);
+			out = new FileOutputStream(destfile);
+
+			buffin = new BufferedInputStream(in);
+			buffout = new BufferedOutputStream(out);
+
+			// 如果文件資料已經全部讀取完畢後，那麼再去讀取資料
+			// 讀取結果就是-1，表示無效(結尾)
+
+			// 打開輸入閥們，流轉資料(輸入)
+			int data = -1;
+			// 轉開輸入閥門讀出 cache 大小 (水桶)
+			while( (data = buffin.read(cache)) != -1)[
+				// 打開輸出閥們，流轉資料(輸出)
+				buffout.write(cache,0, data); // 轉開輸出閥門寫入cache(水桶)
+			}
+
+		} catch(IOException){
+			throw new RuntimeException(e);
+		} finally {
+			if(buffin != null){
+				try {
+					buffin.close();
+				} catch(IOException){
+					throw new RuntimeException(e);
+				}
+			}
+			if(buffout != null){
+				try {
+					buffout.close();
+				} catch(IOException){
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+	}
+
+}

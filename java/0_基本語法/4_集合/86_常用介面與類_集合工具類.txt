@@ -1,0 +1,31 @@
+https://www.youtube.com/watch?v=HGSM8XbT3dU&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=117&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 86
+public class Java86_Collection {
+
+	public static void main(String[] args) throws Exception{
+		// 集合 - Collection -
+
+		int[] is = {3,5,2,1,4};
+		System.out.println(Arrays.toString(is)); // pring [3,5,2,1,4]
+		System.out.println(is); // print hashcode of is
+
+		List<Integer> integers = Arrays.asList(1,2,3,4,5);
+
+		// 排序(默認為升冪)
+		Arrays.sort(is);
+		System.out.println(Arrays.toString(is)); // print [1, 2, 3, 4, 5]
+
+		// 二分查找法，排序後的數值
+		System.out.println(Arrays.binarySearch(is, 5));
+
+		int[] is1 = {1,2,3,4,5};
+		// 陣列的比較
+		System.out.println(Arrays.equals(is, is1)); // true，因為排序後的每個值都相同
+
+		int[] is2 = {1,2,3,4,5,6};
+		System.out.println(Arrays.equals(is, is2)); // false
+	}
+
+}

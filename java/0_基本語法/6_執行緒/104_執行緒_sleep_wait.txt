@@ -1,0 +1,29 @@
+https://www.youtube.com/watch?v=GM08sEEcdAI&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=135&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 104
+public class Java104_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 阻塞
+
+		// wait & sleep
+		// 1. 名字
+		//	  wait : 等待
+		//	  sleep : 休眠
+		// 2. 從屬關係
+		//    wait : Object 成員方法
+		//    sleep : Thread 靜態方法
+		// 3. 使用方式
+		//    wait : 只能使用在同步代碼中
+		//    sleep : 可以再任意地方使用
+		// 4. 阻塞時間
+		//	  wait : 超時時間(會發生錯誤)
+		//    sleep : 休眠時間(不會發生錯誤)
+		// 5. 同步處理
+		//	  wait : 如果執行 wait 方法，那麼其他執行緒有機會執行當前的同步操作
+		//    sleep : 如果執行 sleep 方法，那麼其他執行緒沒有機會執行當前的同步操作
+
+	}
+
+}

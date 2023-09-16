@@ -1,0 +1,41 @@
+https://www.youtube.com/watch?v=zO5Te4N0zEc&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=124&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 94
+public class Java94_IO {
+
+	public static void main(String[] args){
+		// IO資料流處理 - 常見問題
+
+		// FileNotFountException,IOException
+		FileInputStream in = null;
+
+		// ClassNotFountExcetion,NoSerializableException
+		ObjectInputStream objIn = null;
+		ObjectOutputStream objOut = null;
+
+		try {
+			in = new FileInputStream("xxx");
+			in.read();
+
+			objOut.writeObject();
+			objIn.readObject();
+		} catch(IOException){
+			throw new RuntimeException(e);
+		} finally {
+
+			if(fis != null){
+				try {
+					fis.close();
+				} catch(IOException){
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+	}
+
+}
+
+class User implements Serializable{
+}

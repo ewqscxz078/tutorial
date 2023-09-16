@@ -1,0 +1,41 @@
+https://www.youtube.com/watch?v=QwETb5c-Isg&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=135&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 105
+public class Java105_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 安全問題
+
+		// 就是多個執行緒在併發執行時，修改了共享內存中對象的屬性，導致了資料衝突問題
+
+		User7 user = new User7();
+
+		Thread t1 = new Thread(()->{
+			user.name = "張三";
+			try{
+				Thread.sleep(1000);
+			}catch(InterruptedException e){
+				throw new RuntimeException(e);
+			}
+			System.out.println(user.name);
+		})
+		Thread t2 = new Thread(()->{
+			user.name = "list";
+			try{
+				Thread.sleep(1000);
+			}catch(InterruptedException e){
+				throw new RuntimeException(e);
+			}
+			System.out.println(user.name);
+		})
+		t1.start();
+		t2.start();
+		System.out.println("main 主執行緒執行完畢");
+
+	}
+
+}
+class User7 {
+	public String name;
+}

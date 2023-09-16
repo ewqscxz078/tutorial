@@ -1,0 +1,37 @@
+https://www.youtube.com/watch?v=bK5BbuVrCug&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=134&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 102
+public class Java102_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 執行緒池
+		// 就是對執行緒物件的容器
+		// 可以根據需要在啟動時，創建一個或多個執行緒物件
+		// java 有四種比較常見的執行緒池
+		// 1. 創建固定數量的執行緒物件
+		// ExecutorService executorService = Executors.ExecutorService(3);
+
+		// 2. 根據需求動態建立執行緒，有機率重複使用已完成的執行緒
+		// ExecutorService executorService = Executors.newCachecThreadPool();
+
+		// 3. 單一執行緒
+		// ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+		// 4. 定時調度執行緒，可定義每個執行緒執行的時間狀況
+		ExecutorService executorService = Executors.newScheduledThreadPool(3);
+
+		for(int i = 0; i <5; i++) {
+			executorService.submit(new Runnable(){
+				@Override
+				public void run(){
+					System.out.println(Thread.currentThread().getName());
+				}
+			});
+		}
+
+
+		System.out.println("main 執行緒");
+	}
+
+}

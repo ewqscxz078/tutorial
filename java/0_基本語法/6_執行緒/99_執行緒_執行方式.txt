@@ -1,0 +1,60 @@
+https://www.youtube.com/watch?v=vvzns0FoJ_Y&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=128&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
+
+============================================================================================================
+package 99
+public class Java99_Thread {
+
+	public static void main(String[] args){
+		// 執行緒 - 執行方式(循序、併發)
+
+		// 狀態生命週期
+		// new 創建
+		// runnable 可執行
+		// terminate 終止
+
+		// blocked 阻塞			// 從 runnable 來
+		// waiting 等待			// 從 runnable 來
+		// time_waiting 定時等待	// 從 runnable 來
+
+
+		// 併發 : 多個執行緒是獨立，誰先搶到cpu得執行權，誰就能先執行
+		// 建立執行緒
+		// MyThread1 t1 = new MyThread1();
+		// MyThread1 t2 = new MyThread2();
+		// 啟動執行緒
+		// t1.start();
+		// t2.start();
+
+		// 循序 : 多個執行緒按照順序執行
+		// 將執行緒連接成串
+		MyThread1 t11 = new MyThread1();
+		MyThread1 t22 = new MyThread2();
+		// 啟動執行緒
+		t11.start();
+		t22.start();
+		t11.join();
+		t22.join(); // t1執行完後才t2執行
+
+
+		System.out.println("main執行緒執行完畢")
+
+	}
+
+}
+
+// 聲明自定義執行緒
+class MyThread1 extends Thread {
+	// 重寫運行指令
+
+	public void run(){
+		System.out.println("MyThread-1 :" +Thread.currentThreadd().getName()) ;
+	}
+}
+
+class MyThread2 extends Thread {
+	// 重寫運行指令
+
+	public void run(){
+		System.out.println("MyThread-2 :" +Thread.currentThreadd().getName()) ;
+	}
+}
