@@ -1,7 +1,7 @@
 https://www.cmoney.tw/learn/course/technicals/topic/484?utm_source=blog&utm_medium=post&utm_campaign=CMA_LS_ETA
 https://www.cmoney.tw/learn/course/technicals/topic/484
 
-KD 指標又稱隨機指標（ Stochastic Oscillator ）
+KD 指標又稱隨機指標（ Stochastic Oscillator ）: 看出股價相對走勢
 	是由 K 值跟 D 值所組成的兩條線圖，常聽到的黃金交叉、死亡交叉就是指 KD 指標
 	代表股價變化速度，差別在變化速度是快還是慢，但數值皆介於 0 ~ 100
 
