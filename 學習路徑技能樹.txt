@@ -4,9 +4,10 @@
 		第三方 lib
 			junit 5
 			apache ....
+			Selenium
 		framework
 			spring
-				spring Framework
+				spring Framework core
 				spring boot 2
 					actuator
 					web
@@ -15,6 +16,9 @@
 					logger
 
 				spring boot data
+					jdbc
+					jpa
+					mybatis
 				spring cloud
 				spring boot 2 react
 
