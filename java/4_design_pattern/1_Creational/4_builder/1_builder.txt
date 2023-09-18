@@ -1,13 +1,15 @@
+https://www.digitalocean.com/community/tutorials/builder-design-pattern-in-java
+
 =================================================================================================================================================================
 ======================================== Builder Design Pattern =================================================================================================
 =================================================================================================================================================================
-https://www.digitalocean.com/community/tutorials/builder-design-pattern-in-java
 特徵
 	1.解決 實作 Abstract Factory 太多參數設值複雜問題，有些設定可能是可選，有些必須
 	2.輕量化 client 呼叫的方式
 
 方法
-	1.First of all you need to create a static nested class and then copy all the arguments from the outer class to the Builder class. We should follow the naming convention and if the class name is Computer then builder class should be named as ComputerBuilder.
+	1.First of all you need to create a static nested class and then copy all the arguments from the outer class to the Builder class.
+		We should follow the naming convention and if the class name is Computer then builder class should be named as ComputerBuilder.
 		建立一個 static 巢狀類別或是獨立類別 builder
 	2.Java Builder class should have a public constructor with all the required attributes as parameters.
 		僅一個公開建構所有參數 針對目標對象 返回目標對象
@@ -23,7 +25,8 @@ https://www.digitalocean.com/community/tutorials/builder-design-pattern-in-java
 				return this;
 			}
 		}
-	4.The final step is to provide a build() method in the builder class that will return the Object needed by client program. For this we need to have a private constructor in the Class with Builder class as argument.
+	4.The final step is to provide a build() method in the builder class that will return the Object needed by client program.
+		For this we need to have a private constructor in the Class with Builder class as argument.
 			xxxBuilder => xxx
 				private xxx build(xxxBuilder builder){
 					xxx參數 = builder.參數
