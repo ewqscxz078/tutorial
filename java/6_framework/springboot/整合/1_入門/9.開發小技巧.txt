@@ -30,6 +30,9 @@
 						will see lombok message is intalled
 					open eclipse.ini will see
 						-javaagent:D:\dev\java\IDE\eclipse-jee-2022-06-R-win32-x86_64\eclipse\plugins\org.projectlombok.agent_1.18.24/lombok.jar
+			3.eclipse 離線安裝方式
+				承1. 下載最新 jar
+				點擊 lombok.jar 選擇 eclipse 到路徑(預設會自動掃描，若非預期則再自行指定)
 
 
 		2-1 eclipse project pom.xml add

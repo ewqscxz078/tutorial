@@ -10,3 +10,6 @@ ref fortify
 	final char[] password = pf.getPassword();
 	// erase when finished
 	Arrays.fill(password, ' ');
+
+https://blog.csdn.net/lyxuefeng/article/details/103862926
+	1.拿出 char[] password 後用 StringBuffer 處理

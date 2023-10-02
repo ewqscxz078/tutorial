@@ -40,6 +40,9 @@ Path 檔案大小
 Path 路經階層
 	int levels = path.getNameCount();
 
+是否存在 path
+	boolean exist = Files.exists(path);
+
 取得上一層
 	path.getParent();
 
@@ -64,6 +67,25 @@ Path 標準正常化 : 要目的是消除路徑中的冗餘部分，並將其轉
 取得 Path 其延伸路徑
 	extendDir = "xxxx";
 	Path extendPath = sourcePath.resolve(extendDir);
+
+生成暫存預設位置下檔案
+	Files.createTempFile("prefix-", ".suffix");
+
+生成指定位置下的暫存檔案
+	Files.createTempFile(Paths.get("tmpDir"), "prefix-", ".suffix");
+
+走訪 path
+	Path directory = Paths.get("your_directory_path");
+		try (Stream<Path> walk = Files.walk(directory)) {
+            walk.filter(Files::isRegularFile) // 過濾出普通文件
+                .filter(path -> {
+                    String fileName = path.getFileName().toString();
+                    return fileName.endsWith("axx") || fileName.endsWith("bxx");
+                })
+                .forEach(path -> System.out.println("文件名：" + path));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 類似 rm -rf ${path}，但不是離開程序後才刪除，不適用於單元測試
 	public class DirectoryRemover {

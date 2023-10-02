@@ -66,3 +66,8 @@ https://www.baeldung.com/spring-classpath-file-access
 				assertEquals("Joe Employee,Jan Employee,James T. Employee", employees);
 			}
 		}
+
+
+注意 project 打包後的 jar 下的 resource 為非 File 模式
+	僅能用 resource.getInputStream() 存取
+	反之外部檔案用 resource.getFile() 存取
