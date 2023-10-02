@@ -111,7 +111,8 @@ https://www.youtube.com/watch?v=5LGPPPMGn8Y&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 					web:
 					  exposure:
 						include: '*'
-						exclude: threaddump,heapdump
+						exclude: shutdown
+						# exclude: threaddump,heapdump
 
 	暴露 Endpoints
 		支持的暴露方式

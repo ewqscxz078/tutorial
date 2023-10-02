@@ -1,10 +1,14 @@
 https://spring.io/projects/spring-cloud
 	解決分散式微服務常見問題的解決方案
 
-Spring cloud data flow
-	spring cloud task
+1.Spring Cloud Config 分散式系統設定檔集中化串接方式
+	當 client 設定多的時候，於 config server 取得
 
-Spring Cloud Sleuth 實現分散式追蹤
+2.Spring cloud task
+	Spring cloud data flow
+
+
+3.Spring Cloud Sleuth 實現分散式追蹤
 	https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
 	https://www.tpisoftware.com/tpu/articleDetails/2682
 	https://www.baeldung.com/spring-cloud-sleuth-single-application
@@ -16,7 +20,7 @@ Spring Cloud Sleuth 實現分散式追蹤
 	https://developer.okta.com/blog/2021/07/26/spring-cloud-sleuth
 
 
-Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
+4.Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
 	https://www.tpisoftware.com/tpu/articleDetails/1390
 		訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
 
@@ -31,5 +35,3 @@ optional(與 k8s 部分元件交集)
 		Hystrix 服務熔斷，當服務正常時自動恢復
 			https://www.tpisoftware.com/tpu/articleDetails/2781
 
-	Spring Cloud Config 分散式系統設定檔集中化串接方式
-		當client設定多的時候，於 config server 取得
