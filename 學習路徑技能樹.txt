@@ -9,7 +9,7 @@
 			spring
 				spring Framework core
 				spring boot 2
-					actuator
+					actuator(done)
 					web
 					application.yml
 					autoconfigration
@@ -19,9 +19,13 @@
 					jdbc
 					jpa
 					mybatis
-				spring cloud
-				spring boot 2 react
 
+				spring boot 2 react
+				spring cloud
+					spring cloud config
+					Spring Cloud Sleuth
+					Spring cloud task
+					Spring Cloud Stream
 
 	內功心法
 		design pattern
