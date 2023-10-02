@@ -1,0 +1,8 @@
+
+# 取得電腦名稱
+$computerName = $env:COMPUTERNAME
+
+# 輸出電腦名稱
+Write-Output "電腦名稱：$computerName"
+
+

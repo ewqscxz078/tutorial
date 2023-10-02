@@ -1,0 +1,22 @@
+
+// 確認服務開啟
+Get-Service w32time
+
+// 開啟服務
+Start-Service w32time
+
+// 關閉服務
+Stop-Service w32time
+
+// 查詢配置信息
+	w32tm /query /status
+
+// 查詢配置資訊
+	w32tm /query /configuration
+
+// 查詢時間伺服器
+	w32tm /query /peers
+
+// 僅取得 NtpServer
+	w32tm /query /configuration | Select-String "NtpServer:"
+
