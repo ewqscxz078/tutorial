@@ -40,3 +40,6 @@ https://www.cmoney.tw/learn/course/cmoney/topic/135?utm_source=blog&utm_medium=p
 
 	周K => 月k => 季K => 年K
 	大部分用到 季K 之前足夠
+
+
+單看k線圖形不太夠，還要再考量 量、價、位階
