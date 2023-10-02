@@ -7,17 +7,17 @@ http://203.65.114.5/TSS/HttpTspServer
 
 echo "test" > test.txt
 
-// with cert to gen tsq
+// with cert to gen tsq 時戳請求檔
 	openssl ts -query -data test.txt -no_nonce -sha512 -cert -out file.tsq
 
 
-// no cert to gen tsq
+// no cert to gen tsq 時戳請求檔
 	openssl ts -query -data test.txt -no_nonce -out file.tsq
 	// 中華時戳要 sha256 and has nonce
 	openssl ts -query -data test.txt -sha256 -out file.tsq
 
 
-// tsq to gen tsr
+// tsq to gen tsr 時戳請求回應檔
 	curl -H "Content-Type: application/timestamp-query" --data-binary '@file.tsq' http://203.65.114.5/TSS/HttpTspServer > file.tsr
 	curl -H "Content-Type: application/timestamp-query" --data-binary '@file.tsq' https://freetsa.org/tsr > file.tsr
 	//curl -H "Content-Type: application/timestamp-query" --data-binary '@file.tsq' http://10.192.7.51:80/TimestampProxy/TimestampProxy > file.tsr

@@ -1,0 +1,12 @@
+# ref chargpt
+
+# 獲取 Windows 操作系統的版本信息
+$osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+
+# 提取操作系統版本號和版本名稱
+$osVersion = $osInfo.Version
+$osName = $osInfo.Caption
+
+# 顯示操作系統版本信息
+Write-Host "Windows 操作系統版本: $osName"
+Write-Host "版本號: $osVersion"

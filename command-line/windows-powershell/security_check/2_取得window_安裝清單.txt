@@ -1,0 +1,13 @@
+# ref chargpt
+
+# 獲取已安裝程序的信息
+$installedPrograms = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*,
+                      HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |
+                      Where-Object { $_.DisplayName -and $_.DisplayVersion }
+
+# 列出已安裝程序的名稱和版本
+foreach ($program in $installedPrograms) {
+    Write-Host "程序名称: $($program.DisplayName)"
+    Write-Host "版本: $($program.DisplayVersion)"
+    Write-Host "-----------------------------"
+}

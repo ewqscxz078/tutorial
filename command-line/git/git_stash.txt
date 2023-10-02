@@ -25,6 +25,9 @@ Changes not staged for commit:
 	https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/How-to-list-and-show-the-git-stash-history
 		git stash list --stat
 
+		// 完整路徑
+		git stash list --stat --name-only
+
 將最新暫存 apply 到當前 branch
 	git stash apply
 
