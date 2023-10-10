@@ -5,7 +5,7 @@ https://www.digitalocean.com/community/tutorials/adapter-design-pattern-java
 =================================================================================================================================================================
 
 特徵
-	1.使用兩個不相關的介面可以一起工作。 連接這些不相關介面的對象稱為適配器
+	1.使用兩個不相關的介面可以一起工作。 連接這些不相關介面的對象稱為適配器/轉接器
 		常見例子為 : 充電器
 			移動電池需要 3 伏電壓才能充電，但普通插座可產生 120 伏（美國）或 240 伏（印度）電壓。
 			因此，移動充電器充當移動充電插座和牆壁插座之間的適配器。
@@ -22,141 +22,142 @@ https://www.digitalocean.com/community/tutorials/adapter-design-pattern-java
 		2. Object Adapter -
 			This form uses Java Composition and adapter contains the source object.
 
-public class Volt {
+小螺絲 bean
+	public class Volt {
 
-	private int volts;
+		private int volts;
 
-	public Volt(int v){
-		this.volts=v;
-	}
-
-	public int getVolts() {
-		return volts;
-	}
-
-	public void setVolts(int volts) {
-		this.volts = volts;
-	}
-
-}
-
-public class Socket {
-
-	public Volt getVolt(){
-		return new Volt(120);
-	}
-}
-
-public interface SocketAdapter {
-
-	public Volt get120Volt();
-
-	public Volt get12Volt();
-
-	public Volt get3Volt();
-}
-
-
-Class Adapter
-	//Using inheritance for adapter pattern
-	public class SocketClassAdapterImpl extends Socket implements SocketAdapter{
-
-		@Override
-		public Volt get120Volt() {
-			return getVolt();
+		public Volt(int v){
+			this.volts=v;
 		}
 
-		@Override
-		public Volt get12Volt() {
-			Volt v= getVolt();
-			return convertVolt(v,10);
+		public int getVolts() {
+			return volts;
 		}
 
-		@Override
-		public Volt get3Volt() {
-			Volt v= getVolt();
-			return convertVolt(v,40);
-		}
-
-		private Volt convertVolt(Volt v, int i) {
-			return new Volt(v.getVolts()/i);
+		public void setVolts(int volts) {
+			this.volts = volts;
 		}
 
 	}
 
-Object Adapter Implementation
-	public class SocketObjectAdapterImpl implements SocketAdapter{
+	public class Socket {
 
-		//Using Composition for adapter pattern
-		private Socket sock = new Socket();
-
-		@Override
-		public Volt get120Volt() {
-			return sock.getVolt();
-		}
-
-		@Override
-		public Volt get12Volt() {
-			Volt v= sock.getVolt();
-			return convertVolt(v,10);
-		}
-
-		@Override
-		public Volt get3Volt() {
-			Volt v= sock.getVolt();
-			return convertVolt(v,40);
-		}
-
-		private Volt convertVolt(Volt v, int i) {
-			return new Volt(v.getVolts()/i);
+		public Volt getVolt(){
+			return new Volt(120);
 		}
 	}
 
+轉換器介面 bean
+	public interface SocketAdapter {
 
-public class AdapterPatternTest {
+		public Volt get120Volt();
 
-	public static void main(String[] args) {
+		public Volt get12Volt();
 
-		testClassAdapter();
-		testObjectAdapter();
+		public Volt get3Volt();
 	}
 
-	private static void testObjectAdapter() {
-		SocketAdapter sockAdapter = new SocketObjectAdapterImpl();
-		Volt v3 = getVolt(sockAdapter,3);
-		Volt v12 = getVolt(sockAdapter,12);
-		Volt v120 = getVolt(sockAdapter,120);
-		System.out.println("v3 volts using Object Adapter="+v3.getVolts());
-		System.out.println("v12 volts using Object Adapter="+v12.getVolts());
-		System.out.println("v120 volts using Object Adapter="+v120.getVolts());
-	}
+實作方式
+	1.Using inheritance for adapter pattern (Class Adapter)
+		public class SocketClassAdapterImpl extends Socket implements SocketAdapter{
 
-	private static void testClassAdapter() {
-		SocketAdapter sockAdapter = new SocketClassAdapterImpl();
-		Volt v3 = getVolt(sockAdapter,3);
-		Volt v12 = getVolt(sockAdapter,12);
-		Volt v120 = getVolt(sockAdapter,120);
-		System.out.println("v3 volts using Class Adapter="+v3.getVolts());
-		System.out.println("v12 volts using Class Adapter="+v12.getVolts());
-		System.out.println("v120 volts using Class Adapter="+v120.getVolts());
-	}
+			@Override
+			public Volt get120Volt() {
+				return getVolt();
+			}
 
-	private static Volt getVolt(SocketAdapter sockAdapter, int i) {
-		switch (i){
-		case 3: return sockAdapter.get3Volt();
-		case 12: return sockAdapter.get12Volt();
-		case 120: return sockAdapter.get120Volt();
-		default: return sockAdapter.get120Volt();
+			@Override
+			public Volt get12Volt() {
+				Volt v= getVolt();
+				return convertVolt(v,10);
+			}
+
+			@Override
+			public Volt get3Volt() {
+				Volt v= getVolt();
+				return convertVolt(v,40);
+			}
+
+			private Volt convertVolt(Volt v, int i) {
+				return new Volt(v.getVolts()/i);
+			}
+
+		}
+
+	2.Object Adapter Implementation
+		public class SocketObjectAdapterImpl implements SocketAdapter{
+
+			//Using Composition for adapter pattern
+			private Socket sock = new Socket();
+
+			@Override
+			public Volt get120Volt() {
+				return sock.getVolt();
+			}
+
+			@Override
+			public Volt get12Volt() {
+				Volt v= sock.getVolt();
+				return convertVolt(v,10);
+			}
+
+			@Override
+			public Volt get3Volt() {
+				Volt v= sock.getVolt();
+				return convertVolt(v,40);
+			}
+
+			private Volt convertVolt(Volt v, int i) {
+				return new Volt(v.getVolts()/i);
+			}
+		}
+
+Client 演示
+	public class AdapterPatternTest {
+
+		public static void main(String[] args) {
+
+			testClassAdapter();
+			testObjectAdapter();
+		}
+
+		private static void testObjectAdapter() {
+			SocketAdapter sockAdapter = new SocketObjectAdapterImpl();
+			Volt v3 = getVolt(sockAdapter,3);
+			Volt v12 = getVolt(sockAdapter,12);
+			Volt v120 = getVolt(sockAdapter,120);
+			System.out.println("v3 volts using Object Adapter="+v3.getVolts());
+			System.out.println("v12 volts using Object Adapter="+v12.getVolts());
+			System.out.println("v120 volts using Object Adapter="+v120.getVolts());
+		}
+
+		private static void testClassAdapter() {
+			SocketAdapter sockAdapter = new SocketClassAdapterImpl();
+			Volt v3 = getVolt(sockAdapter,3);
+			Volt v12 = getVolt(sockAdapter,12);
+			Volt v120 = getVolt(sockAdapter,120);
+			System.out.println("v3 volts using Class Adapter="+v3.getVolts());
+			System.out.println("v12 volts using Class Adapter="+v12.getVolts());
+			System.out.println("v120 volts using Class Adapter="+v120.getVolts());
+		}
+
+		private static Volt getVolt(SocketAdapter sockAdapter, int i) {
+			switch (i){
+			case 3: return sockAdapter.get3Volt();
+			case 12: return sockAdapter.get12Volt();
+			case 120: return sockAdapter.get120Volt();
+			default: return sockAdapter.get120Volt();
+			}
 		}
 	}
-}
 
-	// v3 volts using Class Adapter=3
-	// v12 volts using Class Adapter=12
-	// v120 volts using Class Adapter=120
-	// v3 volts using Object Adapter=3
-	// v12 volts using Object Adapter=12
-	// v120 volts using Object Adapter=120
+		// v3 volts using Class Adapter=3
+		// v12 volts using Class Adapter=12
+		// v120 volts using Class Adapter=120
+		// v3 volts using Object Adapter=3
+		// v12 volts using Object Adapter=12
+		// v120 volts using Object Adapter=120
 
 
 Adapter Design Pattern Example in JDK

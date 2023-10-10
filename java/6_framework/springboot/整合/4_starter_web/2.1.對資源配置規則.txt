@@ -60,3 +60,12 @@ webMvcAutoConfiguration
 		spring:
 		#  mvc:
 		#    static-path-pattern: /res/**   這個會導致 Favicon 功能失效
+
+
+JSP 限制
+	1.對於 Jetty 和 Tomcat，如果您使用 war 包裝，它應該可以工作。
+		可執行的 war 在使用 java -jar 啟動時可以工作，並且還可以部署到任何標準容器。 使用可執行 jar 時不支援 JSP。
+
+	2.Undertow 不支援 JSP。
+
+	3.建立自訂 error.jsp 頁面不會覆蓋錯誤處理的預設視圖。 應改用自訂錯誤頁面。

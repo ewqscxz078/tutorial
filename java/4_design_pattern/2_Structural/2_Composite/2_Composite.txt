@@ -1,0 +1,101 @@
+https://www.digitalocean.com/community/tutorials/composite-design-pattern-in-java
+
+=================================================================================================================================================================
+======================================== Composite Design Pattern =================================================================================================
+=================================================================================================================================================================
+
+特徵
+	當我們必須表示部分-整體層次結構時，就會使用複合模式。 當我們需要以相同方式處理結構中的物件的方式建立結構時，我們可以應用組合設計模式。
+		1.基礎元件 - 基礎元件是組合中所有物件的接口，客戶端程式使用基礎元件來處理組合中的物件。 它可以是一個介面或一個抽象類，具有所有物件共有的一些方法。
+		2.葉 - 定義組合中元素的行為。 它是組合的構建塊並實現基本組件。 它沒有對其他組件的引用。
+		3.複合 - 它由葉元素組成並實現基本組件中的操作。
+
+
+小螺絲 bean
+	public interface Shape {
+
+		public void draw(String fillColor);
+	}
+
+	public class Triangle implements Shape {
+
+		@Override
+		public void draw(String fillColor) {
+			System.out.println("Drawing Triangle with color "+fillColor);
+		}
+
+	}
+
+	public class Circle implements Shape {
+
+		@Override
+		public void draw(String fillColor) {
+			System.out.println("Drawing Circle with color "+fillColor);
+		}
+
+	}
+
+組合 bean
+	public class Drawing implements Shape{
+
+		//collection of Shapes
+		private List<Shape> shapes = new ArrayList<Shape>();
+
+		@Override
+		public void draw(String fillColor) {
+			for(Shape sh : shapes)
+			{
+				sh.draw(fillColor);
+			}
+		}
+
+		//adding shape to drawing
+		public void add(Shape s){
+			this.shapes.add(s);
+		}
+
+		//removing shape from drawing
+		public void remove(Shape s){
+			shapes.remove(s);
+		}
+
+		//removing all the shapes
+		public void clear(){
+			System.out.println("Clearing all the shapes from drawing");
+			this.shapes.clear();
+		}
+	}
+
+Client 演示
+	public class TestCompositePattern {
+
+		public static void main(String[] args) {
+			Shape tri = new Triangle();
+			Shape tri1 = new Triangle();
+			Shape cir = new Circle();
+
+			Drawing drawing = new Drawing();
+			drawing.add(tri1);
+			drawing.add(tri1);
+			drawing.add(cir);
+
+			drawing.draw("Red");
+
+			drawing.clear();
+
+			drawing.add(tri);
+			drawing.add(cir);
+			drawing.draw("Green");
+		}
+
+	}
+	// Drawing Triangle with color Red
+	// Drawing Triangle with color Red
+	// Drawing Circle with color Red
+	// Clearing all the shapes from drawing
+	// Drawing Triangle with color Green
+	// Drawing Circle with color Green
+
+
+Composite Design Pattern Example in Swing
+	java.awt.Container#add(Component) is a great example of Composite pattern in java and used a lot in Swing
