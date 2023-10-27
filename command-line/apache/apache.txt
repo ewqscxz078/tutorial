@@ -1,8 +1,12 @@
 https://teckadmin.wordpress.com/2013/10/23/difference-between-graceful-restart-and-normal-restart/
 http://blogger.gtwang.org/2013/05/apache-2-reload-httpd-config-file-unix-linux-command.html
 
-/usr/sbin/apachectl其實是個腳本；
-/usr/sbin/httpd才是真正的程序；
+================================================================================================
+=============================== apache cmd =====================================================
+================================================================================================
+
+/usr/sbin/apachectl 其實是個腳本；
+/usr/sbin/httpd 才是真正的程序；
 
 Normal restart(中斷現用的已經開啟的連線，影響線上正在跑的會被kill調，也就是中斷)
 	apachectl -k stop
@@ -16,6 +20,22 @@ Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead
 確認版本
 	apache2ctl -V // detail
 	httpd -v
+
+
+確認 apache 服務
+	For Ubuntu:
+		service apache2 status
+
+================================================================================================
+=============================== apache setting =================================================
+================================================================================================
+
+代理轉導
+	# ProxyPass 代理轉跳
+	ProxyPass	      /contextPath    balancer://contextPath/contextPath
+	# ProxyPassReverse 於 Http header 設定轉導資訊，以利 apache 代為轉址時，告知瀏覽器怎麼正確轉跳 forward 網址
+	# 設定 ProxyPassReverse 用意為若前端有轉頁時，依據 header 可之後怎麼正確轉頁 by apache
+	ProxyPassReverse  /contextPath    balancer://contextPath/contextPath
 
 https://dywang.csie.cyut.edu.tw/dywang/rhel7/node41.html
 存取限制
@@ -38,6 +58,19 @@ https://dywang.csie.cyut.edu.tw/dywang/rhel7/node41.html
 	以 host 限制存取
 		Require host 192.168.*
 
-確認apache服務
-	For Ubuntu:
-		service apache2 status
+RequestHeader
+	Apache 的 mod_headers 模組提供的指令之一，用於處理 HTTP 請求的標頭。
+	它允許你在接收到客戶端的請求後修改或新增特定的 HTTP 標頭
+		RequestHeader [condition] header value
+
+================================================================================================
+=============================== mods ===========================================================
+================================================================================================
+列舉已安裝的模組
+	ls /etc/apache2/mods-available
+
+啟用可用的模組
+	sudo a2enmod <module_name>
+
+禁用模組
+	sudo a2dismod <module_name>
