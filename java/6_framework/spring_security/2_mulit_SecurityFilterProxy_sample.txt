@@ -1,0 +1,152 @@
+https://docs.spring.io/spring-security/reference/5.7/servlet/architecture.html
+
+    @Value("${system.security.admin.whiteIps}")
+    private List<String> whiteIps;
+
+    @Bean
+    @Order(10)
+    SecurityFilterChain filterActChain(final HttpSecurity http,
+            @Qualifier("adminUserDetailSerivce") final UserDetailsService adminUserDetailSerivce) throws Exception { // @Qualifier("adminAuthenticationProvider") final AuthenticationProvider adminAuthenticationProvider
+        http.antMatcher("/actuator/**")  // 為了多個 SecurityFilterChain 之 antMatcher 與 @Order 搭配讓其可以支援不同 url Security 模式
+                .authorizeHttpRequests(req -> req // 定義那些 url 需要被保護
+                        .antMatchers("/actuator/**").access(hasRoleAndWhilteIp(this.actRole, this.whiteIps)) // 受保護認證
+                ).httpBasic().and() //
+                .userDetailsService(adminUserDetailSerivce) //  轉到後台管理員來源
+                .exceptionHandling() //
+                .authenticationEntryPoint(authenticationEntryPoint) //
+                .accessDeniedHandler(accessDeniedHandler()) //
+                .and()
+                //                authenticationProvider(adminAuthenticationProvider) //
+                .csrf().disable(); // 要關閉，不然打 exchange 會 http status 403，TODO fix 可支援 CSRF protection 並可打的到 rc
+        return http.build();
+    }
+
+    private static AuthorizationManager<RequestAuthorizationContext> hasRoleAndWhilteIp(final String limiteRole,
+            final List<String> ipAddresses) {
+        return (authentication, context) -> {
+            final boolean hasRole = authentication.get().getAuthorities().stream()
+                    .anyMatch(auth -> StringUtils.endsWith(auth.getAuthority(), limiteRole));
+            final String remoteIpAddress = RequestUtils.getIpAddr(context.getRequest());
+            final boolean isWhilteIp = ipAddresses.stream().anyMatch(ip -> new IpAddressMatcher(ip).matches(remoteIpAddress));
+            return new AuthorizationDecision(hasRole && isWhilteIp);
+        };
+    }
+
+    @Bean
+    @Order(20)
+    SecurityFilterChain filterExChain(final HttpSecurity http,
+            @Qualifier("adminUserDetailSerivce") final UserDetailsService adminUserDetailSerivce) throws Exception { // @Qualifier("adminAuthenticationProvider") final AuthenticationProvider adminAuthenticationProvider
+        http.antMatcher("/exchange/version/**") // 為了多個 SecurityFilterChain 之 antMatcher 與 @Order 搭配讓其可以支援不同 url Security 模式
+                .authorizeHttpRequests(req -> req // 定義那些 url 需要被保護
+                        .antMatchers("/exchange/version/**").access(hasRoleAndWhilteIp(this.exRole, this.whiteIps)) // 受保護認證
+                ).httpBasic().and() //
+                .userDetailsService(adminUserDetailSerivce) // 轉到後台管理員來源
+                //                .exceptionHandling((exceptionHandling) -> { exceptionHandling. })
+                .exceptionHandling() //
+                .authenticationEntryPoint(authenticationEntryPoint)//
+                .accessDeniedHandler(accessDeniedHandler()) //
+                //                authenticationProvider(adminAuthenticationProvider) //
+                .and().csrf().disable(); // 要關閉，不然打 exchange 會 http status 403，TODO fix 可支援 CSRF protection 並可打的到 rc
+        return http.build();
+    }
+
+    // 未驗證直接打
+    private static AuthenticationEntryPoint authenticationEntryPoint = new AuthenticationEntryPoint() {
+        @Override
+        public void commence(final HttpServletRequest request, final HttpServletResponse response,
+                final AuthenticationException authException) throws IOException, ServletException {
+            request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, 401);
+            request.setAttribute(RequestDispatcher.ERROR_REQUEST_URI, request.getRequestURI());
+            request.getRequestDispatcher("/error").forward(request, response);
+        }
+    };
+
+    // 存取被拒; authorizeHttpRequests 條件不合
+    private static AccessDeniedHandler accessDeniedHandler() {
+        return (request, reqsponse, accessdDeniedException) -> {
+            request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, 403);
+            request.setAttribute(RequestDispatcher.ERROR_REQUEST_URI, request.getRequestURI());
+            request.getRequestDispatcher("/error").forward(request, reqsponse);
+        };
+    }
+
+    //    @Bean(value = "adminAuthenticationProvider")
+    //    AuthenticationProvider adminAuthenticationProvider(final PasswordEncoder passwordEncoder,
+    //            @Qualifier("adminUserDetailSerivce") final UserDetailsService adminUserDetailSerivce) {
+    //        final DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    //        provider.setUserDetailsService(adminUserDetailSerivce);
+    //        provider.setPasswordEncoder(passwordEncoder);
+    //        return provider;
+    //    }
+
+    @Bean(value = "adminUserDetailSerivce")
+    UserDetailsService adminUserDetailSerivce(final PasswordEncoder passwordEncoder) {
+        final UserDetails actuator = User.builder(). //
+                username(this.actUser). //
+                password(passwordEncoder.encode(this.actMima)). //
+                roles(this.actRole).build();
+        final UserDetails exchange = User.builder(). //
+                username(this.exUser). //
+                password(passwordEncoder.encode(this.exMima)). //
+                roles(this.exRole).build();
+        return new InMemoryUserDetailsManager(actuator, exchange);
+    }
+
+    @Bean
+    @Order(30)
+    SecurityFilterChain filterChain(final HttpSecurity http,
+            final SavedRequestAwareAuthenticationSuccessHandler loginSuccessHandler,
+            final SimpleUrlLogoutSuccessHandler logoutSuccessHandler,
+            final SimpleUrlAuthenticationFailureHandler loginFailureHandler,
+            @Qualifier("sysUserDetailsService") final UserDetailsService sysUserDetailsService) throws Exception {
+        http.authorizeHttpRequests(req -> req // 定義那些 url 需要被保護
+                .antMatchers("/login", "/logout", "/Login.action", "/Logout.action", "/Unauthorized.action", "/css/**", "/js/**",
+                        "/bli-websocket/**", "/images/**")
+                .permitAll().anyRequest().hasRole(this.sysRole)).formLogin().loginPage("/login")
+                .defaultSuccessUrl("/LoginForward.action", true).successForwardUrl("/LoginForward.action").failureUrl("/login")
+                .successHandler(loginSuccessHandler).failureHandler(loginFailureHandler).usernameParameter("signedData")
+                .passwordParameter("signedData").and().logout().logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler)
+                .and() //
+                .userDetailsService(sysUserDetailsService) //
+                .csrf().disable(); // 要關閉，不然打 exchange 會 http status 403，TODO fix 可支援 CSRF protection 並可打的到 rc
+        return http.build();
+    }
+
+    //    @Bean(value = "sysAuthenticationProvider")
+    //    AuthenticationProvider sysAuthenticationProvider(final PasswordEncoder passwordEncoder,
+    //            @Qualifier("sysUserDetailsService") final UserDetailsService sysUserDetailsService) {
+    //        final DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    //        provider.setUserDetailsService(sysUserDetailsService);
+    //        provider.setPasswordEncoder(passwordEncoder);
+    //        return provider;
+    //    }
+
+    @Bean(value = "sysUserDetailsService")
+    UserDetailsService sysUserDetailsService(final PasswordEncoder passwordEncoder) {
+
+        final String role = this.sysRole;
+
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
+
+                if (StringUtils.isBlank(username)) {
+                    throw new UsernameNotFoundException("");
+                }
+                try {
+                    final PKCS7Verify verify = new PKCS7Verify();
+                    verify.setB64SignedData(username);
+                    verify.getVerifySignature();
+                    final SysUser user = new SysUser();
+                    user.setUsername(username);
+                    user.setPassword(passwordEncoder.encode(username));
+                    user.addRoles(role);
+                    verify.setSysUserData(user);
+                    return user;
+                } catch (final Exception e) {
+                    log.error("loadUserByUsername:", e);
+                    throw new UsernameNotFoundException("");
+                }
+            }
+        };
+    }

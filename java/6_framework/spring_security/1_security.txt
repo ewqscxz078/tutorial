@@ -1,0 +1,147 @@
+https://spring.io/guides/gs/securing-web/
+https://www.baeldung.com/java-config-spring-security
+
+https://ithelp.ithome.com.tw/m/articles/10250502
+	記憶體帳密範例
+		@Configuration
+		@EnableWebSecurity
+		public class WebSecurityConfig {
+
+			@Bean
+			public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+				http.authorizeHttpRequests((requests) -> requests
+						.requestMatchers("/", "/home").permitAll() // / , /home 允許訪問
+						.anyRequest().authenticated()	// 其他需要認證
+					)
+					.formLogin((form) -> form		// 從 loginPage 登入
+						.loginPage("/login")
+						.permitAll()
+					)
+					.logout((logout) -> logout.permitAll());
+				return http.build();
+			}
+
+			https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/in-memory.html
+			@Bean
+			public UserDetailsService userDetailsService() {
+				UserDetails user =
+					 User.withDefaultPasswordEncoder()
+						.username("user")
+						.password("password")
+						.roles("USER")
+						.build();
+
+				return new InMemoryUserDetailsManager(user);
+			}
+		}
+
+
+https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
+
+https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
+	開發的專案為 web
+		預設使用 csrf 保護
+	開發的專案為後端服務
+		應該使用 csrf().disable()
+
+無登入入口
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(
+				....
+			)
+			.formLogin().disable().htpBasic();
+		return http.build();
+	}
+
+https://www.baeldung.com/spring-security-5-default-password-encoder
+https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/in-memory.html
+	有如何單元測試 spring security
+
+
+https://stackoverflow.com/questions/28578272/how-to-debug-spring-security-authorization-annotations
+	debug 方式
+		1.
+			logging.level.org.springframework.security: TRACE
+
+		2.
+			@Configuration
+			@EnableWebSecurity(debug = true)
+			public class WebSecurityConfiguration {
+			  // ...
+			}
+
+https://stackoverflow.com/questions/66883174/adding-multiple-spring-security-configurations-based-on-pathmatcher
+	multi SecurityFilterChain
+		@Bean
+		@Order(1)
+		public SecurityWebFilterChain securitygWebFilterChain(ServerHttpSecurity http) {
+			SecurityWebFilterChain filterChain = http.authorizeExchange()
+				.pathMatchers(HttpMethod.GET, "/").permitAll()
+				.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+				.pathMatchers("/**").permitAll()
+			....
+		}
+		@Bean
+		@Order(2)
+		public SecurityWebFilterChain securitygWebFilterChain(ServerHttpSecurity http) {
+			SecurityWebFilterChain filterChain = http.authorizeExchange()
+				.pathMatchers(HttpMethod.OPTIONS, "**/admin/**").permitAll()
+				.pathMatchers("**/admin/**").permitAll()
+			....
+		}
+
+https://stackoverflow.com/questions/52783807/spring-security-multiple-userdetailsservice
+https://sanketdaru.com/blog/multiple-sources-user-details-spring-security/
+https://blog.csdn.net/u012702547/article/details/107242526
+	multiple UserDetailsService
+		@Override
+		public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
+			List<UserEntity> users = userRepository.findByName(name);
+			if (users.isEmpty()){
+				return inMemoryUserDetailsService.loadUserByUsername(name);
+			}
+			return new UserDetailEntity (users.get(0));
+		}
+
+		@PostConstruct
+		public void init() {
+			this.inMemoryUserDetailsService = initInMemoryUserDetailsService();
+		}
+
+		private UserDetailsService initInMemoryUserDetailsService() {
+			List<UserDetails> userDetails = new ArrayList<>();
+			UserDetails userDetails1 = new User("user1", "$2a$10$t/U97dFDQ0e8ujCq6728P.E1axs/aoAMsopoSUQtTchiKTP/Ps4um", Collections.singletonList(new SimpleGrantedAuthority("USER")));
+			UserDetails userDetails2 = new User("admin1", "$2a$10$t/U97dFDQ0e8ujCq6728P.E1axs/aoAMsopoSUQtTchiKTP/Ps4um", Arrays.asList(new SimpleGrantedAuthority("USER"),new SimpleGrantedAuthority("ADMIN")));
+			userDetails.add(userDetails1);
+			userDetails.add(userDetails2);
+			return new InMemoryUserDetailsManager(userDetails);
+		}
+
+https://stackoverflow.com/questions/72366267/matching-ip-address-with-authorizehttprequests
+	spring security 5.7
+		如何限定白名單 ip
+			@Bean
+			public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+				http
+					.authorizeHttpRequests((authorizeRequests) -> authorizeRequests
+						.mvcMatchers("/").access(hasIpAddress("127.0.0.1"))
+						.anyRequest().authenticated()
+					)
+					.formLogin(Customizer.withDefaults())
+					.httpBasic(Customizer.withDefaults());
+				return http.build();
+			}
+
+			private static AuthorizationManager<RequestAuthorizationContext> hasIpAddress(String ipAddress) {
+				IpAddressMatcher ipAddressMatcher = new IpAddressMatcher(ipAddress);
+				return (authentication, context) -> {
+					HttpServletRequest request = context.getRequest();
+					return new AuthorizationDecision(ipAddressMatcher.matches(request));
+				};
+			}
+
+https://blog.csdn.net/wangb_java/article/details/86672447
+	例外處理
+		1.登入認證失敗401
+		2.請求沒有權限失敗 403

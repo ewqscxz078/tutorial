@@ -33,6 +33,16 @@ YAML
 			行內寫法
 				pets: [cat,dog,pig]
 
+			https://stackoverflow.com/questions/33369878/spring-boot-read-list-from-yaml-using-value-or-configurationproperties
+			當使用 @Value 解析時 @Value("pets") private List<String> pets;
+				須改用
+				  pets: cat, dog, pig
+				或
+				  pets: >
+				    cat,
+					dog,
+					pig
+
 		4. 複合結構以上寫法可以任意組合
 			值也可以是 物件、陣列的結構
 

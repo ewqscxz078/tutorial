@@ -66,3 +66,47 @@ enable the pretty print mode :
 	import com.google.gson.GsonBuilder;
 
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+
+gson object to json string 指定部分欄位不顯示
+	1.使用 transient 關鍵字
+		這樣 Gson 在序列化時就會忽略這些屬性
+			public class MyClass {
+				private String visibleField;
+				private transient String hiddenField;
+
+				// 省略其他程式碼
+			}
+	2.使用 Gson 的 @Expose 註解 並搭配 excludeFieldsWithoutExposeAnnotation 使用
+		import com.google.gson.annotations.Expose;
+
+		public class MyClass {
+			@Expose
+			private String visibleField;
+
+			@Expose(serialize = false)
+			private String hiddenField;
+
+			// 省略其他程式碼
+		}
+
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+
+	3.僅輸出 json str 限制不顯示: GsonBuilder.setExclusionStrategies
+		class MyExclusionStrategy implements ExclusionStrategy {
+			@Override
+			public boolean shouldSkipField(FieldAttributes f) {
+				// 在這裡自定義哪些字段應該被排除
+				return f.getName().equals("hiddenField");
+			}
+
+			@Override
+			public boolean shouldSkipClass(Class<?> clazz) {
+				// 在這裡可以自定義是否排除整個類別
+				return false;
+			}
+		}
+
+        Gson gson = new GsonBuilder()
+                .setExclusionStrategies(new MyExclusionStrategy())
+                .create();
