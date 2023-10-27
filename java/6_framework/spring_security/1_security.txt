@@ -59,6 +59,9 @@ https://docs.spring.io/spring-security/reference/servlet/authentication/password
 	有如何單元測試 spring security
 
 
+https://docs.spring.io/spring-security/reference/5.7/servlet/architecture.html
+	官網架構說明
+
 https://stackoverflow.com/questions/28578272/how-to-debug-spring-security-authorization-annotations
 	debug 方式
 		1.
@@ -70,26 +73,6 @@ https://stackoverflow.com/questions/28578272/how-to-debug-spring-security-author
 			public class WebSecurityConfiguration {
 			  // ...
 			}
-
-https://stackoverflow.com/questions/66883174/adding-multiple-spring-security-configurations-based-on-pathmatcher
-	multi SecurityFilterChain
-		@Bean
-		@Order(1)
-		public SecurityWebFilterChain securitygWebFilterChain(ServerHttpSecurity http) {
-			SecurityWebFilterChain filterChain = http.authorizeExchange()
-				.pathMatchers(HttpMethod.GET, "/").permitAll()
-				.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.pathMatchers("/**").permitAll()
-			....
-		}
-		@Bean
-		@Order(2)
-		public SecurityWebFilterChain securitygWebFilterChain(ServerHttpSecurity http) {
-			SecurityWebFilterChain filterChain = http.authorizeExchange()
-				.pathMatchers(HttpMethod.OPTIONS, "**/admin/**").permitAll()
-				.pathMatchers("**/admin/**").permitAll()
-			....
-		}
 
 https://stackoverflow.com/questions/52783807/spring-security-multiple-userdetailsservice
 https://sanketdaru.com/blog/multiple-sources-user-details-spring-security/
@@ -141,6 +124,8 @@ https://stackoverflow.com/questions/72366267/matching-ip-address-with-authorizeh
 				};
 			}
 
+https://www.baeldung.com/spring-security-exceptions
+https://www.baeldung.com/spring-security-custom-access-denied-page
 https://blog.csdn.net/wangb_java/article/details/86672447
 	例外處理
 		1.登入認證失敗401
