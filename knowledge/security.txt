@@ -1,0 +1,33 @@
+https://www.ithome.com.tw/voice/115822
+
+常見網站攻擊方式
+	跨站偽造請求（Cross-site Request Forgery，CSRF）
+		攻擊原理
+			CSRF要能成立的必要條件是，使用者已登入網站，而最簡單的場景就是，使用者登入後，單憑瀏覽器與伺服端之間的會話溝通，
+			就確認使用者的身分無誤而進行各種操作，因而使得有意攻擊者，只要能命令瀏覽器做出想要的請求，就能實現攻擊。
+	SQL Injection
+
+	XSS (Cross-site script)
+
+	釐清差異
+		XSS往往容易與CSRF產生混淆，原因在於XSS與CSRF都是跨站式的請求攻擊，有些CSRF攻擊是利用XSS來實現，
+		然而，CSRF不一定要透過XSS，使用者在無知的情況下，點選某外部網站的鏈結（甚至只是瀏覽了某個頁面）回到已登入網站，
+		即使在沒有執行任何JavaScript的情況下，也能使CSRF攻擊成立，因此CSRF也有著One-click Attack的別稱。
+
+防禦基本原理
+	1.儘量不使用自動登入
+	2.在使用者沒有活動一段時間之後，自動登出、令會話失效，可以減少CSRF攻擊成功的可能性
+	3.如果可以的話，增加操作前的確認畫面
+	4.如果可以的話，除了檢查檢查Session Id、必須有其他驗證方式，
+		像是再次輸入密碼（最好是有別於登入時使用之密碼或透過第三方傳遞的一次性密碼）、發送電子郵件附上驗證鏈結等
+	5.檢查Referer，確認來源非跨站請求
+	6.增加一個額外的隨機產生令牌（Token），確認只有使用者自身意願下發出請求，才會附上令牌，若攻擊者利用了某種手法，
+		令瀏覽器發出的情況，則不會附上令牌。這是個公認有效的防禦方式，通常稱之為Synchronizer Token模式，許多程式庫或框架都提供了相關實作，使用方式也略有不同
+		Synchronizer Token
+			1.Tomcat 提供 CsrfPreventionFlilter
+			2.OWASP 也提供 CSRFGuard 專案
+				提供JavaScript注入與JSP標籤庫等方式。
+				JavaScript的注入，主要是透過伺服端動態產生的JavaScript，在客戶端頁面執行時會自動註冊window.onload事件、
+				搜尋頁面中的表單（使用隱藏欄位）、href、src屬性等，並產生對應的令牌與形式。
+				如果想自行控制令牌的注入與形式，可以透過JSP標籤庫，
+				使用<csrf:tokenname/>、<csrf:tokenvalue>、<csrf:token><csrf:a>等標籤。
