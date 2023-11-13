@@ -8,70 +8,83 @@
 				${postgreSQL_path}\bin\psql.exe –U postgres
 					輸入密碼
 
-https://www.tutorialspoint.com/postgresql/postgresql_create_database.htm
-https://docs.postgresql.tw/
+官網說明
+	https://docs.postgresql.tw/
+	https://docs.postgresql.tw/the-sql-language
+	資料型別
+		https://docs.postgresql.tw/the-sql-language/data-types
 
-2.查看指令說明
-	help command
-		\help <command_name>
+第三方簡易說明
+	https://www.tutorialspoint.com/postgresql/postgresql_create_database.htm
+	2.查看指令說明
+		help command
+			\help <command_name>
 
-3.資料庫操作
-	1.列舉資料庫
-		list database
-			\l
+	3.資料庫操作
+		1.列舉資料庫
+			list database
+				\l
 
-	2.建立資料庫
-		create database
-			CREATE DATABASE ${databaseName};
+		2.建立資料庫
+			create database
+				CREATE DATABASE ${databaseName};
 
-	3.連線資料庫(connect database)
-		\c ${資料庫名稱}
-		// will show You are now connected to database "${資料庫名稱}" as user "postgres".
-		// 命令行前墜會變 : ${資料庫名稱}-#
+		3.連線資料庫(connect database)
+			\c ${資料庫名稱}
+			// will show You are now connected to database "${資料庫名稱}" as user "postgres".
+			// 命令行前墜會變 : ${資料庫名稱}-#
 
-		或是連線進來的時候就指定
-			psql -h localhost -p 5432 -U {帳號} ${資料庫名稱}
+			或是連線進來的時候就指定
+				psql -h localhost -p 5432 -U {帳號} ${資料庫名稱}
 
-	4.刪除資料庫
-		DROP DATABASE [ IF EXISTS ] name
-			例如: DROP DATABASE testdb;
+		4.刪除資料庫
+			DROP DATABASE [ IF EXISTS ] name
+				例如: DROP DATABASE testdb;
 
-		外部指令直接刪除資料庫方式
-			dropdb  [option...] dbname
+			外部指令直接刪除資料庫方式
+				dropdb  [option...] dbname
+				例如:
+					dropdb -h localhost -p 5432 -U {帳號} ${資料庫名稱}
+					Password for user postgress: ****
+
+	4.資料表操作
+		1.建表
+			CREATE TABLE table_name(
+			   column1 datatype,
+			   column2 datatype,
+			   column3 datatype,
+			   .....
+			   columnN datatype,
+			   PRIMARY KEY( one or more columns )
+			);
 			例如:
-				dropdb -h localhost -p 5432 -U {帳號} ${資料庫名稱}
-				Password for user postgress: ****
+				CREATE TABLE COMPANY(
+				   ID INT PRIMARY KEY     NOT NULL,
+				   NAME           TEXT    NOT NULL,
+				   AGE            INT     NOT NULL,
+				   ADDRESS        CHAR(50),
+				   SALARY         REAL
+				);
 
-4.資料表操作
-	1.建表
-		CREATE TABLE table_name(
-		   column1 datatype,
-		   column2 datatype,
-		   column3 datatype,
-		   .....
-		   columnN datatype,
-		   PRIMARY KEY( one or more columns )
-		);
-		例如:
-			CREATE TABLE COMPANY(
-			   ID INT PRIMARY KEY     NOT NULL,
-			   NAME           TEXT    NOT NULL,
-			   AGE            INT     NOT NULL,
-			   ADDRESS        CHAR(50),
-			   SALARY         REAL
-			);
+				CREATE TABLE DEPARTMENT(
+				   ID INT PRIMARY KEY      NOT NULL,
+				   DEPT           CHAR(50) NOT NULL,
+				   EMP_ID         INT      NOT NULL
+				);
 
-			CREATE TABLE DEPARTMENT(
-			   ID INT PRIMARY KEY      NOT NULL,
-			   DEPT           CHAR(50) NOT NULL,
-			   EMP_ID         INT      NOT NULL
-			);
-	2. 查表
-		\d ${表名}
-		例如
-			\d company
+		2. 列表
+			\dt [pattern]
 
-	3. 刪表
-		DROP TABLE ${表名};
-		例如:
-			drop table department, company;
+		3. 查表
+			\d ${表名}
+			例如
+				\d company
+
+		4. 刪表
+			DROP TABLE ${表名};
+			例如:
+				drop table department, company;
+
+	5. other sql
+		https://database.guide/how-the-to_number-function-works-in-postgresql/
+			to_number()、cast()
