@@ -1,0 +1,118 @@
+
+https://www.baeldung.com/apache-commons-csv
+提供一個建立和讀取 csv 的 lib
+
+========================================================================================================================
+1.Maven Dependency
+	<dependency>
+		<groupId>org.apache.commons</groupId>
+		<artifactId>commons-csv</artifactId>
+		<version>1.10</version>
+	</dependency>
+
+
+2.Reading a CSV File
+	Sample csv mock data
+		author,title
+		Dan Simmons,Hyperion
+		Douglas Adams,The Hitchhiker's Guide to the Galaxy
+
+	Prepare java code of csv data
+		Map<String, String> AUTHOR_BOOK_MAP = new HashMap<>() {
+			{
+				put("Dan Simmons", "Hyperion");
+				put("Douglas Adams", "The Hitchhiker's Guide to the Galaxy");
+			}
+		});
+		String[] HEADERS = { "author", "title"};
+
+	java test
+		@Test
+		void givenCSVFile_whenRead_thenContentsAsExpected() throws IOException {
+			Reader in = new FileReader("src/test/resources/book.csv");
+
+			CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+				.setHeader(HEADERS)
+				.setSkipHeaderRecord(true)
+				.build();
+
+			Iterable<CSVRecord> records = csvFormat.parse(in);
+
+			for (CSVRecord record : records) {
+				String author = record.get("author");
+				String title = record.get("title");
+				assertEquals(AUTHOR_BOOK_MAP.get(author), title);
+			}
+		}
+
+3.Creating a CSV File
+	@Test
+	void givenAuthorBookMap_whenWrittenToStream_thenOutputStreamAsExpected() throws IOException {
+		StringWriter sw = new StringWriter();
+
+		CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+			.setHeader(HEADERS)
+			.build();
+
+		try (final CSVPrinter printer = new CSVPrinter(sw, csvFormat)) {
+			AUTHOR_BOOK_MAP.forEach((author, title) -> {
+				try {
+					printer.printRecord(author, title);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+		}
+		assertEquals(EXPECTED_FILESTREAM, sw.toString().trim());
+	}
+
+4.Headers & Reading Columns
+	1. Accessing Columns by Index
+		Reader in = new FileReader("book.csv");
+		Iterable<CSVRecord> records = csvFormat.parse(in);
+		for (CSVRecord record : records) {
+			String columnOne = record.get(0);
+			String columnTwo = record.get(1);
+		}
+
+	2. Accessing Columns by Predefined Headers
+		Iterable<CSVRecord> records = csvFormat.parse(in);
+		for (CSVRecord record : records) {
+			String author = record.get("author");
+			String title = record.get("title");
+		}
+
+	3. Using Enums as Headers
+		enum BookHeaders{
+			author, title
+		}
+
+		CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+			.setHeader(BookHeaders.class)
+			.setSkipHeaderRecord(true)
+			.build();
+
+		Iterable<CSVRecord> records = csvFormat.parse(in);
+
+		for (CSVRecord record : records) {
+			String author = record.get(BookHeaders.author);
+			String title = record.get(BookHeaders.title);
+			assertEquals(AUTHOR_BOOK_MAP.get(author), title);
+		}
+
+	4. Skipping the Header Line
+		CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+			.setSkipHeaderRecord(true)
+			.build();
+
+		Iterable<CSVRecord> records = csvFormat.parse(in);
+
+		for (CSVRecord record : records) {
+			String author = record.get("author");
+			String title = record.get("title");
+		}
+
+	5. Creating a File With Headers
+		FileWriter out = new FileWriter("book_new.csv");
+		CSVPrinter printer = csvFormat.print(out);
+========================================================================================================================

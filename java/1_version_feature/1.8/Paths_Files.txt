@@ -14,122 +14,130 @@ temp file : 臨時文件建立與刪除
 	https://ithelp.ithome.com.tw/articles/10102562
 	https://programdoubledragon.blogspot.com/2018/12/java-nio2.html=
 ========================================================================================================================
-get Path by string
-	Path path = Paths.get(...)
+================================= Path =================================================================================
+========================================================================================================================
+路徑處理有關
+	get Path by string
+		Path path = Paths.get(...)
 
-https://www.baeldung.com/java-file-directory-exists
-Path check is exists
-	Path path = Paths.get("does-not-exist.txt");
-	assertFalse(Files.exists(path));
+	Path 路經階層
+		int levels = path.getNameCount();
 
-	Path tempFile = Files.createTempFile("baeldung", "exist-article");
-	assertTrue(Files.exists(tempFile));
+	取得上一層
+		path.getParent();
 
-	Path tempDirectory = Files.createTempDirectory("baeldung-exists");
-	assertTrue(Files.exists(tempDirectory));
+	取得 Path 其兄弟路徑
+		siblingFileName = sourcePath.getFileName() + "xxxx";
+		Path siblingPath = sourcePath.resolveSibling(siblingFileName);
 
-Path 是否為目錄
-	Files.isDirectory(path);
+	取得 Path 其延伸路徑
+		假設有路徑為 xxxx，取得其延伸路徑為 xxxx/yyy
+		Path path = Paths.get("xxxx")
+		String extendDir = "yyy";
+		Path extendPath = sourcePath.resolve(extendDir);
 
-Path 是否為檔案
-	Files.isRegularFile(path);
+	Path 標準正常化 : 要目的是消除路徑中的冗餘部分，並將其轉換為標準形式。它執行以下操作：
+		path.normalize()
+			1.移除路徑中的多餘分隔符：它將路徑中連續的多個分隔符替換為單個分隔符。例如，/dir//file.txt將被規範化為/dir/file.txt。
 
-Path 檔案大小
-	Files.size();
+			2.處理.（當前目錄）和..（上級目錄）：它解析路徑中的.和..符號，並將其轉換為對應的實際目錄。例如，/dir/./file.txt將被規範化為/dir/file.txt，而/dir/../file.txt將被規範化為/file.txt。
 
-Path 路經階層
-	int levels = path.getNameCount();
+			3.處理符號鏈接：如果路徑中存在符號鏈接，它將嘗試解析符號鏈接，將其轉換為實際目標路徑。
 
-是否存在 path
-	boolean exist = Files.exists(path);
+		注意事項: 只進行路徑的規範化處理，並不檢查路徑是否存在或是否有效。它僅對路徑字符串進行處理，並不對底層文件系統進行任何操作
+		功能類似於 spring 裡的 StringUtils.cleanPath，但功能略於它
 
-取得上一層
-	path.getParent();
-
-Path to File
-	File path.toFile();
-
-Path 標準正常化 : 要目的是消除路徑中的冗餘部分，並將其轉換為標準形式。它執行以下操作：
-	path.normalize()
-		1.移除路徑中的多餘分隔符：它將路徑中連續的多個分隔符替換為單個分隔符。例如，/dir//file.txt將被規範化為/dir/file.txt。
-
-		2.處理.（當前目錄）和..（上級目錄）：它解析路徑中的.和..符號，並將其轉換為對應的實際目錄。例如，/dir/./file.txt將被規範化為/dir/file.txt，而/dir/../file.txt將被規範化為/file.txt。
-
-		3.處理符號鏈接：如果路徑中存在符號鏈接，它將嘗試解析符號鏈接，將其轉換為實際目標路徑。
-
-	注意事項: 只進行路徑的規範化處理，並不檢查路徑是否存在或是否有效。它僅對路徑字符串進行處理，並不對底層文件系統進行任何操作
-	功能類似於 spring 裡的 StringUtils.cleanPath，但功能略於它
-
-取得 Path 其兄弟路徑
-	siblingFileName = sourcePath.getFileName() + "xxxx";
-	Path siblingPath = sourcePath.resolveSibling(siblingFileName);
-
-取得 Path 其延伸路徑
-	extendDir = "xxxx";
-	Path extendPath = sourcePath.resolve(extendDir);
-
-生成暫存預設位置下檔案
-	Files.createTempFile("prefix-", ".suffix");
-
-生成指定位置下的暫存檔案
-	Files.createTempFile(Paths.get("tmpDir"), "prefix-", ".suffix");
-
-走訪 path
-	Path directory = Paths.get("your_directory_path");
-		try (Stream<Path> walk = Files.walk(directory)) {
-            walk.filter(Files::isRegularFile) // 過濾出普通文件
-                .filter(path -> {
-                    String fileName = path.getFileName().toString();
-                    return fileName.endsWith("axx") || fileName.endsWith("bxx");
-                })
-                .forEach(path -> System.out.println("文件名：" + path));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-類似 rm -rf ${path}，但不是離開程序後才刪除，不適用於單元測試
-	public class DirectoryRemover {
-		public static void main(String[] args) throws IOException {
-			String directoryPath = "/path/to/directory";
-			removeDirectory(directoryPath);
-		}
-
-		private static void removeDirectory(String directoryPath) throws IOException {
-			Path directory = Paths.get(directoryPath);
-
-			if (!Files.exists(directory)) {
-				System.out.println("Directory does not exist: " + directoryPath);
-				return;
+	走訪 path
+		Path directory = Paths.get("your_directory_path");
+			try (Stream<Path> walk = Files.walk(directory)) {
+				walk.filter(Files::isRegularFile) // 過濾出普通文件
+					.filter(path -> {
+						String fileName = path.getFileName().toString();
+						return fileName.endsWith("axx") || fileName.endsWith("bxx");
+					})
+					.forEach(path -> System.out.println("文件名：" + path));
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 
-			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					Files.delete(file);
-					System.out.println("Deleted file: " + file);
-					return FileVisitResult.CONTINUE;
+	類似 rm -rf ${path}，但不是離開程序後才刪除，不適用於單元測試
+		public class DirectoryRemover {
+			public static void main(String[] args) throws IOException {
+				String directoryPath = "/path/to/directory";
+				removeDirectory(directoryPath);
+			}
+
+			private static void removeDirectory(String directoryPath) throws IOException {
+				Path directory = Paths.get(directoryPath);
+
+				if (!Files.exists(directory)) {
+					System.out.println("Directory does not exist: " + directoryPath);
+					return;
 				}
 
-				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					Files.delete(dir);
-					System.out.println("Deleted directory: " + dir);
-					return FileVisitResult.CONTINUE;
-				}
-			});
+				Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+					@Override
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+						Files.delete(file);
+						System.out.println("Deleted file: " + file);
+						return FileVisitResult.CONTINUE;
+					}
 
-			System.out.println("Directory and its contents have been removed: " + directoryPath);
+					@Override
+					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+						Files.delete(dir);
+						System.out.println("Deleted directory: " + dir);
+						return FileVisitResult.CONTINUE;
+					}
+				});
+
+				System.out.println("Directory and its contents have been removed: " + directoryPath);
+			}
 		}
-	}
-	等於 org.springframework.util.FileSystemUtils.deleteRecursively(path)
+		等於 org.springframework.util.FileSystemUtils.deleteRecursively(path)
 
+	檔案轉成路徑
+		File file = new File(....);
+		Path path = file.toPath();
 
 ========================================================================================================================
 ================================= nio2 Files ===========================================================================
 ========================================================================================================================
-File to Path
-	File file = new File(....);
-	Path path = file.toPath();
+檔案處理有關
+	https://www.baeldung.com/java-file-directory-exists
+	Path check is exists
+		Path path = Paths.get("does-not-exist.txt");
+		assertFalse(Files.exists(path));
+
+		Path tempFile = Files.createTempFile("baeldung", "exist-article");
+		assertTrue(Files.exists(tempFile));
+
+		Path tempDirectory = Files.createTempDirectory("baeldung-exists");
+		assertTrue(Files.exists(tempDirectory));
+
+	Path 是否為目錄
+		Files.isDirectory(path);
+
+	Path 是否為檔案
+		Files.isRegularFile(path);
+
+	Path 檔案大小
+		Files.size();
+
+	是否存在 path
+		boolean exist = Files.exists(path);
+
+	Path 轉成檔案
+		File path.toFile();
+
+	生成暫存預設位置下檔案
+		Files.createTempFile("prefix-", ".suffix");
+
+	生成指定位置下的暫存檔案
+		Files.createTempFile(Paths.get("tmpDir"), "prefix-", ".suffix");
+
+	路徑轉成檔案字元處理
+		try (BufferedReader reader = Files.newBufferedReader(path)) {
 
 ========================================================================================================================
 zip a file

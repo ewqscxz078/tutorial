@@ -1,0 +1,39 @@
+
+============================================================================================================
+Java 8
+	package path : java.time
+		主要目標是提供更清晰、更易用且更安全的日期和時間處理方式。
+			LocalDateTime
+				表示日期和時間，不包含時區。
+				預設為當前系統的時區
+					因此當電腦A是美國時區、電腦B是台灣時區
+					則分別在其電腦執行 JAVA LocalDate currentDate = LocalDate.now();
+					會有不同的結果
+============================================================================================================
+建構
+	取得當前日期時間
+		LocalDateTime localDateTime = LocalDateTime.now();
+
+	指定日期時間
+		LocalDateTime.of(int year, Month month, int dayOfMonth, int hour, int minute);
+
+日期運算
+	相加
+		年份
+			localDateTime.plusYears(long);
+		月份
+			localDateTime.plusMonths(long);
+	相減
+		年份
+			localDateTime.minusYears(long);
+		月份
+			localDateTime.minusMonths(long);
+
+轉換
+	時間物件
+		取得
+			localDateTime.toLocalTime();
+
+	字串
+		指定轉換格式
+			localDateTime.format(DateTimeFormatter.ofPattern("YYYYMMDD-HHmmss"));

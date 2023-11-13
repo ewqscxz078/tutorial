@@ -1,0 +1,76 @@
+https://www.digitalocean.com/community/tutorials/proxy-design-pattern
+
+=================================================================================================================================================================
+======================================== Proxy Design Pattern =================================================================================================
+=================================================================================================================================================================
+
+特徵
+	代理模式為另一個物件提供了一個佔位符來控制對其的存取。 當我們想要提供對功能的受控存取時，可以使用此模式。
+
+
+interface bean
+	public interface CommandExecutor {
+
+		public void runCommand(String cmd) throws Exception;
+	}
+
+一般存取實作 bean
+	public class CommandExecutorImpl implements CommandExecutor {
+
+		@Override
+		public void runCommand(String cmd) throws IOException {
+					//some heavy implementation
+			Runtime.getRuntime().exec(cmd);
+			System.out.println("'" + cmd + "' command executed.");
+		}
+
+	}
+
+Proxy Class
+	public class CommandExecutorProxy implements CommandExecutor {
+
+		private boolean isAdmin;
+		private CommandExecutor executor;
+
+		public CommandExecutorProxy(String user, String pwd){
+			if("Pankaj".equals(user) && "J@urnalD$v".equals(pwd)) isAdmin=true;
+			executor = new CommandExecutorImpl();
+		}
+
+		@Override
+		public void runCommand(String cmd) throws Exception {
+			if(isAdmin){
+				executor.runCommand(cmd);
+			}else{
+				if(cmd.trim().startsWith("rm")){
+					throw new Exception("rm command is not allowed for non-admin users.");
+				}else{
+					executor.runCommand(cmd);
+				}
+			}
+		}
+
+	}
+
+Client 演示
+	public class ProxyPatternTest {
+
+		public static void main(String[] args){
+			CommandExecutor executor = new CommandExecutorProxy("Pankaj", "wrong_pwd");
+			try {
+				executor.runCommand("ls -ltr");
+				executor.runCommand(" rm -rf abc.pdf");
+			} catch (Exception e) {
+				System.out.println("Exception Message::"+e.getMessage());
+			}
+
+		}
+
+	}
+
+	// 'ls -ltr' command executed.
+	// Exception Message::rm command is not allowed for non-admin users.
+
+
+Proxy Design Pattern Example in
+	Java RMI package uses proxy pattern. That’s all for proxy design pattern in java
