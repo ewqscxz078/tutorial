@@ -1,5 +1,5 @@
 https://www.youtube.com/watch?v=mGf1M9VNDWs&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=76&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
-
+https://www.baeldung.com/parameterized-tests-junit-5
 參數化測試
 	JUnit5很重要的一個新特性，它使得用不同的參數多次運行測試成為了可能，也為我們的單元測試帶來許多便利。
 

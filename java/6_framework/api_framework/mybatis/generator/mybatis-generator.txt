@@ -1,0 +1,142 @@
+
+mybatis 生成器
+======================================================================================================
+================================ myBatis generator ===================================================
+======================================================================================================
+https://www.tpisoftware.com/tpu/articleDetails/1392
+https://juejin.cn/post/6844903982582743048
+
+1.設定
+	maven
+		<dependency><groupId>org.mybatis.generator</groupId><artifactId>mybatis-generator</artifactId><version>1.4.2</version><type>pom</type></dependency>
+		<dependency><groupId>org.mybatis.generator</groupId><artifactId>mybatis-generator-maven-plugin</artifactId><version>1.4.2</version></dependency>
+
+
+	generatorConfig配置 (generatorConfig.xml)
+		<?xml version="1.0" encoding="UTF-8"?>
+		<!DOCTYPE generatorConfiguration
+				PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+				"http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+		<generatorConfiguration>
+			<!-- 指定連線資料庫時所需要的JDBC driver的檔案位置 -->
+			<classPathEntry
+				location="C:/Thinkpower/ojdbc6/ojdbc6.jar" />
+			<context id="my" targetRuntime="MyBatis3">
+
+				<commentGenerator>
+					<property name="suppressDate" value="false" />
+					<property name="suppressAllComments" value="true" />
+				</commentGenerator>
+
+				<!-- 資料庫連線設定 -->
+				<jdbcConnection
+					driverClass="oracle.jdbc.driver.OracleDriver"
+					connectionURL="jdbc:oracle:thin:@//172.20.10.1:1521/xe"
+					userId="itp" password="1234" />
+
+				<!-- 要產生的model位置，targetProject的值為專案的Source folder，所以是gm/src/main/java -->
+				<javaModelGenerator
+					targetPackage="com.tsb.itp.vo"
+					targetProject="gm/src/main/java">
+					<property name="enableSubPackages" value="true" />
+					<property name="trimStrings" value="true" />
+				</javaModelGenerator>
+
+				<!-- 要產生的MyBatis Mapper位置 -->
+				<sqlMapGenerator targetPackage="mapper"
+					targetProject="gm/src/main/java">
+					<property name="enableSubPackages" value="true" />
+				</sqlMapGenerator>
+
+				<!-- 要產生的MyBatis Dao位置 -->
+				<javaClientGenerator
+					targetPackage="com.tsb.itp.dao"
+					targetProject="gm/src/main/java" type="XMLMAPPER">
+					<property name="enableSubPackages" value="true" />
+				</javaClientGenerator>
+
+				<!-- 要生成的資料表 -->
+				<table schema="" tableName="SYS_CFG"
+					domainObjectName="SysCfg" enableCountByExample="false"
+					enableUpdateByExample="false" enableDeleteByExample="false"
+					enableSelectByExample="false" selectByExampleQueryId="false">
+				</table>
+
+			</context>
+		</generatorConfiguration>
+
+2.使用方式
+	1.use eclipse plugin
+		在generatorConfig文件滑鼠右鍵，點選Run MyBatis Generator
+
+	2.封閉環境 生成
+		1.generatorConfig配置 (generatorConfig.xml)
+			<?xml version="1.0" encoding="UTF-8"?>
+			<!DOCTYPE generatorConfiguration
+					PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+					"http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+			<generatorConfiguration>
+			<!-- 指定連線資料庫時所需要的JDBC driver的檔案位置 -->
+				<classPathEntry
+					location="C:/mybatis/ojdbc6-11.2.0.3.jar" />
+				<context id="my" targetRuntime="MyBatis3">
+
+					<commentGenerator>
+						<property name="suppressDate" value="false" />
+						<property name="suppressAllComments" value="true" />
+					</commentGenerator>
+
+			<!-- 資料庫連線設定 -->
+					<jdbcConnection
+						driverClass="oracle.jdbc.driver.OracleDriver"
+						connectionURL="jdbc:oracle:thin:@//172.20.10.1:1521/xe"
+						userId="itp" password="1234" />
+
+			<!-- 要產生的model位置，targetProject的值為專案的Source folder，所以是gm/src/main/java -->
+					<javaModelGenerator
+						targetPackage="com.tsb.itp.vo"
+						targetProject="C:/mybatis/test/">
+						<property name="enableSubPackages" value="true" />
+						<property name="trimStrings" value="true" />
+					</javaModelGenerator>
+
+			<!-- 要產生的MyBatis Mapper位置 -->
+					<sqlMapGenerator targetPackage="mapper"
+						targetProject="C:/mybatis/test/">
+						<property name="enableSubPackages" value="true" />
+					</sqlMapGenerator>
+
+			<!-- 要產生的MyBatis Dao位置 -->
+					<javaClientGenerator
+						targetPackage="com.tsb.itp.dao"
+						targetProject="gC:/mybatis/test/" type="XMLMAPPER">
+						<property name="enableSubPackages" value="true" />
+					</javaClientGenerator>
+
+					<!-- 要生成的資料表 -->
+					<table schema="" tableName="SYS_CFG"
+						domainObjectName="SysCfg" enableCountByExample="false"
+						enableUpdateByExample="false" enableDeleteByExample="false"
+						enableSelectByExample="false" selectByExampleQueryId="false">
+					</table>
+
+				</context>
+			</generatorConfiguration>
+		2.cmd
+			java -jar mybatis-generator-core-1.3.7.jar -configfile generatorConfig.xml -overwrite
+
+	3.java 生成
+		public class MBGTool {
+			public static void main(String[] args) throws Exception {
+				List<String> warnings = new ArrayList<>();
+				boolean overwrite = true;
+				InputStream configFile = MBGTool.class.getResourceAsStream("/generator/generatorConfig.xml");
+				ConfigurationParser cp = new ConfigurationParser(warnings);
+				Configuration config = cp.parseConfiguration(configFile);
+				DefaultShellCallback callback = new DefaultShellCallback(overwrite);
+				MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
+				myBatisGenerator.generate(null);
+			}
+		}

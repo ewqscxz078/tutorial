@@ -1,0 +1,23 @@
+
+mybatis 常用說明
+======================================================================================================
+================================ myBatis 分頁 ========================================================
+======================================================================================================
+
+中國
+	PageHelper
+		https://pdai.tech/md/spring/springboot/springboot-x-mysql-mybatis-page.html
+		https://github.com/pagehelper/Mybatis-PageHelper/blob/master/wikis/zh/HowToUse.md
+
+非中國
+	1.MyBatis Paginator:
+		GitHub 頁面： MyBatis Paginator
+		MyBatis Paginator 是一個基於 MyBatis 的分頁插件，支持 MySQL、PostgreSQL、SQL Server 等數據庫。它提供了簡單的 API 來處理分頁。
+
+	2.MyBatis Cursor Pagination:
+		GitHub 頁面： MyBatis Cursor Pagination
+		這個插件使用游標遊走（Cursor Pagination）的方式實現分頁。游標遊走是一種在持續查詢中維護游標的技術，適用於大數據集的分頁操作。
+
+	3.ibatis-paginator:
+		GitHub 頁面： ibatis-paginator
+		ibatis-paginator 是一個支持 Apache iBATIS（前身為 MyBatis）的分頁庫，提供了基於 LIMIT 和 OFFSET 的分頁功能。

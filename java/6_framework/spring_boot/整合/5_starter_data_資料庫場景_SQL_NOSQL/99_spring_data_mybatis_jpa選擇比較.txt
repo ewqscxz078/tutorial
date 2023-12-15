@@ -1,0 +1,23 @@
+https://medium.com/@zzzzzYang/spring-data-jpa-vs-mybatis-8611acff00ec
+
+Spring Data JPA vs MyBatis
+
+Spring Data JPA
+	優勢
+		1. 簡化開發：Spring Data JPA通過使用JPA（Java Persistence API）標準，大大減少了開發者的編碼量，簡化了數據訪問層的開發流程。
+		2. 自動化查詢：Spring Data JPA提供了自動生成查詢方法的功能，通過方法命名規則就能夠生成相應的查詢語句，從而減少了手動編寫SQL語句的工作量。
+		3. 強大的ORM功能：Spring Data JPA集成了Hibernate作為JPA的實現，提供了強大的對象關係映射（ORM）功能，能夠方便地進行對象和關係數據庫之間的轉換。
+		4. 數據源管理：Spring Data JPA通過Spring框架的數據源管理功能，能夠方便地切換和配置不同的數據源。
+
+	劣勢：
+		1. 性能問題：由於它是基於ORM的方式進行數據訪問，可能存在一定的性能開銷。特別是在處理大量數據或複雜查詢時，性能可能會受到影響。
+		2. 靈活性限制：雖然Spring Data JPA提供了方便的自動化查詢方法，但對於復雜的查詢需求，可能需要編寫自定義的JPQL（Java Persistence Query Language）查詢語句，這對於一些高級查詢要求較高的場景可能有些局限。
+
+MyBatis
+	優勢：
+		1. 靈活性高：MyBatis允許開發者使用原生的SQL查詢語句，可以靈活地編寫和優化SQL語句，對於復雜的查詢需求更加自由。
+		2. 性能優化：MyBatis可以通過手動優化SQL語句、使用緩存等技術手段來提高查詢性能，對於大數據量的查詢和性能要求較高的場景更有優勢。
+		3. 易於集成：MyBatis可以與各種數據庫連接池和框架集成，例如Spring等，開發者可以根據自己的需求進行定制化的配置和擴展。
+	劣勢：
+		1. 需要手動編寫SQL語句：相比於Spring Data JPA的自動化查詢方法，MyBatis需要開發者手動編寫SQL語句，這需要一定的SQL語法和數據庫知識，並且增加了開發和維護的工作量。
+		2. 缺乏對象關係映射：相對於Spring Data JPA的自動化對象關係映射功能，MyBatis需要開發者手動處理對象和關係數據庫之間的轉換。

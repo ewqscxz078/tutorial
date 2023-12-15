@@ -1,0 +1,87 @@
+
+mybatis 常用說明
+======================================================================================================
+================================ myBatis CRUD ========================================================
+======================================================================================================
+https://github.com/zwh18013202115/spring-learn-integration/blob/master/springboot/springboot-mybatis/mybatis-annotations/DOC.md
+
+http://www.yanhongzhi.com/post/mybatis-annotation.html
+
+debug
+	spring.boot application.yml
+		logging.level.${package.myBatis.mapper}=debug
+
+
+1.insert
+	db bean
+		@Data
+		@ToString
+		@AllArgsConstructor
+		@NoArgsConstructor
+		public class UserModel {
+			private Integer id;
+			private String userName;
+		}
+
+	mapper bean/dao bean
+		@Mapper
+		public interface UserMapper {
+			@Insert("INSERT INTO user (username) VALUES (#{user.userName})")
+			@Options(useGeneratedKeys = true, keyColumn = "id", keyProperty = "user.id")
+			Integer insertModel(@Param(value = "user") UserModel model);
+		}
+
+		@Options該註解比較特殊,主要是用於標記我們對插入後返回資料的操作,例如我們指定了useGeneratedKeys=true和keyColumn = "id",
+		這樣的話我們插入資料的時候會自動產生主鍵,keyProperty = " user.id"標記著我們插入資料成功後返回目前插入資料庫表中的id資料.
+		需要注意的是我們如果在傳遞參數的時候使用@Param修飾參數後,那麼keyProperty需要指定修飾的網域,
+		如果未進行 修飾的話,我們可以直接使用實體類別中的欄位名稱.
+
+	另一種
+
+
+2.select
+	mapper bean/dao bean
+		一般條件
+			@Results(value = {
+					@Result(property = "id", column = "id", id = true),
+					@Result(property = "userName", column = "username")
+			})
+			@Select(value = "SELECT id, username FROM user WHERE username = #{userName}")
+			UserModel findByUserName(@Param(value = "userName") String userName);
+
+		動態條件
+			@Results(value = {
+					@Result(property = "id", column = "id", id = true),
+					@Result(property = "userName", column = "username")
+			})
+			@Select(value = "<script>" +
+					"SELECT id, username FROM user WHERE 1=1" +
+					"<if test='userName != null'> and username=#{userName} </if>" +
+					"</script>")
+			UserModel findByUserNameAndCustomScript(@Param(value = "userName") String userName);
+
+		共享Results結果資料
+			@Results(id = "userRequiredResults", value = {
+					@Result(property = "id", column = "id", id = true),
+					@Result(property = "userName", column = "username")
+			})
+			@Select(value = "SELECT id, username FROM user WHERE username = #{userName}")
+			UserModel findByUserName(@Param(value = "userName") String userName);
+
+			// 套用共享
+			@ResultMap(value = "userRequiredResults")
+			@Select(value = "<script>" +
+					"SELECT id, username FROM user WHERE 1=1" +
+					"<if test='userName != null'> and username=#{userName} </if>" +
+					"</script>")
+			UserModel findByUserNameAndCommonResult(@Param(value = "userName") String userName);
+
+3.update
+	mapper bean/dao bean
+		@Update(value = "UPDATE user SET userName = #{user.userName} WHERE id = #{user.id}")
+		void updateModel(@Param(value = "user") UserModel model);
+
+4.delete
+	mapper bean/dao bean
+		@Delete(value = "DELETE FROM user WHERE id = #{id}")
+		Integer deleteModel(@Param(value = "id") Integer id);

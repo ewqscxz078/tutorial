@@ -1,0 +1,101 @@
+提供一個解析 html lib
+
+
+======================================================================================================
+https://www.baeldung.com/java-with-jsoup
+
+maven
+	<dependency>
+		<groupId>org.jsoup</groupId>
+		<artifactId>jsoup</artifactId>
+		<version>1.16.2</version>
+	</dependency>
+
+1.url get select
+	Document doc = Jsoup.connect("http://example.com").get();
+	doc.select("p").forEach(System.out::println);
+
+2.Loading
+	String blogUrl = "https://spring.io/blog";
+	Document doc = Jsoup.connect(blogUrl).get();
+
+	若想處理例外
+		try {
+		   Document doc404 = Jsoup.connect("https://spring.io/will-not-be-found").get();
+		} catch (HttpStatusException ex) {
+		   //...
+		}
+	更多的自訂化設定
+		Connection connection = Jsoup.connect(blogUrl);
+		connection.userAgent("Mozilla");
+		connection.timeout(5000);
+		connection.cookie("cookiename", "val234");
+		connection.cookie("cookiename", "val234");
+		connection.referrer("http://google.com");
+		connection.header("headersecurity", "xyz123");
+		Document docCustomConn = connection.get();
+
+		fluent setting 方式
+			Document docCustomConn = Jsoup.connect(blogUrl)
+			  .userAgent("Mozilla")
+			  .timeout(5000)
+			  .cookie("cookiename", "val234")
+			  .cookie("anothercookie", "ilovejsoup")
+			  .referrer("http://google.com")
+			  .header("headersecurity", "xyz123")
+			  .get();
+
+3.Filtering
+	1.Selecting
+		Elements links = doc.select("a");
+		Elements logo = doc.select(".spring-logo--container");
+		Elements pagination = doc.select("#pagination_control");
+		Elements divsDescendant = doc.select("header div");
+		Elements divsDirect = doc.select("header > div");
+
+	2.getElementById
+		Element pag = doc.getElementById("pagination_control");
+		Elements desktopOnly = doc.getElementsByClass("desktopOnly");
+
+4.Traversing
+	Element firstArticle = articles.first();
+	Element lastSection = articles.last();
+	Element secondSection = articles.get(2);
+	Elements allParents = firstArticle.parents();
+	Element parent = firstArticle.parent();
+	Elements children = firstArticle.children();
+	Elements siblings = firstArticle.siblingElements();
+
+	// 走訪全部
+	articles.forEach(el -> System.out.println("article: " + el));
+
+	// previous selection (sub-selection):
+	Elements articleParagraphs = firstArticle.select(".paragraph");
+
+5.Extracting
+	Element firstArticle = doc.select("article").first();
+	Element titleElement= firstArticle.select("h1 a").first();
+	String titleText= titleElement.text();
+	String articleHtml = firstArticle.html();
+	String outerHtml = firstArticle.outerHtml();
+
+6.Modifying
+	1.Setting Attributes and Inner Text/HTML
+		timeElement.attr("datetime", "2016-12-16 15:19:54.3");
+		sectionDiv.text("foo bar");
+		firstArticle.select("h2").html("<div><span></span></div>");
+
+	2.Creating and Appending Elements
+		Element link = new Element(Tag.valueOf("a"), "")
+		  .text("Checkout this amazing website!")
+		  .attr("href", "http://baeldung.com")
+		  .attr("target", "_blank");
+		firstArticle.appendChild(link);
+
+	3.Removing Elements
+		doc.select("li.navbar-link").remove();
+		firstArticle.select("img").remove();
+
+	4.Converting the Modified Document to HTML
+		String docHtml = doc.html();
+======================================================================================================
