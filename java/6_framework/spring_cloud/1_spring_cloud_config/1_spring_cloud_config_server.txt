@@ -1,0 +1,144 @@
+======================================================================================================
+================================ 參考 ================================================================
+======================================================================================================
+https://spring.io/projects/spring-cloud-config/
+https://docs.spring.io/spring-cloud-config/docs/3.1.9/reference/html/
+
+======================================================================================================
+================================ 好處 ================================================================
+======================================================================================================
+
+Spring Cloud Config Server features:
+	1.HTTP, resource-based API for external configuration (name-value pairs, or equivalent YAML content)
+		Http、api外部資源
+	2.Encrypt and decrypt property values (symmetric or asymmetric)
+		加解密資訊(同步或非同步)
+	3.Embeddable easily in a Spring Boot application using @EnableConfigServer
+		快速建立啟動 Spring Cloud Config Server
+
+好處 from charGPT
+	集中管理配置：
+		Spring Cloud Config Server 允許你將配置信息集中存儲在一個中心位置，而不是散佈在多個微服務中。這使得配置更容易管理、更新和維護。
+	動態更新配置：
+		配置信息可以動態地更新，而不需要重啟應用程式。這意味著你可以在不停止服務的情況下更新配置，實現即時生效。
+	多環境支持：
+		Spring Cloud Config Server 支持多環境配置，例如開發、測試、生產等。這樣你可以為每個環境定義不同的配置，並確保每個環境使用正確的配置。
+	版本管理：
+		配置信息可以進行版本管理，你可以隨時回滾到先前的配置版本。這有助於應對配置變更後可能引入的問題，提供了一個恢復點。
+	安全性：
+		Spring Cloud Config Server 提供了基於應用程式的安全性機制，例如使用 HTTPS 和基於憑證的身份驗證。這有助於確保配置信息的安全性。
+	支援不同存儲後端：
+		Spring Cloud Config Server 支援多種後端存儲，包括本地文件系統、Git 存儲庫、Vault、Consul 等。這使得配置的存儲和檢索更具彈性。
+	避免硬編碼：
+		使用 Spring Cloud Config Server 可以避免硬編碼配置信息在應用程式中，而是動態地從配置服務中檢索。這提高了應用程式的可配置性。
+
+======================================================================================================
+================================ 設定 ================================================================
+======================================================================================================
+1.pom.xml
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-config-server</artifactId>
+	</dependency>
+
+2.java 設定為 spring cloud config server
+	@SpringBootApplication
+	@EnableConfigServer    // 這個一定要設定
+	public class ConfigServer {
+	  public static void main(String[] args) {
+		SpringApplication.run(ConfigServer.class, args);
+	  }
+	}
+
+3.spring cloud config server : application.properties/yml
+	server.port: 8888
+	spring.cloud.config.server.accept-empty: false # 代表當 {application} 找不到則 config server 回應 HTTP status 404；預設為true，會回應空的配置檔
+		# debug 用
+	spring.cloud.config.server.default-label: master #不然預設會先用 main branch 搜尋，找不到會有洗 deubg log 後再嘗試用 master branch 找 ，決定使用哪個 {label}
+	spring.cloud.config.server.git.uri: file:///${user.home}/config-repo  # 佈署環境應該成 https://${git-url}/$config-repo
+		注意: Windows 為 file:///${user.home}/config-repo 格式
+		快速建立 git repo 範例
+			$ cd $HOME
+			$ mkdir config-repo
+			$ cd config-repo
+			$ git init .
+			$ echo user.role: local > myapp-local.yml
+			$ git add -A .
+			$ git commit -m "Add myapp-local.yml"
+
+		注意: 使用本地檔案系統的 git repo 僅適合用於測試，正式環境應該使用遠端配置的 git repo
+
+4.spring cloud config server : 提供給 client 可操作 Http Service 對應資源方式範例: 可用於驗證與確認設定的狀況
+	/{application}/{profile}[/{label}]
+		curl localhost:8888/foo/development
+		curl localhost:8888/foo/development/master
+		curl localhost:8888/foo/development,db/master
+	/{application}-{profile}.yml
+		curl localhost:8888/foo-development.yml
+	/{application}-{profile}.properties
+		curl localhost:8888/foo-db.properties
+	/{label}/{application}-{profile}.yml
+	/{label}/{application}-{profile}.properties
+		curl localhost:8888/master/foo-db.properties
+
+5.spring cloud config server log
+	1.若設定正常應該會有如下資訊 log
+		12/31-01:32:06.791|       |                      |                      |         |         |               |D|
+			o.s.c.c.s.e.EncryptionController:
+			{GET [/encrypt/status]}: status()
+			{GET [/key/{name}/{profiles}]}: getPublicKey(String,String)
+			{GET [/key]}: getPublicKey()
+			{POST [/encrypt]}: encrypt(String,MediaType)
+			{POST [/encrypt/{name}/{profiles}]}: encrypt(String,String,String,MediaType)
+			{POST [/decrypt/{name}/{profiles}]}: decrypt(String,String,String,MediaType)
+			{POST [/decrypt]}: decrypt(String,MediaType)(_org.springframework.web.servlet.HandlerMapping.Mappings:295)
+		12/31-01:32:06.798|       |                      |                      |         |         |               |D|
+			o.s.c.c.s.e.EnvironmentController:
+			{GET [/{name}-{profiles}.properties]}: properties(String,String,boolean)
+			{GET [/{name}/{profiles:(?!.*\b\.(?:ya?ml|properties|json)\b).*}], produces [application/json]}: defaultLabel(String,String)
+			{GET [/{name}-{profiles}.yaml || /{name}-{profiles}.yml]}: yaml(String,String,boolean)
+			{GET [/{name}/{profiles}/{label:.*}], produces [application/vnd.spring-cloud.config-server.v2+json]}: labelledIncludeOrigin(String,String,String)
+			{GET [/{label}/{name}-{profiles}.json]}: labelledJsonProperties(String,String,String,boolean)
+			{GET [/{name}/{profiles:(?!.*\b\.(?:ya?ml|properties|json)\b).*}], produces [application/vnd.spring-cloud.config-server.v2+json]}: defaultLabelIncludeOrigin(String,String)
+			{GET [/{label}/{name}-{profiles}.yaml || /{label}/{name}-{profiles}.yml]}: labelledYaml(String,String,String,boolean)
+			{GET [/{name}-{profiles}.json]}: jsonProperties(String,String,boolean)
+			{GET [/{name}/{profiles}/{label:.*}], produces [application/json]}: labelled(String,String,String)
+			{GET [/{label}/{name}-{profiles}.properties]}: labelledProperties(String,String,String,boolean)(_org.springframework.web.servlet.HandlerMapping.Mappings:295)
+		12/31-01:32:06.802|       |                      |                      |         |         |               |D|
+			o.s.c.c.s.r.ResourceController:
+			{GET [/{name}/{profile}/{label}/**]}: retrieve(String,String,String,ServletWebRequest,boolean)
+			{GET [/{name}/{profile}/{label}/**], produces [application/octet-stream]}: binary(String,String,String,ServletWebRequest)
+			{GET [/{name}/{profile}/{path:.*}], params [useDefaultLabel]}: retrieveDefault(String,String,String,ServletWebRequest,boolean)
+			{GET [/{name}/{profile}/{path:.*}], params [useDefaultLabel], produces [application/octet-stream]}: binaryDefault(String,String,String,ServletWebRequest)(_org.
+	2.若使用 local git repo 則會 curl 某個應用程式 profile 會跳出以下錯誤，可忽略該訊息，應該是想將本地與遠端合併而無法的資訊問題
+		12/31-01:32:12.501|       |                      |                      |         |         |               |D|Stacktrace for: Could not merge remote for master remote: null(org.springframework.cloud.config.server.environment.MultipleJGitEnvironmentRepository:734)
+			java.lang.NullPointerException: Cannot invoke "org.eclipse.jgit.lib.Ref.getName()" because "ref" is null
+
+5.Environment Repository
+	client : bootstrap.properties/yml 設定
+		應用程式啟動階段之前載入的配置文件。它主要用於配置應用程式的一些基本設定，例如應用程式名稱、分佈式配置中心的位置、加載應用程式配置之前的設定
+
+	client : bootstrap.properties/yml
+		spring:
+		  application:
+			name: foo # client 自訂的名稱 => {application}
+		  profiles:
+			active: dev,mysql	#該服務用的那些 profile => {profile}
+	server :
+		{label}, which is a server side feature labelling a "versioned" set of config files.
+			也就是 config server git repo 的 label(branch、commitId、tag)
+		預設是 master
+
+	預設使用 Git Backend

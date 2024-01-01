@@ -1,0 +1,55 @@
+======================================================================================================
+================================ 參考 ================================================================
+======================================================================================================
+https://docs.spring.io/spring-cloud-config/docs/3.1.9/reference/html/#_spring_cloud_config_client
+
+======================================================================================================
+================================ 設定 ================================================================
+======================================================================================================
+1.pom.xml 依賴
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-config</artifactId></dependency>
+	</dependencies>
+
+
+2.application.yml
+	server:
+	  port: 8080
+	  servlet:
+		context-path: /test
+	spring
+	  config.import: optional:configserver:http://${your config server}:8888
+	  application:
+	    name: myapp  # 決定 config server 如何找 repo 下的 {application}
+	  profiles:
+		active: local # 決定 config server 如何找 repo 下 {application} 的找 {profile}
+
+3.模擬 controller 驗證抓取 server 端設定回來
+	@RestController
+	public class HelloWorldController {
+		@Value("${user.role}")
+		private String role;
+
+		@GetMapping(value = "/{username}", produces = MediaType.TEXT_PLAIN_VALUE)
+		public String whoami(@PathVariable("username") final String username) {
+			return String.format("Hello! You're %s and you'll become a(n) %s...\n", username, this.role);
+		}
+	}
+
+4.測試 client HelloWorldController 抓取
+	// 要確認 http://${your config server}:8888 服務綁定的 git repo 下有 myapp-local.yml 對應 client端 的 (spring.application.name)-(spriing.profiles.active).yml
+	// server 端 git repo 使用的 branch 依據 spring.cloud.config.server.default-label: master 決定
+	 curl -i http://localhost:8080/test/david
+	 => Hello! You're david and you'll become a(n) local...

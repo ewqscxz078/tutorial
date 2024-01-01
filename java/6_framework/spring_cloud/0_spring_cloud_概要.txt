@@ -1,30 +1,49 @@
 https://spring.io/projects/spring-cloud
 	解決分散式微服務常見問題的解決方案
 
-1.Spring Cloud Config 分散式系統設定檔集中化串接方式
-	當 client 設定多的時候，於 config server 取得
+參考其官網說明對應
+	2023/12/22 官網 spring cloud 首頁看到的資訊
+	注意 spring cloud 對應 spring boot 版本
+		Release Train			Spring Boot Generation
+		2023.0.x aka Leyton		3.2.x
+		2022.0.x aka Kilburn	3.0.x, 3.1.x (Starting with 2022.0.3)
+		2021.0.x aka Jubilee	2.6.x, 2.7.x (Starting with 2021.0.3)
+		2020.0.x aka Ilford		2.4.x, 2.5.x (Starting with 2020.0.3)
+		Hoxton					2.2.x, 2.3.x (Starting with SR5)
+		Greenwich				2.1.x
+		Finchley				2.0.x
+		Edgware					1.5.x
+		Dalston					1.5.x
 
-2.Spring cloud task
+1.Spring Cloud Config
+	分散式系統設定檔集中化串接方式
+		當 client 設定多的時候，於 config server 取得
+		因此會有1個 Spring Cloud Config server 服務 + n個 Spring Cloud Config client 服務的設定
+
+
+2.Spring Cloud Sleuth
+	實現分散式追蹤
+		https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
+		https://www.tpisoftware.com/tpu/articleDetails/2682
+		https://www.baeldung.com/spring-cloud-sleuth-single-application
+
+		第三方 lib 或自行實作比較
+		https://cloud.tencent.com/developer/article/1798224
+
+		概念圖
+		https://developer.okta.com/blog/2021/07/26/spring-cloud-sleuth
+
+3.Spring Cloud Vault
+	敏感資料的存放位置(避難所)
+
+4.Spring cloud task
 	Spring cloud data flow
 
-
-3.Spring Cloud Sleuth 實現分散式追蹤
-	https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
-	https://www.tpisoftware.com/tpu/articleDetails/2682
-	https://www.baeldung.com/spring-cloud-sleuth-single-application
-
-	第三方 lib 或自行實作比較
-	https://cloud.tencent.com/developer/article/1798224
-
-	概念圖
-	https://developer.okta.com/blog/2021/07/26/spring-cloud-sleuth
-
-
-4.Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
+5.Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
 	https://www.tpisoftware.com/tpu/articleDetails/1390
 		訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
 
-optional(與 k8s 部分元件交集)
+99.optional(與 k8s 部分元件交集)
 	Spring Cloud Eureka 服務發現
 		https://www.tpisoftware.com/tpu/articleDetails/2434
 	Spring Cloud Circuit Breaker
