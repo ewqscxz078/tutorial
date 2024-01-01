@@ -1,3 +1,14 @@
+資料庫
+	輔助工具
+		Liquibase
+			https://medium.com/learning-from-jhipster/17-spring-boot-%E5%B0%8E%E5%85%A5-liquibase-c00bc6c481db
+			為什麼使用
+				如果在專案迭帶與更新的過程中，沒有資料庫進行版本控管的機制，那麼在操作資料庫的部分都要手動執行對應專案版號的 SQL Command，這是不是超級災難的一件事情。
+				Liquibase 是一個用於管理資料庫版本的工具，可以讓你免於手動操作資料庫，可以讓正在執行的專案知道目前所在的資料庫版本是多少，自動的執行後續版本的資料庫異動內容。
+				另外，Liquibase 支援了多種不同的資料庫，比較常見的 MySQL、MSSQL、PostgreSQL、MariaDB、H2 等資料庫大多都有支援，如果想要查看完整的內容
+			簡介
+				將資料庫的那些 Table Schema 用另外一種形式的方式儲存起來，像是 XML 或 YAML，就可以將這些文件進行管理，對於 GIT 或 SVN 等就可以做到專案版本控制的部分。
+				而另一方面，這些文件中每個要新增或修改的部分都會有一個「Changelog ID」，這會在所在環境中的資料庫，檢查哪些 ID 是已經有執行，而哪些 ID 尚未被執行，接著執行這些尚未被執行的內容，以達到對資料庫部分的版本控管
 程式語言
 	java
 		java jdk 6(done) => 17
@@ -15,10 +26,15 @@
 					autoconfigration
 					logger
 
+
 				spring boot data
 					jdbc
 					jpa
 					mybatis
+
+				第三方 starter
+					Springfox3 of swagger 整合(swagger 為遵循 OpenAPI 規範的開源工具，可以幫助我們快速的設計、建構 RESTful API，透過 Swagger Codegen 產生出OpenAPI 所規範的 JSON 文件 )
+						https://medium.com/learning-from-jhipster/7-%E4%BD%BF%E7%94%A8-springfox-%E5%B0%8E%E5%85%A5swagger-3-0-0-e1067cb1c565
 
 				spring boot 2 react
 				spring cloud
@@ -27,8 +43,16 @@
 					Spring cloud task
 					Spring Cloud Stream
 
+				其他
+					Spring Boot 導入 Liquibase(資料庫的控管)
+
 	內功心法
 		design pattern
 
 建構管理
 	maven
+
+	Maven Wrapper
+		https://medium.com/learning-from-jhipster/3-%E4%BD%BF%E7%94%A8-maven-wrapper-f4b7e460278
+			在傳統使用 Maven 前，我們都需要到官網下載並安裝，安裝完還要設定環境變數，之後才可以使用 mvn 來執行建置的流程。
+			但如果將一個已存在的 Maven 專案加上 Maven Wrapper，那麼這個專案在只要有 Java 的環境下，就算不安裝 Maven 也可以透過 mvnw 的指令來執行建構流程。
