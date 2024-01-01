@@ -21,6 +21,7 @@ https://roo.cash/blog/us-stock-index/
 	3.代表的公司有 Apple、Facebook、Microsoft、Google、Cicso、Netflix、Amazon、Zoom、Airbnb
 	4.納斯達克 100 指數，是剔除金融股後，由美國與國際 100 大上市公司組成
 	5.成分股超過 3,000 家
+
 費城半導體（PHLX Semiconductor Sector Index）: 觀察美國半導體企業走向
 	1.以「半導體產業」為主，是全球半導體產業的景氣指標
 	2.大約在每年九月會更新一次成分股，目前具代表性的公司除了台積電外，還有英特爾、美光科技、高通、德州儀器等
