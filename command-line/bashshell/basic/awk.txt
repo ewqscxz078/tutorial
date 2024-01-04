@@ -2,6 +2,12 @@
 
 https://noootown.com/awk-useful-usage/
 
+https://linux.vbird.org/linux_basic/fedora4/0330regularex-fc4.php
+變數名稱		代表意義
+	NF			每一行 ($0) 擁有的欄位總數
+	NR			目前 awk 所處理的是『第幾行』資料
+	FS			目前的分隔字元，預設是空白鍵
+
 一般用法
 	顯示整行
 		awk '{print}' <file>
@@ -30,9 +36,33 @@ https://noootown.com/awk-useful-usage/
 	  }
 	}' <file>
 
-https://stackoverflow.com/questions/19075671/how-do-i-use-shell-variables-in-an-awk-script
-with var
-	variable="line one\nline two"
-	awk -v var="$variable" 'BEGIN {print var}'
-	line one
-	line two
+awk 引用外部變數方法
+	方法一
+		https://stackoverflow.com/questions/19075671/how-do-i-use-shell-variables-in-an-awk-script
+		with var 帶入 awk，但已知缺點會把其變數 / 取代為空
+			variable="line one\nline two"
+			awk -v var="$variable" 'BEGIN {print var}'
+			line one
+			line two
+	方法二
+		直接使用，已知不會將變數裡的 / 取代為空
+			var="xxxx"
+			awk '{
+			  print "'$var'"
+			}'
+
+RS（Record Separator）是一個特殊的變數，它用於指定記錄之間的分隔符。
+	默認情況下，RS的值為\n（換行符），
+	這表示awk將文本分割為一個個的記錄，每個記錄以換行符結束。
+	指定特定符號分割紀錄
+		以下案例為指定;為分割紀錄
+			awk 'BEGIN {
+			  RS = ";"
+			} { print $0 }' YourFile.txt
+
+
+於 awk 裡面打印出其檔案路徑
+	awk '{ print $0, FILENAME }' file1 file2 file3
+
+打印 pattern 所在行數
+	awk '/your_pattern/ { print "Line:", NR, $0 }' your_file

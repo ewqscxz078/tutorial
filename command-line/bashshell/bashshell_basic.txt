@@ -71,9 +71,17 @@ https://www.cyberciti.biz/tips/bash-shell-parameter-substitution-2.html
 
 變數內容刪除與取代
 	${變數#關鍵字} 若變數內容從頭開始的資料符合『關鍵字』，則將符合的最短資料刪除
+		例如: 取得 src/main/java 之後的字串
+			path="xxx/yyyy/src/main/java/com/tw/api/exchange"
+			result="${path#*src/main/java/}"
+				=> "com/tw/api/exchange"
 	${變數##關鍵字}	若變數內容從頭開始的資料符合『關鍵字』，則將符合的最長資料刪除
 
 	${變數%關鍵字} 若變數內容從尾向前的資料符合『關鍵字』，則將符合的最短資料刪除
+		例如: 取得 .java 之前字串
+			file_name="xxxx.java"
+			name=${file_name%.java}
+			  => "xxxx"
 	${變數%%關鍵字}	若變數內容從尾向前的資料符合『關鍵字』，則將符合的最長資料刪除
 
 	${變數/舊字串/新字串} 若變數內容符合『舊字串』則『第一個舊字串會被新字串取代』
@@ -135,6 +143,24 @@ elif [ 條件判斷式二 ]; then
 	當條件判斷式二成立時，可以進行的指令工作內容；
 else
 	當條件判斷式一與二均不成立時，可以進行的指令工作內容；
+fi
+
+===================================================================
+========================= if 正則表示法 ===========================
+===================================================================
+若正則表示法含有 ( ) ; 則要跳脫 => \( \) \;
+BASH_REMATCH
+	只在正規表示式匹配成功時才會被填入。
+	如果沒有匹配結果，BASH_REMATCH 將為空數組。
+	因此，在使用 BASH_REMATCH 之前，最好先檢查是否有匹配結果
+
+regex="正則表示法"
+if [[ "$var" ~= regex ]]; then
+   echo "完整配對結果: ${BASH_REMATCH[0]}"
+   echo "第一個分組匹配結果: ${BASH_REMATCH[1]}"
+   echo "第二個分組比對結果: ${BASH_REMATCH[2]}"
+else
+   echo "沒有符合結果"
 fi
 
 ===================================================================
@@ -318,7 +344,7 @@ https://www.yenchen-design.com/diary/linux%E4%B8%AD%E5%9F%B7%E8%A1%8Cshell%E8%85
 而在現有的 shell 環境中執行命令則會在當前環境中更改設定和環境變量。
 
 ===================================================================
-============================ array ================================
+============================ 資料結構 : 陣列 array ================
 ===================================================================
 
 初始
@@ -335,6 +361,9 @@ https://www.yenchen-design.com/diary/linux%E4%B8%AD%E5%9F%B7%E8%A1%8Cshell%E8%85
 
 長度
 	echo ${#list[@]}
+
+直接打印全部
+	echo "${list[@]}"
 
 注意變數存取範圍
 	https://stackoverflow.com/questions/7612320/bash-weird-variable-scope-when-populating-array-with-results
@@ -362,6 +391,9 @@ https://blog.csdn.net/xzw_123/article/details/42920371
 
 輸出所有value
 	echo ${map[@]}
+
+取得第一個，當不知道key值時
+	echo ${!map[@]}
 
 走訪map
 	for key in ${!map[@]}
@@ -409,8 +441,10 @@ var="Hello,Word"
 	bash -x ./xxx.sh
 
 in script
-	set -x
-
+	於某行開始開啟 debug
+		set -x
+	於某行結束關閉 debug
+		set +x
 ===================================================================
 ======================== File test operators ======================
 ===================================================================
@@ -458,6 +492,42 @@ test EXPRESSION
 	fi
 
 ===================================================================
+======================== if 數值判斷 ==============================
+===================================================================
+-eq：等於 (equal)
+-ne：不等於 (not equal)
+-lt：小於 (less than)
+-le：小於等於 (less than or equal to)
+-gt：大於 (greater than)
+-ge：大於等於 (greater than or equal to)
+	# 假設你的變數是 num
+		num=5
+		if [ "$num" -eq 5 ]; then
+			echo "等於 5"
+		fi
+
+		if [ "$num" -ne 10 ]; then
+			echo "不等於 10"
+		fi
+
+		if [ "$num" -lt 8 ]; then
+			echo "小於 8"
+		fi
+
+		if [ "$num" -le 5 ]; then
+			echo "小於等於 5"
+		fi
+
+		if [ "$num" -gt 2 ]; then
+			echo "大於 2"
+		fi
+
+		if [ "$num" -ge 5 ]; then
+			echo "大於等於 5"
+		fi
+
+
+===================================================================
 ======================== 字串的正則表示法 if regular expression ===
 ===================================================================
 https://stackoverflow.com/questions/18709962/regex-matching-in-a-bash-if-statement
@@ -479,7 +549,7 @@ https://stackoverflow.com/questions/3601515/how-to-check-if-a-variable-is-set-in
 
 -n
 	string is not null.
-
+		[[ -n "$var" ]] && echo "$var is not null"
 ===================================================================
 ======================== dirname、basename ========================
 ===================================================================
@@ -560,3 +630,80 @@ https://stackoverflow.com/questions/16774538/override-a-shell-function-keep-a-re
 		echo wrapper
 		_f # pass "$@" to it if required.
 	}
+
+==================================================================================================
+======================== 切割字串後的結果僅奇數位存到陣列 ========================================
+==================================================================================================
+ref open AI
+	test="String str, String[] str2"
+	IFS=" " read -ra words <<< "$test"
+
+	# 初始化一個空陣列
+	oddWords=()
+
+	# 將奇數位置的單詞加入陣列
+	for ((i=0; i<${#words[@]}; i+=2)); do
+		oddWords+=("${words[i]}")
+	done
+
+	# 打印結果
+	echo "奇數位置的單詞陣列: ${oddWords[@]}"
+
+==================================================================================================
+======================== for 迴圈 ================================================================
+==================================================================================================
+#lines=`egrep -no "keyword" file1`
+lines=$(echo -e "Match one\nMatch two")
+
+	for line in $lines; do
+	  echo "$line 預設依據每個空白分割"
+	done
+	for line in "$lines"; do
+	  echo "$line 預設依據\n分割"
+	done
+
+	for line in "${lines[@]}"; do
+	  echo "$line 預設陣列分割"
+	done
+
+==================================================================================================
+======================== 函數 echo 與 return code 關係 ===========================================
+==================================================================================================
+如果你的函數成功執行，可以選擇返回0。這是一種約定俗成的慣例，表示函數執行成功
+
+明確指定回傳離開碼
+	function example_function() {
+		# 函數執行成功，顯示消息，然後明確返回 0
+		echo "Function executed successfully."
+		return 0
+	}
+
+	# 調用函數
+	example_function
+	echo "Exit code: $?"
+
+自動返回最後一個命令的退出狀態碼：
+	function_example_function() {
+		# 函數執行成功，顯示消息，退出狀態碼將是最後一個命令的退出狀態碼（這裡是 echo）
+		echo "Function executed successfully."
+	}
+
+	# 調用函數
+	example_function
+	echo "Exit code: $?"
+
+	#在 function_example_function 裡的 echo 一定成功，因此離開碼一定為 0
+
+常見寫法
+	# 調用一個可能會失敗的命令
+	ls /nonexistentdirectory
+
+	# 獲取命令的退出狀態碼
+	exit_code=$?
+
+	# 判斷退出狀態碼是否不為0
+	if [ $exit_code -ne 0 ]; then
+		echo "Command failed with exit code $exit_code"
+	else
+		echo "Command executed successfully"
+	fi

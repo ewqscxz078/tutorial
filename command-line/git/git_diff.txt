@@ -38,3 +38,13 @@ git diff [branchName] --exit-code
 	#無差異回0
 
 git diff --name-status origin/master origin/issue/[redmineId]
+
+==========================================================================================
+========================================= 計算修改統計 ===================================
+==========================================================================================
+要知道某個 commit 修改了多少行程式碼
+	git diff --shortstat [commit hash]
+
+兩個 commit 區段之間 修改了多少行程式碼
+	git diff [commit 哈希值]^ [commit 哈希值]
+	可透過 git log --grep="keyword 搜尋 commit message" 知道 commit id

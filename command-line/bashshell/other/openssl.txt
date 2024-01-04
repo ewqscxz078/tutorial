@@ -85,7 +85,15 @@ https://www.nocentino.com/posts/2021-05-20-testing-for-specific-versions-of-tls-
 ===================================================================================
 https://serverfault.com/questions/215606/how-do-i-view-the-details-of-a-digital-certificate-cer-file
 
+.cer
+	代表憑證中包含了公開金鑰、擁有者的資訊以及數位簽章等
+
 openssl x509 -in cerfile.cer -noout -text
 	The format of the .CER file might require that you specify a different encoding format to be explicitly called out.
 		openssl x509 -inform pem -in cerfile.cer -noout -text
 		openssl x509 -inform der -in cerfile.cer -noout -text
+
+	-noout 選項用於指示 OpenSSL 在顯示憑證資訊時不要輸出憑證本身的內容
+	-inform <pem|der> 指定輸入憑證的格式
+		若憑證是二進位 DER 格式。
+		如果憑證是基於PEM格式的話，可以省略這個選
