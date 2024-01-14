@@ -1,0 +1,54 @@
+https://ithelp.ithome.com.tw/articles/10187595
+
+simple tag
+	tag file提供了嵌入工作的一種方式,全由JSP去完成
+	但在某些時候,需求無法完全依賴JSP去處理
+	還是需要使用java去做一些較複雜的處理時
+	JSP 2.0提供了一個叫做simple tag的自訂標籤處理器
+	如名稱一樣,透過簡單的宣告去呼叫java程式
+	在java去override我們要的邏輯
+
+	製作simple tag 處理器
+		1.撰寫SimpleTagSupport
+			import javax.servlet.jsp.tagext.SimpleTagSupport;
+			public class SimpleTagTest extends SimpleTagSupport{
+			}
+		2.override doTag()
+			@Override
+			public void doTag() throws JspException, IOException {
+				getJspContext().getOut().print("This is first simple tag");
+			}
+		3.建立TLD
+			<!--- taglib所使用的對應名稱 -->
+			<uri>myTag</uri>
+
+			<tag>
+			<!--- 可省略,只是說明一下此tag -->
+			<description>base simple tag</description>
+			<!--- 設定的tag名稱 -->
+			<name>simple</name>
+			<!--- 對應的java程式 -->
+			<tag-class>com.web.tag</tag-class>
+			<!--- 設定此標籤是否可以有主體-->
+			<body-context>empty</body-context>
+		4.佈署
+			產生的SimpleTagTest的classes會放在web-inf/classes目錄下
+			TLD則放在web-inf目錄
+		5.在JSP加入標籤
+			<%@ taglib prefi"mySimple" uri="myTag" %>
+			<html>
+			<head>
+			<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+			<title>Insert title here</title>
+			</head>
+			<body>
+			<mySimple:simple/>
+	生命週期
+		1.載入simpleTag類別,建立instance(tag 的clasee 為無參數的Constructor)
+		2.呼叫setJspContext(JspContext)去設定PageContext(為JspContext的 subclass)
+		3.如果此標籤為巢狀(即被包在另一個標籤內),則呼叫setParent(JspTag)
+		4.若設定標籤有屬性,則呼叫設定屬性的方法(使用javaBean命名方式)
+		5.假如標籤有主體,呼叫setJspBody(JspFragment)
+		6.呼叫doTag(),把標籤處理的邏輯寫入
+
+	....

@@ -3,6 +3,10 @@
 ======================================================================================================
 https://spring.io/projects/spring-cloud-config/
 https://docs.spring.io/spring-cloud-config/docs/3.1.9/reference/html/
+https://potoyang.gitbook.io/spring-in-action-v5/di-14-zhang-pei-zhi-guan-li/14.2-yun-hang-pei-zhi-fu-wu-qi/14.2.1-qi-dong-pei-zhi-fu-wu-qi
+
+影片 spring cloud server git + valut 範例
+	https://www.youtube.com/watch?v=p65u4t26BBc&ab_channel=TheDevWorld-bySergioLema
 
 ======================================================================================================
 ================================ 好處 ================================================================
@@ -64,21 +68,34 @@ Spring Cloud Config Server features:
 
 3.spring cloud config server : application.properties/yml
 	server.port: 8888
-	spring.cloud.config.server.accept-empty: false # 代表當 {application} 找不到則 config server 回應 HTTP status 404；預設為true，會回應空的配置檔
+	spring.cloud.config.server:
+	  accept-empty: false # 代表當 {application} 找不到則 config server 回應 HTTP status 404；預設為true，會回應空的配置檔
 		# debug 用
-	spring.cloud.config.server.default-label: master #不然預設會先用 main branch 搜尋，找不到會有洗 deubg log 後再嘗試用 master branch 找 ，決定使用哪個 {label}
-	spring.cloud.config.server.git.uri: file:///${user.home}/config-repo  # 佈署環境應該成 https://${git-url}/$config-repo
-		注意: Windows 為 file:///${user.home}/config-repo 格式
-		快速建立 git repo 範例
-			$ cd $HOME
-			$ mkdir config-repo
-			$ cd config-repo
-			$ git init .
-			$ echo user.role: local > myapp-local.yml
-			$ git add -A .
-			$ git commit -m "Add myapp-local.yml"
+	  default-label: master #不然預設會先用 main branch 搜尋，找不到會有洗 deubg log 後再嘗試用 master branch 找 ，決定使用哪個 {label}
+	  git:
+	    uri: file:///${user.home}/config-repo  # 佈署環境應該成 https://${git-url}/$config-repo
+			注意: Windows 為 file:///${user.home}/config-repo 格式
+			快速建立 git repo 範例
+				$ cd $HOME
+				$ mkdir config-repo
+				$ cd config-repo
+				$ git init .
+				$ echo user.role: local > myapp-local.yml
+				$ git add -A .
+				$ git commit -m "Add myapp-local.yml"
 
-		注意: 使用本地檔案系統的 git repo 僅適合用於測試，正式環境應該使用遠端配置的 git repo
+			注意: 使用本地檔案系統的 git repo 僅適合用於測試，正式環境應該使用遠端配置的 git repo
+			# option Placeholders in Git URI : 可用的佔未符有 {application} and {profile} (and {label}，這樣就可以依據 client 傳到 server 過來的方式搜尋對應的位置，而非僅有跟目錄下搜尋
+				https://github.com/myorg/{application}
+				1.可以 one repository per profile by {profile}
+
+				2."(_)" within your {application}
+					{application} => organization(_)application.
+
+	    skipSslValidation: true # 略過 http git 驗證；預設false
+		timeout: 4 # 特別設定 http git connection timeout seconds
+
+
 
 4.spring cloud config server : 提供給 client 可操作 Http Service 對應資源方式範例: 可用於驗證與確認設定的狀況
 	/{application}/{profile}[/{label}]
@@ -127,6 +144,29 @@ Spring Cloud Config Server features:
 			java.lang.NullPointerException: Cannot invoke "org.eclipse.jgit.lib.Ref.getName()" because "ref" is null
 
 5.Environment Repository
+	支援多種不同的 backend 來源類型
+		Git Repository:
+			Backend Type: git
+			使用方式: 將配置文件存儲在 Git 存儲庫中，應用程式通過 Spring Cloud Config 從這個 Git 存儲庫中獲取配置。
+		Subversion Repository:
+			Backend Type: svn
+			使用方式: 將配置文件存儲在 Subversion 存儲庫中，應用程式通過 Spring Cloud Config 從這個 Subversion 存儲庫中獲取配置。
+		File System Repository:
+			Backend Type: native
+			使用方式: 配置文件直接存儲在本地文件系統中，應用程式通過 Spring Cloud Config 從本地文件系統中獲取配置。
+		Vault Repository:
+			Backend Type: vault
+			使用方式: 敏感數據和配置信息存儲在 HashiCorp Vault 中，應用程式通過 Spring Cloud Config 從 Vault 中獲取配置。
+		JDBC Repository:
+			Backend Type: jdbc
+			使用方式: 配置信息存儲在關聯數據庫中，應用程式通過 Spring Cloud Config 從數據庫中獲取配置。
+		Composite Repository:
+			Backend Type: composite
+			使用方式: 可以組合多個 Repository，按優先順序查找配置。例如，你可以同時使用 Git 和本地文件系統 Repository。
+		Custom Repository:
+			Backend Type: 自定義
+			使用方式: 如果以上提到的 Repository 不能滿足需求，你可以實現自己的 Repository 來提供配置信息。
+
 	client : bootstrap.properties/yml 設定
 		應用程式啟動階段之前載入的配置文件。它主要用於配置應用程式的一些基本設定，例如應用程式名稱、分佈式配置中心的位置、加載應用程式配置之前的設定
 

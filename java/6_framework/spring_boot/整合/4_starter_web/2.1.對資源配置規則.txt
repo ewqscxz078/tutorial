@@ -69,3 +69,31 @@ JSP 限制
 	2.Undertow 不支援 JSP。
 
 	3.建立自訂 error.jsp 頁面不會覆蓋錯誤處理的預設視圖。 應改用自訂錯誤頁面。
+
+
+常見放置內容(ref chatGPT)
+	src/main/resources/static 目錄：
+		靜態資源檔案：
+			CSS檔案：
+				用來定義網頁樣式的樣式表檔案。
+			JavaScript檔案：
+				前端腳本檔案，用來實現網頁交互和動態效果。
+			圖片檔案：
+				靜態圖片檔案，例如PNG、JPEG等格式的圖像。
+		前端框架和庫：
+			Bootstrap、jQuery等： 如果您使用了前端框架或庫，可以將其檔案放置在此目錄中。
+		字型檔案：
+			字型檔案（.woff、.woff2等）： 用來定製網頁字型樣式的字型檔案。
+		其他靜態資源：
+			其他靜態檔案： 例如圖示檔案（favicon.ico）等。
+
+	src/main/resources/templates 目錄：
+		Thymeleaf模板檔案：
+			HTML檔案（.html）： Thymeleaf模板檔案，用來生成動態的HTML視圖。
+			Thymeleaf標籤和表達式： 使用Thymeleaf的標籤和表達式實現模板中的動態內容。
+		佈局檔案：
+			整體佈局檔案： 包含網站整體結構的HTML檔案，可以使用Thymeleaf的佈局功能。
+		片段檔案：
+			可重複使用的片段檔案： 將頁面中的某些部分抽象為片段，以便在多個頁面中重複使用。
+		靜態資料檔案：
+			YAML或JSON檔案： 可以存放一些靜態資料，供模板使用。

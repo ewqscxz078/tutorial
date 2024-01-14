@@ -1,0 +1,109 @@
+https://openhome.cc/Gossip/ServletJSP/TagFileTLD.html
+https://ithelp.ithome.com.tw/articles/10187074?sc=rss.iron
+
+TLD(Tag Library Description)
+	提供自訂標籤所使用
+
+	1.標籤名稱及語法
+		可以自行定義前贅字,以及定義是否有主體,要放什麼進去,還有每個屬性的型別
+		屬性是否可以為表達式或是字串
+
+	2.標籤程式庫URI
+		TLD描述這個標籤程式庫特有的名稱
+		URI是放在taglib指令裡面
+		告訴container如何在Web中識別TLD
+		簡單說就是JSP透過這個名稱,去TLD找相關對應
+		再去呼叫java後端的code
+
+	範例
+		src/main/resources/
+			test.tld
+				<?xml version="1.0" encoding="UTF-8"?>
+				<taglib version="2.0" xmlns="http://java.sun.com/xml/ns/j2ee"
+					 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+					 xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee
+					 web-jsptaglibrary_2_0.xsd">
+
+					<!--- 宣告的板號 -->
+					<tlib-version>1.0</tlib-version>
+					<!--- 供開發工具使用 -->
+					<short-name>RandomTags</short-name>
+					<!--- taglib所使用的對應名稱 -->
+					<uri>https://my.david/custom_tag</uri>
+
+					<!-- tag file 模式-->
+					<tag-file>
+						<name>newtag</name>
+						<path>/META-INF/tags/myTag.tag</path>
+					</tag-file>
+
+					<!-- classic tag 模式-->
+					<tag>
+						<!--- 可省略,只是說明一下此tag -->
+						<description>test tag</description>
+						<!--- 設定的tag名稱 -->
+						<name>newtag</name>
+						<!--- 對應的java程式 -->
+						<tag-class>com.myFirstTag</tag-class>
+						<!--- 設定此標籤是否可以有主體-->
+						<body-context>empty</body-context>
+
+
+						<!--- 若要設定此tag可接受屬性,則需要此內容-->
+						<attribute>
+							<!---若required設為true,則代表此tag必須要有屬性才能使用-->
+							<name>userName</name>
+							<required>true</required>
+							<!---設定此tag是否只能接受字串-->
+							<rtexpevalue>true</rtexpevalue>
+						</attribute>
+					</tag>
+				</taglib>
+
+
+				1.rtexprvalue
+					預設為false；若設定為false時，在此用此tag時,屬性的值必須是字串，即設為true才可以使用EL表示
+						<%@ taglib prefix="test" uri="myTag"%>
+						<test:newtag  userName="${currentName}" //若rtexprvalue=false,這樣會失敗
+					各種方式
+						//1.EL表達式
+						<test:newtag  userName="${currentName}"
+						//2.Scripting運算式
+						<test:newtag userName='<%request.getAttribute("currentName")%>' />
+						//3.<jsp:attribute>標準動作
+						//即使這個tag已經設定不能有body,使用標準動作仍可以設定
+						<test:newtag>
+						  <jsp:attribute name="userName">${currentName}</jsp:attribute>
+						</test:newtag>
+				2.body-content
+					<!--- 設定empty表示不能有body-->
+					<body-context>empty</body-context>
+
+					<!--- 設定scriptless表示不能使用scripting元素-->
+					<body-context>scriptless</body-context>
+
+					<!--- 設定tagdependent表示內容當作文字去處理EL不會自動判斷-->
+					<body-context>tagdependent</body-context>
+
+					<!--- 設定這個tag 的body可以包含任何可以出現在JSP裡的東西-->
+					<body-context>JSP</body-context>
+
+					body-content設為empty
+						1.空的標籤
+							<test:newtag userName="${currentName}" />
+						2.開始與結束的tag中沒有任何東西
+							<test:newtag userName="${currentName}"></<test:newtag>
+						3.使用jsp:attribute
+							//body-content真的要包含tag
+							//只能使用jsp:attribute去增加其屬性,其他都不能含有任何內容
+							<test:newtag>
+							  <jsp:attribute name="userName">${currentName}</jsp:attribute>
+							</test:newtag>
+				3.TLD會存放的位置
+					Container會在以下地方去搜尋TLD
+					也就是說TLD只會放置在這些位置
+
+					1.WEB-INF下
+					2.WEB-INF的子目錄
+					3.jar檔(WEB-IND/lib/)META-INF目錄
+					4.jar檔(WEB-IND/lib/)META-INF的子目錄

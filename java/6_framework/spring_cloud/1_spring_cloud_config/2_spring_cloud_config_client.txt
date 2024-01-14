@@ -23,18 +23,19 @@ https://docs.spring.io/spring-cloud-config/docs/3.1.9/reference/html/#_spring_cl
 		<dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-config</artifactId></dependency>
 	</dependencies>
 
-
-2.application.yml
-	server:
-	  port: 8080
-	  servlet:
-		context-path: /test
+2.bootstap.yml
 	spring
 	  config.import: optional:configserver:http://${your config server}:8888
 	  application:
 	    name: myapp  # 決定 config server 如何找 repo 下的 {application}
 	  profiles:
 		active: local # 決定 config server 如何找 repo 下 {application} 的找 {profile}
+
+3.application.yml
+	server:
+	  port: 8080
+	  servlet:
+		context-path: /test
 
 3.模擬 controller 驗證抓取 server 端設定回來
 	@RestController

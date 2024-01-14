@@ -1,0 +1,79 @@
+https://ithelp.ithome.com.tw/articles/10187474?sc=rss.iron
+
+tag file
+	像include和import一樣
+	將程式嵌入到JSP中
+	但不同是可以建立可重複利用的功能
+	且開發人員無需撰寫太複雜的tag
+	就可以達到自訂標籤的功用
+
+	製作tag file的方法:
+		1.將被嵌入檔案rename為副檔名為.tag的檔案
+			要嵌入的檔案 myTag.jsp
+			改成 myTag.tag
+
+		2.將 tag file 放在web-inf目錄下,名為tags的目錄
+
+		3.在JSP中加上taglib指令,呼叫這個標籤
+			<%@ taglib prefix="testTags" tagdir="/WEB-INF/tags" %>
+			<testTags:myTag />
+
+			在JSP呼叫
+				<jsp:include  page="myTag.jsp">
+				  <jsp:param name="title" value="this is test tag context"
+				</jsp:include>
+
+				//for tag
+				<testTags:myTag title="this is test tag context" />
+				//${title}只能在<testTags裡面使用>
+
+			在tag file使用
+				<em><strong>${param.title}</strong></em>
+
+				//for tag
+				<em><strong>${title}</strong></em>
+	標籤屬性設定
+		將相關的屬性設定在被嵌入檔裡面(即myTag.tag) 使用attribute,類似像TLD中tag的attribute的設定
+		myTag.tag
+			<%@ attribute name="title" require="true" rtexprvalue="true" %>
+			<em><strong>${title}</strong></em>
+		在JSP中使用
+			<testTags:myTag title="this is test tag context" />
+			//這裡因為require已經設為true
+			//代表使用此tag一定要有title這個屬性
+
+		body-content
+			當屬性內容很多的時候 tag file提供了jsp:doBody的設定這樣一來可以直接給標籤一個body去做設計
+				myTag.tag
+					<em><strong><jsp:doBody/></strong></em>
+				JSP
+					<testTags:myTag>
+					this is test tag context
+					<testTags:myTag/>
+
+			可以設定body的型別，預設值為scriptless(不可以有scripting元素)也可以設定成empty(body為空) tagdependent(純文字)
+				myTag.tag
+					<%@ attribute name="color" require="true" rtexprvalue="true" %>
+					<%@ tag body-content="tagdependent" %>
+
+					<em><strong><font color="${color}"><jsp:doBody/></font></strong></em>
+				JSP
+				//jsp:doBody和attribute還是可以一起使用
+				//在這段body新增了一個color的屬性
+				<testTags:myTag color="#666666">
+				this is test tag context
+				<testTags:myTag/>
+
+	tag file可放置的位置
+
+		1.web-inf/tags下
+		2.web-inf/tags/的子目錄
+		3.web-inf/lib的JAR檔中的meta-inf/tags下
+		4.web-inf/lib的JAR檔中的meta-inf/tags子目錄下
+		5.如果tag file被佈署在JAR檔中,必須要有TLD去對應tag file
+
+	也就是說自訂標籤必須要有TLD
+	但tag file只要不是被佈署在JAR裡面時
+	可以利用attribute和body-content去做設定,不需要TLD
+	此外tag file可以使用scripting
+	但在JSP裡面使用tag file呼叫的body裡不能使用scripting
