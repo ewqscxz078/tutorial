@@ -1,0 +1,5 @@
+https://www.w3resource.com/sql/aggregate-functions/count-having.php
+
+SELECT COUNT(*)
+FROM agents
+HAVING COUNT(*) > 3;
