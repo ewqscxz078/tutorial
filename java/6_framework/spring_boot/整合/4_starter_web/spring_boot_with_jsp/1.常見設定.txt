@@ -1,0 +1,137 @@
+https://www.baeldung.com/spring-boot-jsp
+
+maven
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+		<version>2.4.4</version>
+	</dependency>
+
+	<!-- for jsp -->
+	<dependency>
+		<groupId>org.apache.tomcat.embed</groupId>
+		<artifactId>tomcat-embed-jasper</artifactId>
+	</dependency>
+	<!-- for jstl -->
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>jstl</artifactId>
+	</dependency>
+
+<!--
+	for Running in a Web Container by provided
+	<dependency>
+		<groupId>org.apache.tomcat.embed</groupId>
+		<artifactId>tomcat-embed-jasper</artifactId>
+		<scope>provided</scope>
+	</dependency>
+
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-tomcat</artifactId>
+		<scope>provided</scope>
+	</dependency>
+-->
+
+2.View Resolver Configuration
+	application.yml
+	spring.mvc:
+	  view:
+	    prefix: /WEB-INF/jsp/
+	    suffix: .jsp
+
+3.Bootstrapping Our Application
+	standalone application
+		@SpringBootApplication(scanBasePackages = "com.baeldung.boot.jsp")
+		public class SpringBootJspApplication {
+
+			public static void main(String[] args) {
+				SpringApplication.run(SpringBootJspApplication.class);
+			}
+		}
+
+	deploy in a web container
+		@SpringBootApplication(scanBasePackages = "com.baeldung.boot.jsp")
+		public class SpringBootJspApplication extends SpringBootServletInitializer {
+
+			@Override
+			protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+				return builder.sources(SpringBootJspApplication.class);
+			}
+
+			public static void main(String[] args) {
+				SpringApplication.run(SpringBootJspApplication.class);
+			}
+		}
+
+4.Serving a Simple Web Page
+	@Controller
+	@RequestMapping("/book")
+	public class BookController {
+
+		private final BookService bookService;
+
+		public BookController(BookService bookService) {
+			this.bookService = bookService;
+		}
+
+		@GetMapping("/viewBooks")
+		public String viewBooks(Model model) {
+			model.addAttribute("books", bookService.getBooks());
+			return "view-books"; // 注意應有檔案在 /WEB-INF/jsp/view-books.jsp
+		}
+	}
+
+5.Handling Errors
+	Static Error Pages
+		${project.basedir}/main/resources/static/error/4xx.html
+
+	Dynamic Error Pages
+		public class DuplicateBookException extends RuntimeException {
+			private final Book book;
+
+			public DuplicateBookException(Book book) {
+				this.book = book;
+			}
+
+			// getter methods
+		}
+
+		@Service
+		public class BookServiceImpl implements BookService {
+
+			private final BookRepository bookRepository;
+
+			// constructors, other override methods
+
+			@Override
+			public Book addBook(Book book) {
+				final Optional<BookData> existingBook = bookRepository.findById(book.getIsbn());
+				if (existingBook.isPresent()) {
+					throw new DuplicateBookException(book);
+				}
+
+				final BookData savedBook = bookRepository.add(convertBook(book));
+				return convertBookData(savedBook);
+			}
+
+			// conversion logic
+		}
+
+		@ControllerAdvice
+		public class LibraryControllerAdvice {
+
+			@ExceptionHandler(value = DuplicateBookException.class)
+			public ModelAndView duplicateBookException(DuplicateBookException e) {
+				final ModelAndView modelAndView = new ModelAndView();
+				modelAndView.addObject("ref", e.getBook().getIsbn());
+				modelAndView.addObject("object", e.getBook());
+				modelAndView.addObject("message", "Cannot add an already existing book");
+				modelAndView.setViewName("error-book");
+				return modelAndView;
+			}
+		}
+
+
+6.pom.xml
+	<packaging>war</packaging>

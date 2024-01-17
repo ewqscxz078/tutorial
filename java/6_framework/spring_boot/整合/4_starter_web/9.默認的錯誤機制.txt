@@ -1,5 +1,7 @@
 https://www.youtube.com/watch?v=TOwcNVQtniU&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMowsx-u&index=55&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
+https://www.baeldung.com/spring-boot-custom-error-page
+
 1.默認規則
 	1.瀏覽器，返回一個默認的錯誤頁面
 		Whitelabel Error Page

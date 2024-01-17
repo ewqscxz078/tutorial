@@ -1,0 +1,22 @@
+
+use @DataJpaTest
+	1.預設使用 H2 資料庫
+	2.會自動回滾事務，以確保測試不會影響實際資料庫
+		@DataJpaTest
+		@Rollback(false)
+		public class YourRepositoryTest {
+			// Your test code here
+		}
+	3.使用實際資料庫
+		使用@AutoConfigureTestDatabase 注解
+			@DataJpaTest
+			@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+			public class YourRepositoryTest {
+				// Your test code here
+			}
+		自定義資料庫連接設定
+			@DataJpaTest
+			@TestPropertySource(locations = "classpath:test.properties")
+			public class YourRepositoryTest {
+				// Your test code here
+			}

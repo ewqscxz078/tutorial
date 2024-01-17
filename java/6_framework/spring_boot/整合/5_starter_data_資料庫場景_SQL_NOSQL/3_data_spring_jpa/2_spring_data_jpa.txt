@@ -1,3 +1,5 @@
+https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
+
 1.引入 spring-boot-starter-data-jpa
 2.配置文件打印sql 語句
 3.創建 Entity 標註 JPA 註解
@@ -50,12 +52,14 @@ Repository
 	application.yml
 		spring:
 		  jpa:
+			show-sql: true # console顯示 sql 預設 false
 			hibernate:
-			  # 更新或創建資料表
-			  ddl-auto: update
-			#console顯示 sql
-			show-sql: true
-
+			  #ddl-auto: # 更新或創建資料表 : update 預設 none
+			  use-new-id-generator-mappings: false # 使用 hiberate 4 預設 id 生成策略 / 預設 true
+			properties
+			  hibernate:
+			    format_sql: true # real pretty sql format
+		logging.level.org.hibernate.type: trace # 可以看到 sql 佔位符號的實際值
 5.
 	src/main/java/.../controller/
 
@@ -79,4 +83,7 @@ Repository
 	http://localhost:8080/user/1
 
 	http://localhost:8080/user?lastName=lisi&email=aa
+
+
+
 
