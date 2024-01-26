@@ -1,0 +1,88 @@
+https://www.baeldung.com/spring-jpa-like-queries
+
+0. init
+	@Entity
+	public class Movie {
+		@Id
+		@GeneratedValue(strategy = GenerationType.SEQUENCE)
+		private Long id;
+		private String title;
+		private String director;
+		private String rating;
+		private int duration;
+
+		// standard getters and setters
+	}
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(1, 'Godzilla: King of the Monsters', ' Michael Dougherty', 'PG-13', 132);
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(2, 'Avengers: Endgame', 'Anthony Russo', 'PG-13', 181);
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(3, 'Captain Marvel', 'Anna Boden', 'PG-13', 123);
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(4, 'Dumbo', 'Tim Burton', 'PG', 112);
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(5, 'Booksmart', 'Olivia Wilde', 'R', 102);
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(6, 'Aladdin', 'Guy Ritchie', 'PG', 128);
+	INSERT INTO movie(id, title, director, rating, duration)
+		VALUES(7, 'The Sun Is Also a Star', 'Ry Russo-Young', 'PG-13', 100);
+
+1.預設提供
+	1.1. Containing, Contains, IsContaining and Like
+		target : SELECT * FROM movie WHERE title LIKE '%in%';
+
+		List<Movie> results = movieRepository.findByTitleContaining("in");
+		assertEquals(3, results.size());
+
+		results = movieRepository.findByTitleIsContaining("in");
+		assertEquals(3, results.size());
+
+		results = movieRepository.findByTitleContains("in");
+		assertEquals(3, results.size());
+
+		results = movieRepository.findByTitleLike("%in%");
+		assertEquals(3, results.size());
+
+		皆為相等意思
+
+	1.2. StartsWith
+		target : SELECT * FROM Movie WHERE Rating LIKE 'PG%';
+
+		List<Movie> results = movieRepository.findByRatingStartsWith("PG");
+		assertEquals(6, results.size());
+
+	1.3. EndsWith
+		target : SELECT * FROM Movie WHERE director LIKE '%Burton';
+
+		List<Movie> results = movieRepository.findByDirectorEndsWith("Burton");
+		assertEquals(1, results.size());
+
+	1.4. Case Insensitivity
+
+		List<Movie> results = movieRepository.findByTitleContainingIgnoreCase("the");
+		assertEquals(2, results.size());
+
+	1.5. Not ( NotContains, NotContaining and NotLike keywords )
+
+		List<Movie> results = movieRepository.findByRatingNotContaining("PG");
+		assertEquals(1, results.size());
+
+		List<Movie> results = movieRepository.findByDirectorNotLike("An%");
+		assertEquals(5, results.size());
+
+2.@Query
+	2.1. Named Parameters
+		@Query("SELECT m FROM Movie m WHERE m.title LIKE %:title%")
+		List<Movie> searchByTitleLike(@Param("title") String title);
+
+	2.2. Ordered Parameters.
+		@Query("SELECT m FROM Movie m WHERE m.rating LIKE ?1%")
+		List<Movie> searchByRatingStartsWith(String rating);
+
+		Spring Boot 2.4.1 or later, we can use the SpEL escape method:
+			@Query("SELECT m FROM Movie m WHERE m.director LIKE %?#{escape([0])} escape ?#{escapeCharacter()}")
+			List<Movie> searchByDirectorEndsWith(String director);
+
+3. criteriaBuilder
+	則要自己於值加 %% 控制

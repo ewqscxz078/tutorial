@@ -1,4 +1,5 @@
-
+https://mkyong.com/spring-boot/testing-spring-data-jpa-with-datajpatest/
+https://www.baeldung.com/spring-boot-data-sql-and-schema-sql
 use @DataJpaTest
 	1.預設使用 H2 資料庫
 	2.會自動回滾事務，以確保測試不會影響實際資料庫

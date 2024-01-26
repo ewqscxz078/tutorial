@@ -5,6 +5,9 @@ mybatis 生成器
 ======================================================================================================
 https://www.tpisoftware.com/tpu/articleDetails/1392
 https://juejin.cn/post/6844903982582743048
+https://blog.csdn.net/pk490525/article/details/16819307
+	引入 property 讓 xml 屬性
+
 
 1.設定
 	maven

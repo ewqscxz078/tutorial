@@ -45,7 +45,7 @@
 			public SomethinObject somethinObject(XXXXProperties properties) {
 				....
 			}
-	2.或是當作 auto-configuration 的建構參數 : 適何當注入的每個 ioc 物件參數已過多時的替代方式
+	2.或是當作 auto-configuration 的建構參數 : 適合當注入的每個 ioc 物件參數已過多時的替代方式
 		@AutoConfiguration
 		@ConditionalOnClass(KafkaTemplate.class)
 		@EnableConfigurationProperties(KafkaProperties.class)

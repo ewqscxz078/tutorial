@@ -1,0 +1,112 @@
+web.xml 與 web-fragment.xml 差異
+	web.xml：
+		web.xml 是傳統的 Web 應用程式描述文件，用於配置整個 Web 應用程式的行為。
+		它包含了許多配置元素，用於定義 Servlet、Filter、Listener、Welcome Files、Error Pages 等元素的屬性和映射。
+		在 Java EE 5 和之前的版本中，web.xml 是必需的，所有的配置都需要在這個文件中進行。
+		在 Java EE 6 之後，Servlet 3.0 引入了基於注解的配置，使得在很多情況下可以不再需要 web.xml。
+	web-fragment.xml：
+		web-fragment.xml 是 Servlet 3.0 引入的一個新概念，用於允許模塊化的 Web 應用程式配置。
+		它允許 JAR 文件中的 Web 模塊提供自己的配置片段，而不需要修改主 web.xml。
+		Web 模塊通常是一個包含 Servlet、Filter 或 Listener 配置的 JAR 文件。
+			每個模塊可以提供一個 web-fragment.xml 文件，這些文件將自動被合併到主 web.xml 中。
+		web-fragment.xml 中的配置僅影響它所屬的模塊，這使得更容易擴展或修改 Web 應用程式而不需要修改主 web.xml。
+
+	簡而言之，web.xml 是主 Web 應用程式的配置文件，而 web-fragment.xml
+	允許模塊提供自己的配置並在運行時合併到主 web.xml。這使得 Web 應用程式更具模塊化和可擴展性。
+
+tomcat 裡的 web.xml 與 佈署到 tomcat 的 java web project 的 web.xml 差異
+
+	Tomcat 安裝目錄中的全域 web.xml：
+		Tomcat 伺服器本身包含一個全域的 web.xml 檔案，通常位於 Tomcat 安裝目錄下的 conf 資料夾中。
+		這個 web.xml 包含了一些全域設定，影響所有部署在該 Tomcat 伺服器上的 Web 專案。
+
+	Web 專案中的 web.xml：
+		每個具體的 Web 專案也可以包含自己的 web.xml，通常位於 WEB-INF 目錄中。
+		這個 web.xml 包含了該 Web 專案的特定配置，可能會覆蓋或擴充全域的 web.xml 設定。
+
+
+當使用 spring boot 嵌入式的 tomcat 則無預設的全域 web.xml
+	依據 spring boot web 專案的設定決定
+
+
+常見 web.xml/web-fragment.xml 對應 spring boot 都有對應的 java config 設定。
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+	</context-param>
+		=> 對應 spring boot configuration
+
+	<filter>
+		<filter-name>xxx</filter-name>
+		<filter-class>tw.gov.xxxx.yyyy</filter-class>
+		<init-param>
+			<param-name>types</param-name>
+			<param-value>jsp|jspx</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>xxx</filter-name>
+		<url-patterns>/*</filter-name>
+	</filter-mapping>
+		=> 對應 FilterRegistrationBean 註冊
+		@Bean(name = "someFilter")
+		public Filter someFilter() {
+		}
+		@Bean
+		public FilterRegistrationBean someFilterRegistration() {
+
+				FilterRegistrationBean registration = new FilterRegistrationBean();
+				registration.setFilter(someFilter());
+				registration.addUrlPatterns("/url/*");
+				registration.addInitParameter("paramName", "paramValue");
+				registration.setName("someFilter");
+				registration.setOrder(1);
+				return registration;
+		}
+
+	<listener>
+		<listener-class>xxx.yyy.Zzz</listener-class>
+	</listener>
+		=>
+
+	<servlet>
+		<servlet-name>yyy</filter-name>
+		<servlet-class>tw.gov.xxxx.yyyy</filter-class>
+		<init-param>
+			<param-name>${自訂運用}</param-name>
+			<param-value>${自訂運用}</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>yyy</filter-name>
+		<url-patterns>/*</filter-name>
+	</servlet-mapping>
+		=> 對應 ServletRegistrationBean 註冊
+
+	// 通常有自訂義的才需要設定
+	<mime-mapping>
+		<extension>png</extension> <!-- url 最後的副檔名 -->
+		<mime-type>image/png</mime-type> <!- request content type mime對應 -->
+	</mime-mapping>
+		=> spring boot 默認情況下是不需要額外配置 mime-mapping 的，
+		因為 Spring Boot 使用了嵌入式的 Servlet 容器，
+		而這些容器通常已經提供了合理的默認 MIME 類型映射。
+
+		spring boot 2 若有特定自訂型別對應設定方式
+			https://leaderli.github.io/2019/08/02/springboot%E9%9D%99%E6%80%81%E8%B5%84%E6%BA%90%E5%AE%9A%E4%B9%89mime%E7%B1%BB%E5%9E%8B/
+
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+		=>
+			application.yml
+				spring.mvc.view.prefix: /WEB-INF/views/
+				spring.mvc.view.suffix: .jsp
+
+			默認的首頁設定為
+				src/main/webapp/WEB-INF/views/index.jsp
+
+	<error-page>
+		<error-code>400</error-code>
+		<location>/WEB-INF/error/400.jsp</location>
+	</error-page>
