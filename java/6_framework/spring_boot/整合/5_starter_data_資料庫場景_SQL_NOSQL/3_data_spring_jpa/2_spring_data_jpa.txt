@@ -85,5 +85,10 @@ Repository
 	http://localhost:8080/user?lastName=lisi&email=aa
 
 
-
-
+7. 預設 spring boot jpa 會自動掃 @Repository、@Entity 讓其 spring bean ioc 納管
+	若 相關 @Repository 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
+		@EnableJpaRespositories(basePackages = "你的 Repository package 路徑")
+	
+	若 相關 @Entity 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
+		@EntityScan(basePackages = "你的 Entity package 路徑")
+			

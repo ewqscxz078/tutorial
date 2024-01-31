@@ -1,0 +1,49 @@
+https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
+
+@Entity
+	被視為一個可持久化的實體，它的實例可以被存儲到數據庫中，並且可以通過JPA進行管理
+@Table
+	可以指定表名(name)、索引(indexes)、唯一約束(uniqueConstraints)等
+@Id
+	指定實體類別中的一個欄位作為主鍵，該欄位將映射到數據庫表的主鍵欄位。
+@GeneratedValue
+	設定主鍵的生成策略，可以是自動增長、UUID、序列等方式
+		GenerationType.IDENTITY：
+		由數據庫自動增長來生成主鍵值（適用於支持自動增長的數據庫，如 MySQL 的 AUTO_INCREMENT）。
+		GenerationType.AUTO：
+		由 JPA 驅動自動選擇適合的主鍵生成策略（這是預設值）。
+		GenerationType.SEQUENCE：
+		使用數據庫的序列來生成主鍵值（適用於支持序列的數據庫，如 Oracle）。
+		GenerationType.TABLE：
+		使用一個特定的數據庫表來保存主鍵的生成狀態。
+		GenerationType.UUID：
+		使用 UUID（通用唯一標識符）來生成主鍵值。
+
+@Column
+	指定列名、長度、是否允許為空等
+		name：
+			用於指定該屬性在數據庫表中對應的列名稱。默認情況下，列名將與屬性名稱相同。
+		unique：
+			屬性是否唯一
+		nullable：
+			指示該屬性是否可以為空（true 表示可為空，false 表示不可為空）。默認值為 true。
+		length：
+			用於指定列的最大長度（僅適用於 String 屬性）。
+		precision 和 scale：
+			用於指定數值類型屬性的精度和小數位數。
+
+@OneToOne
+	建立實體類別之間的一對一關係映射
+
+@OneToMany
+	建立一對多的關係映射，在一端實體類別中使用該註解，表示一個對多的關係，可以將多個子實體關聯到同一個父實體
+
+@ManyToOne
+	建立多對一的關係映射，在多端實體類別中使用該註解，表示多個子實體關聯到同一個父實體
+
+@ManyToMany
+	建立多對多的關係映射，需要中介表來存儲關聯關係，用於表示一個實體可以關聯多個其他實體
+
+@JoinColumn
+	設定關聯表之間的外鍵映射。在多對一或一對多關係中，用於指定關聯的外鍵欄位。
+

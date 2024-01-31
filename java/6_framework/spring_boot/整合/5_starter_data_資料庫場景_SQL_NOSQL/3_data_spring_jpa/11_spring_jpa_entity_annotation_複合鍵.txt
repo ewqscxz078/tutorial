@@ -1,0 +1,25 @@
+複合鍵 entity 設定
+	import javax.persistence.Embeddable;
+	import java.io.Serializable;
+
+	@Embeddable
+	public class YourCompositeKey implements Serializable {
+		private Long keyPart1;
+		private Long keyPart2;
+
+		// 空的建構子和 getter, setter 方法
+		// 注意，這裡需要實作 Serializable 介面
+	}
+
+	import javax.persistence.EmbeddedId;
+	import javax.persistence.Entity;
+	import java.io.Serializable;
+
+	@Entity
+	public class YourEntity implements Serializable {
+		@EmbeddedId
+		private YourCompositeKey id;
+
+		// 其他屬性和方法
+		// 注意，這裡的屬性名稱和 YourCompositeKey 中的變數名稱需要一致
+	}
