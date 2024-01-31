@@ -32,12 +32,12 @@ https://www.baeldung.com/spring-boot-custom-starter
 			舉例: spring-boot-starter-web、
 				  spring-boot-starter-actuator、
 				  spring-boot-starter-jdbc、
-		定義命名空間
+		自定義命名空間
 			後墜: -spring-boot-starter
 			模式: 模塊名-spring-boot-starter
 			舉例: mybatis-spring-boot-starter
 
-	xxx-starter(client 引入 pom 用) -> xxx-starter-autoconfigure(存放可設定化元件:常見有xxxAutoConfiguration、xxxProperties)
+	xxx-spring-boot-starter(client 引入 pom 用) -> xxx-spring-boot-autoconfigure(存放可設定化元件:常見有xxxAutoConfiguration、xxxProperties)
 											可能會引用 xxx(常見含有xxxBuilder、xxxCustomizer)
 
 	client 覆蓋方式
