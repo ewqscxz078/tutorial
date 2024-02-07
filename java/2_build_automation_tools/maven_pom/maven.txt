@@ -204,3 +204,29 @@ how to know maven properties and other
 		</project>
 
 or ref https://github.com/apache/maven/blob/trunk/maven-model-builder/src/main/resources/org/apache/maven/model/pom-4.0.0.xml#L53
+
+==================================================================================================
+============================== classifiers =======================================================
+==================================================================================================
+https://www.baeldung.com/maven-artifact-classifiers
+	用於區分相同坐標（groupId、artifactId、version）但具有不同特性的檔案的機制。
+	通常，classifiers 被用來區分相同的 artifact，但有一些不同版本或變體
+		例如，一個 Maven 專案可能擁有不同操作系統下的 native 庫，如 Windows、Linux 和 MacOS。
+		這時就可以使用 classifiers 來區分這些 native 庫的不同版本
+			<dependencies>
+				<!-- 引入 artifactId 為 example-artifact、version 為 1.0.0、classifier 為 windows 的檔案 -->
+				<dependency>
+					<groupId>com.example</groupId>
+					<artifactId>example-artifact</artifactId>
+					<version>1.0.0</version>
+					<classifier>windows</classifier>
+				</dependency>
+
+				<!-- 引入相同的 artifactId 和 version，但 classifier 為 linux 的檔案 -->
+				<dependency>
+					<groupId>com.example</groupId>
+					<artifactId>example-artifact</artifactId>
+					<version>1.0.0</version>
+					<classifier>linux</classifier>
+				</dependency>
+			</dependencies>

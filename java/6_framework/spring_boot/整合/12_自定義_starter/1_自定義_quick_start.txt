@@ -48,16 +48,16 @@ https://www.baeldung.com/spring-boot-custom-starter
 				TaskSchedulerCustomizer
 
 	3.1 建立專案 xxx-starter
-		依賴 xxx-starter-autoconfigure 專案
+		依賴 xxx-autoconfigure 專案
 		pom.xml
 			<dependencies>
 				<dependency>
 					<groupId>org.springframework.boot</groupId>
-					<artifactId>xxx-starter-autoconfigure</artifactId>
+					<artifactId>xxx-autoconfigure</artifactId>
 				</dependency>
 			<dependencies>
 
-	3.2 建立專案 xxx-starter-autoconfigure 撰寫
+	3.2 建立專案 xxx-autoconfigure 撰寫
 		依賴基本
 			pom.xml
 				<dependency>
@@ -119,7 +119,7 @@ https://www.baeldung.com/spring-boot-custom-starter
 
 			test
 				xxx-starter 專案 => maven install // to local
-				xxx-starter-autoconfigurer 專案 => maven install // to local
+				xxx-autoconfigurer 專案 => maven install // to local
 
 				create new 專案
 					1.依賴 spring-boot-starter-web

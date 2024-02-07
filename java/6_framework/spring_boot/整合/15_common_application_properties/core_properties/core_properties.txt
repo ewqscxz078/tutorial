@@ -1,0 +1,31 @@
+======================================================================================================
+================================ 參考 ================================================================
+======================================================================================================
+https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html
+
+======================================================================================================
+================================ 設定 ================================================================
+======================================================================================================
+server.error.whitelabel.enabled=false
+	1.取消默認錯誤頁面
+
+spring.config
+	spring.config.additional-location
+		1.Config file locations used in addition to the defaults.
+		2.額外附加設定檔載入(可以是yml、profiles)，通常是外部檔案
+
+	spring.config.import
+		1.Import additional config data.
+		2.用於主配置文件引入其他配置文件
+		3.引入任意的配置文件
+		4.適合引入一個通用的配置文件合併
+
+spring.profiles
+	spring.profiles.active
+		1.Comma-separated list of active profiles. Can be overridden by a command line switch.
+		2.啟用那些 profiles
+
+	spring.profiles.include
+		1.用於在特定的配置文件中引入其他配置文件，與 Spring profiles 相結合
+		2.通常用於引入與 profiles 關聯的配置文件
+		3.適合根據不同的 profiles 引入不同的配置文件
