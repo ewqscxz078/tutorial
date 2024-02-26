@@ -5,10 +5,10 @@ logback xml setting
 	https://www.cnblogs.com/xrq730/p/8628945.html
 
 https://logback.qos.ch/dependencies.html
-	logback 	jdk 	SLF4J 
+	logback 	jdk 	SLF4J
 	1.3.x		8 		2
 	1.4.x		11		2
-	
+
 	但在 spring bot 2.7.x 版本 僅支援到 1.2.x 因為其底層處理 StaticLoggerBinder in LogbackLoggingSystem.java 問題
 		https://github.com/qos-ch/logback/issues/745
 

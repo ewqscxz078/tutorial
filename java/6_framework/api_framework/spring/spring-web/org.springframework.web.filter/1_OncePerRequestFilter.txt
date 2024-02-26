@@ -1,0 +1,119 @@
+https://www.baeldung.com/spring-onceperrequestfilter
+
+1.定義
+	緣由
+		原始 javax.servlet.filter 可能當 RequestDispatcher 將 servlet forward 到另一個 servlet，會經過執行相同 filter 多次問題
+
+	目的
+		為了確保特定的 filter 每一個 request 僅經過一次 filter(最常見的案例為 Spring Security : we might want some of the authentication actions to happen only once for the request)
+		spring 提供了一個保證每一個 request 經過 filter 僅一次的功能
+
+2.已知 spring 底層有繼承的
+	spring-web-5.3.31
+		org.springframework.web.filter.AbstractRequestLoggingFilter
+		org.springframework.web.filter.CharacterEncodingFilter
+		org.springframework.web.filter.CorsFilter
+		org.springframework.web.filter.FormContentFilter
+		org.springframework.web.filter.ForwardedHeaderFilter
+		org.springframework.web.filter.HiddenHttpMethodFilter
+		org.springframework.web.filter.HttpPutFormContentFilter
+		org.springframework.web.filter.RelativeRedirectFilter
+		org.springframework.web.filter.RequestContextFilter
+		org.springframework.web.filter.ShallowEtagHeaderFilter
+		org.springframework.web.multipart.support.MultipartFilter
+
+		org.springframework.security.web.authentication.AuthenticationFilter
+		org.springframework.security.web.authentication.www.BasicAuthenticationFilter
+		org.springframework.security.web.csrf.CsrfFilter
+		org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter
+		org.springframework.security.web.session.DisableEncodeUrlFilter
+		org.springframework.security.web.session.ForceEagerSessionCreationFilter
+		org.springframework.security.web.header.HeaderWriterFilter
+		org.springframework.security.web.RequestMatcherRedirectFilter
+		org.springframework.security.web.context.SecurityContextHolderFilter
+		org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter
+
+		org.springframework.boot.web.servlet.filter.ApplicationContextHeaderFilter
+		org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter
+		org.springframework.boot.actuate.web.trace.servlet.HttpTraceFilter
+
+3.for Synchronous Requests
+	預設支援 同步 request，僅要複寫 doFilterInternal
+		public class AuthenticationFilter extends OncePerRequestFilter {
+			@Override
+			protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+			  FilterChain filterChain) throws ServletException, IOException {
+				String usrName = request.getHeader(“userName”);
+				logger.info("Successfully authenticated user  " +
+						userName);
+				filterChain.doFilter(request, response);
+			}
+		}
+
+4.for Asynchronous Requests
+	若要支援 非同步 request，要再複寫 shouldNotFilterAsyncDispatch、andshouldNotFilterErrorDispatch
+		@Override
+		protected boolean shouldNotFilterAsyncDispatch() {
+			// 增加某些邏輯判斷處理 if want
+			return false;
+		}
+
+		@Override
+		protected boolean shouldNotFilterErrorDispatch() {
+			// 增加某些邏輯判斷處理 if want
+			return false;
+		}
+
+5.Conditionally Skipping Requests
+	可增加複寫那些條件 OncePerRequestFilter 不處理
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+		return Boolean.TRUE.equals(request.getAttribute(SHOULD_NOT_FILTER));
+	}
+
+6.Quick Example : 驗證了解 OncePerRequestFilter 針對非同步是否執行兩次狀況
+	@Controller
+	public class HelloController  {
+		@GetMapping(path = "/greeting")
+		public DeferredResult<String> hello(HttpServletResponse response) throws Exception {
+			DeferredResult<String> deferredResult = new DeferredResult<>();
+			executorService.submit(() -> perform(deferredResult));
+			return deferredResult;
+		}
+		private void perform(DeferredResult<String> dr) {
+			// some processing
+			dr.setResult("OK");
+		}
+	}
+
+	@Component
+	public class MyOncePerRequestFilter extends OncePerRequestFilter {
+		@Override
+		protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+		  FilterChain filterChain) throws ServletException, IOException {
+			logger.info("Inside Once Per Request Filter originated by request {}", request.getRequestURI());
+			filterChain.doFilter(request, response);
+		}
+
+		@Override
+		protected boolean shouldNotFilterAsyncDispatch() {
+			return true;
+		}
+	}
+
+	curl -X GET http://localhost:8082/greeting
+		10:23:24.175 [http-nio-8082-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+		10:23:24.175 [http-nio-8082-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+		10:23:24.176 [http-nio-8082-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+		10:23:26.814 [http-nio-8082-exec-1] INFO  c.b.O.MyOncePerRequestFilter - Inside OncePer Request Filter originated by request /greeting
+
+	@Override
+	protected boolean shouldNotFilterAsyncDispatch() {
+		return false;
+	}
+
+	2:53.616 [http-nio-8082-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+	10:32:53.616 [http-nio-8082-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+	10:32:53.617 [http-nio-8082-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+	10:32:53.633 [http-nio-8082-exec-1] INFO  c.b.O.MyOncePerRequestFilter - Inside OncePer Request Filter originated by request /greeting
+	10:32:53.663 [http-nio-8082-exec-2] INFO  c.b.O.MyOncePerRequestFilter - Inside OncePer Request Filter originated by request /greeting

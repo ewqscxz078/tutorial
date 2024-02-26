@@ -8,6 +8,8 @@ https://potoyang.gitbook.io/spring-in-action-v5/di-14-zhang-pei-zhi-guan-li/14.2
 影片 spring cloud server git + valut 範例
 	https://www.youtube.com/watch?v=p65u4t26BBc&ab_channel=TheDevWorld-bySergioLema
 
+配置中心演示到自動更新
+	https://www.cnblogs.com/fengzheng/p/11242128.html
 ======================================================================================================
 ================================ 好處 ================================================================
 ======================================================================================================

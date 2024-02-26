@@ -53,4 +53,3 @@ https://spring.io/projects/spring-cloud
 			https://www.tpisoftware.com/tpu/articleDetails/2622
 		Hystrix 服務熔斷，當服務正常時自動恢復
 			https://www.tpisoftware.com/tpu/articleDetails/2781
-

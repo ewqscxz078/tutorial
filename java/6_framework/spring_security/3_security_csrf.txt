@@ -4,7 +4,7 @@ https://www.baeldung.com/spring-security-csrf
 		1.表單 form 要使用 spring form 才會自動代入，缺點要一個form bind 一個 model 繁瑣問題
 			若使用一般 form 則要自己手動加入
 				<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-			
+
 		2.json 為 html meta 設定
 			<meta name="_csrf" content="${_csrf.token}"/>
 			<meta name="_csrf_header" content="${_csrf.headerName}"/>

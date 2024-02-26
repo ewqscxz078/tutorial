@@ -1,4 +1,5 @@
 https://docs.spring.io/spring-security/reference/5.7/servlet/architecture.html
+https://segmentfault.com/a/1190000040346944
 
     @Value("${system.security.admin.whiteIps}")
     private List<String> whiteIps;

@@ -1,0 +1,10 @@
+https://www.jianshu.com/p/c955c44ae534
+
+https://stackoverflow.com/questions/32997352/what-is-the-difference-between-putting-a-property-on-application-yml-or-bootstra
+	bootstrap.yml is loaded before application.yml.
+
+	It is typically used for the following:
+
+	when using Spring Cloud Config Server, you should specify spring.application.name and spring.cloud.config.server.git.uri inside bootstrap.yml
+	some encryption/decryption information
+	Technically, bootstrap.yml is loaded by a parent Spring ApplicationContext. That parent ApplicationContext is loaded before the one that uses application.yml.
