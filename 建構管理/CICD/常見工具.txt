@@ -1,0 +1,81 @@
+https://www.youtube.com/watch?v=GcMqHnSDyc4&t=22s
+
+CI : 持續整合
+	people -> git -> test ->　code review -> git branch merge -> image
+CD : 持續佈署
+	env-dev -> env-staging(UAT/同正式區環境) -> env-production
+
+CICD
+	工具
+		1.github
+			後起之秀
+			git 平台，建構私有需要額外費用
+			CICD 需要額外費用 : github Actions
+
+		2.gitlab
+			後起之秀
+			git 平台
+			提供CICD 常用東西 : gitlab Runner
+			可本地架設
+
+		3.jenkins
+			老牌客製化多，支援多
+
+
+	版本控制
+		gitlab : 實體主機(私有)
+
+		bitbucket : 實體主機(私有)
+		實作寫在 jenkins Pipline
+
+	單元測試 Auto
+		實作寫在 jenkins Pipline
+			C# : vstest.console
+			Python :　Junit-unittest
+			跨語言 : Selenium
+				網頁自動腳本
+
+	編譯 Auto
+		編譯語言才需要
+			實作寫在 jenkins Pipline
+				java : maven build/gradle
+				c# :　MSBuild
+
+	掃弱點
+		白箱掃描
+		黑箱掃描
+		網頁掃描
+		主機掃描
+		滲透測試
+
+
+	雲端區
+		雲端伺服器架設的技術
+			水平擴展 Scale 			機器自動增加與減少依據流量
+				GCP
+				AWS
+				azure(微軟)
+
+		容器化的技術
+			docker
+			K8S
+
+	監控區
+		監控工具使用與看懂它
+			grafana 抓取 Time series data 呈現美美的介面到網頁上
+			influxdb 時序資料庫(Time series data)
+
+
+	日誌區
+		日誌搜集器 ELK
+			Elastic Search
+			Logstash
+			Kibana
+
+
+	其他區
+		Linux
+		server 架設
+			Queue
+			rabbitmq
+			kafka

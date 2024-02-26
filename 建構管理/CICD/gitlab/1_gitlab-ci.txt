@@ -1,0 +1,6 @@
+
+建立 .gitlab-ci.yml
+	#JOB
+	helloworld:
+	  script:
+		- echo "hello world, GitLab"
