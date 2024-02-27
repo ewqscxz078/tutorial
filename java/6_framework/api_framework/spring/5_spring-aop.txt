@@ -83,3 +83,10 @@ AOP(Aspect-Oriented Programming)
 				return "result from mainMethod";
 			}
 		}
+
+
+動態 aop Pointcut
+	https://blog.csdn.net/sinat_31396769/article/details/100980049
+	DynamicMethodMatcherPointcut
+		https://blog.csdn.net/yangshangwei/article/details/77410891
+		http://www.java2s.com/Code/Java/Spring/DynamicPointcutExample.htm

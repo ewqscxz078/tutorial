@@ -1,19 +1,39 @@
 https://docs.spring.io/spring-security/reference/features/exploits/csrf.html
 https://www.baeldung.com/spring-security-csrf
 	若使用 spring boot 2 security 自動帶的 csrf
-		1.表單 form 要使用 spring form 才會自動代入，缺點要一個form bind 一個 model 繁瑣問題
+		1.表單 form 要使用 spring form 才會自動代入，缺點要一個 form bind 一個 model 繁瑣問題(但經測試不用特別bind 也可以送出)
 			若使用一般 form 則要自己手動加入
 				<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 
-		2.json 為 html meta 設定
+		2.json 為從 html meta 取得設定並到 requestHeader 塞入
 			<meta name="_csrf" content="${_csrf.token}"/>
 			<meta name="_csrf_header" content="${_csrf.headerName}"/>
 			javascript 使用其 spring csrf token 為例
-				var token = $("meta[name='_csrf']").attr("content");
 				var header = $("meta[name='_csrf_header']").attr("content");
-				$(document).ajaxSend(function(e, xhr, options) {
+				var token = $("meta[name='_csrf']").attr("content");
+				$(document).ajaxSend(function(e, xhr, options) { // 設定成每個 ajax 送到後端都有
 					xhr.setRequestHeader(header, token);
 				});
+
+		3. html form 手動放入 spring security csrf token，於 CsrfRequestDataValueProcessor 可以看到 ${_csrf.parameterName}、${_csrf.token} 處理
+			<head>
+				<!-- 其他頭部內容 -->
+				<script type="text/javascript">
+					var csrfToken = "${_csrf.token}";
+					var csrfHeader = "${_csrf.headerName}";
+				</script>
+			</head>
+			<body>
+				<!-- 其他HTML內容 -->
+				<form id="myForm" action="/yourFormAction" method="post">
+					<!-- 其他表單元素 -->
+					<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+					<button type="submit">Submit</button>
+				</form>
+
+				<!-- 其他JavaScript內容 -->
+			</body>
+			</html>
 
 https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
 	開發的專案為 web

@@ -1,0 +1,69 @@
+### 修改項目
+
+critical「Cross-Site Scripting: DOM」漏洞須修補。 for 前端依據條件再動態修改下拉
+
+#### 修改前
+
+```javascript
+
+<script type="text/javascript">
+    $("#hospitalCode").change(function() {
+        var hospitalCode = $("#hospitalCode :selected").val();
+        $.ajax({
+                type : 'POST',
+                url : "/military-backs-subPhyExam/app/toGa0001/getAreaList",
+                accept : {
+                        json : "application/json"
+                },
+                data : {
+                        hospitalCode : hospitalCode
+                },
+                success : function(data) {
+                        $('#acceptAreaCode').empty();
+                        $('#acceptAreaCode').append("<option value=''>-----------</option>");
+                        $.map(data, function(item) {
+                            $('#acceptAreaCode').append("<option value='"+item.code+"'>"+ item.text+ "</option>");
+                        });
+                }
+        });
+    });
+</script>
+```
+
+
+#### 修改後：使用ESAPI encode
+
+
+```javascript
+<spring:url value="/webjars/owasp-esapi-js/dist" var="esapiPath" />
+<script type="text/javascript" src="${esapiPath}/esapi.js"></script>
+<script type="text/javascript" src="${esapiPath}/resources/i18n/ESAPI_Standard_en_US.properties.js"></script>
+<script type="text/javascript" src="${esapiPath}/resources/Base.esapi.properties.js"></script>
+
+
+<script type="text/javascript">
+    org.owasp.esapi.ESAPI.initialize();
+    $("#hospitalCode").change(function() {
+        var hospitalCode = $("#hospitalCode :selected").val();
+        $.ajax({
+                type : 'POST',
+                url : "/military-backs-subPhyExam/app/toGa0001/getAreaList",
+                accept : {
+                        json : "application/json"
+                },
+                data : {
+                        hospitalCode : hospitalCode
+                },
+                success : function(data) {
+                        $('#acceptAreaCode').empty();
+                        $('#acceptAreaCode').append("<option value=''>-----------</option>");
+                        $.map(data, function(item) {
+                            let optCode=$ESAPI.encoder().encodeForHTML(item.code);
+                            let optText=$ESAPI.encoder().encodeForHTML(item.text);
+                            $('#acceptAreaCode').append("<option value='"+optCode+"'>"+ optText + "</option>");
+                        });
+                }
+        });
+    });
+</script>
+```
