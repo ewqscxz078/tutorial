@@ -1,0 +1,80 @@
+===================================================================================
+====================== 確認檔案格式 PKCS OF PEM、DER ==============================
+===================================================================================
+確認 PEM 之 PKCS 格式
+	openssl asn1parse -in yourfile.pem -inform PEM
+		ASN.1結構：
+		SEQUENCE
+		  INTEGER (version)
+		  INTEGER (modulus)
+		  INTEGER (publicExponent)
+		  INTEGER (privateExponent)
+		  INTEGER (prime1)
+		  INTEGER (prime2)
+		  INTEGER (exponent1)
+		  INTEGER (exponent2)
+		  INTEGER (coefficient)
+
+確認 DER 之 PKCS 格式
+	openssl asn1parse -in yourfile.der -inform DER
+		ASN.1結構：
+		SEQUENCE
+		  INTEGER (version)
+		  SEQUENCE (privateKeyAlgorithm)
+			OBJECT IDENTIFIER (algorithm)
+			NULL
+		  OCTET STRING (privateKey)
+===================================================================================
+====================== PKCS =======================================================
+===================================================================================
+PKCS#1
+	針對 RSA 私鑰的特定標準
+PKCS#8
+	則是一個通用的私鑰信息表示標準
+
+===================================================================================
+====================== PEM 檔案格式(基於Base64) ===================================
+===================================================================================
+
+PKCS#1
+	1.包含 "----BEGIN RSA PRIVATE KEY----" 的格式是PEM格式
+		表示這是一個RSA私鑰。PEM（Privacy Enhanced Mail）是一種基於ASCII編碼的標準文件格式，
+		通常用於表示密鑰、證書和其他相關的安全數據。
+
+	2.在這種格式下，私鑰被Base64編碼，並包含在 "----BEGIN RSA PRIVATE KEY----" 和 "----END RSA PRIVATE KEY----" 之間。
+		這樣的標記用於標識文件的開始和結束，以便應用程序能夠識別和解析私鑰的部分。
+
+PKCS#8
+	1.包含 "----BEGIN PRIVATE KEY----" 的格式是PEM格式
+		表示這是一個RSA私鑰。PEM（Privacy Enhanced Mail）是一種基於ASCII編碼的標準文件格式，
+		通常用於表示密鑰、證書和其他相關的安全數據。
+
+	2.在這種格式下，私鑰被Base64編碼，並包含在 "----BEGIN PRIVATE KEY----" 和 "----END PRIVATE KEY----" 之間。
+		這樣的標記用於標識文件的開始和結束，以便應用程序能夠識別和解析私鑰的部分。
+
+這種格式的私鑰通常用於加密、數字簽名等應用，
+	並且可以透過OpenSSL等工具進行讀取、解析和操作。請注意，保護私鑰的機密性是非常重要的，
+	請謹慎處理和存儲私鑰。
+
+============================================================================================================================
+====================== DER 檔案格式(二進制形式的ASN.1（Abstract Syntax Notation One）編碼) =================================
+============================================================================================================================
+1. PEM(PKCS#1) to DER(PKCS#1)
+	openssl rsa -in privatekey.pem -outform DER -out privatekey.der
+
+	# 將DER格式的PKCS#1私鑰轉換為PKCS#8格式
+	openssl pkcs8 -topk8 -in privatekey.der -inform DER -outform DER -nocrypt -out privatekey_pkcs8.der
+
+2. PEM(PKCS#8) to DER(PKCS#8)
+	openssl pkcs8 -in privatekey.pem -outform DER -out privatekey.der
+	
+3.與 PEM 情境差異適用
+	1.PEM格式：
+		可讀性： PEM格式是基於Base64編碼的ASCII文本形式，因此易於人類閱讀和編寫。這種可讀性使得PEM格式的文件在調試、檢查和手動編輯時更為方便。
+		廣泛應用： 許多應用程序和工具支持PEM格式，因此在一些場景下，PEM更容易集成和使用。
+	2.DER格式：
+		二進制形式： DER是二進制的ASN.1編碼，相對於PEM更節省空間。這對於在有限的網絡帶寬或存儲空間的環境中更為重要。
+		標準化： DER是ASN.1的標準編碼形式，這使得在不同的系統之間更容易進行溝通和交換數據。
+	總體而言，PEM和DER的選擇主要取決於應用的需求和環境。如果易於人類閱讀和使用是首要考慮因素，
+	則PEM是一個不錯的選擇；而如果空間效率和標準化更重要，那麼DER可能更合適。在實際應用中，
+	有時也會使用PEM和DER的混合格式，例如在PEM中包含DER編碼的二進制數據。
