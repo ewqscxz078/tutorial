@@ -9,7 +9,7 @@ https://www.baeldung.com/spring-deferred-result
 
 3. Blocking REST Service
 	@GetMapping("/process-blocking")
-	public ResponseEntity<?> handleReqSync(Model model) { 
+	public ResponseEntity<?> handleReqSync(Model model) {
 		// ...
 		return ResponseEntity.ok("ok");
 	}
@@ -19,7 +19,7 @@ https://www.baeldung.com/spring-deferred-result
 	public DeferredResult<ResponseEntity<?>> handleReqDefResult(Model model) {
 		LOG.info("Received async-deferredresult request");
 		DeferredResult<ResponseEntity<?>> output = new DeferredResult<>();
-		
+
 		ForkJoinPool.commonPool().submit(() -> {
 			LOG.info("Processing in separate thread");
 			try {
@@ -28,11 +28,11 @@ https://www.baeldung.com/spring-deferred-result
 			}
 			output.setResult(ResponseEntity.ok("ok"));
 		});
-		
+
 		LOG.info("servlet thread freed");
 		return output;
 	}
-	
+
 	[nio-8080-exec-6] com.baeldung.controller.AsyncDeferredResultController: Received async-deferredresult request
 	[nio-8080-exec-6] com.baeldung.controller.AsyncDeferredResultController: Servlet thread freed
 	[nio-8080-exec-6] java.lang.Thread : Processing in separate thread
@@ -40,10 +40,10 @@ https://www.baeldung.com/spring-deferred-result
 5. DeferredResult Callbacks : completion, timeout and error callbacks
 	completion
 		deferredResult.onCompletion(() -> LOG.info("Processing complete"));
-	
+
 	timeout
 		DeferredResult<ResponseEntity<?>> deferredResult = new DeferredResult<>(500l);
-		deferredResult.onTimeout(() -> 
+		deferredResult.onTimeout(() ->
 		  deferredResult.setErrorResult(
 			ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
 			  .body("Request timeout occurred.")));
