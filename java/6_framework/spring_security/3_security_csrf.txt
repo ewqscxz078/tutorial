@@ -35,11 +35,12 @@ https://www.baeldung.com/spring-security-csrf
 			</body>
 			</html>
 
-https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
-	開發的專案為 web
-		預設使用 csrf 保護
-	開發的專案為後端服務
-		應該使用 csrf().disable()
+csrf 處理方式
+	https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
+		開發的專案為 web
+			預設使用 csrf 保護
+		開發的專案為後端服務
+			應該使用 csrf().disable()
 
 無登入入口
 	@Bean

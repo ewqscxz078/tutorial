@@ -4,7 +4,7 @@ Introduction
 	Thread(線程，或稱執行緒)是一個美妙的東西，它允許你在同一個address space(定址空間)撰寫concurrency(併發)以及parallelism(並行)的程式。
 	通常跟它會拿來比較的是process(進程)，跟thread不一樣的是，process之間會是在不同的定址空間，因此可以做到比較高度的隔離，但是缺點就是比較難在process之間溝通。
 	因此，thread我們會稱為較lightweight的process。
-	
+
 	1.介紹thread
 	2.如何寫multi thread的程式
 	3.thread之間的synchronization
@@ -17,7 +17,7 @@ java thread
 		new Thread(() -> {
 			System.out.println("hello thread");
 		}).start();
-	
+
 	使用時機
 		1.IO相關的task，或稱IO bound task。如果同時需要讀很多個檔案，或是同時要處理很多的sokcet connection，
 			用thread的方法去做blocking read/write可以讓程式不會因為等待IO而導致什麼事情都不能做。
@@ -66,7 +66,7 @@ Synchronization
 				解決方法:
 					1.應該要統一以先取得A再取得B的順序，也就是前後關係要一致，這樣就可以避免掉deadlock
 					2.再來可以思考真的要把lock分到A跟B那麼細嗎? 還是統一就去取得A就好了，但這就牽涉到程式設計的議題了
-				
+
 			Race Condition
 				發生在沒有對resource做synchronized保護
 					public class MyClass {
@@ -107,7 +107,7 @@ Synchronization
 						讓resource可以是thread safe必定有其代價。例如用了很多synchronized
 					誰決定
 						讓使用library的人去決定synchronized包裝的granularity(顆粒度)也許會更適合
-					既有 jdk lib 
+					既有 jdk lib
 						因此，在java collection library中，大部分的collection其實都不是thread safe。
 						如果想讓你的collection是thread safe，可以透過Collections中的很多helper methods來提供。例如
 							syncedCol = Collections.synchronizedCollection(myCol);
@@ -115,20 +115,20 @@ Synchronization
 							syncedSet = Collections.synchronizedSet(mySet);
 							syncedMap = Collections.synchronizedMap(myMap);
 						則可以把原本的non-thread-safe的容器包成thread safe的容器。
-				
+
 				Immutable Object (不能修改)
 					1.概念是resource在唯獨的情況下沒有共用的問題，也不需要lock，只要裡面資料不會更動。
 					2.但如果想要修改怎麼辦? 此時以產生取代修改，也就是會再產生另外一個immutable object
 					在Java中最經典的例子就是String，所有的String的物件是不能修改的
 						newStr = str + "2";
 						此時的newStr跟str會是兩個獨立的object。這種方式最大的好處是即便很多thread去存取也不用去lock，可以增加平行化的程度
-				
+
 				Other Utilities
 					Semaphore: 可以算是countable lock，也就是會有一定數量的resources可以取得。
 					ReadWriteLock: Lock分read跟write，理論上read access可以multiple thread，write access只能single thread。
 						Read/Write lock把read跟write分開可以讓synchronization的成本降低
 					Atomics: 上面已經介紹過，把一些操控primitives的動作變成是atomic(不可分割的) operation。
-					
+
 		2.Flow Control: 一個thread可否等到另外一個thread完成或是執行到某個狀況的時候才繼續往下做?
 		3.Message Passing: 我可否把我一個thread的output當作另外一個thread的input?
 
@@ -137,16 +137,16 @@ Thread Pool
 	定義
 		開thread是有成本的。如果每一個小的task就開一thread，並且有很多的小task需要處理，那產生thread的overhead是很可觀的。
 		因此，比較好的方法是產生一堆threads，稱之為thread pool，讓這些開好的threads來處理這一堆小工作
-	
+
 	舉例
 		外包工作
 			開thread處理task就很像外包一個工作，可能我們會在網路上找一個人過來幫忙處理，等到事情處理完了合約就結束了。
 			但是當事情多了，那就可能直接聘雇一群人當作員工來處理事情，這群正職員工就是thread pool，在此員工就是thread，而工作就是task。
-		
+
 		業務櫃台
 			辦理金融業務的可能會有三四個櫃檯，而當我們有事情要處理會在取票機中提取一個號碼。當職員處理完一個人的業務時，
 			就會叫下一個人過來處理。在這邊職員就是thread，而我們的號碼牌就是一個task，而這個取票機就是queue。
-	
+
 	三大元素就是thread, task, 跟queue
 		而其實thread pool就是producer consumer pattern的一種形式，consumer就是一堆threads，當queue中一有工作進來，一個空閒的thread就會取出來做處理
 
@@ -216,7 +216,7 @@ Thread Pool
 				threadPool.shutdown();
 			}
 		}
-	
+
 	Basic Pool : 已存在 JDK 建構好的
 		一般的Thread Pool，大家共用一個queue
 		介面
@@ -225,7 +225,7 @@ Thread Pool
 					void execute(Runnable command);
 				}
 
-			ExecutorService 
+			ExecutorService
 				Methods			Description
 				submit			可以呼叫沒有回傳值的task(Runnable)跟有回傳值的task(Callable)，並且會回傳一個Future。這個Future的概念容我稍後介紹。
 				invokeAll		一次執行多個task，並且取得所有task的future objects
@@ -246,14 +246,14 @@ Thread Pool
 			Executors.newCachedThreadPool()						產生沒有數量上限的thread pool。Thread的數量會根據使用狀況動態的增加或是減少。
 			Executors.newScheduledThreadPool(int corePoolSize)	產生固定數量可以做scheduling的thread pool。
 			Executors.newWorkStealingPool()						產生work stealing的thread pool，這種類型的thread pool下一章會介紹。
-	
-	
+
+
 	ForkJoin Pool : 已存在 JDK 建構好的
 		實作了working stealing scheduling
 			1.有一個大的專案，如果一個人無法完成的話，那我們很直覺的會把大的專案，切成很多中型的task，再把他分成幾個小的task，讓整個團隊可以協力完成。
 				這些小的task完成之後，中型的task再把它整合起來，最終完成整合後就完成了大的專案。
 			2.也就是recursion或是divide & conquer 具體演算做法
-		
+
 		每個thread有一個自己的queue，而且是雙向的queue(deque)
 			當一個task進來，他會把一部分的工作fork(切)出來先放到queue的最後面，另外一部分開始做。當然可能做進去後，發現task還是太大，就會繼續切更小，
 			並再放到queue的最後方。如此一邊切一邊往下執行，直到task夠小可以直接運算為止。
@@ -269,38 +269,38 @@ Thread Pool
 				ForkJoinPool.commonPool().execute(fibonacci);
 				System.out.println(fibonacci.get());
 			}
-		
+
 		跟傳統Thread Pool比較
 			兩種不同的執行策略，分別是producer consumer跟recursion。前者適合每個task是獨立的，他可以把大事小事都平均分攤在每個thread去執行；
 			後者是透過divide and conquer演算法，用work stealing的方式去執行。
 			所以主要還是要看你的task是哪一種類型居多。
-		
+
 		優點
 			而ForkJoinPool有一個很大的好處是減少thread因為blocking造成context switching。不管是fork, compute, join都幾乎不會blocking(只有join少數情況會要等待結果)。
 			這可以讓thread一直保持running的狀態，一直到時間到了被context switch，而不是自己卡住了造成的context switch。
-		
+
 		缺點
 			但ForkJoinPool對於不可分割的task，並且處理時間差異很大的情境比較不適合，畢竟每個thread都有一個queue。
 			就很像在大賣場排隊結帳，只要運氣不好排到一個前面卡比較久的task就要等比較久。
 			但是別排又沒有閒到可以把你steal走，那就沒有辦法做到先到先處理的特性了。
-		
+
 		JDK 其他應用 ForkJoinPool
 			Java8的Stream API的parallel stream : 透過Spliterator來定義怎麼去split(或稱fork)你的input data。若執行結果需要collect，就會join回最後的result。
 
 Asynchronous
 	非同步處理是multi threading的重要課題，尤其是對於需要網路相關的操作時，非同步處理可以讓你同時可以處理多個網路處理而不會卡在等單一的網路存取完成。
-	
+
 	Future
 		代表一個非同步呼叫的回傳結果，而這個結果會在未來某一個時間點可以取得
 		例如: 送洗衣服就是一個非同步的呼叫，因為衣服是交給別人洗而非自己洗，而洗好的衣服是一個未來會發生的結果，這個結果被Future這個class包裝起來。
 
 			Future<Clothes> future = laundryService.serviceAsync(myClothes);
-			
+
 			// block until result is available
 			Clothes clothes = future.get();
 			因為是非同步，所以我們可以一次執行很多個非同步的task，讓他們可以平行的去處理，最後再一次等所有的非同步結果。這在生活中也挺常發生，
 			例如我去夜市買雞排豆花跟珍奶，我也不會呆呆的在每一個攤位前面等他一個一個做好，我可能會跟老闆說等等過來拿，讓這幾個攤位可以平行的處理我的tasks。
-		
+
 			ExecutorService#submit就提供了一個非同步執行的實作，並且回傳一個Future，一般來講我們只要使用這個method來實作我們的非同步執行就可以了。
 				public class LaundaryService {
 					private ExecutorService executorService = /*...*/;
@@ -313,7 +313,7 @@ Asynchronous
 						return dirtyClothes.wash();
 					}
 				}
-		
+
 	CompletableFuture
 		Sample code
 			CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -354,9 +354,9 @@ Asynchronous
 				Method								Description
 				complete(T t)						完成非同步執行，並回傳結果
 				completeExceptionally(Throwable ex)	非同步執行不正常的結束
-				
+
 				在Google的Guava library中也可以看到completable的蹤影，那就是SettableFuture。
-				
+
 			Listenable
 				更多時候我們想要的是好了叫我這種語意。因此Listenable的特性，就是我們可以註冊一個callback，讓我可以listen執行完成的event
 				主要是透過whenComplete()跟handle()這兩個method。
@@ -373,12 +373,12 @@ Asynchronous
 				}).whenComplete((result, throwable) -> {
 					System.out.println("world");
 				});
-				
+
 				這兩個method以及包含後面會提到的method都有三種變形，分別是
 					xxxx(function): function會用前個執行的thread去呼叫。
 					xxxxAsync(function): function會用非同步的方式呼叫，並用預設的thread pool。
 					xxxxAsync(function, executor): function會用非同步的方式呼叫，並用指定的thread pool。
-				
+
 				同樣在Guava library中也可以看到listenable的蹤影，那就是ListenableFuture。
 
 			Composible : 可串連
@@ -393,12 +393,12 @@ Asynchronous
 				thenAccept()	Consumer<T>							CompletableFuture<Void>
 				thenApply()		Function<T, U>						CompletableFuture<U>
 				thenCompose()	Function<T, CompletableFuture<U>>	CompletableFuture<U>
-				
+
 				經過這樣的轉換過程，我們把很多的future合併成單一的future。這些轉換我們沒有看到任何的exception處理，
 				因為在任何一個階段出現exception，對於整個包起來的future就是exception。所以我們就是希望把每一個小的async invocation compose成一個大的async invocation。
 				在guava library中，我們可以看到composible的蹤影，他是放在Futures下面的transformXXX()相關的methods。
-				
-				
+
+
 			Combinable : 可並聯
 				async的流程有些時候不會是單一條路的，有時候更像是DAG(Directed Acyclic Graph)。例如做一個爬蟲程式(Crawler)，我們排一個文章的時候，可能會抓到很多個外部鏈結，這時候就會繼續展開更多非同步的task。等到到了某個停止條件，我們就要等所有爬蟲的task完成，最終等於執行完這個大的async task。
 				Method				With					Transformer			Return Type
@@ -408,7 +408,7 @@ Asynchronous
 				acceptEither()		CompletableFuture<T>	Conusmer<T>			CompletableFuture<Void>
 				applyToEither()		CompletableFuture<T>	Function<T,U>		CompletableFuture<U>
 				thenCombine()		CompletableFuture<U>	BiFunction<T,U,V>	CompletableFuture<V>
-				
+
 				還有提供兩個static methods來做combine多個futures
 					Method	Description
 					allOf(...)	回傳一個future，其中所有的future都完成此future才算完成。
