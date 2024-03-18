@@ -67,7 +67,7 @@ PKCS#8
 
 2. PEM(PKCS#8) to DER(PKCS#8)
 	openssl pkcs8 -in privatekey.pem -outform DER -out privatekey.der
-	
+
 3.與 PEM 情境差異適用
 	1.PEM格式：
 		可讀性： PEM格式是基於Base64編碼的ASCII文本形式，因此易於人類閱讀和編寫。這種可讀性使得PEM格式的文件在調試、檢查和手動編輯時更為方便。
