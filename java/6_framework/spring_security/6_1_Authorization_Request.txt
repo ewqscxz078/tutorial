@@ -3,3 +3,92 @@
 官網
 	https://docs.spring.io/spring-security/reference/5.8/servlet/authorization/authorize-http-requests.html
 ========================================================================================================================
+
+
+慣例
+	1.提供那些 url 要受保護，那些不用保護，每個 url 授予的角色是
+	2.提供那些 靜態 url 不用受保護
+	3.提供 帳密來源 給 security
+	4.是否提供帳密管理給 security
+	5.登入頁、登入執行處理
+	6.權限拒絕處理
+	
+SecurityFilterChain loginFilterChain(HttpSecurity http)
+	http
+		1.表頭
+			同源
+			.headers(headers -> headers
+				.frameOptions(optinos -> options.sameOrigin())
+			)
+		2.授權 request Request
+			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
+				// 那些 URL 不用授權
+				.antMatchers("/login","/css/**","/images/**","/js/**").permitAll()
+				// 除了以上，其他都須驗證
+				.anyRequest().authenticated();
+				// 那些 URL 要授權 with role : 指定 url 要驗證且有角色，若有需要的話
+				// .antMatcher("/xxx").hasRoles("role_sys")
+			)
+			// antMatchers
+				基於URL模式的授權設置
+					1.通過Ant風格的模式匹配指定哪些URL需要進行授權。
+					2.可以使用通配符（例如/**）和模式（例如/admin/**）來指定URL模式。
+					3.這個方法通常用於指定具體的URL路徑或模式
+
+			// requestMatchers
+				更靈活，可以基於更多的請求屬性進行授權設置
+					1.用於通過RequestMatcher對象來指定哪些請求需要進行授權
+					2.RequestMatcher是一個接口，它用於定義如何匹配HTTP請求
+					3.根據不同的條件（例如HTTP方法、Host、IP等）來進行授權
+		3.登入
+			.formLogin((formLogin) -> formLogin
+				//1.option 帳號參數(預設:username)，與預設一樣可以不用特別設定
+				// .usernameParameter("aaa")
+				//2.option 密碼參數(預設:password)，與預設一樣可以不用特別設定
+				// .passwrodParameter("bbb")
+				//3.登入頁面 url : (預設:/login)
+				.loginPage("/url")
+				//4.登入失敗頁 url : 將用戶重定向到固定的錯誤頁面，那麼使用 failureUrl 會更加方便
+				.failureUrl("/url?fail=y") 
+				//5.登入處理 url
+				.loginProcessingUrl("/doLogin")
+				//6.option 用於在登入成功後執行自定義的行為。例如，你可以將用戶重定向到不同的 URL，顯示特定的訊息，或執行其他自訂操作。
+				// .successHandler(AuthenticationSuccessHandler)
+				//7.option 用於在登入失敗時執行自定義的行為。你可以在這裡處理登入失敗的情況，例如顯示錯誤訊息、記錄日誌、重新導向到登入頁面等。
+				// .failureHandler(AuthenticationFailureHandler)
+			)
+
+		4.登出
+			.logout((logout) -> logout
+				// 1.option 登出後 刪除 指定 cookies
+				// 	deleteCookies(String keyword....)
+				// 2.option 登出後 失效 session : 預設 true
+				// 	invalidateHttpSession(boolean)
+				//3.登出頁面 url : 預設 /logout
+				.logoutUrl(String logoutUrl)
+				//4.登出成功處理 : logoutSuccessHandler(java) 或 logoutSuccessUrl(String url)
+				.logoutSuccessHandler(LogoutSuccessHandler LogoutSuccessHandler) 若有設定 LogoutSuccessHandler 則 logoutSuccessUrl會被忽略
+				.logoutSuccessUrl(String logoutSuccessUrl) 
+			)
+		
+		5.驗證 authentication
+			//1.option authenticationManager : 客製自訂驗證管理
+			//默認情況下，Spring Boot Security 會使用 InMemoryUserDetailsManager 作為 UserDetailsService 的實現，並且會配置一個 DelegatingPasswordEncoder 作為 PasswordEncoder 的實現
+			//.authenticationManager(AuthenticationManager)
+			
+			//2.option authenticationProvider : 客製自訂驗證提供者(DaoAuthenticationProvider、LdapAuthenticationProvider)
+			//默認情況下，Spring Boot Security 會自動配置一個 DaoAuthenticationProvider 作為默認的 AuthenticationProvider。
+			//  DaoAuthenticationProvider 將使用 UserDetailsService 加載用戶詳細信息，並使用 PasswordEncoder 對用戶提供的密碼進行驗證
+			//.authenticationManager(AuthenticationProvider)
+			3.使用者詳細資訊介面 : userDeailService 
+				// 提供給 Spring Security 的用戶詳細資訊的介面
+				實作 UserDetails userDeailService.loadUserByUsername(String username){
+					透過資料庫 table where username = ${username} 取得其 user bean
+					return 將 user bean 必要資訊塞回實作 UserDetails 的 bean
+				}
+		6.例外處理
+			.exceptionHandling(exceptionHandling -> exceptionHandling
+				.accessDeniedPage(String)
+				// 客製化拒絕處理細節實作
+				//.accessDeniedHandler(AccessDeniedHandler)
+			)
