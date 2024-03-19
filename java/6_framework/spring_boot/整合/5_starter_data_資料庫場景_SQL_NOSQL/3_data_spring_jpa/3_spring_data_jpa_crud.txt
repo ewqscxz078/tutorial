@@ -55,7 +55,7 @@ jpa 沒有 update
 			@Modifying
 			@Query("update entity e set e.xxx = :xxx where e.yyy = :yyy")
 			int updateField(@Param("xxx") String xxx, @Param("yyy") String yyy);
-			
+
 Q&A
 	Q: 嘗試使用 repository.save(entity)
 		出現錯誤

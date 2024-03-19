@@ -101,7 +101,7 @@ Repository
 		findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉換
 	3.@Query with entity
 	4.@Query with nativeSQL
-	5.@Query 撈取部分欄位 
+	5.@Query 撈取部分欄位
 		1.with projections
 		2.select part Columns and return Object[]
 		3.@EntityGraph

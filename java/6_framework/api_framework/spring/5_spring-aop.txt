@@ -86,7 +86,7 @@ AOP(Aspect-Oriented Programming)
 
 
 動態 aop Pointcut
-	DefaultPointcutAdvisor 
+	DefaultPointcutAdvisor
 		https://blog.csdn.net/sinat_31396769/article/details/100980049
 		自訂一個同@Around 效果的 by implements MethodInterceptor
 			public class AroundAdvice implements MethodInterceptor {
@@ -189,7 +189,7 @@ AOP(Aspect-Oriented Programming)
 
 			return advisor;
 		}
-		
+
 	DynamicMethodMatcherPointcut
 		https://blog.csdn.net/yangshangwei/article/details/77410891
 		http://www.java2s.com/Code/Java/Spring/DynamicPointcutExample.htm

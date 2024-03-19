@@ -35,7 +35,7 @@ https://www.baeldung.com/java-spring-field-injection-cons
 		缺點
 			1.Null-Safety : 可能注入是 null 當不存在時
 			2.Immutability : 不可變
-			3.Design Problems : 
+			3.Design Problems :
 				1. Single Responsibility Violation
 				2. Circular Dependencies
 

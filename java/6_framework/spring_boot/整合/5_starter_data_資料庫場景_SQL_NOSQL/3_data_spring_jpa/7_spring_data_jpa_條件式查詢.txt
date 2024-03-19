@@ -5,10 +5,10 @@ https://juejin.cn/post/6985573675764285477
 https://blog.csdn.net/john_1023/article/details/118087600
 https://www.cnblogs.com/summerday152/p/14182138.html
 	簡易
-	
+
 	public interface XxxxDao extends JpaRepository<${Entity}, ${Entity.id}>, JpaSpecificationExecutor<${Entity}> {
 	}
-	
+
 	JpaSpecificationExecutor 預設提供
 		public interface JpaSpecificationExecutor<T> {
 			Optional<T> findOne(@Nullable Specification<T> spec);

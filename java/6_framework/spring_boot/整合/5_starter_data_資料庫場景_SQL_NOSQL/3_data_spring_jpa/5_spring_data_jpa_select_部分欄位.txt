@@ -1,7 +1,7 @@
 https://stackoverflow.com/questions/22007341/spring-jpa-selecting-specific-columns
 
 https://www.w3docs.com/snippets/java/spring-jpa-selecting-specific-columns.html
-	1.使用 @Query 
+	1.使用 @Query
 		指定 entity 部分欄位轉換到 Object[]
 			@Repository
 			public interface UserRepository extends JpaRepository<User, Long> {
@@ -25,7 +25,7 @@ https://www.javaguides.net/2023/08/spring-data-jpa-specific-columns.html
 				@Id
 				@GenerateValue(strategy = GenerationType.IDENTITY)
 				private Long id;
-				
+
 				private String firstName;
 				private String lastName;
 				private Date dateOfBirth;
@@ -35,7 +35,7 @@ https://www.javaguides.net/2023/08/spring-data-jpa-specific-columns.html
 			public class PersionLite {
 				private final String firstName;
 				private final String lastName;
-				
+
 				public PersionLite(String firstName,String lastName){
 					this.firstName = firstName;
 					this.lastName = lastName;
@@ -55,15 +55,15 @@ https://www.baeldung.com/spring-data-jpa-projections
 			指定了要查詢的欄位field1和field2。請注意，YourEntityProjection是一個自定義的投影介面，用於映射查詢結果
 				@Entity
 				public class Address {
-				 
+
 					@Id
 					private Long id;
-				 
+
 					@OneToOne
 					private Person person;
-					
+
 					....
-					
+
 					private String zipCode;
 
 					// getters and setters
@@ -72,7 +72,7 @@ https://www.baeldung.com/spring-data-jpa-projections
 				public interface AddressView {
 					String getZipCode();
 				}
-				
+
 				public interface AddressRepository extends Repository<Address, Long> {
 					List<AddressView> getAddressByState(String state);
 				}

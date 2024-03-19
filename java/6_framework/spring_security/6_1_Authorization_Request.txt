@@ -12,7 +12,7 @@
 	4.是否提供帳密管理給 security
 	5.登入頁、登入執行處理
 	6.權限拒絕處理
-	
+
 SecurityFilterChain loginFilterChain(HttpSecurity http)
 	http
 		1.表頭
@@ -49,7 +49,7 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 				//3.登入頁面 url : (預設:/login)
 				.loginPage("/url")
 				//4.登入失敗頁 url : 將用戶重定向到固定的錯誤頁面，那麼使用 failureUrl 會更加方便
-				.failureUrl("/url?fail=y") 
+				.failureUrl("/url?fail=y")
 				//5.登入處理 url
 				.loginProcessingUrl("/doLogin")
 				//6.option 用於在登入成功後執行自定義的行為。例如，你可以將用戶重定向到不同的 URL，顯示特定的訊息，或執行其他自訂操作。
@@ -68,19 +68,19 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 				.logoutUrl(String logoutUrl)
 				//4.登出成功處理 : logoutSuccessHandler(java) 或 logoutSuccessUrl(String url)
 				.logoutSuccessHandler(LogoutSuccessHandler LogoutSuccessHandler) 若有設定 LogoutSuccessHandler 則 logoutSuccessUrl會被忽略
-				.logoutSuccessUrl(String logoutSuccessUrl) 
+				.logoutSuccessUrl(String logoutSuccessUrl)
 			)
-		
+
 		5.驗證 authentication
 			//1.option authenticationManager : 客製自訂驗證管理
 			//默認情況下，Spring Boot Security 會使用 InMemoryUserDetailsManager 作為 UserDetailsService 的實現，並且會配置一個 DelegatingPasswordEncoder 作為 PasswordEncoder 的實現
 			//.authenticationManager(AuthenticationManager)
-			
+
 			//2.option authenticationProvider : 客製自訂驗證提供者(DaoAuthenticationProvider、LdapAuthenticationProvider)
 			//默認情況下，Spring Boot Security 會自動配置一個 DaoAuthenticationProvider 作為默認的 AuthenticationProvider。
 			//  DaoAuthenticationProvider 將使用 UserDetailsService 加載用戶詳細信息，並使用 PasswordEncoder 對用戶提供的密碼進行驗證
 			//.authenticationManager(AuthenticationProvider)
-			3.使用者詳細資訊介面 : userDeailService 
+			3.使用者詳細資訊介面 : userDeailService
 				// 提供給 Spring Security 的用戶詳細資訊的介面
 				實作 UserDetails userDeailService.loadUserByUsername(String username){
 					透過資料庫 table where username = ${username} 取得其 user bean
