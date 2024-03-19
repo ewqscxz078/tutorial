@@ -1,13 +1,13 @@
-https://caloskao.org/using-netplan-to-configure-ubuntu-nic/
+ubuntu 機器多綁定ip 方式
+	https://caloskao.org/using-netplan-to-configure-ubuntu-nic/
+		cat /etc/netplan/00-installer-config.yam
 
-cat /etc/netplan/00-installer-config.yam
+		vi /etc/netplan/00-installer-config.yam
+			fix address
 
-vi /etc/netplan/00-installer-config.yam
-	fix address
+		netplan try
+			兩分鐘後沒操作會自動還原
+			時間內enter 則吃進新設定
 
-netplan try
-	兩分鐘後沒操作會自動還原
-	時間內enter 則吃進新設定
-
-netplan apply
-	直接apply 設定，請慎用，因為設錯的若是vm 的話就很麻煩，要請在其機房的相關人員處理
+		netplan apply
+			直接apply 設定，請慎用，因為設錯的若是vm 的話就很麻煩，要請在其機房的相關人員處理
