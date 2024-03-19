@@ -1,0 +1,15 @@
+https://docs.oracle.com/javaee/5/tutorial/doc/bnamu.html
+
+	tlds/xxx.tld
+		參考 tag-file.path 的 tag 路徑應為 /META-INF/tags (jar) or /WEB-INF/tags (war)
+	tags/yyy.tag 放置位置
+
+因此若使用 spring boot 打包 jsp 必為 war
+	
+若將 tlds/xxx.tld、tags/yyy.tag 放置於獨立專案必為 jar 
+	yyy.tag 應放在 /META-INF/tags 下
+	
+	並且 tld 通常放在 /META-INF/ 下或其相關自訂目錄下(如 /META-INF/TLDS )
+	
+	並注意測試時不要將 "獨立專案的tld、tag jar" 開啟
+		不然 eclipse 使用 main 啟動 spring boot 會有讀取不到目錄問題

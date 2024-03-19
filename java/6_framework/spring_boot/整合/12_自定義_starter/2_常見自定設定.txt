@@ -118,6 +118,10 @@ https://reflectoring.io/spring-boot-conditionals/
 				public class MultipartAutoConfiguration {
 					....
 				}
+				
+				對應值match方式
+				@ConditionalOnProperty(prefix = "spring.servlet.multipart", name = "enabled", havingValue = "xxxx", matchIfMissing = true)
+				
 		6.@ConditionalOnWebApplication // 當為 WEB 應用才生效其配置
 			通常會宣告在其 XXXXAutoConfiguration
 				@ConditionalOnClass({ Servlet.class, StandardServletMultipartResolver.class, MultipartConfigElement.class })

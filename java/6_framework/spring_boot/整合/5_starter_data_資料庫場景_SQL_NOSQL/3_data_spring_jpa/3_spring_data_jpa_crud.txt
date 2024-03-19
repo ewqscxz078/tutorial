@@ -42,12 +42,26 @@ https://blog.wuwii.com/jpa-specification.html
 	https://www.cnblogs.com/summerday152/p/14182138.html
 		簡易
 
+jpa 沒有 update
+	https://blog.csdn.net/liu_rockefeller/article/details/97282130
+		1.JpaRepository.save
+			jpa 會依據 entity Id 有無存在
+				若存在則 insert
+				不存在則 update
+				所以 jpa JpaRepository 僅提供 save 名稱，含有新增或更新的意思
+		2.手寫 update sql
+			https://stackoverflow.com/questions/11881479/how-do-i-update-an-entity-using-spring-data-jpa
+			// @Query 有 update、delete
+			@Modifying
+			@Query("update entity e set e.xxx = :xxx where e.yyy = :yyy")
+			int updateField(@Param("xxx") String xxx, @Param("yyy") String yyy);
+			
+Q&A
+	Q: 嘗試使用 repository.save(entity)
+		出現錯誤
+			com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Table 'test.hibernate_sequence' doesn't exist
 
-Q: 嘗試使用 repository.save(entity)
-	出現錯誤
-		com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Table 'test.hibernate_sequence' doesn't exist
-
-A:
-	https://stackoverflow.com/questions/32968527/hibernate-sequence-doesnt-exist
-		application.yml
-			spring.jpa.hibernate.use-new-id-generator-mappings: false # 等於原本 hibernate 4 預設 id 生成策略
+	A:
+		https://stackoverflow.com/questions/32968527/hibernate-sequence-doesnt-exist
+			application.yml
+				spring.jpa.hibernate.use-new-id-generator-mappings: false # 等於原本 hibernate 4 預設 id 生成策略

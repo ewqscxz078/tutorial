@@ -86,7 +86,110 @@ AOP(Aspect-Oriented Programming)
 
 
 動態 aop Pointcut
-	https://blog.csdn.net/sinat_31396769/article/details/100980049
+	DefaultPointcutAdvisor 
+		https://blog.csdn.net/sinat_31396769/article/details/100980049
+		自訂一個同@Around 效果的 by implements MethodInterceptor
+			public class AroundAdvice implements MethodInterceptor {
+
+				private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AroundAdvice.class);
+				private MDCSupport mdcSupport;
+
+				public <T extends Annotation> AroundAdvice(final MDCSupport mdcSupport) {
+					this.mdcSupport = mdcSupport;
+				}
+
+				@Override
+				public Object invoke(final MethodInvocation invocation) throws Throwable {
+
+					// 1.task 資訊 to threadlocal
+					// 2.task 資訊 to mdc
+					doMDC(invocation);
+
+					try {
+						LOGGER.trace("========= logback start =========");
+						final Method method = invocation.getMethod();
+						LOGGER.trace(
+								"Call Method Name :" + method.toGenericString() + "| Args => " + Arrays.asList(invocation.getArguments()));
+						return invocation.proceed();
+					} finally {
+						LOGGER.trace("========= logback end ============");
+					}
+				}
+
+				private void doMDC(final MethodInvocation invocation) throws Exception {
+
+					// try 反射方法 annotation.task get type => task
+					// task instanceof GenericTask and 紀錄
+					//        final String annotationClassName = this.annotationClass.getName();
+					final String annotationClassName = invocation.getClass().getName();
+					final Method method = invocation.getMethod();
+
+					final Annotation[] annotations = method.getAnnotations();
+
+					if (annotations != null && annotations.length > 0) {
+						for (final Annotation annotation : annotations) {
+							final Class<?> annotationType = annotation.annotationType();
+
+							final Method[] annotationMethods = annotationType.getDeclaredMethods();
+							boolean hasGenericTask = false;
+							for (final Method annotationMethod : annotationMethods) {
+								final String methodName = annotationMethod.getName();
+								try {
+									final Object value = annotationMethod.invoke(annotation);
+									if (value instanceof GenericTask) {
+										final GenericTask task = (GenericTask) value;
+
+										// 應僅能一個 annotation 符合
+										setupTask(task);
+										hasGenericTask = true;
+										return;
+									}
+								} catch (final IllegalAccessException e) {
+									throw new LogbackMDCException(LogbackMDCMesg.TX_AF02_E, annotationClassName + " 呼叫 " + methodName + "異常",
+											e);
+								} catch (final IllegalArgumentException e) {
+									throw new LogbackMDCException(LogbackMDCMesg.TX_AF04_E, annotationClassName + " 呼叫 " + methodName + "異常",
+											e);
+								} catch (final InvocationTargetException e) {
+									throw new LogbackMDCException(LogbackMDCMesg.TX_AF05_E, annotationClassName + " 呼叫 " + methodName + "異常",
+											e);
+								}
+							}
+							// 確保有同一 task 介面，反之丟例外
+							if (!hasGenericTask) {
+								throw new LogbackMDCException(LogbackMDCMesg.TX_AF03_E,//
+										annotationClassName + " 未實作 " + GenericTask.class.getName());
+							}
+						}
+
+					}
+
+				}
+
+				protected void setupTask(final GenericTask task) {
+					// taskCode 預設 UNKOWN，需自行填入 by method of annotation
+					final String taskCode = task.getTaskCode();
+					ThreadLocalUtil.setupTask(task);
+					this.mdcSupport.setTaskMDC(task.getTaskCode());
+					LOGGER.trace("taskCode : {} / taskName {}", taskCode, task.getTaskName());
+				}
+			}
+		@Bean
+		@ConditionalOnMissingBean
+		DefaultPointcutAdvisor awTaskDefaultPointcutAdvisor(final LogbackMDCProperties logbackMDCProperties,
+				final MDCSupport mDCSupport) {
+
+			final Task task = logbackMDCProperties.getTask();
+			final AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+			pointcut.setExpression(task.getPointcutExpression());
+
+			final DefaultPointcutAdvisor advisor = new DefaultPointcutAdvisor();
+			advisor.setPointcut(pointcut);
+			advisor.setAdvice(new AroundAdvice(mDCSupport));
+
+			return advisor;
+		}
+		
 	DynamicMethodMatcherPointcut
 		https://blog.csdn.net/yangshangwei/article/details/77410891
 		http://www.java2s.com/Code/Java/Spring/DynamicPointcutExample.htm

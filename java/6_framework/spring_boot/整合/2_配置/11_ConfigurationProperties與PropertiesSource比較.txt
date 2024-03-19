@@ -1,0 +1,14 @@
+@PropertySource與 @ConfigurationProperties 多種方式讀取設定檔詳解，附帶@PropertySources使用說明
+	https://blog.csdn.net/weixin_43849277/article/details/120728182
+
+spring(-context)
+	Spring PropertySource 配置亂碼處理與緣由
+		https://umm.js.org/p/e678b765/
+		https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
+	
+	調整 PropertySource 讀取 properties 順序(spring 原始使用無序方式塞回)
+		https://blog.csdn.net/JustDoSelf/article/details/124945022
+	
+spring boot
+	@ConfigurationProperties yml 多支援國際化
+		http://www.luisrocha.net/2016/10/spring-boot-configuration-properties.html

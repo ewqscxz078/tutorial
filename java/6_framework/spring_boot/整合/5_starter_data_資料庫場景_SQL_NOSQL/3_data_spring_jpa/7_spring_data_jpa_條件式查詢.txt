@@ -1,0 +1,28 @@
+https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html
+
+https://juejin.cn/post/6985573675764285477
+	詳述
+https://blog.csdn.net/john_1023/article/details/118087600
+https://www.cnblogs.com/summerday152/p/14182138.html
+	簡易
+	
+	public interface XxxxDao extends JpaRepository<${Entity}, ${Entity.id}>, JpaSpecificationExecutor<${Entity}> {
+	}
+	
+	JpaSpecificationExecutor 預設提供
+		public interface JpaSpecificationExecutor<T> {
+			Optional<T> findOne(@Nullable Specification<T> spec);
+			List<T> findAll(@Nullable Specification<T> spec);
+			Page<T> findAll(@Nullable Specification<T> spec, Pageable pageable);
+			List<T> findAll(@Nullable Specification<T> spec, Sort sort);
+			long count(@Nullable Specification<T> spec);
+		}
+
+spring boot jpa Predicate 如何下組出 (column1 = 'Y' or column2 = '2') 結果
+    public static Specification<YourEntity> yourSpecification() {
+        return (root, query, criteriaBuilder) -> {
+            Predicate predicate1 = criteriaBuilder.equal(root.get("column1"), "Y");
+            Predicate predicate2 = criteriaBuilder.equal(root.get("column2"), "2");
+            return criteriaBuilder.or(predicate1, predicate2);
+        };
+    }

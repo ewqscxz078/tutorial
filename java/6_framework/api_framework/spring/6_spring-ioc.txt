@@ -1,24 +1,42 @@
 https://www.baeldung.com/constructor-injection-in-spring
-Constructor Dependency Injection
+	Constructor Dependency Injection
 
-預設單例
-	java
-		@Configuration
-		public class RS_TABLES {
+	預設單例注入
+		java
+			@Configuration
+			public class RS_TABLES {
 
-			private static final String RSDFZ = "rsdfz.+";
-			@Bean
-			public TableConversionRule RS_TABLES_RSDFZ() {
-				final AliasTableConversionRule rule = new AliasTableConversionRule();
-				....
-				return rule;
+				private static final String RSDFZ = "rsdfz.+";
+				@Bean
+				public TableConversionRule RS_TABLES_RSDFZ() {
+					final AliasTableConversionRule rule = new AliasTableConversionRule();
+					....
+					return rule;
+				}
 			}
+
+		xml
+			RS_TABLES.xml
+				<beans>
+					<bean id="RS_TABLES_RSDFZ" class="com.iisigroup.ude.tools.codegen.db.rule.TableConversionRule">
+						....
+					<bean/>
+				</beans>
+
+	原型注入
+		@Bean
+		@Scope("prototype")
+		XXXbean xXXbean(){
+			return new XXXbean();
 		}
 
-	xml
-		RS_TABLES.xml
-			<beans>
-				<bean id="RS_TABLES_RSDFZ" class="com.iisigroup.ude.tools.codegen.db.rule.TableConversionRule">
-					....
-				<bean/>
-			</beans>
+https://www.baeldung.com/java-spring-field-injection-cons
+	Field injection
+		缺點
+			1.Null-Safety : 可能注入是 null 當不存在時
+			2.Immutability : 不可變
+			3.Design Problems : 
+				1. Single Responsibility Violation
+				2. Circular Dependencies
+
+
