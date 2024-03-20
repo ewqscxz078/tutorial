@@ -1,11 +1,13 @@
+常見於: 表單提交、AJAX請求和某些情況下的普通連結點擊
+
 https://docs.spring.io/spring-security/reference/features/exploits/csrf.html
 https://www.baeldung.com/spring-security-csrf
 	若使用 spring boot 2 security 自動帶的 csrf
-		1.表單 form 要使用 spring form 才會自動代入，缺點要一個 form bind 一個 model 繁瑣問題(但經測試不用特別bind 也可以送出)
+		1.表單 form 要使用 spring form 才會自動代入，缺點要一個 form bind 一個 model 繁瑣問題(但經測試不用特別bind 也可以送出，除非無屬性綁定)
 			若使用一般 form 則要自己手動加入
 				<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 
-		2.json 為從 html meta 取得設定並到 requestHeader 塞入
+		2.json 為從 html meta 取得設定並到 requestHeader 塞入，比如前端動態處理後ajax送到後端、一堆link
 			<meta name="_csrf" content="${_csrf.token}"/>
 			<meta name="_csrf_header" content="${_csrf.headerName}"/>
 			javascript 使用其 spring csrf token 為例
