@@ -1,0 +1,97 @@
+========================================================================================================================
+================================= ref ==================================================================================
+================== https://kknews.cc/code/6r8a2aq.html =================================================================
+========================================================================================================================
+
+spring
+	security config
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			http.authorizeRequests()
+				.anyRequest().authenticated()
+				.and()
+					.formLogin()
+				.and()
+					.rememberMe()	// 關鍵設定將認證過的資訊寫到 cookie 並含有時效，即使關閉瀏覽器、服務端重啟動、電腦重啟動，當到登入首頁時即自動登入
+					.key("${給予rememberMe 鹽值}") // 為了改變預設值為uuid : 這樣才能 即使服務端重啟，即使瀏覽器打開再關閉
+				.and()
+					.csrf().disable();
+		}
+	controller test
+		@RestController
+		public class HelloController { @GetMapping("/hello")
+			public String hello() {
+				return "hello";
+			}
+		}
+
+	security 核心實作
+		TokenBasedRememberMeServices#onLoginSuccess
+			@Override
+			public void onLoginSuccess(HttpServletRequest request, HttpServletResponse response, Authentication successfulAuthentication) {
+				String username = retrieveUserName(successfulAuthentication);
+				String password = retrievePassword(successfulAuthentication);
+				if (!StringUtils.hasLength(password)) {
+					UserDetails user = getUserDetailsService().loadUserByUsername(username);
+					password = user.getPassword();
+				}
+				int tokenLifetime = calculateLoginLifetime(request, successfulAuthentication);
+				long expiryTime = System.currentTimeMillis(); expiryTime += 1000L * (tokenLifetime < 0 ? TWO_WEEKS_S : tokenLifetime);
+				String signatureValue = makeTokenSignature(expiryTime, username, password);
+				setCookie( new String[] { username, Long.toString(expiryTime), signatureValue }, tokenLifetime, request, response);
+			}
+
+			protected String makeTokenSignature(long tokenExpiryTime, String username, String password) {
+				String data = username + ":" + tokenExpiryTime + ":" + password + ":" + getKey(); // getKey() 預設值是一個 UUID 字符串
+				MessageDigest digest; digest = MessageDigest.getInstance("MD5");
+				return new String(Hex.encode(digest.digest(data.getBytes())));
+			}
+		RememberMeAuthenticationFilter
+			public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+				HttpServletRequest request = (HttpServletRequest) req;
+				HttpServletResponse response = (HttpServletResponse) res;
+				if (SecurityContextHolder.getContext().getAuthentication() == null) {
+					Authentication rememberMeAuth = rememberMeServices.autoLogin(request, response);
+					if (rememberMeAuth != null) {
+						rememberMeAuth = authenticationManager.authenticate(rememberMeAuth);
+						SecurityContextHolder.getContext().setAuthentication(rememberMeAuth);
+						onSuccessfulAuthentication(request, response, rememberMeAuth);
+						if (this.eventPublisher != null) {
+							eventPublisher .publishEvent(new InteractiveAuthenticationSuccessEvent( SecurityContextHolder.getContext() .getAuthentication(), this.getClass()));
+						}
+						if (successHandler != null) {
+							successHandler.onAuthenticationSuccess(request, response, rememberMeAuth); return;
+						}
+					}
+					chain.doFilter(request, response);
+				} else {
+					chain.doFilter(request, response);
+				}
+			}
+
+		rememberMeServices
+			public final Authentication autoLogin(HttpServletRequest request, HttpServletResponse response) {
+				String rememberMeCookie = extractRememberMeCookie(request);
+				if (rememberMeCookie == null) {
+					return null;
+				}
+				logger.debug("Remember-me cookie detected");
+				if (rememberMeCookie.length() == 0) {
+					logger.debug("Cookie was empty");
+					cancelCookie(request, response);
+					return null;
+				}
+				UserDetails user = null;
+				try {
+					String[] cookieTokens = decodeCookie(rememberMeCookie);
+					user = processAutoLoginCookie(cookieTokens, request, response);
+					userDetailsChecker.check(user);
+					logger.debug("Remember-me cookie accepted");
+					return createSuccessfulAuthentication(request, user);
+				} catch (CookieTheftException cte) {
+					throw cte;
+				}
+				cancelCookie(request, response);
+				return null;
+			}
+
