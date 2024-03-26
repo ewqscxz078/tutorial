@@ -1,0 +1,20 @@
+========================================================================================================================
+================================= ref ==================================================================================
+https://blog.csdn.net/xxxzzzqqq_/article/details/129684324
+========================================================================================================================
+
+參考 spring security 內建的 UsernamePasswordAuthenticationFilter
+	使用到
+		1.UsernamePasswordAuthenticationToken
+		2.AbstractAuthenticationProcessingFilter
+		3.AbstractAuthenticationToken
+
+EmailVerificationCodeAuthenticationFilter
+	1.提供預設的請求參數名稱。
+	2.提供無參構造方法，對請求進行過濾。
+	3.繼承 AbstractAuthenticationProcessingFilter，重寫了 attemptAuthentication 方法，
+		對其參數進行校驗，最後呼叫認證管理器的 authenticate 方法。
+	4.setDetails 方法設定該次請求訊息，例如：呼叫位址、sessionId。
+	
+EmailVerificationCodeAuthenticationToken
+	1.

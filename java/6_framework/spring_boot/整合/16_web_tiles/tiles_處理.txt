@@ -1,0 +1,67 @@
+從 TILES 容器取得已定義的實際視圖路徑，當僅有 HttpServletRequest、HttpServletResponse
+	public void yourMethod(HttpServletRequest request, HttpServletResponse response) {
+         // 取得Tiles容器
+		 ServletContext servletContext = request.getServletContext();
+         TilesContainer container = TilesAccess.getContainer(servletContext);
+
+         // 根據邏輯視圖名稱取得實際視圖路徑
+         String viewPath = container.getPreparerFactory().getPreparer("tiles.xxx.check").prepare(request, response).toString();
+
+         // 轉送到實際視圖路徑
+         request.getRequestDispatcher(viewPath).forward(request, response);
+     }
+
+透過 TilesViewResolver 解析邏輯視圖名稱取得具體位置
+    @Autowired
+    private TilesViewResolver tilesViewResolver;
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) {
+
+		// 解析邏輯視圖名稱為實際視圖
+		View view = tilesViewResolver.resolveViewName("tiles.xxx.check", null);
+
+		// 取得實際視圖路徑
+		String viewPath = view.getUrl();
+
+        // 轉發到實際視圖路徑
+        try {
+            request.getRequestDispatcher(viewPath).forward(request, response);
+        } catch (Exception e) {
+            // 處理轉發時的異常
+            e.printStackTrace();
+        }
+	}
+
+確認已定義的 tils 邏輯視圖名稱
+	public void yourMethod(ServletContext servletContext) {
+         // 取得Tiles容器
+         TilesContainer container = TilesAccess.getContainer(servletContext);
+
+         // 檢查是否包含特定名稱的定義
+         boolean hasDefinition = container.isValidDefinition("tiles.xxx.check");
+        
+         if (hasDefinition) {
+             System.out.println("tiles.xxx.check 已定義");
+         } else {
+             System.out.println("tiles.xxx.check 未定義");
+         }
+     }
+
+
+@PostMapping("/test")
+public String test(){
+  return 結果字串;
+}
+spring 底層會嘗試解析 結果字串，若是 tiles view 會用轉發，反之是重定向?
+	這個邏輯是在Spring MVC的DispatcherServlet中進行處理的。
+		DispatcherServlet是Spring MVC框架的中心控制器，它負責接收所有的HTTP請求，
+		並根據配置的處理器映射（Handler Mapping）將這些請求路由到適當的處理器（Controller）
+		進行處理。
+
+	當控制器方法處理完請求並返回時，DispatcherServlet會根據返回值決定如何處理響應。
+	如果返回的是一個字符串，DispatcherServlet 會將其視為視圖的邏輯名稱。接著，
+	它會查找適合的視圖解析器（ViewResolver），並使用解析器來解析這個視圖的邏輯名稱。
+	如果視圖解析器能夠解析成實際的視圖，則使用轉發機制將該視圖呈現給客戶端；
+	如果無法解析或者返回的字串以斜杠（/）開頭，則使用重定向機制將請求重定向到指定的URL。

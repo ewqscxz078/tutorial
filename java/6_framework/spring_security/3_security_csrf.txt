@@ -36,7 +36,18 @@ https://www.baeldung.com/spring-security-csrf
 				<!-- 其他JavaScript內容 -->
 			</body>
 			</html>
-
+		4.menu link 透過 javascript onclick post form
+			<script>
+				function logout() {
+					document.getElementById("logoutForm").submit();
+				}
+			</script>
+			<a href="#" onclick="logout()">點擊投稿</a>
+			<form id="logoutForm" method="post" action="/logout">
+				<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+			</form>
+			
+			
 csrf 處理方式
 	https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
 		開發的專案為 web

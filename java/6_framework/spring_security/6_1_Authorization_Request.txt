@@ -4,15 +4,24 @@
 	https://docs.spring.io/spring-security/reference/5.8/servlet/authorization/authorize-http-requests.html
 ========================================================================================================================
 
-
 慣例
-	1.提供那些 url 要受保護，那些不用保護，每個 url 授予的角色是
-	2.提供那些 靜態 url 不用受保護
-	3.提供 帳密來源 給 security
-	4.是否提供帳密管理給 security
-	5.登入頁、登入執行處理
-	6.權限拒絕處理
-	7.例外處理
+	HttpSecurity
+		1.提供那些 url 要受保護，那些不用保護，每個 url 授予的角色是
+		2.提供那些 靜態 url 不用受保護
+		3.提供 帳密來源 給 security
+		4.是否提供帳密管理給 security
+		5.登入頁、登入執行處理
+		6.權限拒絕處理
+		7.例外處理
+		8.設定 cors
+	websecurity
+		1.全域靜態資源不經過 SecurityFilterChain，但在某一版之後建議使用 HttpSecurity with PermitAll
+			https://github.com/spring-projects/spring-security/issues/10938
+				web.ignoring() 表示 Spring Security 無法在這些端點上提供任何安全標頭或其他保護措施。 
+				'相反，使用 PermitAll 允許 Spring Security 寫入標頭並以其他方式保護請求，而無需授權。 
+				這就是為什麼推薦使用permitAll的原因。 該警告訊息旨在提醒您注意權衡。
+		2.debug url 經過 SecurityFilterChain 資訊
+		3.防火牆設定
 
 SecurityFilterChain loginFilterChain(HttpSecurity http)
 	http
@@ -48,10 +57,10 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 				//2.option 密碼參數(預設:password)，與預設不一樣時要設定
 				// .passwrodParameter("bbb")
 				//3.option 登入頁面 url : (預設:/login)，與預設不一樣時要設定
-				// .loginPage("/url")
+				.loginPage("/url")
 				//4.option 登入失敗頁 url : 將用戶重定向到固定的錯誤頁面，與預設不一樣時要設定
 				// .failureUrl("/url?fail=y")
-				//5.登入處理 url，交給 spring security 處理其登入動作，不用自己特別寫 controller 處理 /doLogin 
+				//5.登入處理 url，交給 spring security 處理其登入動作，不用自己特別寫 controller 處理 /doLogin，一個虛擬處理 path
 					.loginProcessingUrl("/doLogin")
 				//6.option 用於在登入成功後執行自定義的行為。例如，你可以將用戶重定向到不同的 URL，顯示特定的訊息，或執行其他自訂操作。
 				// .successHandler(AuthenticationSuccessHandler)
@@ -60,6 +69,7 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 			)
 
 		4.登出
+			https://www.baeldung.com/spring-security-logout
 			.logout((logout) -> logout
 				// 1.option 登出後 刪除 指定 cookies，預設的 JSESSIONID 會因為 invalidateHttpSession 自動刪除
 				// 	deleteCookies(String keyword....)
@@ -72,7 +82,7 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 				// option 若登入頁面沒有處理成功後的處理設定 .logoutSuccessUrl(String logoutSuccessUrl)
 			)
 
-		5.驗證 authentication
+		5.認/驗證 authentication
 			//1.option authenticationManager : 客製自訂驗證管理
 			//默認情況下，Spring Boot Security 會使用 InMemoryUserDetailsManager 作為 UserDetailsService 的實現，並且會配置一個 DelegatingPasswordEncoder 作為 PasswordEncoder 的實現
 			//.authenticationManager(AuthenticationManager)
@@ -93,8 +103,16 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 				// 客製化拒絕處理細節實作
 				//.accessDeniedHandler(AccessDeniedHandler)
 			)
-
-
+		8.設定 cors
+			.cors(
+				// option 
+			)
+		
+		9.設定 securityContext
+			.securityContext(securityContext -> securityContext
+				.
+			)
+		
 https://www.baeldung.com/spring-security-httpsecurity-vs-websecurity
 https://www.baeldung.com/spring-deprecated-websecurityconfigureradapter
 	httpsecurity-vs-websecurity 比較

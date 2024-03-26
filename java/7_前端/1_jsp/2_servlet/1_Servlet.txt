@@ -1,0 +1,10 @@
+request.getRequestDispatcher(viewPath).forward(request, response);是一種內部轉發（Forward）機制。
+	這意味著請求是在服務器端進行處理，並且不會對客戶端進行新的HTTP請求。
+	在這種情況下，瀏覽器的URL不會改變，因為客戶端不知道內部發生了轉發。
+	這種方式適用於需要在服務器內部處理的情況，
+	例如將請求發送到JSP頁面進行渲染。
+
+response.sendRedirect("/WEB-INF/jsp/mysystem/check.jsp");是一種重定向（Redirect）機制。
+	這意味著服務器會向客戶端發送一個HTTP 重定向響應，告訴瀏覽器請求應該重定向到新的URL。
+	瀏覽器收到重定向響應後會向新的URL發送新的HTTP請求。在這種情況下，瀏覽器的URL會改變為新的URL。
+	這種方式適用於需要將客戶端重定向到新的URL的情況，例如在登錄成功後將用戶重定向到首頁。
