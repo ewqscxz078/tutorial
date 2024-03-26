@@ -41,7 +41,7 @@
 
          // 檢查是否包含特定名稱的定義
          boolean hasDefinition = container.isValidDefinition("tiles.xxx.check");
-        
+
          if (hasDefinition) {
              System.out.println("tiles.xxx.check 已定義");
          } else {

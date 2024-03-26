@@ -46,8 +46,8 @@ https://www.baeldung.com/spring-security-csrf
 			<form id="logoutForm" method="post" action="/logout">
 				<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 			</form>
-			
-			
+
+
 csrf 處理方式
 	https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
 		開發的專案為 web

@@ -14,7 +14,7 @@ https://medium.com/@heather_programming/spring-security-%E5%B8%B3%E8%99%9F%E5%AF
 
 		@Override
 		public List<SimpleGrantedAuthority> getAuthorities() {
-			List<SimpleGrantedAuthority> authorities = 
+			List<SimpleGrantedAuthority> authorities =
 				Arrays.stream(memberPo.getAuthority().split(",")).map(
 				SimpleGrantedAuthority::new).collect(Collectors.toList());
 			return authorities;
@@ -62,7 +62,7 @@ https://medium.com/@heather_programming/spring-security-%E5%B8%B3%E8%99%9F%E5%AF
 		private MemberRepo memberRepo;
 
 		@Override
-		public MyUser loadUserByUsername(String username) 
+		public MyUser loadUserByUsername(String username)
 					  throws UsernameNotFoundException {
 			MemberPo memberPo = memberRepo.findByUsername(username);
 			return new MyUser(memberPo);
@@ -74,7 +74,7 @@ https://medium.com/@heather_programming/spring-security-%E5%B8%B3%E8%99%9F%E5%AF
 	public class SecurityConfig {
 
 		@Bean
-		public SecurityFilterChain securityFilterChain(HttpSecurity http) 
+		public SecurityFilterChain securityFilterChain(HttpSecurity http)
 			   throws Exception {
 			return http
 				.authorizeRequests()
@@ -96,7 +96,7 @@ https://medium.com/@heather_programming/spring-security-%E5%B8%B3%E8%99%9F%E5%AF
 	public class SecurityConfig {
 		原本上面
 		@Bean
-		SecurityFilterChain securityFilterChain(HttpSecurity http) 
+		SecurityFilterChain securityFilterChain(HttpSecurity http)
 			   throws Exception {
 			....
 			.authenticationManager(authenticationManager())
@@ -105,13 +105,13 @@ https://medium.com/@heather_programming/spring-security-%E5%B8%B3%E8%99%9F%E5%AF
 		@Bean
 		AuthenticationManager authenticationManager() {
 			return new ProviderManager(daoAuthenticationProvider());
-			// 若有多個驗證方式，可使用： 
+			// 若有多個驗證方式，可使用：
 			// List.of(daoAuthenticationProvider(), customAuthenticationProvider())
 		}
 
 		@Bean
 		DaoAuthenticationProvider daoAuthenticationProvider() {
-			DaoAuthenticationProvider authenticationProvider 
+			DaoAuthenticationProvider authenticationProvider
 									  = new DaoAuthenticationProvider();
 			authenticationProvider.setUserDetailsService(myUserDetailsService);
 			authenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder());

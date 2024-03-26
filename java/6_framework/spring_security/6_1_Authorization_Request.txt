@@ -17,8 +17,8 @@
 	websecurity
 		1.全域靜態資源不經過 SecurityFilterChain，但在某一版之後建議使用 HttpSecurity with PermitAll
 			https://github.com/spring-projects/spring-security/issues/10938
-				web.ignoring() 表示 Spring Security 無法在這些端點上提供任何安全標頭或其他保護措施。 
-				'相反，使用 PermitAll 允許 Spring Security 寫入標頭並以其他方式保護請求，而無需授權。 
+				web.ignoring() 表示 Spring Security 無法在這些端點上提供任何安全標頭或其他保護措施。
+				'相反，使用 PermitAll 允許 Spring Security 寫入標頭並以其他方式保護請求，而無需授權。
 				這就是為什麼推薦使用permitAll的原因。 該警告訊息旨在提醒您注意權衡。
 		2.debug url 經過 SecurityFilterChain 資訊
 		3.防火牆設定
@@ -105,18 +105,18 @@ SecurityFilterChain loginFilterChain(HttpSecurity http)
 			)
 		8.設定 cors
 			.cors(
-				// option 
+				// option
 			)
-		
+
 		9.設定 securityContext
 			.securityContext(securityContext -> securityContext
 				.
 			)
-		
+
 https://www.baeldung.com/spring-security-httpsecurity-vs-websecurity
 https://www.baeldung.com/spring-deprecated-websecurityconfigureradapter
 	httpsecurity-vs-websecurity 比較
-		websecurity 
+		websecurity
 			1.適合靜態資源
 			2.global level
 			3.debug logging for Spring Security filters

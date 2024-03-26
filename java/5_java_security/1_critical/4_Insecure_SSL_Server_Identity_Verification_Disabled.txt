@@ -1,6 +1,6 @@
 ### 修改項目
 
-	Insecure SSL Server Identity Verification Disabled 
+	Insecure SSL Server Identity Verification Disabled
 		=> 應該要驗證什麼東西而非永遠等於true
 
 #### 修改前
@@ -8,7 +8,7 @@
 	private static HostnameVerifier allHostsValid = (hostname, session) -> true;
 
 #### 修改後：
-	
+
 	private static HostnameVerifier allHostsValid = new HostnameVerifier(){
 		@Override
 		public boolean verify(String hostname, SSLSession session) {
@@ -18,7 +18,7 @@
 			return !hostname.equals("驗證");
 		}
 	};
-	
+
 	或真的驗證 by ssl cn 後面的字串
 
     @Override
