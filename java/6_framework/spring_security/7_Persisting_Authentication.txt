@@ -1,0 +1,68 @@
+========================================================================================================================
+================================= ref ==================================================================================
+================== https://docs.spring.io/spring-security/reference/5.7/servlet/authentication/persistence.html ========
+========================================================================================================================
+過程
+	1.Unauthenticated User Requests Protected Resource
+		GET / HTTP/1.1
+		Host: example.com
+		Cookie: SESSION=91470ce0-3f3c-455b-b7ad-079b02290f7b
+
+		HTTP/1.1 302 Found
+		Location: /login
+
+	2.Username and Password Submitted
+		POST /login HTTP/1.1
+		Host: example.com
+		Cookie: SESSION=91470ce0-3f3c-455b-b7ad-079b02290f7b
+
+		username=user&password=password&_csrf=35942e65-a172-4cd4-a1d4-d16a51147b3e
+
+	3.Authenticated User is Associated to New Session
+		HTTP/1.1 302 Found
+		Location: /
+		Set-Cookie: SESSION=4c66e474-3f5a-43ed-8e48-cc1d8cb1d1c8; Path=/; HttpOnly; SameSite=Lax
+
+	4.Authenticated Session Provided as Credentials
+		GET / HTTP/1.1
+		Host: example.com
+		Cookie: SESSION=4c66e474-3f5a-43ed-8e48-cc1d8cb1d1c8
+
+核心
+	SecurityContextRepository : 使用者使用的reqeust 透過該物件取得
+		HttpSecurityContextRepository : 預設實作
+		NullSecurityContextRepository
+		RequestAttributeSecurityContextRepository
+			public SecurityFilterChain filterChain(HttpSecurity http) {
+				http
+					// ...
+					.securityContext((securityContext) -> securityContext
+						// 改變預設
+						.securityContextRepository(new RequestAttributeSecurityContextRepository())
+					);
+				return http.build();
+			}
+
+	SecurityContextPersistenceFilter :　for persisting the SecurityContext between requests using the SecurityContextRepository
+		1.loads the SecurityContext from the SecurityContextRepository and sets it on the SecurityContextHolder.
+		2.Next, the application is ran.
+		3.Finally, if the SecurityContext has changed, we save the SecurityContext using the SecurityContextPersistenceRepository.
+			This means that when using SecurityContextPersistenceFilter,
+			just setting the SecurityContextHolder will ensure that the SecurityContext is persisted using SecurityContextRepository.
+
+	SecurityContextHolderFilter :  for loading the SecurityContext between requests using the SecurityContextRepository
+		1.Before running the rest of the application, SecurityContextHolderFilter loads the SecurityContext from the SecurityContextRepository
+			and sets it on the SecurityContextHolder.
+		2.Next, the application is ran.
+
+		Unlike, SecurityContextPersisteneFilter, SecurityContextHolderFilter only loads the SecurityContext it does not save the SecurityContext.
+		This means that when using SecurityContextHolderFilter, it is required that the SecurityContext is explicitly saved.
+			public SecurityFilterChain filterChain(HttpSecurity http) {
+				http
+					// ...
+					.securityContext((securityContext) -> securityContext
+						// 使用 SecurityContextHolderFilter 需要確保儲存，才能有效讀取
+						.requireExplicitSave(true)
+					);
+				return http.build();
+			}

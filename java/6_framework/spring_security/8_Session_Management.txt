@@ -1,0 +1,17 @@
+========================================================================================================================
+================================= ref ==================================================================================
+========== https://docs.spring.io/spring-security/reference/5.7/servlet/authentication/session-management.html =========
+========================================================================================================================
+1.Force Eager Session Creation
+
+2.Detecting Timeouts
+
+3.Concurrent Session Control
+
+4.Session Fixation Attack Protection
+
+5.SessionManagementFilter
+
+6.SessionAuthenticationStrategy
+
+7.Concurrency Control
