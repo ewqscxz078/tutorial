@@ -1,0 +1,61 @@
+========================================================================================================================
+================================= ref ==================================================================================
+== https://www.baeldung.com/spring-security-manual-logout ======================
+========================================================================================================================
+
+Basic Logout
+	@Configuration
+	public class DefaultLogoutConfiguration {
+
+		@Bean
+		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			http
+			  .logout(logout -> logout
+				.logoutUrl("/basic/basiclogout")
+				.addLogoutHandler(new SecurityContextLogoutHandler())
+			  );
+			return http.build();
+		}
+	}
+
+Cookie Clearing Logout
+	@Configuration
+	public class AllCookieClearingLogoutConfiguration {
+		@Bean
+		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			http
+			  .logout(logout -> logout
+				.logoutUrl("/cookies/cookielogout")
+				.addLogoutHandler((request, response, auth) -> {
+					for (Cookie cookie : request.getCookies()) {
+						String cookieName = cookie.getName();
+						Cookie cookieToDelete = new Cookie(cookieName, null);
+						cookieToDelete.setMaxAge(0);
+						response.addCookie(cookieToDelete);
+					}
+				})
+			  );
+			return http.build();
+		}
+	}
+
+Clear-Site-Data Header Logout
+	@Configuration
+	public class ClearSiteDataHeaderLogoutConfiguration {
+
+		private static final ClearSiteDataHeaderWriter.Directive[] SOURCE = 
+		  {CACHE, COOKIES, STORAGE, EXECUTION_CONTEXTS};
+
+		@Bean
+		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			http
+			  .logout(logout -> logout
+				.logoutUrl("/csd/csdlogout")
+				.addLogoutHandler(new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(SOURCE)))
+			  );
+			return http.build();
+		}
+	}
+
+標準 spring-security-logout 設定
+	https://www.baeldung.com/spring-security-logout

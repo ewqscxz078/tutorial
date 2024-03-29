@@ -67,4 +67,11 @@ https://matthung0807.blogspot.com/2021/02/spring-boot-redirect-url.html
 				response.setStatus(HttpServletResponse.SC_FOUND); // 302 Found
 			}
 		}
+	5.字串 prefix
+		@GetMapping("/redirect")
+		public String redirect() {
+			// String url ="https://matthung0807.blogspot.com";
+			String url ="/targetPath";
+			return "redirect:" + url; // 重新導向到指定的url
+		}
 =================================================================================================================

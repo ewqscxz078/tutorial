@@ -5,8 +5,49 @@
 1.Force Eager Session Creation
 
 2.Detecting Timeouts
-
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) {
+		http
+			.sessionManagement(session -> session
+				.invalidSessionUrl("/invalidSession.htm")
+			);
+		return http.build();
+	}
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) {
+		http
+			.logout(logout -> logout
+				.deleteCookies("JSESSIONID")
+			);
+		return http.build();
+	}
 3.Concurrent Session Control
+	@Bean
+	public HttpSessionEventPublisher httpSessionEventPublisher() {
+		return new HttpSessionEventPublisher();
+	}
+	// 限制只能一個使用者登入
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) {
+		http
+			.sessionManagement(session -> session
+				.maximumSessions(1)
+			);
+		return http.build();
+	}
+	// 防止多個瀏覽器登入相同使用者第二次
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) {
+		http
+			.sessionManagement(session -> session
+				.maximumSessions(1)
+				//.maxSessionsPreventsLogin(true) 
+				// 預設 false 第二次已登入的人會踢掉第一次已登入為登出的人
+				// true 代表 無法超過 session 已登入的次數
+			);
+		return http.build();
+	}
+
 
 4.Session Fixation Attack Protection
 

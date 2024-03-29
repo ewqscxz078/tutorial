@@ -1,0 +1,363 @@
+========================================================================================================================
+================================= sample ==================================================================================
+========================================================================================================================
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfiguration {
+
+    @Value("${SYS_ROLE:sys}")
+    String sysRole;
+
+    //    @Bean
+    //    CsrfTokenRepository myCsrfTokenRepository() {
+    //        return new LazyCsrfTokenRepository(new HttpSessionCsrfTokenRepository());
+    //    }
+
+    @Bean
+    MyLogoutSuccessHandler myLogoutSuccessHandler() {
+        return new MyLogoutSuccessHandler();
+    }
+
+    // 未驗證直接打
+    @Bean
+    AuthenticationEntryPoint myAuthenticationEntryPoint() {
+        final AuthenticationEntryPoint authenticationEntryPoint = new LoginUrlAuthenticationEntryPoint(
+                "/app/accountManage/login");
+        return authenticationEntryPoint;
+    }
+
+    // 存取被拒; 授權角色條件不合
+    @Bean
+    AccessDeniedHandler myAccessDeniedHandler() {
+        return (request, reqsponse, accessdDeniedException) -> {
+            request.getRequestDispatcher("/error").forward(request, reqsponse);
+        };
+    }
+
+    @Bean
+    @Order(30)
+    SecurityFilterChain loginFilterChain(final HttpSecurity http, //
+            final MyAuthenticationFilter myAuthenticationFilter, //
+            final MyLogoutSuccessHandler myLogoutSuccessHandler, //
+            final ConcurrentSessionFilter myConcurrentSessionFilter, //
+            final AuthenticationEntryPoint myAuthenticationEntryPoint, //
+            final AccessDeniedHandler myAccessDeniedHandler, //
+            //final CsrfTokenRepository myCsrfTokenRepository, //
+            final SessionAuthenticationStrategy mySessionAuthenticationStrategy //
+    ) throws Exception {
+
+        http    //
+                .headers(headers -> headers //
+                        // 為了允許被 X-Frame-Options 相同源
+                        .frameOptions(options -> options.sameOrigin()) //
+                ) //
+                // 使用自訂帳密+圖文驗證碼過濾器驗證，不使用 spring security 預設 formLogin 方式
+                .addFilterAfter(myAuthenticationFilter, LogoutFilter.class)// addFilterAfter UsernamePasswordAuthenticationFilter.class
+                .addFilterAfter(myConcurrentSessionFilter, MyAuthenticationFilter.class) // 參考原始註冊模式後自動註冊的順序
+
+                // 授權 url 控制
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests //
+                        .antMatchers( //
+                                "/app/accountManage/login",  // 登入 , "/app/accountManage/doLogin"
+                                "/captcha/**", // 圖形驗證碼 of 首頁
+                                "/webjars/**", // ref java lib of webjars
+                                "/resources/**", // ref sris3-aw-military-accountManage-boot-web/src/main/webapp/resources/css、images、jquery-ui-1.11.4、js
+                                "/global/**" // ref sris3-awkitx-military-mvc/src/main/resources/METF-INF/resources/global/css、images、js
+                        ).permitAll() // 可不授權存取
+                        .anyRequest().authenticated() // 除了以上其他都需驗證
+                //                ) // 登入
+                //                .formLogin(formLogin -> formLogin //
+                //                        .loginPage("/app/accountManage/login")  // 必要:登入呈現頁面，含有自動將未登入 url 自動轉到 /app/accountManage/login by LoginUrlAuthenticationEntryPoint
+                ) // 登出
+                .logout(logout -> logout //
+                        .logoutUrl("/app/accountManage/doLogout") // 給底層後端 match 登出 url(虛擬) 處理用
+                        .logoutSuccessHandler(myLogoutSuccessHandler) // 登出成功後額外處理邏輯
+                        .logoutSuccessUrl("/app/accountManage/login") // 登出成功後轉跳 url
+                        .deleteCookies("JSESSIONID") //
+                ) //
+                .exceptionHandling((exceptionHandling) -> exceptionHandling //
+                        .authenticationEntryPoint(myAuthenticationEntryPoint) //
+                        .accessDeniedHandler(myAccessDeniedHandler) //
+                );
+
+        return http.build();
+    }
+
+    //    @Bean
+    //    WebSecurityCustomizer webSecurityCustomizer() {
+    //        return web -> web //
+    //                .debug(true); // 可以看到每個存取資源經過 SecurityFilterChain 詳細狀況
+    //    }
+
+    //####################################################################
+    //## [Method] sub-block : 自訂認證與 session 過期策略
+    //## ref https://docs.spring.io/spring-security/reference/5.7/servlet/authentication/session-management.html
+    //####################################################################
+
+    // session 管理用需要
+    @Bean
+    HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+	// 內建，要自行建構因為自訂認證 session 的處理
+    @Bean 
+    SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+	// 內建，加設定過期後 redirect url，要自行建構因為自訂認證 session 的處理
+    @Bean
+    SessionInformationExpiredStrategy mySimpleRedirectSessionInformationExpiredStrategy() {
+        final SessionInformationExpiredStrategy strategy = new MySimpleRedirectSessionInformationExpiredStrategy(// SimpleRedirectSessionInformationExpiredStrategy
+                "/app/accountManage/login");
+        return strategy;
+    }
+
+	// 內建，要自行建構因為自訂認證 session 的處理
+    @Bean
+    ConcurrentSessionFilter myConcurrentSessionFilter(final SessionRegistry sessionRegistry,//
+            final SessionInformationExpiredStrategy mySimpleRedirectSessionInformationExpiredStrategy//
+    ) {
+        final ConcurrentSessionFilter filter = new ConcurrentSessionFilter(sessionRegistry, //
+                mySimpleRedirectSessionInformationExpiredStrategy);
+        return filter;
+    }
+
+    @Bean
+    CsrfAuthenticationStrategy myCsrfAuthenticationStrategy(final CsrfTokenRepository csrfTokenRepository) {
+        return new CsrfAuthenticationStrategy(csrfTokenRepository);
+    }
+
+    // 內建，加設定其他配置屬性，要自行建構因為自訂認證 session 的處理
+    @Bean
+    ConcurrentSessionControlAuthenticationStrategy myConcurrentSessionControlAuthenticationStrategy(//
+            final SessionRegistry sessionRegistry) {
+        final ConcurrentSessionControlAuthenticationStrategy strategy = new ConcurrentSessionControlAuthenticationStrategy(
+                sessionRegistry);
+        strategy.setMaximumSessions(1); // 一個使用者多個瀏覽器僅能登入一次 ref allowableSessionsExceeded 具體處理方針
+        // strategy.setExceptionIfMaximumExceeded(true); 超過丟例外返回登入首頁，反之會把上一個登入的登出(要自己重新整理第一個瀏覽器才會導頁到登入頁，實際session已被過期移除)
+        return strategy;
+    }
+
+	// 內建，要自行建構因為自訂認證 session 的處理
+    @Bean
+    SessionFixationProtectionStrategy mySessionFixationProtectionStrategy() {
+        return new SessionFixationProtectionStrategy();
+    }
+
+	// 內建，要自行建構因為自訂認證 session 的處理
+    @Bean
+    RegisterSessionAuthenticationStrategy myRegisterSessionAuthenticationStrategy(final SessionRegistry sessionRegistry) {
+        return new RegisterSessionAuthenticationStrategy(sessionRegistry);
+    }
+
+	// 內建，要自行建構因為自訂認證 session 的處理
+    @Bean
+    SessionAuthenticationStrategy mySessionAuthenticationStrategy(//
+            final CsrfAuthenticationStrategy myCsrfAuthenticationStrategy, //
+            final ConcurrentSessionControlAuthenticationStrategy myConcurrentSessionControlAuthenticationStrategy,//
+            final SessionFixationProtectionStrategy mySessionFixationProtectionStrategy,//
+            final RegisterSessionAuthenticationStrategy myRegisterSessionAuthenticationStrategy) {
+
+        final CompositeSessionAuthenticationStrategy compositeSessionAuthenticationStrategy = new CompositeSessionAuthenticationStrategy(
+                Arrays.asList(myCsrfAuthenticationStrategy, myConcurrentSessionControlAuthenticationStrategy,
+                        mySessionFixationProtectionStrategy, myRegisterSessionAuthenticationStrategy));
+        return compositeSessionAuthenticationStrategy;
+    }
+
+    /**
+     * 自訂的 帳號密碼與圖形驗證碼的驗證、session認證策略
+	 * MyAuthenticationFilter 繼承自 AbstractAuthenticationProcessingFilter
+	 * 具體細節可以參考原始 UsernamePasswordAuthenticationFilter
+     */
+    @Bean
+    MyAuthenticationFilter myAuthenticationFilter( //
+            final AuthenticationManager myAuthenticationManager,//
+            final SimpleUrlAuthenticationSuccessHandler myAuthenticationSuccessHandler,//
+            final SimpleUrlAuthenticationFailureHandler myAuthenticationFailureHandler,//
+            final SessionAuthenticationStrategy mySessionAuthenticationStrategy //
+    ) {
+
+        final RequestMatcher antPathRequestMatcher = new AntPathRequestMatcher("/app/accountManage/doLogin", "POST"); // 僅 POST才要認證，不然已登入若用GET進來會被認為要認證，反之未提供服務/404
+        final MyAuthenticationFilter myAuthenticationFilter = new MyAuthenticationFilter(antPathRequestMatcher);
+        myAuthenticationFilter.setUsernameParameter("account");
+        myAuthenticationFilter.setPasswordParameter("verifyMain");
+        myAuthenticationFilter.setAuthenticationManager(myAuthenticationManager); // 必須設定不然會跳出錯誤: authenticationManager must be specified
+        myAuthenticationFilter.setAuthenticationSuccessHandler(myAuthenticationSuccessHandler);
+        myAuthenticationFilter.setAuthenticationFailureHandler(myAuthenticationFailureHandler);
+        myAuthenticationFilter.setSessionAuthenticationStrategy(mySessionAuthenticationStrategy);
+        return myAuthenticationFilter;
+    }
+
+	// 為了自訂認證需要自行建構
+	// 自訂 DaoAuthenticationProvider 給 myAuthenticationManager 用
+    @Bean
+    DaoAuthenticationProvider myDaoAuthenticationProvider(final UserDetailsService myUserDetailsService, //
+            final PasswordEncoder awmPasswordEncoder) {
+        final DaoAuthenticationProvider provider = new MyDaoAuthenticationProvider();
+        provider.setUserDetailsService(myUserDetailsService);
+        provider.setPasswordEncoder(awmPasswordEncoder);
+        return provider;
+    }
+
+    /**
+     * 自訂 AuthenticationManager 給 MyAuthenticationFilter 用
+     *
+     */
+    @Bean
+    AuthenticationManager myAuthenticationManager(final DaoAuthenticationProvider myDaoAuthenticationProvider) {
+        final ProviderManager providerManager = new ProviderManager(Arrays.asList(myDaoAuthenticationProvider));
+        return providerManager;
+    }
+
+    @Bean
+    SimpleUrlAuthenticationSuccessHandler myAuthenticationSuccessHandler() {
+        final MyAuthenticationSuccessHandler myAuthenticationSuccessHandler = new MyAuthenticationSuccessHandler();
+        myAuthenticationSuccessHandler.setTargetUrlParameter(MyAuthenticationFilter.REQUEST_ATTRIBUTE_SUCCESS_TARGET_URL);
+        return myAuthenticationSuccessHandler;
+    }
+
+    @Bean
+    SimpleUrlAuthenticationFailureHandler myAuthenticationFailureHandler() {
+        final MyAuthenticationFailureHandler myAuthenticationFailureHandler = new MyAuthenticationFailureHandler(//
+                "/app/accountManage/login");
+        //myAuthenticationFailureHandler.setUseForward(true);
+        return myAuthenticationFailureHandler;
+    }
+
+    @Bean
+    PasswordEncoder awmPasswordEncoder() {
+        //        PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        return new BCryptPasswordEncoder(); // 沒有前墜 ${} 處理模式
+    }
+
+    @Bean
+    UserDetailsService myUserDetailsService(final PasswordEncoder awmPasswordEncoder, final AccountDao accountDao) {
+
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
+
+                if (StringUtils.isBlank(username)) {
+                    throw new UsernameNotFoundException("使用者名稱為空");
+                }
+                try {
+                    // 提供帳號實際的 bean 轉成實作UserDetails class 給 spring security
+                    final AccountType accountType = accountDao.findById(username).orElse(null);
+                    if (accountType == null) {
+                        throw new UsernameNotFoundException("使用者不存在");
+                    }
+
+                    final SysUser user = new SysUser();
+                    user.setUsername(username);
+                    user.setEncMima(accountType.getVerify()); // 通常是已經加密的內容
+                    user.setPersonName(accountType.getPersonName());
+                    user.addRoles(WebSecurityConfiguration.this.sysRole);
+                    return user;
+                } catch (final Exception e) {
+                    throw new UsernameNotFoundException("資料不存在", e);
+                }
+            }
+        };
+
+    }
+
+    public static class SysUser implements UserDetails {
+        private static final long serialVersionUID = -1920720932646344414L;
+
+        private String username;
+
+        private String personName; // 目前已知僅 insert log 時需要用到而已
+
+        private String encMima;
+
+        private List<GrantedAuthority> authorities = new ArrayList<>();
+
+        @Override
+        // 取得所有權限
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return this.authorities;
+        }
+
+        @Override
+        // 取得使用者名稱
+        public String getUsername() {
+            return this.username;
+        }
+
+        @Override
+        // 取得密碼
+        public String getPassword() {
+            return this.encMima;
+        }
+
+        @Override
+        // 帳號是否過期
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        // 帳號是否被鎖定
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        // 憑證/密碼是否過期
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        // 帳號是否可用
+        public boolean isEnabled() {
+            return true;
+        }
+
+        public void setEncMima(final String encMima) {
+            this.encMima = encMima;
+        }
+
+        public void setUsername(final String username) {
+            this.username = username;
+        }
+
+        public String getPersonName() {
+            return this.personName;
+        }
+
+        public void setPersonName(final String personName) {
+            this.personName = personName;
+        }
+
+        public void addRoles(final String... roles) {
+            for (final String role : roles) {
+                this.authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.authorities, this.personName, this.username);
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final SysUser other = (SysUser) obj;
+            return Objects.equals(this.authorities, other.authorities) && Objects.equals(this.personName, other.personName)
+                    && Objects.equals(this.username, other.username);
+        }
+
+    }
+}

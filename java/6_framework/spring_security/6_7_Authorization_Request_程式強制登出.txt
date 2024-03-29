@@ -1,0 +1,35 @@
+========================================================================================================================
+================================= ref ==================================================================================
+== https://stackoverflow.com/questions/37870350/spring-security-force-logout-when-password-change ======================
+========================================================================================================================
+
+spring security configuration
+	// 1.配置 sessionManagement sessionRegistry
+	SecurityFilterChain loginFilterChain(HttpSecurity http)
+		// this enables ConcurrentSessionFilter to allow us to read all sessions by using getAllPrincipals
+			http
+				.sessionManagement().maximumSessions(10)
+				.sessionRegistry(sessionRegistry())
+				.expiredUrl("/login?expire");
+		// Rest of the configuration
+	}
+
+	// 2.後臺程式當改變密碼時
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Object currentPrincipal = authentication.getPrincipal();
+		List<Object> principals = sessionRegistry.getAllPrincipals();
+		// 找到特定的使用者登出
+		if(principals.indexof(currentPrincipal) != -1){
+			List<SessionInformation> sessionInformations = sessionRegistry.getAllSessions(principal,false);
+			for (SessionInformation sessionInformation : sessionInformations) {
+				sessionInformation.expireNow();;
+			}
+		}
+		// 全部使用者登出
+		for (Object principal: principals) {
+			// Check for the principal you want to expire here
+			List<SessionInformation> sessionInformations = sessionRegistry.getAllSessions(principal,false);
+			for (SessionInformation sessionInformation : sessionInformations) {
+				sessionInformation.expireNow();;
+			}
+		}
