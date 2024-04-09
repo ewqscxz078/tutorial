@@ -1,0 +1,248 @@
+元件添加
+	1、@Configuration
+		● 基本使用
+		● Full模式與Lite模式
+		  ○ 示例
+		  ○ 最佳實戰
+			■ 配置 類組件之間無依賴關係用Lite模式加速容器啟動過程，減少判斷
+			■ 配置類組件之間有依賴關係，方法會被調用得到之前單實例組件，用Full模式
+
+		#############################Configuration使用示例######################################################
+		/**
+		 * https://www.cnblogs.com/krock/p/15743401.html
+		 * 1、配置類裡面使用@Bean標註在方法上給容器註冊組件，默認也是單實例的
+		 * 2、配置類本身也是組件
+		 * 3、proxyBeanMethods：代理bean的方法
+		 *      Full(proxyBeanMethods = true)、【保證每個@Bean方法被調用多少次返回的組件都是單實例的】 default
+		 *      Lite(proxyBeanMethods = false)【每個@Bean方法被調用多少次返回的組件都是新創建的】
+		 *      組件依賴必須使用Full模式默認。其他默認是否Lite模式
+		 *
+		 *  https://www.cnblogs.com/dreamroute/p/15944957.html
+		 *  什麼時候用Full全模式，什麼時候用Lite輕量級模式？
+		 *  當在你的同一個Configuration配置類別中，注入到容器中的bean實例之間有依賴關係時，建議使用Full全模式
+		 *  當在你的同一個Configuration配置類別中，注入到容器中的bean實例之間沒有依賴關係時，建議使用Lite輕量級模式，以提高springboot的啟動速度和效能、因此沒有 spring ioc bean 生命週期
+		 */
+		@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
+		public class MyConfig {
+
+			/**
+			 * Full:外部無論對配置類中的這個組件註冊方法調用多少次獲取的都是之前註冊容器中的單實例對象
+			 * @return
+			 */
+			@Bean //給容器中添加組件。以方法名作為組件的id。返回類型就是組件類型。返回的值，就是組件在容器中的實例
+			public User user01(){
+				User zhangsan = new User("zhangsan", 18);
+				//user組件依賴了Pet組件
+				zhangsan.setPet(tomcatPet());
+				return zhangsan;
+			}
+
+			@Bean("tom")
+			public Pet tomcatPet(){
+				return new Pet("tomcat");
+			}
+		}
+
+
+		################################@Configuration測試代碼如下########################################
+		@SpringBootConfiguration
+		@EnableAutoConfiguration
+		@ComponentScan("com.atguigu.boot")
+		public class MainApplication {
+
+			public static void main(String[] args) {
+				//1、返回我們IOC容器
+				ConfigurableApplicationContext run = SpringApplication.run(MainApplication.class, args);
+
+				//2、查看容器裡面的組件
+				String[] names = run.getBeanDefinitionNames();
+				for (String name : names) {
+					System.out.println(name);
+				}
+
+				//3、從容器中獲取組件
+
+				Pet tom01 = run.getBean("tom", Pet.class);
+
+				Pet tom02 = run.getBean("tom", Pet.class);
+
+				System.out.println("組件："+(tom01 == tom02));
+
+				//4、com.atguigu.boot.config.MyConfig$$EnhancerBySpringCGLIB$$51f1e1ca@1654a892
+				MyConfig bean = run.getBean(MyConfig.class);
+				System.out.println(bean);
+
+				//如果@Configuration(proxyBeanMethods = true)代理對象調用方法。 SpringBoot總會檢查這個組件是否在容器中有。
+				//保持組件單實例
+				User user = bean.user01();
+				User user1 = bean.user01();
+				System.out.println(user == user1);
+
+
+				User user01 = run.getBean("user01", User.class);
+				Pet tom = run.getBean("tom", Pet.class);
+
+				System.out.println("用戶的寵物："+(user01.getPet() == tom));
+
+
+
+			}
+		}
+
+
+	https://stackoverflow.com/questions/61266792/when-to-set-proxybeanmethods-to-false-in-springs-configuration
+		@Slf4j
+		public class ServiceA {
+
+			private final ServiceC sharedService;
+
+			public ServiceA(final ServiceC sharedService) {
+				this.sharedService = sharedService;
+				log.debug("java bean init ServiceA :{}", this);
+				log.debug("java bean init sharedService :{}", sharedService);
+			}
+
+			@PostConstruct
+			public void init() {
+				log.debug("spring bean ioc init ServiceA :{}", this);
+				log.debug("spring bean ioc init sharedService :{}", this.sharedService);
+			}
+
+			public ServiceC getSharedService() {
+				return this.sharedService;
+			}
+
+		}
+
+		@Slf4j
+		public class ServiceB {
+
+			private final ServiceC sharedService;
+
+			public ServiceB(final ServiceC sharedService) {
+				this.sharedService = sharedService;
+				log.debug("java bean init ServiceB :{}", this);
+				log.debug("java bean init sharedService :{}", sharedService);
+			}
+
+			@PostConstruct
+			public void init() {
+				log.debug("spring bean ioc init ServiceB :{}", this);
+				log.debug("spring bean ioc init sharedService :{}", this.sharedService);
+			}
+
+			public ServiceC getSharedService() {
+				return this.sharedService;
+			}
+
+		}
+
+		@Slf4j
+		public class ServiceC {
+
+			public ServiceC() {
+				log.debug("java bean init ServiceC :{}", this);
+			}
+
+			@PostConstruct
+			public void init() {
+				log.debug("spring bean ioc init ServiceC :{}", this);
+			}
+
+		}
+
+		// 以下案例代表 proxyBeanMethods 會攔截 sharedService() 確保重用且單例含有 spring ioc bean 生命週期，缺點就是會有點效能啟動得稍微慢一點，當配置的元件越來越多時
+		@Configuration(proxyBeanMethods=true)
+		public class SomeConfiguration {
+			@Bean
+			ServiceA serviceA(){
+			  return new ServiceA(sharedService());
+			}
+
+			@Bean
+			ServiceB serviceB(){
+			  return new ServiceB(sharedService());
+			}
+
+			@Bean
+			ServiceC sharedService(){
+			  return new ServiceC();
+			}
+		}
+
+		輸出測試結果
+			public static void main(final String[] args) {
+				final ConfigurableApplicationContext run = SpringApplication.run(SpringBootWebTestApplication.class, args);
+
+				final ServiceA serviceA = run.getBean("serviceA", ServiceA.class);
+
+				final ServiceB serviceB = run.getBean("serviceB", ServiceB.class);
+
+				final ServiceC sharedService = run.getBean("sharedService", ServiceC.class);
+
+				log.debug("serviceA.getSharedService() == serviceB.getSharedService() : {}",
+						serviceA.getSharedService() == serviceB.getSharedService());
+
+				log.debug("serviceC == serviceA.getSharedService() : {}", sharedService == serviceA.getSharedService());
+
+				log.debug("serviceC == serviceB.getSharedService() : {}", sharedService == serviceB.getSharedService());
+			}
+		
+			04/04-11:56:11.550|       |D|java bean init ServiceC :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceC:11)
+			04/04-11:56:11.552|       |D|spring bean ioc init ServiceC :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceC:16)
+			
+			04/04-11:56:11.552|       |D|java bean init ServiceA :com.david.web.jsp.test.ServiceA@4ecd00b5(com.david.web.jsp.test.ServiceA:14)
+			04/04-11:56:11.553|       |D|java bean init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceA:15)
+			04/04-11:56:11.553|       |D|spring bean ioc init ServiceA :com.david.web.jsp.test.ServiceA@4ecd00b5(com.david.web.jsp.test.ServiceA:20)
+			04/04-11:56:11.553|       |D|spring bean ioc init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceA:21)
+
+			04/04-11:56:11.554|       |D|java bean init ServiceB :com.david.web.jsp.test.ServiceB@3667faa8(com.david.web.jsp.test.ServiceB:14)
+			04/04-11:56:11.554|       |D|java bean init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceB:15)
+			04/04-11:56:11.554|       |D|spring bean ioc init ServiceB :com.david.web.jsp.test.ServiceB@3667faa8(com.david.web.jsp.test.ServiceB:20)
+			04/04-11:56:11.554|       |D|spring bean ioc init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceB:21)			
+			
+			04/04-11:56:11.763|       |D|serviceA.getSharedService() == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:33)
+			04/04-11:56:11.763|       |D|serviceC == serviceA.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:36)
+			04/04-11:56:11.763|       |D|serviceC == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:38)
+		
+		// 以下案例代表 使用輕量級綁定(方法參數對應)，
+		@Configuration(proxyBeanMethods=false)
+		public class FalseConfiguration {
+
+			@Bean
+			ServiceC sharedService(){
+			  return new ServiceC();
+			}
+
+			@Bean
+			ServiceA serviceA(ServiceC sharedService){
+			  return new ServiceA(sharedService);
+			}
+
+			@Bean
+			ServiceB serviceB(ServiceC sharedService){
+			  return new ServiceB(sharedService);
+			}
+		}
+
+		04/04-11:59:33.285|       |D|java bean init ServiceC :com.david.web.jsp.test.ServiceC@205df5dc(com.david.web.jsp.test.ServiceC:11)
+		04/04-11:59:33.287|       |D|spring bean ioc init ServiceC :com.david.web.jsp.test.ServiceC@205df5dc(com.david.web.jsp.test.ServiceC:16)
+
+		04/04-11:59:33.287|       |D|java bean init ServiceA :com.david.web.jsp.test.ServiceA@28369db0(com.david.web.jsp.test.ServiceA:14)
+		04/04-11:59:33.288|       |D|java bean init sharedService :com.david.web.jsp.test.ServiceC@205df5dc(com.david.web.jsp.test.ServiceA:15)
+		04/04-11:59:33.288|       |D|spring bean ioc init ServiceA :com.david.web.jsp.test.ServiceA@28369db0(com.david.web.jsp.test.ServiceA:20)
+		04/04-11:59:33.288|       |D|spring bean ioc init sharedService :com.david.web.jsp.test.ServiceC@205df5dc(com.david.web.jsp.test.ServiceA:21)
+
+		04/04-11:59:33.288|       |D|java bean init ServiceB :com.david.web.jsp.test.ServiceB@2e86807a(com.david.web.jsp.test.ServiceB:14)
+		04/04-11:59:33.288|       |D|java bean init sharedService :com.david.web.jsp.test.ServiceC@205df5dc(com.david.web.jsp.test.ServiceB:15)
+		04/04-11:59:33.289|       |D|spring bean ioc init ServiceB :com.david.web.jsp.test.ServiceB@2e86807a(com.david.web.jsp.test.ServiceB:20)
+		04/04-11:59:33.289|       |D|spring bean ioc init sharedService :com.david.web.jsp.test.ServiceC@205df5dc(com.david.web.jsp.test.ServiceB:21)
+
+		04/04-11:59:33.506|       |D|serviceA.getSharedService() == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:33)
+		04/04-11:59:33.506|       |D|serviceC == serviceA.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:36)
+		04/04-11:59:33.507|       |D|serviceC == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:38)
+
+題外話
+	spring 5.2 
+		@Configuration 預設 proxyBeanMethods = true
+		@AutoConfiguration 預設 proxyBeanMethods = false

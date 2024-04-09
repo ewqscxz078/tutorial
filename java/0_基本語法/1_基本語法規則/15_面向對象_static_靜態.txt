@@ -1,32 +1,54 @@
 https://www.youtube.com/watch?v=l1Up4clCIow&list=PLmOn9nNkQxJHNyTuKHxQGdRVD_zJt8SMA&index=45&ab_channel=%E5%B0%9A%E7%A1%85%E8%B0%B7IT%E5%9F%B9%E8%AE%AD%E5%AD%A6%E6%A0%A1
 
-public static void main(String[] args){
-	// 面向對象- 靜態
-	// 針對於具體對象的屬性稱之為 對象屬性/成員屬性/實例屬性
-	// 針對於具體對象的方法稱之為 對象方法/成員方法/實例方法
-	// 把和對象無關，只和類相關的稱之為靜態
-	// 和類相關的屬性稱之為 靜態屬性
-	// 和類相關的方法稱之為 靜態方法
-	// 靜態語法就是在屬性與方法前端前增加 static 關鍵字
+public class myTest { // 外部類
 
-	Chinese c = new Chinese();
-	c.name = "張三";
-	System.out.println("hello " + c.name + ", " + c.nationally);
+	public static void main(String[] args){
+		// 面向對象- 靜態
+		// 針對於具體對象的屬性稱之為 對象屬性/成員屬性/實例屬性
+		// 針對於具體對象的方法稱之為 對象方法/成員方法/實例方法
+		// 把和對象無關，只和類相關的稱之為靜態
+		// 和類相關的屬性稱之為 靜態屬性
+		// 和類相關的方法稱之為 靜態方法
+		// 靜態語法就是在屬性與方法前端前增加 static 關鍵字
 
-	Bird.fly();
-	System.out.println(Bird.type);
-}
+		Chinese c = new Chinese();
+		c.name = "張三";
+		System.out.println("hello " + c.name + ", " + c.nationally);
 
-class Bird(){
-	static String type = "鳥";
-
-	static void fly(){
-		System.out.println("飛....");
+		Bird.fly();
+		System.out.println(Bird.type);
 	}
+
+	class Bird(){  // 非靜態內部類
+		static String type = "鳥";
+
+		static void fly(){
+			System.out.println("飛....");
+		}
+	}
+
+	class Chinese(){ // 非靜態內部類
+		String name;
+
+		String nationally = "中國";
+	}
+	
+	static class innerClass { // 宣告 static 在 class 前，通常代表靜態內部類
+		// 優點
+		// 1.命名空間控制：靜態內部類提供了更好的命名空間控制。它們將相關的類型放在一起，並使它們更易於理解和組織。
+
+		// 2.隱藏實現細節：當一個類只對其外部類有用時，可以將它作為外部類的靜態內部類。這樣可以隱藏實現細節，並將其限制在外部類的範圍內。
+
+		// 3.訪問外部類的私有成員：靜態內部類可以訪問其外部類的所有靜態成員，包括私有成員。這使得靜態內部類更具靈活性，可以輕鬆地與其外部類通信。
+
+		// 4.避免循環依賴：靜態內部類可以在不引起循環依賴的情況下訪問外部類，因為它們不需要外部類的實例。
+
+		// 5.更好的可讀性和維護性：靜態內部類使得相關的類型可以放在一起，使得代碼更易於理解和維護。這種組織方式可以提高代碼的可讀性，並且更容易進行重構和修改。		
+	}
+	
 }
 
-class Chinese(){
-	String name;
 
-	String nationally = "中國";
-}
+
+
+

@@ -9,6 +9,8 @@
 
 		#############################Configuration使用示例######################################################
 		/**
+		 * https://stackoverflow.com/questions/61266792/when-to-set-proxybeanmethods-to-false-in-springs-configuration
+		 * https://www.cnblogs.com/krock/p/15743401.html
 		 * 1、配置類裡面使用@Bean標註在方法上給容器註冊組件，默認也是單實例的
 		 * 2、配置類本身也是組件
 		 * 3、proxyBeanMethods：代理bean的方法
@@ -18,6 +20,11 @@
 		 *
 		 *
 		 *
+		 *
+		 *  https://www.cnblogs.com/dreamroute/p/15944957.html
+		 *  什麼時候用Full全模式，什麼時候用Lite輕量級模式？
+		 *  當在你的同一個Configuration配置類別中，注入到容器中的bean實例之間有依賴關係時，建議使用Full全模式
+		 *  當在你的同一個Configuration配置類別中，注入到容器中的bean實例之間沒有依賴關係時，建議使用Lite輕量級模式，以提高springboot的啟動速度和效能、因此沒有 spring ioc bean 生命週期
 		 */
 		@Configuration(proxyBeanMethods = false) //告訴SpringBoot這是一個配置類 == 配置文件
 		public class MyConfig {

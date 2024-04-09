@@ -1,0 +1,12 @@
+https://medium.com/@heather_programming/spring-security-jwt-%E9%A9%97%E8%AD%89-d51dc4eb5fe5
+	jwt 驗證
+		適合分散式、無狀態、跨平台
+
+https://www.tpisoftware.com/tpu/articleDetails/1606
+	範例
+
+https://ithelp.ithome.com.tw/m/articles/10332832
+	jwt 記錄到資料庫並實現強制登出
+	
+https://medium.com/spring-boot/invalidate-revoked-the-jwt-force-logout-the-user-from-spring-security-a20ef3a2a928
+	Invalidate/Revoked the JWT : Force logout the user from spring security
