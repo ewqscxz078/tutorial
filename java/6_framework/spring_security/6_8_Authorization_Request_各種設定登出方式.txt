@@ -43,7 +43,7 @@ Clear-Site-Data Header Logout
 	@Configuration
 	public class ClearSiteDataHeaderLogoutConfiguration {
 
-		private static final ClearSiteDataHeaderWriter.Directive[] SOURCE = 
+		private static final ClearSiteDataHeaderWriter.Directive[] SOURCE =
 		  {CACHE, COOKIES, STORAGE, EXECUTION_CONTEXTS};
 
 		@Bean

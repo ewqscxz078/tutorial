@@ -1,0 +1,257 @@
+
+ref
+	官網
+		https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html
+	第三方
+		https://ithelp.ithome.com.tw/m/articles/10322166
+
+Spring Validation
+	用途
+		數據驗證是一種確保應用程式接收到正確、有效數據的過程。在許多應用程式中，使用者和其他系統提供的數據是不可靠的。
+		因此，數據驗證成為了防止錯誤、安全漏洞和不一致性的關鍵步驟。
+			數據品質提高： 通過驗證數據，可以確保數據品質。這有助於防止應用程式中的錯誤數據，從而提高了應用程式的可靠性。
+			安全性增強： 數據驗證有助於防止惡意攻擊，如 SQL 注入和跨站腳本（XSS）攻擊。它可以確保輸入的數據不包含惡意程式碼。
+			錯誤減少： 通過驗證數據，可以在數據進入應用程式之前捕獲錯誤。這有助於減少後續階段的錯誤，降低了應用程式維護的成本。
+			一致性維護： 數據驗證有助於確保數據的一致性，使其符合應用程式的預期格式和要求。
+
+	適合場景
+		應該宣告在前端控制器（Controller）中使用的資料傳輸物件（DTO）或模型（Model）Bean 下，
+		這樣可以確保輸入資料的有效性。這樣做有助於保持程式碼的清晰度和可維護性，並且可以使驗證邏輯與業務邏輯分開
+			DTO（資料傳輸物件）：
+				如果您的應用程式使用 DTO 來傳輸資料，那麼應該在 DTO 類別中宣告驗證註解。DTO 類別用於在客戶端和伺服器之間傳輸資料，它們包含客戶端傳送到伺服器的資料。
+
+			Controller 中的 Model Bean：
+				如果您的控制器直接使用模型物件，在控制器中的 Model Bean 下宣告驗證也是恰當的。這些模型物件通常用於在後端渲染視圖時，它們代表業務資料模型。
+		具體情境
+			使用者註冊和登錄： 在使用者註冊和登錄過程中，需要驗證使用者提供的使用者名稱和密碼是否有效，以確保安全性。
+			表單驗證： 在Web應用程式中，表單是主要的使用者輸入方式。數據驗證用於檢查表單提交的數據是否有效。
+			API輸入驗證： 對於後端API，數據驗證用於檢查傳入請求的數據是否滿足要求。
+			數據存儲： 在將數據存儲到數據庫或文件系統之前，需要驗證數據的有效性。
+			交易處理： 在金融應用程式中，數據驗證用於確保交易的準確性和完整性。
+
+	好處
+		僅宣告，不用在每支業務撰寫重複雷同邏輯
+
+依賴
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-validation</artifactId>
+	</dependency>
+
+application.yml
+	# 啟用或禁用驗證
+	spring.mvc.validation.enabled=true
+
+	# 驗證消息的本地化
+	spring.mvc.validation.locale=zh_TW
+
+
+常用 annotation
+	1.空值檢查 : 用於檢查數據是否為 null 或者空值。
+		@NotBlank	用於字串，字串不能為 null 也不能為空字串。
+		@NotEmpty	對於集合（Map、List、Set）不能為空，必須有元素。
+		@NotNull	不能為 null。
+		@Null	必須為 null。
+		@Size(min, max)	檢查String、Collection、Map、陣列的大小是否在指定範圍內。
+			public class User {
+				@NotBlank
+				private String username; // 字串不能為 null 也不能為空字串
+
+				@NotEmpty
+				private List<String> roles; // 集合不能為空，必須有元素
+
+				@NotNull
+				private Integer age; // 不能為 null
+
+				@Null
+				private String middleName; // 必須為 null
+
+				@Size(min = 2, max = 50)
+				private String fullName; // 字串長度必須在2到50個字符之間
+			}
+
+	2.數值檢查 : 用於檢查數值型數據是否滿足特定的條件。
+		@Max(value)	檢查數字是否小於或等於指定的最大值。
+		@Min(value)	檢查數字是否大於或等於指定的最小值。
+		@DecimalMax(value)	檢查數字是否小於或等於指定的最大值，可用於 BigDecimal。
+		@DecimalMin(value)	檢查數字是否大於或等於指定的最小值，可用於 BigDecimal。
+		@Digits(integer, fraction)	檢查數值的整數部分和小數部分的位數是否在指定範圍內。
+		@Positive	檢查數字是否為正數（不包括零）。
+		@PositiveOrZero	檢查數字是否為正數或 0。
+		@Negative	檢查數字是否為負數（不包括零）。
+		@NegativeOrZero	檢查數字是否為負數或 0。
+			public class Product {
+
+			  @Min(value = 1, message = "產品ID必須大於等於1")
+			  private int productId;
+
+			  @Max(value = 1000, message = "價格不能超過1000")
+			  @DecimalMax(value = "1000.00", message = "價格不能超過1000.00")
+			  private BigDecimal price;
+
+			  @Digits(integer = 4, fraction = 2, message = "折扣必須是一個數字，整數部分不超過4位，小數部分不超過2位")
+			  private BigDecimal discount;
+
+			  @Positive(message = "庫存數量必須是正數")
+			  private int stockQuantity;
+
+			  @NegativeOrZero(message = "折扣金額必須是負數或零")
+			  private double discountAmount;
+
+			  // 省略其他欄位和方法
+			}
+
+	3.日期和時間檢查 : 用於檢查日期和時間型數據是否符合指定的格式或條件。
+		@Past	檢查日期或時間是否在當前時間之前。
+		@Future	檢查日期或時間是否在當前時間之後。
+		@DateTimeFormat(pattern)	指定日期或時間的格式，用於數據的格式化和解析。
+			public class Event {
+				@Past(message = "事件開始日期必須在過去")
+				@DateTimeFormat(pattern = "yyyy-MM-dd")
+				private LocalDate startDate;
+
+				@Future(message = "事件結束日期必須在未來")
+				@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+				private LocalDateTime endDate;
+			}
+
+	4.其他檢查 : 用於特殊情況的註解。
+		@Email	檢查字串是否是有效的電子郵件地址。
+		@URL	檢查字串是否是有效的 URL。
+		@Pattern(regexp)	檢查字串數據是否匹配指定的正則表達式。
+		@Valid	用於嵌套物件的校驗，通常與複雜物件的欄位一起使用。
+		@AssertTrue 和 @AssertFalse	分別檢查數據是否為 true 和 false。
+			public class User {
+				@Email
+				private String email;
+
+				@Pattern(regexp = "^[A-Za-z0-9]+$")
+				private String username;
+
+				@URL
+				private String personalWebsite;
+
+				@Valid //在這裡用於嵌套物件的校驗，因為Address類的"postalCode"屬性也使用到驗證註解
+				private Address address;
+
+				@AssertTrue
+				private boolean isActive;
+
+				@AssertFalse
+				private boolean isDeleted;
+
+				// 省略其他屬性和方法
+			}
+
+			public class Address {
+				@Pattern(regexp = "^[0-9]{5}$")
+				private String postalCode;
+
+				// 省略其他屬性和方法
+			}
+
+
+示範
+	範例一
+		@Data //Lombok註解
+		public class AppUser {
+			@NotBlank
+			@Size(min = 2, max = 30)
+			private String username;
+
+			@NotBlank
+			@Email
+			private String email;
+		}
+
+		@RestController
+		@RequestMapping("/api")
+		@Validated
+		public class UserController {
+
+			@PostMapping("/register")
+			public ResponseEntity<String> registerUser(@RequestBody @Valid AppUser user) {
+				// 處理使用者註冊邏輯，例如將使用者儲存到資料庫
+				return ResponseEntity.ok("使用者註冊成功!");
+			}
+		}
+
+	使用 @Validated 註解來啟用資料驗證，確保在進入 registerUser 方法之前，User 物件會被驗證。如果驗證失敗，將返回適當的錯誤響應。如果驗證成功，將返回成功的響應。
+		ref https://www.baeldung.com/spring-valid-vs-validated
+		@Valid
+			屬於標準 JSR-303
+			驗證的成員屬性。但不支援群組驗證
+			驗證所有屬性皆成功才能正常
+		@Validated
+			Spring 擴展 JSR-303 變體
+			方法層級，支援群組驗證
+				當 bean 對應到前端 form 時，該bean 在前端 ui 有多個階段驗證，第一個階段驗證部分欄位、第二階段驗證其他欄位，因此需要群組驗證
+			支援驗證群組成員屬性成功才能正常
+
+	範例二
+		// 另外定義群組驗證 BasicInfo.class、AdvanceInfo.class 空介面即可
+		public class UserAccount {
+
+			@NotNull(groups = BasicInfo.class)
+			@Size(min = 4, max = 15, groups = BasicInfo.class)
+			private String password;
+
+			@NotBlank(groups = BasicInfo.class)
+			private String name;
+
+			@Min(value = 18, message = "Age should not be less than 18", groups = AdvanceInfo.class)
+			private int age;
+
+			@NotBlank(groups = AdvanceInfo.class)
+			private String phone;
+
+			// standard constructors / setters / getters / toString
+
+			// 定義驗證分組空介面
+			public interface BasicInfo {}
+			public interface AdvanceInfo {}
+
+		}
+
+		// 階段一
+			@RequestMapping(value = "/saveBasicInfoStep1", method = RequestMethod.POST)
+			public String saveBasicInfoStep1(
+			  @Validated(BasicInfo.class)
+			  @ModelAttribute("useraccount") UserAccount useraccount,
+			  BindingResult result, ModelMap model) {
+				if (result.hasErrors()) {
+					return "error";
+				}
+				return "success";
+			}
+
+			@Test
+			public void givenSaveBasicInfoStep1_whenCorrectInput_thenSuccess() throws Exception {
+				this.mockMvc.perform(MockMvcRequestBuilders.post("/saveBasicInfoStep1")
+				  .accept(MediaType.TEXT_HTML)
+				  .param("name", "test123")
+				  .param("password", "pass"))
+				  .andExpect(view().name("success"))
+				  .andExpect(status().isOk())
+				  .andDo(print());
+			}
+
+@Valid Annotation to Mark Nested Objects
+	public class UserAddress {
+
+		@NotBlank
+		private String countryCode;
+
+		// standard constructors / setters / getters / toString
+	}
+
+	public class UserAccount {
+
+		//...
+
+		@Valid
+		@NotNull(groups = AdvanceInfo.class)
+		private UserAddress useraddress;
+
+		// standard constructors / setters / getters / toString
+	}

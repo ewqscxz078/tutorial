@@ -101,7 +101,7 @@ public class WebSecurityConfiguration {
     }
 
 	// 內建，要自行建構因為自訂認證 session 的處理
-    @Bean 
+    @Bean
     SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }

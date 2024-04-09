@@ -187,10 +187,10 @@
 
 				log.debug("serviceC == serviceB.getSharedService() : {}", sharedService == serviceB.getSharedService());
 			}
-		
+
 			04/04-11:56:11.550|       |D|java bean init ServiceC :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceC:11)
 			04/04-11:56:11.552|       |D|spring bean ioc init ServiceC :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceC:16)
-			
+
 			04/04-11:56:11.552|       |D|java bean init ServiceA :com.david.web.jsp.test.ServiceA@4ecd00b5(com.david.web.jsp.test.ServiceA:14)
 			04/04-11:56:11.553|       |D|java bean init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceA:15)
 			04/04-11:56:11.553|       |D|spring bean ioc init ServiceA :com.david.web.jsp.test.ServiceA@4ecd00b5(com.david.web.jsp.test.ServiceA:20)
@@ -199,12 +199,12 @@
 			04/04-11:56:11.554|       |D|java bean init ServiceB :com.david.web.jsp.test.ServiceB@3667faa8(com.david.web.jsp.test.ServiceB:14)
 			04/04-11:56:11.554|       |D|java bean init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceB:15)
 			04/04-11:56:11.554|       |D|spring bean ioc init ServiceB :com.david.web.jsp.test.ServiceB@3667faa8(com.david.web.jsp.test.ServiceB:20)
-			04/04-11:56:11.554|       |D|spring bean ioc init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceB:21)			
-			
+			04/04-11:56:11.554|       |D|spring bean ioc init sharedService :com.david.web.jsp.test.ServiceC@49a6f486(com.david.web.jsp.test.ServiceB:21)
+
 			04/04-11:56:11.763|       |D|serviceA.getSharedService() == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:33)
 			04/04-11:56:11.763|       |D|serviceC == serviceA.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:36)
 			04/04-11:56:11.763|       |D|serviceC == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:38)
-		
+
 		// 以下案例代表 使用輕量級綁定(方法參數對應)，
 		@Configuration(proxyBeanMethods=false)
 		public class FalseConfiguration {
@@ -243,6 +243,6 @@
 		04/04-11:59:33.507|       |D|serviceC == serviceB.getSharedService() : true(com.david.web.jsp.SpringBootWebTestApplication:38)
 
 題外話
-	spring 5.2 
+	spring 5.2
 		@Configuration 預設 proxyBeanMethods = true
 		@AutoConfiguration 預設 proxyBeanMethods = false

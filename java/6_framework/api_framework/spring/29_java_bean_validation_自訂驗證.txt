@@ -1,0 +1,66 @@
+
+ref
+	https://ithelp.ithome.com.tw/articles/10323025?sc=rss.iron
+
+以自訂 驗證手機號碼為例
+	// 實作宣告類
+	@Target({ElementType.FIELD, ElementType.METHOD})
+	@Retention(RetentionPolicy.RUNTIME)
+	@Constraint(validatedBy = PhoneNumberValidator.class)
+	public @interface ValidPhoneNumber {
+		String message() default "Invalid phone number";
+		Class<?>[] groups() default {};
+		Class<? extends Payload>[] payload() default {};
+	}
+
+	// 實作具體驗證類
+	public class PhoneNumberValidator implements ConstraintValidator<ValidPhoneNumber, String> {
+
+		@Override
+		public void initialize(ValidPhoneNumber constraintAnnotation) {
+		}
+
+		@Override
+		public boolean isValid(String phoneNumber, ConstraintValidatorContext context) {
+			if (phoneNumber == null) {
+				return false;
+			}
+
+			// 定義規則：手機號碼必須以09開頭，總共10位數字
+			return phoneNumber.matches("^09\\d{8}$");
+		}
+	}
+
+	使用範例
+		// 具體屬性宣告
+		public class UserProfile {
+			@ValidPhoneNumber
+			private String phoneNumber;
+
+			// 其他屬性和方法
+		}
+
+		// 控制類
+		@RestController
+		@RequestMapping("/api")
+		public class UserProfileController {
+
+			@PostMapping("/user-profile")
+			public ResponseEntity<String> createUserProfile(@RequestBody @Valid UserProfileRequest request, BindingResult bindingResult) {
+				if (bindingResult.hasErrors()) {
+					// 紀錄驗證錯誤
+					List<String> errorMessages = new ArrayList<>();
+
+					// 提取所有驗證錯誤的消息
+					for (FieldError error : bindingResult.getFieldErrors()) {
+						errorMessages.add(error.getDefaultMessage());
+					}
+
+					// 返回錯誤消息給给客戶端
+					return ResponseEntity.badRequest().body("Validation failed: " + String.join(", ", errorMessages));
+				}
+
+				// 驗證通過，執行保存用戶操作...
+				return ResponseEntity.ok("UserProfile created successfully");
+			}
+		}

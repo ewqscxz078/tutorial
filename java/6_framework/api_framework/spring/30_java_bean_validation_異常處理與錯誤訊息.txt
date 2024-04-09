@@ -1,0 +1,33 @@
+
+ref
+	https://ithelp.ithome.com.tw/articles/10323025?sc=rss.iron
+
+
+驗證失敗時，Spring Validation 會拋出 MethodArgumentNotValidException 異常
+
+1.異常處理
+	使用 @ExceptionHandler 註解來定義異常處理程式
+		@ControllerAdvice
+		public class GlobalExceptionHandler {
+
+			@ExceptionHandler(MethodArgumentNotValidException.class)
+			@ResponseStatus(HttpStatus.BAD_REQUEST)
+			public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException ex) {
+				return ResponseEntity.badRequest().body("參數驗證失敗：" + ex.getBindingResult().getFieldError().getDefaultMessage());
+			}
+		}
+
+
+2.自訂錯誤訊息
+	驗證註解上使用 message 屬性，來指定錯誤訊息
+	可以使用佔位符來參考驗證失敗的欄位和其他資訊
+		public class Product {
+
+			@NotBlank(message = "產品名稱不能為空")
+			private String name;
+
+			@Positive(message = "價格必須是正數")
+			private double price;
+
+			// 省略其他屬性和方法
+		}
