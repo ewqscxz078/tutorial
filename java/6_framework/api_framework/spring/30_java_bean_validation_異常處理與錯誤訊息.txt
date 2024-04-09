@@ -2,7 +2,6 @@
 ref
 	https://ithelp.ithome.com.tw/articles/10323025?sc=rss.iron
 
-
 驗證失敗時，Spring Validation 會拋出 MethodArgumentNotValidException 異常
 
 1.異常處理
@@ -31,3 +30,7 @@ ref
 
 			// 省略其他屬性和方法
 		}
+
+
+	國際化驗證訊息處理
+		ref 	https://www.baeldung.com/rest-localized-validation-messages

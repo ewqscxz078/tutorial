@@ -30,7 +30,7 @@ Spring Validation
 			交易處理： 在金融應用程式中，數據驗證用於確保交易的準確性和完整性。
 
 	好處
-		僅宣告，不用在每支業務撰寫重複雷同邏輯
+		僅宣告，不用在每支業務撰寫重複常見 if/else 驗證邏輯
 
 依賴
 	<dependency>
@@ -44,7 +44,6 @@ application.yml
 
 	# 驗證消息的本地化
 	spring.mvc.validation.locale=zh_TW
-
 
 常用 annotation
 	1.空值檢查 : 用於檢查數據是否為 null 或者空值。
