@@ -208,12 +208,21 @@ docker run
 # 刪除 docker by container
 	docker rm [name by docker ps -a]
 
+
+
+=======================================================================
+======================= docker 檔案放入與拿出 =========================
+=======================================================================
 # 從 docker 裡複製出檔案
 	1.找出 CONTAINER_ID
 		docker ps|grep docker name
 		第一個欄位即為CONTAINER_ID
-	2.
+	2.從容器複製檔案到主機
 		docker cp [CONTAINER_ID]:/[filepath/filename] .
+		docker cp <container_id>:/path/to/container/file /path/to/host/destination
+	3.將檔案從主機複製到容器
+		docker cp /path/to/host/file <container_id>:/path/to/container/destination
+
 =======================================================================
 ============================== 其他常用 ===============================
 =======================================================================
