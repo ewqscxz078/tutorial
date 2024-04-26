@@ -26,3 +26,14 @@ spring boot jpa Predicate 如何下組出 (column1 = 'Y' or column2 = '2') 結�
             return criteriaBuilder.or(predicate1, predicate2);
         };
     }
+
+spring boot jpa 條件式查詢到複合鍵處理方式
+	root.get("id").get("複合鍵 entity column 屬性變數值")
+	例如
+		public static Specification<YourEntity> yourSpecification() {
+			return (root, query, criteriaBuilder) -> {
+				Predicate predicate1 = criteriaBuilder.equal(root.get(id).get("column1"), "Y");
+				Predicate predicate2 = criteriaBuilder.equal(root.get("column2"), "2");
+				return criteriaBuilder.or(predicate1, predicate2);
+			};
+		}

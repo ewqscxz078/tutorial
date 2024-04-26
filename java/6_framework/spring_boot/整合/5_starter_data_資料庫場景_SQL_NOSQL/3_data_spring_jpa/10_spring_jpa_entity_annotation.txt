@@ -9,15 +9,15 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 @GeneratedValue
 	設定主鍵的生成策略，可以是自動增長、UUID、序列等方式
 		GenerationType.IDENTITY：
-		由數據庫自動增長來生成主鍵值（適用於支持自動增長的數據庫，如 MySQL 的 AUTO_INCREMENT）。
+			由數據庫自動增長來生成主鍵值（適用於支持自動增長的數據庫，如 MySQL 的 AUTO_INCREMENT）。
 		GenerationType.AUTO：
-		由 JPA 驅動自動選擇適合的主鍵生成策略（這是預設值）。
+			由 JPA 驅動自動選擇適合的主鍵生成策略（這是預設值）。
 		GenerationType.SEQUENCE：
-		使用數據庫的序列來生成主鍵值（適用於支持序列的數據庫，如 Oracle）。
+			使用數據庫的序列來生成主鍵值（適用於支持序列的數據庫，如 Oracle）。
 		GenerationType.TABLE：
-		使用一個特定的數據庫表來保存主鍵的生成狀態。
+			使用一個特定的數據庫表來保存主鍵的生成狀態。
 		GenerationType.UUID：
-		使用 UUID（通用唯一標識符）來生成主鍵值。
+			使用 UUID（通用唯一標識符）來生成主鍵值。
 
 @Column
 	指定列名、長度、是否允許為空等
@@ -31,6 +31,25 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 			用於指定列的最大長度（僅適用於 String 屬性）。
 		precision 和 scale：
 			用於指定數值類型屬性的精度和小數位數。
+	
+	常見資料庫欄位轉換 
+		db varchar/char 轉 java String
+			@Column(name="db_column_name", length = ${資料庫.table.column_size})
+		db int 轉 java int
+			@Column(name="db_column_name") // 讓其底層自動判定轉換
+		db bigint 轉 java long
+			@Column(name="db_column_name") // 讓其底層自動判定轉換
+		db datetime 轉 java date
+			@Column(name="db_column_name", columnDefinition = "datetime")
+				指定了資料庫中列的類型為 datetime 類型，而不是讓 JPA 自動選擇適當的類型
+			或
+			@Temporal(TemporalType.TIMESTAMP)
+			@Column(name = "db_column_name")
+				JPA 會根據資料庫類型自動選擇適當的對應策略，你不需要直接指定資料庫中列的類型
+
+@Transient
+	指定某 entity 欄位不轉換到資料庫
+		
 
 @OneToOne
 	建立實體類別之間的一對一關係映射

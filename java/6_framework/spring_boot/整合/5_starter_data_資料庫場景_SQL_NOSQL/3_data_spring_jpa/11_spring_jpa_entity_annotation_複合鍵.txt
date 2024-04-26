@@ -1,25 +1,69 @@
-複合鍵 entity 設定
-	import javax.persistence.Embeddable;
-	import java.io.Serializable;
+ref
+	https://www.baeldung.com/jpa-composite-primary-keys
+
+範例
+	@IdClass
+		public class AccountId implements Serializable {
+			private String accountNumber;
+
+			private String accountType;
+
+			// default constructor
+
+			public AccountId(String accountNumber, String accountType) {
+				this.accountNumber = accountNumber;
+				this.accountType = accountType;
+			}
+
+			// equals() and hashCode()
+		}
+		@Entity
+		@IdClass(AccountId.class)
+		public class Account {
+			@Id
+			private String accountNumber;
+
+			@Id
+			private String accountType;
+
+			// other fields, getters and setters
+		}
 
 	@Embeddable
-	public class YourCompositeKey implements Serializable {
-		private Long keyPart1;
-		private Long keyPart2;
+		複合鍵 entity 設定
+			import javax.persistence.Embeddable;
+			import java.io.Serializable;
 
-		// 空的建構子和 getter, setter 方法
-		// 注意，這裡需要實作 Serializable 介面
-	}
+			@Embeddable
+			public class YourCompositeKey implements Serializable {
+				private Long keyPart1;
+				private Long keyPart2;
 
-	import javax.persistence.EmbeddedId;
-	import javax.persistence.Entity;
-	import java.io.Serializable;
+				// 空的建構子和 getter, setter 方法
+				// 注意，這裡需要實作 Serializable 介面
+			}
 
-	@Entity
-	public class YourEntity implements Serializable {
+			import javax.persistence.EmbeddedId;
+			import javax.persistence.Entity;
+			import java.io.Serializable;
+
+			@Entity
+			public class YourEntity implements Serializable {
+				@EmbeddedId
+				private YourCompositeKey id;
+
+				// 其他屬性和方法
+				// 注意，這裡的屬性名稱和 YourCompositeKey 中的變數名稱需要一致
+			}
+
+@IdClass VS @EmbeddedId
+	1.複合鍵在 @IdClass 的欄位要宣告兩次
+	2.JPQL queries 差異
+		@IdClass
+			SELECT account.accountNumber FROM Account account
 		@EmbeddedId
-		private YourCompositeKey id;
-
-		// 其他屬性和方法
-		// 注意，這裡的屬性名稱和 YourCompositeKey 中的變數名稱需要一致
-	}
+			SELECT book.bookId.title FROM Book book
+	3.@IdClass 
+		can be quite useful in places where we are using a composite key class 
+		that we can’t modify.
+	

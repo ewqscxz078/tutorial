@@ -4,7 +4,7 @@ use @DataJpaTest
 	1.預設使用 H2 資料庫
 	2.會自動回滾事務，以確保測試不會影響實際資料庫
 		@DataJpaTest
-		@Rollback(false)
+		@Rollback // 預設 true 自動回滾 ，若為 false 則真的會交易存取進入到資料
 		public class YourRepositoryTest {
 			// Your test code here
 		}
