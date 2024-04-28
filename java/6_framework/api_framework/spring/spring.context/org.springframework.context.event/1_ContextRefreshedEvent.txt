@@ -3,12 +3,12 @@ contextrefreshedevent 觸發多次問題
 	https://stackoverflow.com/questions/27859182/spring-applicationlistener-gets-fired-twice-on-webapp
 	https://blog.csdn.net/YOUYOU0710/article/details/123453017
 	原因
-		Generally in a Spring MVC application you have both a ContextLoaderListener 
-		and DispatcherServlet. Both components create their own ApplicationContext 
+		Generally in a Spring MVC application you have both a ContextLoaderListener
+		and DispatcherServlet. Both components create their own ApplicationContext
 		which in turn both fire a ContextRefreshedEvent.
-		
-		The DispatcherServlet uses the ApplicationContext as created by the 
-		ContextLoaderListener as its parent. Events fired from child contexts are 
+
+		The DispatcherServlet uses the ApplicationContext as created by the
+		ContextLoaderListener as its parent. Events fired from child contexts are
 		propagated to the parent context.
 
 		Now if you have an ApplicationListener<ContextRefreshedEvent> defined in the
@@ -17,17 +17,17 @@ contextrefreshedevent 觸發多次問題
 	解決方法
 		參考 ParentContextCloserApplicationListener、ScheduledAnnotationBeanPostProcessor 寫法
 		class 繼承 ApplicationContextAware 置入 ApplicationContext context，並特別判斷避免觸發多次問題
-		
+
 			public class XxxxContext implements ApplicationListener<ContextRefreshedEvent>, ApplicationContextAware {
 				....
-				
+
 				private ApplicationContext context;
-				
+
 				@Override
 				public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 					this.context = applicationContext;
 				}
-				
+
 				@Override
 				public void onApplicationEvent(ContextRefreshedEvent event)
 					if(event.getApplicationContext() == this.context){

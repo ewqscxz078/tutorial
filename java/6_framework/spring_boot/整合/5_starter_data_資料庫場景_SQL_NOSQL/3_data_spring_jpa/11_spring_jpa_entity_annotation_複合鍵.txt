@@ -63,7 +63,6 @@ ref
 			SELECT account.accountNumber FROM Account account
 		@EmbeddedId
 			SELECT book.bookId.title FROM Book book
-	3.@IdClass 
-		can be quite useful in places where we are using a composite key class 
+	3.@IdClass
+		can be quite useful in places where we are using a composite key class
 		that we can’t modify.
-	

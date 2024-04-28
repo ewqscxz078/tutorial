@@ -31,8 +31,8 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 			用於指定列的最大長度（僅適用於 String 屬性）。
 		precision 和 scale：
 			用於指定數值類型屬性的精度和小數位數。
-	
-	常見資料庫欄位轉換 
+
+	常見資料庫欄位轉換
 		db varchar/char 轉 java String
 			@Column(name="db_column_name", length = ${資料庫.table.column_size})
 		db int 轉 java int
@@ -49,7 +49,7 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 
 @Transient
 	指定某 entity 欄位不轉換到資料庫
-		
+
 
 @OneToOne
 	建立實體類別之間的一對一關係映射

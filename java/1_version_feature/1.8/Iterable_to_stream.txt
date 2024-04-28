@@ -1,8 +1,8 @@
 ref
 	https://www.baeldung.com/java-iterable-to-stream
-	
+
 Converting Iterable to Stream
-	Iterable<String> iterable 
+	Iterable<String> iterable
 	  = Arrays.asList("Testing", "Iterable", "conversion", "to", "Stream");
 
 	StreamSupport.stream(iterable.spliterator(), false);
@@ -10,7 +10,7 @@ Converting Iterable to Stream
 Performing Stream Operation
 	@Test
 	public void whenConvertedToList_thenCorrect() {
-		Iterable<String> iterable 
+		Iterable<String> iterable
 		  = Arrays.asList("Testing", "Iterable", "conversion", "to", "Stream");
 
 		List<String> result = StreamSupport.stream(iterable.spliterator(), false)
