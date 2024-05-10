@@ -1,3 +1,0 @@
-ref
-	https://blog.typeart.cc/generate-spring-boot-entity-from-database-by-eclipse/
-	https://www.twblogs.net/a/5c4161c0bd9eee35b21e7ae3

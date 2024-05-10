@@ -1,3 +1,4 @@
 常見情境為兩個 join 結果僅各取其部分欄位
 	https://www.baeldung.com/jpa-sql-resultset-mapping
 	https://blog.csdn.net/wngpenghao/article/details/129768502
+	https://vladmihalcea.com/jpa-sqlresultsetmapping/
