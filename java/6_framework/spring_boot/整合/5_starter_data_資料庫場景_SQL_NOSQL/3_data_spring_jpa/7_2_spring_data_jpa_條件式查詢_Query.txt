@@ -8,7 +8,7 @@ https://blog.csdn.net/James_Hlh/article/details/118030766
 			"and (?2 is null or e.email = ?1)"
 		)
 		List<User> findUserByNameAndEmail(String name, String email)
-	
+
 	in 條件
 		@Query(
 			"select e.* from user e where " +
@@ -17,7 +17,7 @@ https://blog.csdn.net/James_Hlh/article/details/118030766
 		)
 		List<User> findUserByNameAndEmail(String name, String email, List<String> emails)
 			// 注意不能用 ?2當參數在 in
-	
+
 	兩個條件的if 判斷
 		@Query(
 			"select e.* from user e where " +
@@ -25,5 +25,5 @@ https://blog.csdn.net/James_Hlh/article/details/118030766
 			"and if(?2 is not null , e.email in (?3), 1=1)"
 		)
 		List<User> findUserByNameAndEmail(String name, String email, List<String> emails)
-	
+
 	HQL中不支持子查詢，必須使用 nativeQuery = true

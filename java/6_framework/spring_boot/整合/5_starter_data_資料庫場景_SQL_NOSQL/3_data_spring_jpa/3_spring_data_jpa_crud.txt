@@ -5,7 +5,7 @@ https://blog.wuwii.com/jpa-specification.html
 	特定 Specification 查詢 與 Criteria 查詢(提供不寫sql 模式純粹call api 方式)
 
 https://medium.com/@AlexanderObregon/optimizing-queries-with-query-annotation-in-spring-data-jpa-fe213c8a60a
-	
+
 
 假設
 	public interface UserRepository extends JpaRepository<User,Integer>{
