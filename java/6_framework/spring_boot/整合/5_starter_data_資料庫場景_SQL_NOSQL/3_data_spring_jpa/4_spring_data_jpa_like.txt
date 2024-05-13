@@ -92,10 +92,10 @@ https://www.baeldung.com/spring-data-jpa-modifying-annotation
 	@Modifying
 	@Query("delete User u where u.active = false")  // delete or update
 	int deleteDeactivatedUsers();
-		As we can see, this method returns an integer. 
-		It’s a feature of Spring Data JPA @Modifying queries that 
+		As we can see, this method returns an integer.
+		It’s a feature of Spring Data JPA @Modifying queries that
 		provides us with the number of updated entities.
-	
+
 	option 設定
 		若同一交易裡使用 @Modifying 修改或刪除 entity 時，若其同一交易使用其entity 則要考慮宣告 clearAutomatically = true 或 flushAutomatically = true
 			@Modifying(clearAutomatically = true)
