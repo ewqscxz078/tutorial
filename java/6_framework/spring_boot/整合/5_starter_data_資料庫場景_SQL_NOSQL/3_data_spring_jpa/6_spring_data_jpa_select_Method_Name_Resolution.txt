@@ -29,3 +29,8 @@ True				findByActiveTrue()											… where x.active = true
 False				findByActiveFalse()											… where x.active = false
 IgnoreCase			findByFirstnameIgnoreCase									… where UPPER(x.firstname) = UPPER(?1)
 
+若含有複合鍵
+	entity id
+		private String lastname
+		private String firstname
+			findByIdLastnameAndIdFirstname		where id.lastname = ?1 and id.firstname = ?2

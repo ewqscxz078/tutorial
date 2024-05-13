@@ -1,0 +1,25 @@
+分頁
+	無條件
+		public Page<User> getUsersPage(int pageNumber, int pageSize) {
+			PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
+			return userRepository.findAll(pageRequest);
+		}
+
+	有條件 by 自訂 @Query
+		public interface UserRepository extends CrudRepository<User, Long> {
+
+			@Query("SELECT u FROM User u WHERE u.status = ?1")
+			Page<User> findUsersByStatus(String status, Pageable pageable);
+		}
+
+		@Service
+		public class UserService {
+
+			@Autowired
+			private UserRepository userRepository;
+
+			public Page<User> getUsersByStatus(String status, int pageNumber, int pageSize) {
+				PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
+				return userRepository.findByStatus(status, pageRequest);
+			}
+		}
