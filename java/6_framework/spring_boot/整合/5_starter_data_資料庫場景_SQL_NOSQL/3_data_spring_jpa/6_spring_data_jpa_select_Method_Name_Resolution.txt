@@ -1,7 +1,16 @@
 https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html
 	方法名解析 Method Name Resolution，不用宣告 annotaion 方式
-			findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉
-
+			findBy
+				findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉
+				
+			https://www.baeldung.com/spring-data-jpa-row-count
+			countBy
+				long countByUsername(String username);
+				long countByPermission(Permission permission); 
+				long countByPermissionAndCreatedOnGreaterThan(Permission permission, Timestamp ts)
+			
+			deleteBy
+			
 Keyword				Sample														JPQL snippet
 Distinct			findDistinctByLastnameAndFirstname							select distinct …​ where x.lastname = ?1 and x.firstname = ?2
 And					findByLastnameAndFirstname									… where x.lastname = ?1 and x.firstname = ?2
@@ -28,6 +37,14 @@ NotIn				findByAgeNotIn(Collection<Age> ages)						… where x.age not in ?1
 True				findByActiveTrue()											… where x.active = true
 False				findByActiveFalse()											… where x.active = false
 IgnoreCase			findByFirstnameIgnoreCase									… where UPPER(x.firstname) = UPPER(?1)
+
+排序
+	如果需要排序，必須明確指定排序方向（升序 Asc 或降序 Desc）。 => 預設 Asc
+	如果沒有指定排序方向，Spring Data JPA 不會自動應用任何預設的排序方式，而是會拋出異常。
+		// 正確的使用，指定排序方向
+		List<User> findAllByOrderByLastNameAsc();
+		List<User> findAllByOrderByLastNameDesc();
+		List<User> findAllByOrderByLastNameAscFirstNameDesc();
 
 若含有複合鍵
 	entity id

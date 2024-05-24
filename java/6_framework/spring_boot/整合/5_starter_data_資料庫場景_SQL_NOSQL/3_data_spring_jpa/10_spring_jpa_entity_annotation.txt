@@ -18,6 +18,18 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 			使用一個特定的數據庫表來保存主鍵的生成狀態。
 		GenerationType.UUID：
 			使用 UUID（通用唯一標識符）來生成主鍵值。
+		
+		https://www.baeldung.com/java-hibernate-uuid-primary-key
+			JPA/Jakarta Specification
+				@Id
+				@GeneratedValue(strategy = GenerationType.UUID)
+			Hibernate 6.2 之前
+				@Id
+				@GeneratedValue(generator = "UUID")
+				@GenericGenerator(
+					name = "UUID",
+					strategy = "org.hibernate.id.UUIDGenerator"
+				)
 
 @Column
 	指定列名、長度、是否允許為空等
