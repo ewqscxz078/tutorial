@@ -349,6 +349,7 @@ A1:
 
 Q1: docker pull [images]
 	unexpected EOF
+	docker pull registry:5000/${images name}:${tag}
 A1:
 	https://blog.csdn.net/HarretLee/article/details/107545893
 		https://ningyu1.github.io/site/post/83-docker-pull-error/
