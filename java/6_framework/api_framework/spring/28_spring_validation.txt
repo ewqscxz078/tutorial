@@ -152,6 +152,9 @@ application.yml
 
 示範
 	範例一
+		1. valid-entity annotation 宣告要驗證的東西
+		2. 於適當的地方觸發驗證(常見 controller )
+
 		@Data //Lombok註解
 		public class AppUser {
 			@NotBlank

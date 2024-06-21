@@ -99,6 +99,11 @@ https://reflectoring.io/spring-boot-conditionals/
 			class DependantModule {
 			  ...
 			}
+			
+			@ConditionalOnBean(type= "基礎類package路徑") // 限制有衍生於基礎類的 才生效其配置
+			class DependantModule {
+			  ...
+			}
 
 		4.@ConditionalOnMissingBean // 限制不存在哪些 ioc bean 才生效其配置
 			class OnMissingBeanModule {

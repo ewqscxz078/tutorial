@@ -2,7 +2,7 @@
 ============================================================================================================
 Java 8
 	package path : java.time.chrone
-		提供專門處理 中華民國 ROC 的日期時間，起始於1912年，即民國元年
+		提供專門處理 中華民國 ROC 的日期，起始於1912年，即民國元年
 ============================================================================================================
 取得當前日期
 	MinguoDate.now();
@@ -11,4 +11,24 @@ Java 8
 
 	字串
 		指定轉換格式
-			MinguoDate.now().format(DateTimeFormatter.ofPattern("yyyMMDD-HHmmss"));
+			// 轉換 yyyMMdd
+				MinguoDate.now().format(DateTimeFormatter.ofPattern("yyyMMdd"));
+			
+			// 轉換 民國yyy年MM月dd日 HH時mm分ss秒
+				LocalDateTime now = LocalDateTime.now();
+
+				// 取得時間部分
+				LocalTime time = now.toLocalTime();
+
+				// 轉換為民國日期
+				MinguoDate minguoDate = MinguoDate.from(now);
+
+				// 定義日期和時間格式
+				DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("民國yyy年MM月dd日");
+				DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH時mm分ss秒");
+
+				// 格式化民國日期
+				String formattedDate = minguoDate.format(dateFormatter);
+
+				// 格式化時間
+				String formattedTime = time.format(timeFormatter);

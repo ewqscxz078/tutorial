@@ -1,0 +1,62 @@
+entity
+	設定關聯的用處
+		1.以利使用 Specification 動態關聯
+		2.了解table之間個關係
+
+	假設 entityA 要一對多 entityB 關聯
+		單一欄位 joinColumn
+			@OneToMany
+			@JoinColumn(name = "product_id", referencedColumnName = "product_id"),
+			private List<EntityB> entityBs;
+				name 				 為 entityA 的 資料庫欄位名稱
+				referencedColumnName 為 entityB 的 資料庫欄位名稱
+		多個欄位 joinColumn
+			@OneToMany
+			@JoinColumns({
+				@JoinColumn(name = "product_id", referencedColumnName = "product_id"),
+				@JoinColumn(name = "supplier_id", referencedColumnName = "supplier_id")
+			})
+			private List<EntityB> entityBs;
+
+	@OneToOne、@OneToMany、@ManyToOne 和 @ManyToMany 裡的註解屬性
+		cascade
+			ref https://www.baeldung.com/jpa-cascade-types
+			ref chatGPT
+				cascade 屬性是 JPA 中的 註解的一部分。它允許我們定義在對主實體進行操作時，這些操作應如何影響到關聯實體。常見的 cascade 類型包括：
+
+				CascadeType.PERSIST：在持久化主實體時，自動持久化關聯的實體。
+				CascadeType.MERGE：在合併主實體時，自動合併關聯的實體。
+				CascadeType.REMOVE：在刪除主實體時，自動刪除關聯的實體。
+				CascadeType.REFRESH：在刷新主實體時，自動刷新關聯的實體。
+				CascadeType.DETACH：在分離主實體時，自動分離關聯的實體。
+				CascadeType.ALL：應用以上所有操作。
+				預設是不自動相關聯動處理，預設為空，若沒特別優化調整通常預設即可
+		FetchType
+			1. FetchType.EAGER
+				立即加載：在檢索主實體時，立刻加載關聯的實體。
+				用途：適用於必須與主實體一同加載的關聯數據。通常在需要頻繁訪問關聯數據時使用。
+			2. FetchType.LAZY
+				延遲加載：只有在實際訪問關聯屬性時才加載關聯的實體。
+				用途：適用於可能不需要每次都加載的關聯數據，這有助於提高性能，特別是在關聯數據量大或關聯數據訪問頻率低的情況下。
+			3. 預設為 FetchType.LAZY，通常預設即可
+
+
+QA:
+	Q1. 
+		遇到 repeated column in mapping for entity: column should be mapped with insert="false" update="false"
+	A1.	
+		ref https://blog.csdn.net/hadues/article/details/107120503
+			https://blog.csdn.net/weixin_41888813/article/details/80841899
+		該欄位名稱有兩個一樣的宣告在 entity 時，需要宣告其中關聯的那個為 insert="false" update="false" (也就是告知該java 屬性欄位不存同步存取到資料庫)
+		例如 
+			entityA a、b 關聯 entityB a、c 複合鍵
+			entityA
+				@Column(name="tableA_column_a")
+				private String a
+				
+				@OneToOne
+				@JoinColumns({
+					@JoinColumn(name = "tableA_column_a", referencedColumnName = "tableB_column_a", insert="false" update="false"),
+					@JoinColumn(name = "tableA_column_b", referencedColumnName = "tableB_column_c", insert="false" update="false")
+				})
+				private EntityB entityB;

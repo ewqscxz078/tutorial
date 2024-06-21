@@ -1,0 +1,76 @@
+ref chatGPT
+	依賴 spring-boot-starter-validation
+	如果你需要進行更複雜的全局驗證，可以實作 Spring 的 Validator 介面。
+		這種方法適用於更通用的驗證需求，而不是僅針對特定字段和注解。
+		適用於全局性、複雜的驗證需求。
+		
+	1.實作 Validator 介面：
+		import org.springframework.validation.Errors;
+		import org.springframework.validation.ValidationUtils;
+		import org.springframework.validation.Validator;
+
+		public class UserValidator implements Validator {
+
+			@Override
+			public boolean supports(Class<?> clazz) {
+				return User.class.isAssignableFrom(clazz);
+			}
+
+			@Override
+			public void validate(Object target, Errors errors) {
+				User user = (User) target;
+
+				// 使用 Spring 提供的 ValidationUtils 來簡化 null 檢查
+				ValidationUtils.rejectIfEmptyOrWhitespace(errors, "username", "field.required");
+
+				// 自訂驗證邏輯
+				if (user.getUsername() != null && !user.getUsername().matches("[a-zA-Z]+")) {
+					errors.rejectValue("username", "field.invalid", "Only alphabetic characters are allowed");
+				}
+			}
+		}
+
+	2.在配置中註冊 Validator：
+		import org.springframework.context.annotation.Bean;
+		import org.springframework.context.annotation.Configuration;
+		import org.springframework.validation.Validator;
+		import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+		@Configuration
+		public class WebConfig implements WebMvcConfigurer {
+
+			@Bean
+			public Validator validator() {
+				return new UserValidator();
+			}
+
+			@Override
+			public Validator getValidator() {
+				return validator();
+			}
+		}
+
+	3.在控制器中使用 Validator：
+		import org.springframework.beans.factory.annotation.Autowired;
+		import org.springframework.stereotype.Controller;
+		import org.springframework.validation.BindingResult;
+		import org.springframework.web.bind.annotation.PostMapping;
+		import org.springframework.web.bind.annotation.RequestBody;
+
+		@Controller
+		public class UserController {
+
+			@Autowired
+			private Validator validator;
+
+			@PostMapping("/users")
+			public String createUser(@RequestBody User user, BindingResult result) {
+				validator.validate(user, result);
+
+				if (result.hasErrors()) {
+					return "error"; // 返回錯誤頁面或訊息
+				}
+
+				return "success"; // 處理成功的邏輯
+			}
+		}

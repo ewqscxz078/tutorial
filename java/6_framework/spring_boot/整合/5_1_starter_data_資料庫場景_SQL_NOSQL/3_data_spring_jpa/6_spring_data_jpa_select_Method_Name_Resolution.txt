@@ -47,7 +47,18 @@ IgnoreCase			findByFirstnameIgnoreCase									… where UPPER(x.firstname) = UP
 		List<User> findAllByOrderByLastNameAscFirstNameDesc();
 
 若含有複合鍵
-	entity id
+	https://www.baeldung.com/spring-jpa-embedded-method-parameters
+	entity id 變數名稱為 id
 		private String lastname
 		private String firstname
 			findByIdLastnameAndIdFirstname		where id.lastname = ?1 and id.firstname = ?2
+	
+	entity id 變數名稱為 pk
+			findByPkLastnameAndIdFirstname		where pk.lastname = ?1 and pk.firstname = ?2
+
+回傳型別
+	若為 findByXXXX ，一般回傳其 entity，也可 List<entity>，其底層會自適應調整	
+		若回傳 entity，沒有後端資料庫沒有對應的結果，則回傳的 entity 會是 null
+		若回傳 List<entity>，沒有後端資料庫沒有對應的結果，則回傳的 空的列表 List<entity>
+	若為 findAllByXXXX ，一定回傳 List<entity>
+		回傳 List<entity>，沒有後端資料庫沒有對應的結果，則回傳的 空的列表 List<entity>
