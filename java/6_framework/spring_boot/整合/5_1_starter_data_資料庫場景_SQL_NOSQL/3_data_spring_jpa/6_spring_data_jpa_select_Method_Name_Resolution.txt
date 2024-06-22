@@ -2,15 +2,15 @@ https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html
 	方法名解析 Method Name Resolution，不用宣告 annotaion 方式
 			findBy
 				findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉
-				
+
 			https://www.baeldung.com/spring-data-jpa-row-count
 			countBy
 				long countByUsername(String username);
-				long countByPermission(Permission permission); 
+				long countByPermission(Permission permission);
 				long countByPermissionAndCreatedOnGreaterThan(Permission permission, Timestamp ts)
-			
+
 			deleteBy
-			
+
 Keyword				Sample														JPQL snippet
 Distinct			findDistinctByLastnameAndFirstname							select distinct …​ where x.lastname = ?1 and x.firstname = ?2
 And					findByLastnameAndFirstname									… where x.lastname = ?1 and x.firstname = ?2
@@ -52,12 +52,12 @@ IgnoreCase			findByFirstnameIgnoreCase									… where UPPER(x.firstname) = UP
 		private String lastname
 		private String firstname
 			findByIdLastnameAndIdFirstname		where id.lastname = ?1 and id.firstname = ?2
-	
+
 	entity id 變數名稱為 pk
 			findByPkLastnameAndIdFirstname		where pk.lastname = ?1 and pk.firstname = ?2
 
 回傳型別
-	若為 findByXXXX ，一般回傳其 entity，也可 List<entity>，其底層會自適應調整	
+	若為 findByXXXX ，一般回傳其 entity，也可 List<entity>，其底層會自適應調整
 		若回傳 entity，沒有後端資料庫沒有對應的結果，則回傳的 entity 會是 null
 		若回傳 List<entity>，沒有後端資料庫沒有對應的結果，則回傳的 空的列表 List<entity>
 	若為 findAllByXXXX ，一定回傳 List<entity>

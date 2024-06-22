@@ -3,7 +3,7 @@ ref chatGPT
 	如果你需要進行更複雜的全局驗證，可以實作 Spring 的 Validator 介面。
 		這種方法適用於更通用的驗證需求，而不是僅針對特定字段和注解。
 		適用於全局性、複雜的驗證需求。
-		
+
 	1.實作 Validator 介面：
 		import org.springframework.validation.Errors;
 		import org.springframework.validation.ValidationUtils;

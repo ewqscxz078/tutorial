@@ -13,7 +13,7 @@ Java 8
 		指定轉換格式
 			// 轉換 yyyMMdd
 				MinguoDate.now().format(DateTimeFormatter.ofPattern("yyyMMdd"));
-			
+
 			// 轉換 民國yyy年MM月dd日 HH時mm分ss秒
 				LocalDateTime now = LocalDateTime.now();
 

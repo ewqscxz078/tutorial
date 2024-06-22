@@ -28,7 +28,7 @@ Java 8
 			localDateTime.minusYears(long);
 		月份
 			localDateTime.minusMonths(long);
-	
+
 轉換
 	時間物件
 		取得

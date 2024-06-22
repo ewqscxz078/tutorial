@@ -42,18 +42,18 @@ entity
 
 
 QA:
-	Q1. 
+	Q1.
 		遇到 repeated column in mapping for entity: column should be mapped with insert="false" update="false"
-	A1.	
+	A1.
 		ref https://blog.csdn.net/hadues/article/details/107120503
 			https://blog.csdn.net/weixin_41888813/article/details/80841899
 		該欄位名稱有兩個一樣的宣告在 entity 時，需要宣告其中關聯的那個為 insert="false" update="false" (也就是告知該java 屬性欄位不存同步存取到資料庫)
-		例如 
+		例如
 			entityA a、b 關聯 entityB a、c 複合鍵
 			entityA
 				@Column(name="tableA_column_a")
 				private String a
-				
+
 				@OneToOne
 				@JoinColumns({
 					@JoinColumn(name = "tableA_column_a", referencedColumnName = "tableB_column_a", insert="false" update="false"),
