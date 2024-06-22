@@ -16,7 +16,7 @@
 
 			3.測試 sql
 				於 ${postgreSQL_path}\bin 目錄 下 cmd
-				${postgreSQL_path}\bin\psql.exe –U postgres
+				${postgreSQL_path}\bin\psql.exe -d tw_stock –U postgres
 					分別輸入帳號密碼
 
 					select 1;
