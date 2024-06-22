@@ -3,7 +3,7 @@
 
 1.登入
 	於 ${postgreSQL_path}\bin 目錄 下 cmd
-		${postgreSQL_path}\bin\psql.exe –U ${帳號}
+		${postgreSQL_path}\bin\psql.exe -d ${資料庫名稱} –U ${帳號}
 			例如:
 				${postgreSQL_path}\bin\psql.exe –U postgres
 					輸入密碼
