@@ -1,232 +1,297 @@
-==================================================================================================
-============================== type ==============================================================
-==================================================================================================
-https://www.baeldung.com/maven-packaging-types
-	jar
-		<packaging>jar</packaging>
+<parent>....</parent>
+	==================================================================================================
+	============================== parent、modules ===================================================
+	==================================================================================================
+	https://stackoverflow.com/questions/40213901/eclipse-cant-open-sub-project-of-maven-parent-project
+	https://www.cnblogs.com/davenkin/p/advanced-maven-multi-module-vs-inheritance.html
+	1.當於 project 點擊 parent 可到 parent pom.xml
+	2.當於 parent pom.xml 點擊 modules 可到 modules pom.xml
+	3.import existed maven project pom.xml 若有 modules 的 pom.xml 則會有階層效果訊問是否要將其連帶的 modules import 進來
+	4.當於 parent project 執行 mvn clean package 則連同 modules 下的相關 module 一起執行
+	5.有 modules 的 pom.xml 較容易了解一群的整體關係
 
-		default goal-to-build-phase bindings for the jar:
-			resources: resources
-			compiler: compile
-			resources: testResources
-			compiler: testCompile
-			surefire: test
-			jar: jar
-			install: install
-			deploy: deploy
-	war
-		jar with web application resource
-	ear
-		由一個或多個模塊組成，這些模塊可以是 Web 模塊（打包為 war 文件）或 EJB 模塊（打包為 jar 文件）或兩者
-	pom
-		create aggregators and parent projects
-	maven-plugin
-
-	Other Packaging Types
-		ejb
-		rar
-		....
-
-==================================================================================================
-============================== optional ==========================================================
-==================================================================================================
-https://cloud.tencent.com/developer/article/1756145
-預設為 false，代表依賴的 jar 一定傳遞給子專案
-	如父專案依賴
-		<groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId>
-		<dependency><groupId>junit</groupId><artifactId>junit/artifactId></dependency>
-	當子專案依賴 父專案
-		<groupId>子專案</groupId><artifactId>${子專案.package.base.path/}/artifactId>
-			<dependency><groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId></dependency>
-		則會連帶傳遞 junit 依賴
-
-若為 true，代表依賴的 jar 不一定傳遞給子專案，依據是否使用到 junit class 來決定是否動態引入近來
-	如父專案依賴
-		<groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId>
-		<dependency><groupId>junit</groupId><artifactId>junit/artifactId><optional>true</optional></dependency>
-	當子專案依賴 父專案
-		<groupId>子專案</groupId><artifactId>${子專案.package.base.path/}/artifactId>
-			<dependency><groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId></dependency>
-		則會依據是否使用到 junit class 來決定是否傳遞 junit 依賴
-
-常見於 parent pom 、共通專案設定依賴 <optional>true</optional>
-==================================================================================================
-============================== scope =============================================================
-==================================================================================================
-<dependency>
-	<groupId>javax.servlet</groupId>
-	<artifactId>javax.servlet-api</artifactId>
-	<version>${javax.servlet.version}</version>
-	<scope>provided</scope>
-</dependency>
-
-1.compile  (編譯)
-  此為預設值，表示此jar是所有階段需要的。 部署時將一起被打包到jar/war裡面。
-
-2.test (測試)
-  表示此jar檔只有在測試時，才需要使用。如 junit jar 等。
-  部署時將不會打包到jar/war裡面。
-
-3.runtime (運行)
-  表示此jar檔只有在運行時，才需要使用。如jdbc jar等。
-
-4.provided (已提供)
-  當運行時，表示此jar檔期望由JDK、Tomcat及jboss等來提供。如 servlet.jar、jsp-api.jar 等。
-  部署時將不會打包到jar/war裡面。
-
-5.system (系統)
-  表示此jar檔有系統提供。跟provided 相似，這是以外部JAR檔的形式提供。
-  而在maven repository 是無法找到它的。
-  需指定位置，配合 systemPath 來使用
-
-6.import
-	This scope is only supported on a dependency of type pom in the <dependencyManagement> section.
-	It indicates the dependency is to be replaced with the effective list of dependencies in the specified POM's <dependencyManagement> section.
-	Since they are replaced, dependencies with a scope of import do not actually participate in limiting the transitivity of a dependency.
-
-	僅限 dependencyManagement 裡可使用，不依賴傳遞。
-	如若 不使用 spring-boot parent 時，dependencyManagement 的用法
-		<dependencyManagement>
-			<dependencies>
-				<dependency>
-					<!-- Import dependency management from Spring Boot -->
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-dependencies</artifactId>
-					<version>2.6.6</version>
-					<type>pom</type>
-					<scope>import</scope>
-				</dependency>
-			</dependencies>
-		</dependencyManagement>
-	將 dependencyManagement 下的 dependencies 插入到當前工程的 dependencyManagement
-
-==================================================================================================
-============================== properties ========================================================
-==================================================================================================
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
-或是
-	<plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-compiler-plugin</artifactId>
-		<configuration>
-			<source>1.8</source>
-			<target>1.8</target>
-		</configuration>
-	</plugin>
-
-常用設定
-	1.build 編碼
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-	2.compiler
-		<maven.compiler.source>1.8</maven.compiler.source>
-
-==================================================================================================
-============================== parent、modules ===================================================
-==================================================================================================
-https://stackoverflow.com/questions/40213901/eclipse-cant-open-sub-project-of-maven-parent-project
-https://www.cnblogs.com/davenkin/p/advanced-maven-multi-module-vs-inheritance.html
-1.當於 project 點擊 parent 可到 parent pom.xml
-2.當於 parent pom.xml 點擊 modules 可到 modules pom.xml
-3.import existed maven project pom.xml 若有 modules 的 pom.xml 則會有階層效果訊問是否要將其連帶的 modules import 進來
-4.當於 parent project 執行 mvn clean package 則連同 modules 下的相關 module 一起執行
-5.有 modules 的 pom.xml 較容易了解一群的整體關係
-
-parent
-	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	  <modelVersion>4.0.0</modelVersion>
-	  <groupId>parent</groupId>
-	  <artifactId>test.parent</artifactId>
-	  <version>0.0.1-SNAPSHOT</version>
-	  <packaging>pom</packaging>
-	  <modules>
-		<module>mod1</module>
-	  </modules>
-	</project>
-Module
-	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	  <modelVersion>4.0.0</modelVersion>
-	  <parent>
-		<groupId>parent</groupId>
-		<artifactId>test.parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	  </parent>
-	  <artifactId>mod1</artifactId>
-	</project>
-==================================================================================================
-============================== parent、relaivePath ===============================================
-==================================================================================================
-https://stackoverflow.com/questions/37062491/maven-complaining-about-parent-relative-path
-<parent> 裡若沒有 <relaivePath> 或是 <relaivePath/> 則預設於 ../pom.xml 找 parent pom.xml
-
-In order to resolve the parent project, these possible sources are checked:
-	1.relativePath
-	2.local repository
-	3.remote repositories
-
-==================================================================================================
-============================== project.build.directory ===========================================
-==================================================================================================
-https://stackoverflow.com/questions/13354531/maven-project-build-directory
-
-how to know maven properties and other
-
-	1.${M2_HOME}/lib/maven-model-builder-3.0.3.jar
-	2.Navigate to org/apache/maven/model
-	3.vi pom-4.0.0.xml
-		<project>
-			...
-			<build>
-				<directory>${project.basedir}/target</directory>
-				<outputDirectory>${project.build.directory}/classes</outputDirectory>
-				<finalName>${project.artifactId}-${project.version}</finalName>
-				<testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
-				<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
-				<scriptSourceDirectory>src/main/scripts</scriptSourceDirectory>
-				<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
-				<resources>
-					<resource>
-						<directory>${project.basedir}/src/main/resources</directory>
-					</resource>
-				</resources>
-				<testResources>
-					<testResource>
-						<directory>${project.basedir}/src/test/resources</directory>
-					</testResource>
-				</testResources>
-				...
-			</build>
-			...
+	parent
+		<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		  <modelVersion>4.0.0</modelVersion>
+		  <groupId>parent</groupId>
+		  <artifactId>test.parent</artifactId>
+		  <version>0.0.1-SNAPSHOT</version>
+		  <packaging>pom</packaging>
+		  <modules>
+			<module>mod1</module>
+		  </modules>
 		</project>
+	Module
+		<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		  <modelVersion>4.0.0</modelVersion>
+		  <parent>
+			<groupId>parent</groupId>
+			<artifactId>test.parent</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		  </parent>
+		  <artifactId>mod1</artifactId>
+		</project>
+	==================================================================================================
+	============================== parent、relaivePath ===============================================
+	==================================================================================================
+	https://stackoverflow.com/questions/37062491/maven-complaining-about-parent-relative-path
+	<parent> 裡若沒有 <relaivePath> 或是 <relaivePath/> 則預設於 ../pom.xml 找 parent pom.xml
 
-or ref https://github.com/apache/maven/blob/trunk/maven-model-builder/src/main/resources/org/apache/maven/model/pom-4.0.0.xml#L53
+	In order to resolve the parent project, these possible sources are checked:
+		1.relativePath
+		2.local repository
+		3.remote repositories
+
+<properties>....</properties>
+	==================================================================================================
+	============================== properties ========================================================
+	==================================================================================================
+	  <properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>17</java.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	  </properties>
+	或是
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-compiler-plugin</artifactId>
+			<configuration>
+				<source>1.8</source>
+				<target>1.8</target>
+			</configuration>
+		</plugin>
+
+	常用設定
+		1.build 編碼
+			<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		2.compiler
+			<maven.compiler.source>1.8</maven.compiler.source>
+		3.java 版本
+			<java.version>17</java.version>
+	==================================================================================================
+	============================== project.build.directory ===========================================
+	==================================================================================================
+	https://stackoverflow.com/questions/13354531/maven-project-build-directory
+
+	how to know maven properties and other
+
+		1.${M2_HOME}/lib/maven-model-builder-3.0.3.jar
+		2.Navigate to org/apache/maven/model
+		3.vi pom-4.0.0.xml
+			<project>
+				...
+				<build>
+					<directory>${project.basedir}/target</directory>
+					<outputDirectory>${project.build.directory}/classes</outputDirectory>
+					<finalName>${project.artifactId}-${project.version}</finalName>
+					<testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
+					<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+					<scriptSourceDirectory>src/main/scripts</scriptSourceDirectory>
+					<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
+					<resources>
+						<resource>
+							<directory>${project.basedir}/src/main/resources</directory>
+						</resource>
+					</resources>
+					<testResources>
+						<testResource>
+							<directory>${project.basedir}/src/test/resources</directory>
+						</testResource>
+					</testResources>
+					...
+				</build>
+				...
+			</project>
+
+	or ref https://github.com/apache/maven/blob/trunk/maven-model-builder/src/main/resources/org/apache/maven/model/pom-4.0.0.xml#L53
+
+<dependency>....</dependency>
+	==================================================================================================
+	============================== packaging =========================================================
+	==================================================================================================
+	https://www.baeldung.com/maven-packaging-types
+		jar
+			<packaging>jar</packaging>
+
+			default goal-to-build-phase bindings for the jar:
+				resources: resources
+				compiler: compile
+				resources: testResources
+				compiler: testCompile
+				surefire: test
+				jar: jar
+				install: install
+				deploy: deploy
+		war
+			jar with web application resource
+		ear
+			由一個或多個模塊組成，這些模塊可以是 Web 模塊（打包為 war 文件）或 EJB 模塊（打包為 jar 文件）或兩者
+		pom
+			create aggregators and parent projects
+		maven-plugin
+
+		Other Packaging Types
+			ejb
+			rar
+			....
+
+	==================================================================================================
+	============================== optional ==========================================================
+	==================================================================================================
+	https://cloud.tencent.com/developer/article/1756145
+	預設為 false，代表依賴的 jar 一定傳遞給子專案
+		如父專案依賴
+			<groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId>
+			<dependency><groupId>junit</groupId><artifactId>junit/artifactId></dependency>
+		當子專案依賴 父專案
+			<groupId>子專案</groupId><artifactId>${子專案.package.base.path/}/artifactId>
+				<dependency><groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId></dependency>
+			則會連帶傳遞 junit 依賴
+
+	若為 true，代表依賴的 jar 不一定傳遞給子專案，依據是否使用到 junit class 來決定是否動態引入近來
+		如父專案依賴
+			<groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId>
+			<dependency><groupId>junit</groupId><artifactId>junit/artifactId><optional>true</optional></dependency>
+		當子專案依賴 父專案
+			<groupId>子專案</groupId><artifactId>${子專案.package.base.path/}/artifactId>
+				<dependency><groupId>父專案</groupId><artifactId>${父專案.package.base.path/}/artifactId></dependency>
+			則會依據是否使用到 junit class 來決定是否傳遞 junit 依賴
+
+	常見於 parent pom 、共通專案設定依賴 <optional>true</optional>
+	==================================================================================================
+	============================== scope =============================================================
+	==================================================================================================
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+		<version>${javax.servlet.version}</version>
+		<scope>provided</scope>
+	</dependency>
+
+	1.compile  (編譯)
+	  此為預設值，表示此jar是所有階段需要的。 部署時將一起被打包到jar/war裡面。
+
+	2.test (測試)
+	  表示此jar檔只有在測試時，才需要使用。如 junit jar 等。
+	  部署時將不會打包到jar/war裡面。
+
+	3.runtime (運行)
+	  表示此jar檔只有在運行時，才需要使用。如jdbc jar等。
+
+	4.provided (已提供)
+	  當運行時，表示此jar檔期望由JDK、Tomcat及jboss等來提供。如 servlet.jar、jsp-api.jar 等。
+	  部署時將不會打包到jar/war裡面。
+
+	5.system (系統)
+	  表示此jar檔有系統提供。跟provided 相似，這是以外部JAR檔的形式提供。
+	  而在maven repository 是無法找到它的。
+	  需指定位置，配合 systemPath 來使用
+
+	6.import
+		This scope is only supported on a dependency of type pom in the <dependencyManagement> section.
+		It indicates the dependency is to be replaced with the effective list of dependencies in the specified POM's <dependencyManagement> section.
+		Since they are replaced, dependencies with a scope of import do not actually participate in limiting the transitivity of a dependency.
+
+		僅限 dependencyManagement 裡可使用，不依賴傳遞。
+		如若 不使用 spring-boot parent 時，dependencyManagement 的用法
+			<dependencyManagement>
+				<dependencies>
+					<dependency>
+						<!-- Import dependency management from Spring Boot -->
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-dependencies</artifactId>
+						<version>2.6.6</version>
+						<type>pom</type>
+						<scope>import</scope>
+					</dependency>
+				</dependencies>
+			</dependencyManagement>
+		將 dependencyManagement 下的 dependencies 插入到當前工程的 dependencyManagement
+
+	==================================================================================================
+	============================== classifiers =======================================================
+	==================================================================================================
+	https://www.baeldung.com/maven-artifact-classifiers
+		用於區分相同坐標（groupId、artifactId、version）但具有不同特性的檔案的機制。
+		通常，classifiers 被用來區分相同的 artifact，但有一些不同版本或變體
+			例如，一個 Maven 專案可能擁有不同操作系統下的 native 庫，如 Windows、Linux 和 MacOS。
+			這時就可以使用 classifiers 來區分這些 native 庫的不同版本
+				<dependencies>
+					<!-- 引入 artifactId 為 example-artifact、version 為 1.0.0、classifier 為 windows 的檔案 -->
+					<dependency>
+						<groupId>com.example</groupId>
+						<artifactId>example-artifact</artifactId>
+						<version>1.0.0</version>
+						<classifier>windows</classifier>
+					</dependency>
+
+					<!-- 引入相同的 artifactId 和 version，但 classifier 為 linux 的檔案 -->
+					<dependency>
+						<groupId>com.example</groupId>
+						<artifactId>example-artifact</artifactId>
+						<version>1.0.0</version>
+						<classifier>linux</classifier>
+					</dependency>
+				</dependencies>
 
 ==================================================================================================
-============================== classifiers =======================================================
+============================== pom 階層結構 ======================================================
 ==================================================================================================
-https://www.baeldung.com/maven-artifact-classifiers
-	用於區分相同坐標（groupId、artifactId、version）但具有不同特性的檔案的機制。
-	通常，classifiers 被用來區分相同的 artifact，但有一些不同版本或變體
-		例如，一個 Maven 專案可能擁有不同操作系統下的 native 庫，如 Windows、Linux 和 MacOS。
-		這時就可以使用 classifiers 來區分這些 native 庫的不同版本
-			<dependencies>
-				<!-- 引入 artifactId 為 example-artifact、version 為 1.0.0、classifier 為 windows 的檔案 -->
-				<dependency>
-					<groupId>com.example</groupId>
-					<artifactId>example-artifact</artifactId>
-					<version>1.0.0</version>
-					<classifier>windows</classifier>
-				</dependency>
+1. 高層 parent pom (Project Object Model)
+	1.主要用途 : 共用構建配置和依賴管理
+	2.繼承機制 : 子專案繼承父 POM 的所有配置
+	3.配置範圍 : 包括插件、構建配置和依賴管理
+	4.使用方式 : 通過 <parent> 繼承
 
-				<!-- 引入相同的 artifactId 和 version，但 classifier 為 linux 的檔案 -->
-				<dependency>
-					<groupId>com.example</groupId>
-					<artifactId>example-artifact</artifactId>
-					<version>1.0.0</version>
-					<classifier>linux</classifier>
-				</dependency>
-			</dependencies>
+	常見 設定通用 plugin、慣例編碼、dependencyManagement import bom
+
+2. 中間層 parent pom (Project Object Model)
+	1.機制如 高層 parent pom
+	2.定位與作用
+		細化配置：
+			中層 Parent POM 用於將高層 Parent POM 中的通用配置進一步細化，針對特定模組群組添加專屬配置。
+			例如，不同的業務模組可能需要不同的 Spring Boot 配置或不同的插件設定。
+		組織依賴管理：
+			中層 Parent POM 可以引用特定的 BOM 來管理特定模組群組的依賴版本。
+			這樣做可以避免在高層 Parent POM 中定義過多的依賴版本，保持清晰性。
+		增強靈活性：
+			通過中層 Parent POM，可以靈活地在不同模組群組之間共享配置，同時允許不同的群組具有獨立的配置和依賴管理。
+			例如，不同的業務模組可能使用不同的技術棧，這時候就需要中層 Parent POM 來進行區分。	
+	3.使用時機
+		大型項目：
+			當項目規模較大且包含多個相互關聯但獨立的模組時，中層 Parent POM 有助於分層管理配置和依賴。
+		多業務模組：
+			當項目包含多個業務模組，且這些模組之間的技術需求或依賴版本有所不同時，中層 Parent POM 可以針對這些模組進行專門的配置和管理。
+		組織和團隊分工：
+			當項目由不同的團隊負責不同的模組群組時，中層 Parent POM 可以幫助各團隊獨立管理自己的配置和依賴，同時保持與高層 Parent POM 的一致性。
+3. bom(Bill Of Materials)
+	1.主要用途 : 管理依賴版本
+	2.繼承機制 : 不繼承配置，僅管理依賴版本
+	3.配置範圍 : 僅管理依賴版本
+	4.使用方式 : 通過 <import> 引入
+	
+	使用 BOM 可以在不同的專案間統一管理依賴版本，而不必強制這些專案都繼承同一個 Parent POM。這對於大型企業或開源項目尤其重要，因為他們可能有不同的構建需求，但需要保持依賴版本一致。
+	通過在不同層級的 Parent POM 中引用 BOM，可以靈活而有效地管理依賴版本，提升項目的組織性和一致性。
+
+4. 具體項目 pom
+	1.主要用途 : 具體依賴宣告，不宣告版本 or 複寫上層非相同慣例設定
+
+結構範例
+	a parent pom
+		include plugins、編譯、dependencyManagement import bom a、group modules b、c
+		
+		b parent pom 繼承 a parent bom
+			include group module b details (B1、B2) or dependencyManagement import bom b to override bom a version
+				B1 具體專案
+					include dependencys 具體依賴 or 複寫上層非相同慣例設定
+				B2 具體專案
+					include dependencys 具體依賴 or 複寫上層非相同慣例設定
+
+		c parent pom 繼承 a parent bom
+			include group module c details (C1、C2) or dependencyManagement import bom c to override bom a version
+				C1 具體專案
+					include dependencys 具體依賴 or 複寫上層非相同慣例設定
+				C2 具體專案
+					include dependencys 具體依賴 or 複寫上層非相同慣例設定
