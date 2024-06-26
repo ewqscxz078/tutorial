@@ -1,0 +1,80 @@
+PropertyMapper
+	ref https://juejin.cn/post/7225809587675906109
+	Spring提供的工具類，主要用於重新賦值，轉換等操作，位於org.springframework.boot.context.properties.PropertyMapper下。
+
+	實體類別Entity轉成DTO類別的操作，通常情況。我們有可以將屬性一個個get出來，在set進去。還有一種就是用BeanUtils工具類別將對應類型的屬性一個個copy進去。
+
+	了解了PropertyMapper之後，我們有多了一個方法轉換了。
+
+	範例 :
+		Order to OrderDTO
+
+	@Data
+	public class Order {
+		private Long id;
+
+		private BigDecimal totalAmout;
+
+		private Integer status;
+
+		private Long userId;
+
+		private LocalDateTime createTime;
+	}
+
+	@Data
+	public class OrderDTO {
+		private Long id;
+
+		private BigDecimal totalAmout;
+
+		private Integer status;
+
+		private Long userId;
+
+		private String createTime;
+	}
+
+	具體轉換使用方式
+		Order order = new Order();
+		order.setId(1L);
+		order.setStatus(1);
+		order.setTotalAmout(BigDecimal.ONE);
+		order.setUserId(100L);
+		order.setCreateTime(LocalDateTime.now());
+
+		PropertyMapper propertyMapper = PropertyMapper.get();
+		OrderDTO orderDTO = new OrderDTO();
+		propertyMapper.from(order::getId).to(orderDTO::setId);
+		// 如果from取得的元素不是null，則執行to裡面的動作
+		propertyMapper.from(order::getStatus).whenNonNull().to(orderDTO::setStatus);
+		propertyMapper.from(order::getUserId).to(orderDTO::setUserId);
+		propertyMapper.from(order::getTotalAmout).to(orderDTO::setTotalAmout);
+		// 因為Order裡面的createTime是LocalDateTime類型，OrderDTO裡面則是String類型，需要轉換一下
+		propertyMapper.from(order::getCreateTime).as(createTime -> {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		return createTime.format(formatter);
+		}).to(orderDTO::setCreateTime);
+
+	PropertyMapper常用方法
+		<T> Source<T> from(Supplier<T> supplier)：提供值的來源，入參為Supplier
+		<T> Source<T> from(T value)：一種重載形式，入參可以為一個物件
+		void to(Consumer<T> consumer)：透過將任何未過濾的值傳遞給指定的使用者來完成映射
+		<R> R toInstance(Function<T, R> factory)：透過從未過濾的值建立新實例來完成映射
+		void toCall(Runnable runnable)：當值還沒有時，透過呼叫指定的方法來完成映射
+		<R> Source<R> as(Function<T, R> adapter)：將T類型的入參轉成R類型的出參，類似Stream中的map
+		Source<T> when...：這一系列方法，都是過濾用的。在from後面調用，如果滿足條件，就直接to方法
+		static PropertyMapper get()：提供PropertyMapper實例
+		PropertyMapper alwaysApplyingWhenNonNull()：提供實例時，目前實例就過濾掉from之後是null的元素。 PropertyMapper.get().alwaysApplyingWhenNonNull();
+		PropertyMapper alwaysApplying(SourceOperator operator)：自訂過濾規則，參考程式碼
+
+			PropertyMapper propertyMapper = PropertyMapper.get().alwaysApplying(new PropertyMapper.SourceOperator() {
+				@Override
+				public <T> PropertyMapper.Source<T> apply(PropertyMapper.Source<T> source) {
+					return source.when(t -> t instanceof LocalDateTime);
+				}
+			});
+
+			目前 PropertyMapper只會對應 LocalDateTime類型的欄位。
+
+			注意：如果from方法後面有when條件，則alwaysApplying中設定的初始化提交將會失效。

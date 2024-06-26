@@ -258,7 +258,7 @@
 			這樣做可以避免在高層 Parent POM 中定義過多的依賴版本，保持清晰性。
 		增強靈活性：
 			通過中層 Parent POM，可以靈活地在不同模組群組之間共享配置，同時允許不同的群組具有獨立的配置和依賴管理。
-			例如，不同的業務模組可能使用不同的技術棧，這時候就需要中層 Parent POM 來進行區分。	
+			例如，不同的業務模組可能使用不同的技術棧，這時候就需要中層 Parent POM 來進行區分。
 	3.使用時機
 		大型項目：
 			當項目規模較大且包含多個相互關聯但獨立的模組時，中層 Parent POM 有助於分層管理配置和依賴。
@@ -271,7 +271,7 @@
 	2.繼承機制 : 不繼承配置，僅管理依賴版本
 	3.配置範圍 : 僅管理依賴版本
 	4.使用方式 : 通過 <import> 引入
-	
+
 	使用 BOM 可以在不同的專案間統一管理依賴版本，而不必強制這些專案都繼承同一個 Parent POM。這對於大型企業或開源項目尤其重要，因為他們可能有不同的構建需求，但需要保持依賴版本一致。
 	通過在不同層級的 Parent POM 中引用 BOM，可以靈活而有效地管理依賴版本，提升項目的組織性和一致性。
 
@@ -281,7 +281,7 @@
 結構範例
 	a parent pom
 		include plugins、編譯、dependencyManagement import bom a、group modules b、c
-		
+
 		b parent pom 繼承 a parent bom
 			include group module b details (B1、B2) or dependencyManagement import bom b to override bom a version
 				B1 具體專案
