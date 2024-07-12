@@ -10,11 +10,34 @@ https://www.baeldung.com/spring-security-csrf
 		2.json 為從 html meta 取得設定並到 requestHeader 塞入，比如前端動態處理後ajax送到後端、一堆link
 			<meta name="_csrf" content="${_csrf.token}"/>
 			<meta name="_csrf_header" content="${_csrf.headerName}"/>
-			javascript 使用其 spring csrf token 為例
+			javascript ajax 使用其 spring csrf token 為例
 				var header = $("meta[name='_csrf_header']").attr("content");
 				var token = $("meta[name='_csrf']").attr("content");
 				$(document).ajaxSend(function(e, xhr, options) { // 設定成每個 ajax 送到後端都有
 					xhr.setRequestHeader(header, token);
+				});
+			jquery ajax 
+				var header = $("meta[name='_csrf_header']").attr("content");
+				var token = $("meta[name='_csrf']").attr("content");
+
+				$.ajax({
+					url: 'https://api.example.com/data', // 要請求的 URL
+					type: 'POST', // HTTP 請求方法
+					dataType: 'json', // 預期從伺服器返回的數據類型
+					contentType: 'application/json', // 傳送數據的內容類型
+					data: JSON.stringify({ key: 'value' }), // 傳送到伺服器的數據
+					beforeSend: function(xhr) {
+						// 在請求發送前設置 CSRF token
+						xhr.setRequestHeader(header, token);
+					},
+					success: function(response) {
+						// 請求成功時執行的回調函數
+						console.log(response);
+					},
+					error: function(xhr, status, error) {
+						// 請求失敗時執行的回調函數
+						console.error('Error: ' + error);
+					}
 				});
 
 		3. html form 手動放入 spring security csrf token，於 CsrfRequestDataValueProcessor 可以看到 ${_csrf.parameterName}、${_csrf.token} 處理

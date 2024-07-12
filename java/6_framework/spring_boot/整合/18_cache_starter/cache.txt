@@ -1,0 +1,189 @@
+
+ref
+	https://www.baeldung.com/spring-boot-caffeine-cache
+		簡易說明
+
+	https://medium.com/@rickyhsieh0302/spring-cache-%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8B%A2-cfbaa07d25e4
+		使用情境與簡易加入緩存與清除緩存範例
+	
+	https://dev.to/noelopez/spring-cache-with-caffeine-384l
+		稍微詳細的說明
+	
+緩存使用場景
+	1. 數據重複訪問：需要多次訪問同一數據時。
+	2. 數據更新較少：當需要訪問的數據較少更新時。
+	3. 性能敏感：當我們對性能要求較高時。
+	4. 數據量大：需要處理大量數據時。
+	5. 分布式環境：需要運行在分布式環境中時，可以使用Spring Cache來提高應用程序的可擴展性和效率，從而更好地管理和優化應用程序。
+
+清除Cache的常見狀況:
+	清除緩存的主要目的是確保您的應用程式能夠獲取最新的數據，並釋放不必要的資源。
+		1.數據更新：當應用程式中的數據被更新時，可能需要清除相應的緩存，以便下一次訪問時能夠獲取最新的數據。例如，當我們向數據庫中添加、更新或刪除數據時，可能需要清除相應的緩存。
+		2.數據過期：當應用程式中的數據具有過期時間時，您可能需要定期清除緩存，以便過期的數據能夠被刪除。例如，如果程式中有一些快取數據具有一定的生存週期，可以定期清除緩存以避免這些數據過期。
+		3.資源限制：當的程式中的儲存空間有限時，可能需要清除緩存以釋放資源。
+		4.清除Spring Cache的時機取決於應用程式的具體需求和情況
+Caffeine
+	1.maven 依賴
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-cache</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>com.github.ben-manes.caffeine</groupId>
+				<artifactId>caffeine</artifactId>
+			</dependency>
+		</dependencies>
+
+	2.1. yml 配置宣告，常見作法，但僅限專案上單一 CacheManager 模式設定
+		spring:
+		  cache:
+			cache-names: "cache1,cache2" 
+			caffeine:
+			  spec: "maximumSize=500,expireAfterAccess=600s"
+		cache-names 不一定要設定
+
+	2.2.可選配置，當有多個 CacheManager 使用
+		Configuration
+			@Bean
+			public CacheManager defaultCacheManager() {
+				CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+				caffeineCacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(60, TimeUnit.MINUTES));
+				return caffeineCacheManager;
+			}
+			@Bean
+			public CacheManager specialCacheManager() {
+				CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+				caffeineCacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(66, TimeUnit.MINUTES));
+				return caffeineCacheManager;
+			}
+	3.使用方式
+		加入緩存
+			直接使用
+				@Service
+				public class AddressService {
+					@Cacheable
+					public AddressDTO getAddress(long customerId) {
+						// lookup and return result
+					}
+				}
+			或宣告緩存key
+				@Service
+				public class AddressService {
+					@Cacheable(value = "address_cache", key = "#customerId")
+					public AddressDTO getAddress(long customerId) {
+						// lookup and return result
+					}
+				}
+			或宣告緩存key 加參考的 cacheManager
+				@Service
+				public class AddressService {
+					@Cacheable(value = "address_cache", key = "#customerId", cacheManager = "specialCacheManager" ) // 當有多個 cacheManager 時，指定使用哪個
+					public AddressDTO getAddress(long customerId) {
+						// lookup and return result
+					}
+				}
+			或透過 CacheManager 參考取得
+				@Service
+				public class AddressService {
+
+					@Autowired
+					CacheManager cacheManager;
+
+					public AddressDTO getAddress(long customerId) {
+						if(cacheManager.containsKey(customerId)) {
+							return cacheManager.get(customerId);
+						}
+						
+						// lookup address, cache result, and return it
+					}
+				}
+		移除緩存
+			@CacheEvict 依據 value 從 cacheManager 移除緩存
+			allEntries屬性設置為true，則將刪除所有數據；否則，只會刪除與指定鍵匹配的數據。
+				@Service
+				public class MemberService {
+
+					@Autowired
+					private MemberRepository memberRepository;
+					
+					@Cacheable(value = "memberListCache", key = "#root.methodName")
+					public List<Member> getMemberList() {
+						return memberRepository.findAll();
+					}
+
+					@CacheEvict(value = "memberListCache", allEntries = true)
+					public void clearMemberListCache() {
+						// do nothing
+					}
+				}
+	4.使用限制
+		1.目標方法必須是公有方法
+		2.方法呼叫必須透過代理，也就是不能被間接呼叫的方式，容易因為這樣沒有採到cache效果，通常宣告在元件實作介面的方法
+			@Service
+			public class ItemService {
+
+				@Cacheable(value = "items", key = "#id")
+				public Item getItemById(Long id) {
+					// 方法實現
+				}
+
+				public void someMethod() {
+					// 直接呼叫 getItemById 方法將不會觸發快取
+					this.getItemById(1L);
+				}
+			}
+		3.快取鍵生成問題
+			確保快取鍵的生成邏輯正確。如果使用 SpEL 表達式指定鍵，請確保表達式能正確解析
+				@Cacheable(value = "items", key = "#id")
+				public Item getItemById(Long id) {
+					// 方法实现
+				}
+		4.yml cache 設定確認
+	5.Caffeine 取代 Google Guava
+		https://blog.csdn.net/youanyyou/article/details/132797843
+	
+	6.CacheManager 配置建議
+		多個 registerCustomCache 適合統一管理和簡化配置的場景，所有快取由同一個 CacheManager 實例管理。
+			統一管理：適合需要統一管理所有快取的應用場景，所有的快取實例由同一個 CacheManager 實例管理，可以統一配置、統一監控。
+			簡化配置：如果快取的數量不多，並且配置相對簡單，這種方式可以簡化配置。
+			應用內部共享：當應用內部不同部分需要共享同一個 CacheManager 實例時，這種方式會比較方便。
+				@Bean
+				public CacheManager cacheManager() {
+					CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+
+					Caffeine<Object, Object> defaultCacheConfig = Caffeine.newBuilder()
+							.expireAfterWrite(10, TimeUnit.MINUTES)
+							.maximumSize(500);
+
+					Caffeine<Object, Object> specialCacheConfig = Caffeine.newBuilder()
+							.expireAfterWrite(5, TimeUnit.MINUTES)
+							.maximumSize(1000);
+
+					cacheManager.registerCustomCache("defaultCache", new CaffeineCache("defaultCache", defaultCacheConfig.build()));
+					cacheManager.registerCustomCache("specialCache", new CaffeineCache("specialCache", specialCacheConfig.build()));
+
+					return cacheManager;
+				}
+		多個 CaffeineCacheManager 則適合需要獨立管理、靈活配置和高度隔離的場景，每個 CacheManager 實例都有獨立的快取策略。
+			獨立管理：適合需要獨立管理不同快取實例的場景，不同的 CacheManager 實例有各自獨立的配置、監控和管理策略。
+			高靈活性：當需要高度靈活的快取配置和管理時，每個 CacheManager 實例可以根據具體需求進行細粒度的配置。
+			隔離性：當不同的模塊或子項目之間需要完全隔離的快取策略時，這種方式能夠提供更好的隔離性。			
+				@Bean
+				@Primary
+				public CacheManager defaultCacheManager() {
+					CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+					cacheManager.setCaffeine(Caffeine.newBuilder()
+							.expireAfterWrite(10, TimeUnit.MINUTES)
+							.maximumSize(500));
+					return cacheManager;
+				}
+
+				@Bean
+				public CacheManager specialCacheManager() {
+					CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+					cacheManager.setCaffeine(Caffeine.newBuilder()
+							.expireAfterWrite(5, TimeUnit.MINUTES)
+							.maximumSize(1000));
+					return cacheManager;
+				}

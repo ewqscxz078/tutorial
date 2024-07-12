@@ -49,6 +49,16 @@ run container
 		ex:
 			COPY test.war .
 			COPY /home/users/files .
+	
+	或複製目錄下所有文件到指定目錄
+		COPY source target
+			行為：會將 source 目錄下的所有內容（不包括目錄本身）複製到 target 目錄。如果 target 目錄不存在，則會創建它。
+			假設 source 目錄包含 file1.txt 和 file2.txt，那麼這個指令會將 source 目錄下的所有文件複製到 target/，即 target/file1.txt 和 target/file2.txt。
+
+	或目錄到容器目錄
+		COPY source/ target/
+			行為：會將 source 目錄下的所有內容（包括目錄本身）複製到 target/ 目錄下。目標目錄 target 必須已存在或將被創建
+			假設 source 目錄包含 file1.txt 和 file2.txt，那麼這個指令會將 source 目錄下的所有文件複製到 target/source/。
 
 # 複製檔案到容器內，順便解壓縮
 	ADD {local path file} {container path}

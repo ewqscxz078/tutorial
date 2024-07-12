@@ -53,7 +53,7 @@ High 高風險(from fortify)
 	Path Manipulation
 
 Medium 中風險(from fortify)
-
+	Portability Flaw: File Separator
 Low (from fortify)low
 	Dead Code: Expression is Always false
 	Dead Code: Unused Method

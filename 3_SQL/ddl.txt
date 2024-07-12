@@ -1,0 +1,9 @@
+https://ithelp.ithome.com.tw/m/articles/10203697
+	
+	CREATE DATABASE -創建新資料庫
+	ALTER DATABASE -修改資料庫
+	CREATE TABLE - 創建新表
+	ALTER TABLE - 變更（改變）資料庫表
+	DROP TABLE - 刪除表
+	CREATE INDEX - 創建索引（搜索鍵）
+	DROP INDEX - 刪除索引
