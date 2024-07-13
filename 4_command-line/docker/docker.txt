@@ -49,7 +49,7 @@ run container
 		ex:
 			COPY test.war .
 			COPY /home/users/files .
-	
+
 	或複製目錄下所有文件到指定目錄
 		COPY source target
 			行為：會將 source 目錄下的所有內容（不包括目錄本身）複製到 target 目錄。如果 target 目錄不存在，則會創建它。

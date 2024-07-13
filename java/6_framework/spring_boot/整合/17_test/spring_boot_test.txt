@@ -3,7 +3,7 @@ spring boot test
 https://stackoverflow.com/questions/58901288/springrunner-vs-springboottest
 
 https://blog.csdn.net/howeres/article/details/108339464
-	常用三類測試方式: 
+	常用三類測試方式:
 		單元測試
 			@Test
 		切片測試
@@ -11,18 +11,18 @@ https://blog.csdn.net/howeres/article/details/108339464
 			@ExtendWith(SpringExtension.class) // junit 5 for spring 的註解
 				https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-testing
 				You need this annotation to just enable spring boot features like @Autowire, @MockBean etc.. during junit testing
-			
+
 			@WebMvcTest
 		功能測試
 			@RunWith
 			@SpringBootTest
-	
+
 	一般 spring test
 		@ContextConfiguration(classes = xxxConfiguration.class)
 		@RunWith
 		public class xxxTest {
 		}
-	
+
 	spring boot test
 		@RunWith
 		@SpringBootTest(classes = xxxConfiguration.class) // 取代 ContextConfiguration 效果，通常不用特別設定locations、classes，預設會自動掃描當前層與其相關上層掃描註冊

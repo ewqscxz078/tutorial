@@ -87,12 +87,12 @@ https://reflectoring.io/spring-boot-conditionals/
 				public class MultipartAutoConfiguration {
 					....
 				}
-				
+
 				建議一般使用 name 模式，當剛好都沒有依賴時，可能會跳出
 				// Caused by: java.lang.ArrayStroreException: sun.reflect.annotation.TypeNotPresentExceptionProxy 問題
 				// ref https://blog.csdn.net/kingwinstar/article/details/132979588
 				@ConditionalOnClass(name = { "xxx.yyy.className" })
-				
+
 		2.@ConditionalOnMissingClass
 			通常會宣告在其 XXXXAutoConfiguration 限制哪些類別有不存在 classpath 才生效其配置
 				@ConditionalOnMissingClass(value = "this.clazz.does.not.Exist")
@@ -132,10 +132,10 @@ https://reflectoring.io/spring-boot-conditionals/
 
 				對應值match方式
 				@ConditionalOnProperty(prefix = "spring.servlet.multipart", name = "enabled", havingValue = "xxxx", matchIfMissing = true)
-				
+
 				限定多個值有設定才註冊 matchIfMissing = false
 				@ConditionalOnProperty(name = {"app.mima", "app.feature.enabled"}, matchIfMissing = false)
-				
+
 		6.@ConditionalOnWebApplication // 當為 WEB 應用才生效其配置
 			通常會宣告在其 XXXXAutoConfiguration
 				@ConditionalOnClass({ Servlet.class, StandardServletMultipartResolver.class, MultipartConfigElement.class })

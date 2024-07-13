@@ -5,10 +5,10 @@ ref
 
 	https://medium.com/@rickyhsieh0302/spring-cache-%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8B%A2-cfbaa07d25e4
 		使用情境與簡易加入緩存與清除緩存範例
-	
+
 	https://dev.to/noelopez/spring-cache-with-caffeine-384l
 		稍微詳細的說明
-	
+
 緩存使用場景
 	1. 數據重複訪問：需要多次訪問同一數據時。
 	2. 數據更新較少：當需要訪問的數據較少更新時。
@@ -38,7 +38,7 @@ Caffeine
 	2.1. yml 配置宣告，常見作法，但僅限專案上單一 CacheManager 模式設定
 		spring:
 		  cache:
-			cache-names: "cache1,cache2" 
+			cache-names: "cache1,cache2"
 			caffeine:
 			  spec: "maximumSize=500,expireAfterAccess=600s"
 		cache-names 不一定要設定
@@ -94,7 +94,7 @@ Caffeine
 						if(cacheManager.containsKey(customerId)) {
 							return cacheManager.get(customerId);
 						}
-						
+
 						// lookup address, cache result, and return it
 					}
 				}
@@ -106,7 +106,7 @@ Caffeine
 
 					@Autowired
 					private MemberRepository memberRepository;
-					
+
 					@Cacheable(value = "memberListCache", key = "#root.methodName")
 					public List<Member> getMemberList() {
 						return memberRepository.findAll();
@@ -142,7 +142,7 @@ Caffeine
 		4.yml cache 設定確認
 	5.Caffeine 取代 Google Guava
 		https://blog.csdn.net/youanyyou/article/details/132797843
-	
+
 	6.CacheManager 配置建議
 		多個 registerCustomCache 適合統一管理和簡化配置的場景，所有快取由同一個 CacheManager 實例管理。
 			統一管理：適合需要統一管理所有快取的應用場景，所有的快取實例由同一個 CacheManager 實例管理，可以統一配置、統一監控。
@@ -168,7 +168,7 @@ Caffeine
 		多個 CaffeineCacheManager 則適合需要獨立管理、靈活配置和高度隔離的場景，每個 CacheManager 實例都有獨立的快取策略。
 			獨立管理：適合需要獨立管理不同快取實例的場景，不同的 CacheManager 實例有各自獨立的配置、監控和管理策略。
 			高靈活性：當需要高度靈活的快取配置和管理時，每個 CacheManager 實例可以根據具體需求進行細粒度的配置。
-			隔離性：當不同的模塊或子項目之間需要完全隔離的快取策略時，這種方式能夠提供更好的隔離性。			
+			隔離性：當不同的模塊或子項目之間需要完全隔離的快取策略時，這種方式能夠提供更好的隔離性。
 				@Bean
 				@Primary
 				public CacheManager defaultCacheManager() {

@@ -16,7 +16,7 @@ https://www.baeldung.com/spring-security-csrf
 				$(document).ajaxSend(function(e, xhr, options) { // 設定成每個 ajax 送到後端都有
 					xhr.setRequestHeader(header, token);
 				});
-			jquery ajax 
+			jquery ajax
 				var header = $("meta[name='_csrf_header']").attr("content");
 				var token = $("meta[name='_csrf']").attr("content");
 
