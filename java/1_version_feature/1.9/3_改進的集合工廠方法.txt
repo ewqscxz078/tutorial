@@ -1,0 +1,12 @@
+
+
+增加了方便的工廠方法來創建不可變的集合（如 List、Set 和 Map）。
+
+	// 不可變的 List
+	List<String> list = List.of("Apple", "Banana", "Cherry");
+
+	// 不可變的 Set
+	Set<String> set = Set.of("Apple", "Banana", "Cherry");
+
+	// 不可變的 Map
+	Map<String, Integer> map = Map.of("Apple", 1, "Banana", 2, "Cherry", 3);

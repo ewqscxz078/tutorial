@@ -1,0 +1,37 @@
+
+增強的異常處理 (Improved Exception Handling)：
+	允許在 catch 塊中重新拋出異常並保留原始異常信息。
+
+	public class ImprovedExceptionHandlingExample {
+		public static void main(String[] args) {
+			try {
+				method1();
+			} catch (Exception e) {
+				System.err.println("Caught in main: " + e);
+				e.printStackTrace();
+			}
+		}
+
+		public static void method1() throws Exception {
+			try {
+				method2();
+			} catch (Exception e) {
+				// 重新拋出異常並保留原始異常信息
+				throw new Exception("Exception in method1", e);
+			}
+		}
+
+		public static void method2() throws Exception {
+			throw new Exception("Original exception in method2");
+		}
+	}
+
+	Caught in main: java.lang.Exception: Exception in method1
+		at ImprovedExceptionHandlingExample.method1(ImprovedExceptionHandlingExample.java:12)
+		at ImprovedExceptionHandlingExample.main(ImprovedExceptionHandlingExample.java:6)
+	Caused by: java.lang.Exception: Original exception in method2
+		at ImprovedExceptionHandlingExample.method2(ImprovedExceptionHandlingExample.java:17)
+		at ImprovedExceptionHandlingExample.method1(ImprovedExceptionHandlingExample.java:10)
+		... 1 more
+
+	也就是可以看到更底層的錯誤堆疊串接

@@ -1,0 +1,21 @@
+ref
+	https://www.baeldung.com/java-util-concurrent
+
+
+數據並行操作 (java.util.concurrent)：
+	引入了新的並行數據處理工具，如 Phaser 和 TransferQueue。
+
+
+核心元件
+	Executor
+	ExecutorService
+	ScheduledExecutorService
+	Future
+	CountDownLatch
+	CyclicBarrier
+	Semaphore
+	ThreadFactory
+	BlockingQueue
+	DelayQueue
+	Locks
+	Phaser

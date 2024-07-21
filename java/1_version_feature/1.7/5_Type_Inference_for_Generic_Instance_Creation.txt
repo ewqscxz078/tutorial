@@ -1,0 +1,6 @@
+
+
+鑑別泛型 (Type Inference for Generic Instance Creation)：
+	簡化了泛型實例的創建，減少了代碼冗長。
+
+		Map<String, List<String>> map = new HashMap<>();

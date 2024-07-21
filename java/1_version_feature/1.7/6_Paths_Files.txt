@@ -1,3 +1,7 @@
+NIO.2 (New I/O) API：
+	加強了文件系統和文件 I/O 操作，提供了更強大、更靈活的 API。
+
+
 temp file : 臨時文件建立與刪除
 	try (OutputStream out = Files.newOutputStream(Files.createTempFile("prefix-", ".suffix"))) {
 		// 使用臨時文件進行文件操作

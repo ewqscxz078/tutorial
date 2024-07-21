@@ -1,0 +1,8 @@
+
+接口中可以有預設方法（使用 default 關鍵字），這樣接口的更新就不會影響其實現類。
+
+	interface MyInterface {
+		default void defaultMethod() {
+			System.out.println("This is a default method");
+		}
+	}

@@ -1,0 +1,21 @@
+ref
+	https://www.baeldung.com/new-java-9
+
+
+The process API has been improved for controlling and managing operating-system processes.
+
+1.Process Information
+	ProcessHandle self = ProcessHandle.current();
+	long PID = self.getPid();
+	ProcessHandle.Info procInfo = self.info();
+
+	Optional<String[]> args = procInfo.arguments();
+	Optional<String> cmd =  procInfo.commandLine();
+	Optional<Instant> startTime = procInfo.startInstant();
+	Optional<Duration> cpuUsage = procInfo.totalCpuDuration();
+
+2.Destroying Processes
+	childProc = ProcessHandle.current().children();
+	childProc.forEach(procHandle -> {
+		assertTrue("Could not kill process " + procHandle.getPid(), procHandle.destroy());
+	});

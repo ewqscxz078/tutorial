@@ -1,0 +1,99 @@
+ref
+	https://www.baeldung.com/java-try-with-resources
+
+提供自動關閉資源功能
+
+1.Using try-with-resources
+
+	try (PrintWriter writer = new PrintWriter(new File("test.txt"))) {
+		writer.println("Hello World");
+	}
+
+2.Replacing try–catch-finally With try-with-resources
+	Scanner scanner = null;
+	try {
+		scanner = new Scanner(new File("test.txt"));
+		while (scanner.hasNext()) {
+			System.out.println(scanner.nextLine());
+		}
+	} catch (FileNotFoundException e) {
+		e.printStackTrace();
+	} finally {
+		if (scanner != null) {
+			scanner.close();
+		}
+	}
+
+	try (Scanner scanner = new Scanner(new File("test.txt"))) {
+		while (scanner.hasNext()) {
+			System.out.println(scanner.nextLine());
+		}
+	} catch (FileNotFoundException fnfe) {
+		fnfe.printStackTrace();
+	}
+
+3.try-with-resources With Multiple Resources
+	try (Scanner scanner = new Scanner(new File("testRead.txt"));
+		PrintWriter writer = new PrintWriter(new File("testWrite.txt"))) {
+		while (scanner.hasNext()) {
+		writer.print(scanner.nextLine());
+		}
+	}
+
+4.A Custom Resource With AutoCloseable
+	public class MyResource implements AutoCloseable {
+		@Override
+		public void close() throws Exception {
+			System.out.println("Closed MyResource");
+		}
+	}
+
+5.Resource Closing Order
+	Resource 1:
+		public class AutoCloseableResourcesFirst implements AutoCloseable {
+
+			public AutoCloseableResourcesFirst() {
+				System.out.println("Constructor -&gt; AutoCloseableResources_First");
+			}
+
+			public void doSomething() {
+				System.out.println("Something -&gt; AutoCloseableResources_First");
+			}
+
+			@Override
+			public void close() throws Exception {
+				System.out.println("Closed AutoCloseableResources_First");
+			}
+		}
+	Resource 2:
+		public class AutoCloseableResourcesSecond implements AutoCloseable {
+
+			public AutoCloseableResourcesSecond() {
+				System.out.println("Constructor -&gt; AutoCloseableResources_Second");
+			}
+
+			public void doSomething() {
+				System.out.println("Something -&gt; AutoCloseableResources_Second");
+			}
+
+			@Override
+			public void close() throws Exception {
+				System.out.println("Closed AutoCloseableResources_Second");
+			}
+		}
+	client code sample
+		private void orderOfClosingResources() throws Exception {
+			try (AutoCloseableResourcesFirst af = new AutoCloseableResourcesFirst();
+				AutoCloseableResourcesSecond as = new AutoCloseableResourcesSecond()) {
+
+				af.doSomething();
+				as.doSomething();
+			}
+		}
+
+		Constructor -> AutoCloseableResources_First
+		Constructor -> AutoCloseableResources_Second
+		Something -> AutoCloseableResources_First
+		Something -> AutoCloseableResources_Second
+		Closed AutoCloseableResources_Second
+		Closed AutoCloseableResources_First

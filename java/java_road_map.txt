@@ -1,1 +1,21 @@
 https://github.com/s4kibs4mi/java-developer-roadmap
+
+
+chatGPT 建議
+	證照
+		Oracle Certified Professional, Java SE Developer (OCPJP)：這是 Java 專業證照的基本要求，掌握 Java 語言的深度知識。
+		Oracle Certified Master, Java EE Enterprise Architect (OCMEA)：針對企業架構設計的高級證照，涵蓋架構設計、技術選型等內容。
+		AWS Certified Solutions Architect：雲端架構設計證照，涵蓋 AWS 服務及最佳實踐。
+		// Microsoft Azure ?
+		Google Professional Cloud Architect：Google Cloud 平台的架構師證照，強調在 GCP 上設計可擴展和可靠的應用程式。
+		TOGAF 9 Certification：企業架構框架的國際認證，涵蓋架構開發方法及實踐。
+	精進領域
+		設計模式 (Design Patterns)：深入理解設計模式，提升代碼可重用性、可維護性及擴展性。
+		微服務架構 (Microservices Architecture)：學習微服務設計原則及實踐，掌握 Spring Boot、Spring Cloud 等框架。
+		系統設計 (System Design)：學習如何設計大規模、高可用性、高性能系統，包括數據庫設計、分佈式系統等。
+		雲端計算 (Cloud Computing)：掌握 AWS、Google Cloud、Azure 等雲平台的服務和架構設計。
+		DevOps 實踐：學習持續整合 (CI)、持續部署 (CD)、自動化測試及基礎設施即代碼 (Infrastructure as Code)。
+		性能優化：學習性能調優技術，包括 JVM 調優、數據庫優化及應用性能監控。
+		安全性 (Security)：深入了解應用安全性設計，包括身份驗證、授權、數據加密及安全編碼實踐。
+
+	透過這些證照和技能的提升，你可以逐步邁向程式架構師的角色，並在大型系統設計和技術選型中發揮關鍵作用。

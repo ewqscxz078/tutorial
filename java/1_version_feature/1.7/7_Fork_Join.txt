@@ -1,0 +1,6 @@
+
+Fork/Join 框架：
+	提供了一個高效的並行編程框架，適用於多核處理器，簡化了並行任務的開發。
+
+		ForkJoinPool pool = new ForkJoinPool();
+		pool.invoke(new MyRecursiveTask());

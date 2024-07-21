@@ -1,0 +1,14 @@
+
+模組系統（Project Jigsaw），讓你能夠將大型應用程式拆分成更小、更可管理的模組。這個特性有助於提高代碼的可維護性和封裝性。
+
+	// 定義一個模組，在module-info.java中
+	module com.example.myapp {
+		requires java.sql;
+		exports com.example.myapp.services;
+	}
+
+	// 使用模組
+	module com.example.myapp {
+		requires com.example.othermodule;
+	}
+

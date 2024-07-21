@@ -1,0 +1,14 @@
+
+
+可以在 Java 應用中嵌入和執行 JavaScript 代碼。
+
+import javax.script.ScriptEngine;
+	import javax.script.ScriptEngineManager;
+	import javax.script.ScriptException;
+
+	public class NashornExample {
+		public static void main(String[] args) throws ScriptException {
+			ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+			engine.eval("print('Hello from Nashorn');");
+		}
+	}

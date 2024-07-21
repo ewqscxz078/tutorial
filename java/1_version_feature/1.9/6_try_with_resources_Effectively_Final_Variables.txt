@@ -1,0 +1,17 @@
+ref
+	https://www.baeldung.com/java-try-with-resources
+
+try 優化變數處理
+
+Before Java 9, we could only use fresh variables inside a try-with-resources block:
+	try (Scanner scanner = new Scanner(new File("testRead.txt"));
+		PrintWriter writer = new PrintWriter(new File("testWrite.txt"))) {
+		// omitted
+	}
+
+After Java 9
+	final Scanner scanner = new Scanner(new File("testRead.txt"));
+	PrintWriter writer = new PrintWriter(new File("testWrite.txt"))
+	try (scanner;writer) {
+		// omitted
+	}

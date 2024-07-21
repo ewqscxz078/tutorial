@@ -1,0 +1,6 @@
+
+java.util 包中的多個類（如 Stream、CompletableFuture）也進行了改進和新增方法，使得處理並行流和異步編程更加方便。
+	// 使用 Stream API 的新方法
+	Stream.of("a", "b", "c")
+		.takeWhile(s -> s.compareTo("b") < 0)
+		.forEach(System.out::println); // 輸出 a

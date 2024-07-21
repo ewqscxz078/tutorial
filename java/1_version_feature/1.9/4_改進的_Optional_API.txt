@@ -1,0 +1,8 @@
+
+
+增加了 ifPresentOrElse 方法，讓你可以在值存在時執行某個操作，值不存在時執行另一個操作。
+	Optional<String> optional = Optional.of("Hello");
+	optional.ifPresentOrElse(
+		value -> System.out.println("Value is: " + value),
+		() -> System.out.println("Value is not present")
+	);

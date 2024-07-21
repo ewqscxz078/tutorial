@@ -1,0 +1,11 @@
+
+Switch 語句支持 String
+	使代碼更具可讀性和便利性。
+
+	String day = "Monday";
+	switch(day) {
+		case "Monday":
+			System.out.println("Start of the week");
+			break;
+		// other cases
+	}

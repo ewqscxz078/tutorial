@@ -1,0 +1,8 @@
+
+多捕獲塊 (Multi-catch Blocks)：允許在一個 catch 塊中捕獲多種異常，減少冗餘代碼。
+
+	try {
+		// some code
+	} catch (IOException | SQLException ex) {
+		ex.printStackTrace();
+	}
