@@ -1,0 +1,77 @@
+ref
+	https://blog.csdn.net/myyhtw/article/details/129069586
+	https://blog.csdn.net/luo15242208310/article/details/107353987/
+
+
+# tomcat 8
+server:
+  tomcat:
+    accept-count: 100 #最大連接等待數，default=100
+	max-connections: 10000 #最大連接數，default=10,000
+	max-threads: 200 #最大工作執行緒，default=200
+	min-spare-threads: 10 #最小工作執行緒，default=10
+	
+# tomcat 9
+server:
+  tomcat:
+    max-connections: 8192
+	accept-count: 100
+	threads:
+	  max: 200
+	  min-spare: 10
+
+最大連接數/request count = max-connections + accept-count
+最大併發數 = max-threads
+
+max-threads執行緒數的經驗值為：
+	1核2g內存，線程數經驗值200；
+	4核8g內存，線程數經驗值800。
+	4核心8g內存，建議值：
+		server:
+		  tomcat:
+			max-connections: 10000
+			accept-count: 100
+			threads:
+			  max: 800
+			  min-spare: 100
+			  
+常見優化設定
+	1.設置最大連接數
+		server:
+		  tomcat:
+			max-connections: 10000 # 最大連接數
+			max-threads: 200 # 最大線程數
+	2.調整 Tomcat 線程池
+		server:
+		  tomcat:
+			threads:
+			  max: 200 # 最大線程數
+			  min-spare: 20 # 最小空閒線程數
+	3.增加連接超時時間
+		server:
+		  connection-timeout: 20000 # 連接超時時間（毫秒）
+	4.配置 Keep-Alive 設定
+		server:
+		  tomcat:
+			keep-alive-timeout: 60000 # Keep-Alive 超時時間（毫秒）
+			max-keep-alive-requests: 100 # 每個連接的最大請求數
+	5.壓縮響應內容
+		server:
+		  compression:
+			enabled: true
+			mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+			min-response-size: 1024 # 壓縮最小響應大小（字節）
+	6.優化 JVM 參數
+		java -Xms512m -Xmx2048m -XX:+UseG1GC -jar your-app.jar
+			-Xms 和 -Xmx 用於設置 JVM 的初始和最大堆大小。
+			-XX:+UseG1GC 使用 G1 垃圾收集器，適合大內存應用。
+	7.使用 APR (Apache Portable Runtime)
+		APR 提供了更高的性能和更好的可擴展性
+		server.tomcat.apr-enabled=true
+
+	8.設定優化 Session 管理
+		server:
+		  servlet:
+			session:
+			  timeout: 30m # Session 超時時間
+			  tracking-modes: cookie # Session 追蹤模式
