@@ -1,0 +1,1 @@
+Common Annotations（JSR 250）：引入了一組通用的註釋，如@Resource、@PostConstruct、@PreDestroy等，用於簡化Java EE開發。

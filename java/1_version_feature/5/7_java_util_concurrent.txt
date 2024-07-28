@@ -1,0 +1,1 @@
+併發 API 的改進（Concurrency Utilities）：包括新的 java.util.concurrent 包，提供了高效的多執行緒處理工具和併發集合。

@@ -1,0 +1,4 @@
+其他改進：
+
+	移除Native-Header生成工具（JEP 313: Remove the Native-Header Generation Tool）：移除了已過時的javah工具。
+	合併JDK和JRE映像（JEP 310: Application Class-Data Sharing）：合併了JDK和JRE映像，以簡化Java安裝和部署。

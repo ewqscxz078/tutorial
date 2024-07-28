@@ -1,0 +1,3 @@
+局部變量類型推斷（Local-Variable Type Inference）：
+	使用var關鍵字，允許編譯器推斷局部變量的類型。
+		var list = new ArrayList<String>();

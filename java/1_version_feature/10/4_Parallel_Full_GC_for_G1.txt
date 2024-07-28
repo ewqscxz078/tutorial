@@ -1,0 +1,2 @@
+Heap分配內存的並行處理（Parallel Full GC for G1）：
+	提高了G1垃圾收集器在Full GC階段的性能。

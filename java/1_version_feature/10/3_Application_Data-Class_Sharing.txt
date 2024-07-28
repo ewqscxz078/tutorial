@@ -1,0 +1,2 @@
+應用數據共享（Application Data-Class Sharing, AppCDS）：
+	擴展了Class-Data Sharing（CDS），允許應用程序類共享數據，提高啟動性能和內存使用效率。

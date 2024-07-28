@@ -1,0 +1,4 @@
+列舉類型（Enumerations）：引入了一種新的類型，用於定義固定集合的常量。
+	public enum Day {
+		SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+	}

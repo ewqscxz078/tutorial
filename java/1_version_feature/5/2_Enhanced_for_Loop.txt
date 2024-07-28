@@ -1,0 +1,4 @@
+增強的 for 迴圈（Enhanced for Loop）：簡化了遍歷陣列和集合的語法。
+	for (String s : list) {
+		System.out.println(s);
+	}

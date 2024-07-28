@@ -1,0 +1,2 @@
+Thread-Local握手（Thread-Local Handshakes）：
+	提供了一種新的機制，可以在不安全點（safe points）執行代碼，從而提高性能和響應速度。

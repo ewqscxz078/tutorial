@@ -1,0 +1,4 @@
+Java Monitoring and Management Console (jconsole)：
+	增強了jconsole的功能，使得監控和管理Java應用更加容易。
+VisualVM：
+	一個整合的性能分析和診斷工具。

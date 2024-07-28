@@ -1,0 +1,3 @@
+自動裝箱和拆箱（Autoboxing/Unboxing）：自動在基本數據類型和其對應的包裝類型之間轉換。
+	Integer i = 10; // Autoboxing
+	int j = i; // Unboxing

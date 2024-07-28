@@ -1,0 +1,6 @@
+可變參數（Varargs）：允許方法接受可變數量的參數。
+	public void printNumbers(int... numbers) {
+		for (int number : numbers) {
+			System.out.println(number);
+		}
+	}

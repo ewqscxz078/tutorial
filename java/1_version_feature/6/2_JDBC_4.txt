@@ -1,0 +1,1 @@
+JDBC 4.0：改進了JDBC API，包括自動裝載JDBC驅動、SQL異常的新層次結構、改進的BLOB和CLOB支持等。

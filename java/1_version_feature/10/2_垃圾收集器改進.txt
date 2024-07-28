@@ -1,0 +1,2 @@
+G1垃圾收集器並行全局GC（Parallel Full GC for G1）：改善了G1垃圾收集器在全局GC過程中的性能。
+垃圾收集器接口（Garbage-Collector Interface）：引入了統一的GC接口，使得不同GC實現之間的切換更加容易。

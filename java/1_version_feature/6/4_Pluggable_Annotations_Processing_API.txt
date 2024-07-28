@@ -1,0 +1,1 @@
+Pluggable Annotations Processing API（JSR 269）：允許開發者創建和註冊自己的注釋處理器。

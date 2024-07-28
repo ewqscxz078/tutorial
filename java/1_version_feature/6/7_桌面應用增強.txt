@@ -1,0 +1,3 @@
+Java Web Start：改進了Java Web Start，使得部署Java桌面應用變得更加簡單。
+SwingWorker：一個新的類，用於簡化Swing應用中耗時任務的處理。
+桌面API：新增了一些桌面應用相關的API，如系統托盤支持和桌面快捷方式。
