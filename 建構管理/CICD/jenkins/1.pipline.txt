@@ -1,0 +1,61 @@
+ref chatGPT
+
+兩種寫法
+	Declarative Pipeline
+		特點
+			結構化語法：Declarative Pipeline 有嚴格的語法結構，使得配置更簡潔、更易讀。
+			易於使用：適合沒有太多程式設計經驗的使用者，因為它的語法更像是配置檔案。
+			內建功能：提供了許多內建功能，如 post 區塊，用於定義失敗或成功後的行為。
+	Scripted Pipeline
+		特點
+			更靈活：Scripted Pipeline 完全基於 Groovy 語言，提供更大的靈活性和控制能力。
+			程式化：適合有程式設計背景的使用者，可以實現更複雜的邏輯。
+			自由度高：沒有嚴格的結構限制，可以根據需求自由編寫。
+
+	範例
+		Declarative Pipeline
+			pipeline {
+				agent any
+				stages {
+					stage('Build') {
+						steps {
+							// 產生 output.txt 檔案
+							sh 'echo "Hello, World!" > output.txt'
+						}
+					}
+					stage('Archive') {
+						steps {
+							// 將 output.txt 檔案儲存起來並生成指紋
+							archiveArtifacts artifacts: 'output.txt', fingerprint: true
+						}
+					}
+				}
+			}
+
+		Scripted Pipeline
+			node {
+				stage('Build') {
+					// 產生 output.txt 檔案
+					sh 'echo "Hello, World!" > output.txt'
+				}
+				
+				stage('Archive') {
+					// 將 output.txt 檔案儲存起來並生成指紋
+					archiveArtifacts artifacts: 'output.txt', fingerprint: true
+				}
+			}
+
+	為何要分兩種寫法？
+		使用者需求不同：一些使用者需要簡單、易用的語法來快速上手並配置常見的 CI/CD 工作流，這就是 Declarative Pipeline 的目標。另一方面，一些使用者需要更高的靈活性和控制能力，這是 Scripted Pipeline 的優勢。
+
+		可讀性和可維護性：Declarative Pipeline 通常更具可讀性和可維護性，因為它的結構化語法使得 Pipeline 更直觀。對於團隊合作來說，這種可讀性和一致性很重要。
+
+		遺留代碼：Jenkins 最初只有 Scripted Pipeline，後來才引入 Declarative Pipeline 以滿足廣大使用者的需求。因此，很多現有的 Jenkins 任務和 Pipeline 都是基於 Scripted Pipeline 編寫的。
+
+		功能特性：Declarative Pipeline 內建了一些方便的功能，如 post 區塊、options 區塊等，這些功能在 Scripted Pipeline 中需要自行實現。
+
+	選擇哪種語法？
+		選擇 Declarative 或 Scripted Pipeline 取決於你的需求和偏好：
+
+		如果你需要簡單明了的配置，並且你的工作流邏輯不是非常複雜，Declarative Pipeline 是更好的選擇。
+		如果你需要高度自定義的邏輯和控制，並且對 Groovy 有一定的了解，那麼 Scripted Pipeline 可能更適合你。

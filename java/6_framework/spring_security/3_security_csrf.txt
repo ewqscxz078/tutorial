@@ -39,7 +39,14 @@ https://www.baeldung.com/spring-security-csrf
 						console.error('Error: ' + error);
 					}
 				});
-
+			jquery ajax 全局設定(可相對上方設定方式省力很多不用散在各個地方設定)
+				$.ajaxSetup({
+				  beforeSend: function(xhr) {
+					var header = $("meta[name='_csrf_header']").attr("content")
+					var sToken= $("meta[name='_csrf']").attr("content")
+					xhr.setRequestHeader(header,sToken)
+				  }
+				});
 		3. html form 手動放入 spring security csrf token，於 CsrfRequestDataValueProcessor 可以看到 ${_csrf.parameterName}、${_csrf.token} 處理
 			<head>
 				<!-- 其他頭部內容 -->

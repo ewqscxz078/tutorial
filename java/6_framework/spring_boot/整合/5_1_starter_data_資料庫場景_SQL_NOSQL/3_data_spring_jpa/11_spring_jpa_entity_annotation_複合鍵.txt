@@ -39,7 +39,8 @@ ref
 				private Long keyPart1;
 				private Long keyPart2;
 
-				// 空的建構子和 getter, setter 方法
+				// 空的建構子(給 jpa 必要使用)、與含參數的建構子(方便 findById 建構傳入)
+				// getter, setter 方法
 				// 注意，這裡需要實作 Serializable 介面
 			}
 

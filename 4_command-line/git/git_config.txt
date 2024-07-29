@@ -67,6 +67,16 @@ https://blog.miniasp.com/post/2018/05/28/Git-Credential-Howto
 編輯全域設定
 	git config --global --edit
 
+大小寫敏感
+	Git 的目錄和檔案名稱在大小寫敏感性上的行為取決於底層的檔案系統
+		unix 大小寫敏感
+		windows/macOS 大小寫不敏感
+			如果你想在大小寫不敏感的系統上修改檔案的大小寫，
+			可以先將檔案重命名為另一個名稱，然後再重命名為你想要的大小寫：
+
+		修改指定設定大小寫敏感
+		git config core.ignoreCase false
+
 vi edit
 	Checkout Windows-style, commit Unix-style
 		core.autocrlf true

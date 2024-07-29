@@ -187,3 +187,7 @@ Caffeine
 							.maximumSize(1000));
 					return cacheManager;
 				}
+	7.debug cache 之前的程式碼
+		1.方法一: 於配置檔 @configuration 前宣告 @Profile("!dev") 非測試用的profile
+		2.方法二: 暫時註解
+			@Cacheable 宣告的地方

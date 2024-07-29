@@ -1,0 +1,113 @@
+
+依賴
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+	</dependency>
+
+
+配置
+	spring:
+	  messages:
+	    basename: i18n/messages #意思是 src/main/resources/i18n/messages* 的檔案，且可接收多可,分隔
+	    encoding: UTF-8
+		fallback-to-system-locale: false #必要設定，預設true，不因找不到預設的locale而改用 os 預設locale，本機windows與佈署unix系統的預設locale不同
+	    cache-duration=86400  # 緩存持續時間為 1 天（86400 秒）建議設定以利減少讀取和解析國際化文件的開銷，底層使用 ReloadableResourceBunleMessageSource cacheProperties = new ConcurrentHashMap 簡易實作
+
+專案國際化檔案準備
+	src/main/resources/i18n/
+		messages.properties
+			greeting=Hello
+		messages_zh_TW.properties 
+			greeting=您好
+
+專案 java 
+	範例以前端選擇的語系決定國際化
+		import org.springframework.context.annotation.Bean;
+		import org.springframework.context.annotation.Configuration;
+		import org.springframework.web.servlet.LocaleResolver;
+		import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+		import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+		import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+		import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+
+		import java.util.Locale;
+
+		@Configuration
+		public class WebConfig implements WebMvcConfigurer {
+
+			@Bean
+			public LocaleResolver localeResolver() {
+				CookieLocaleResolver localeResolver = new CookieLocaleResolver();
+				localeResolver.setDefaultLocale(Locale.TAIWAN); // 默認語言設置為繁體中文
+				return localeResolver;
+			}
+
+			@Bean
+			public LocaleChangeInterceptor localeChangeInterceptor() {
+				LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+				interceptor.setParamName("lang"); // 設置 URL 參數名稱
+				return interceptor;
+			}
+
+			@Override
+			public void addInterceptors(InterceptorRegistry registry) {
+				registry.addInterceptor(localeChangeInterceptor());
+			}
+		}
+
+
+前端 jsp
+	select 語系 jsp
+		<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+		<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+		<html>
+		<head>
+			<title>國際化示例</title>
+		</head>
+		<body>
+			<h2><spring:message code="example.message" /></h2>
+			
+			<form method="get" action="">
+				<select name="lang" onchange="this.form.submit()">
+					<option value="zh_TW" ${param.lang == 'zh_TW' ? 'selected' : ''}>繁體中文</option>
+					<option value="en" ${param.lang == 'en' ? 'selected' : ''}>English</option>
+				</select>
+			</form>
+		</body>
+		</html>
+
+
+	呈現頁
+		<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+
+		<html>
+		<head>
+			<title>國際化範例</title>
+		</head>
+		<body>
+			<h1><spring:message code="greeting" /></h1>
+			<p><spring:message code="welcome.message" arguments="${username}, ${date}" /></p>
+			<p><spring:message code="html.message" htmlEscape="true" /></p>
+		</body>
+		</html>
+		
+		具體可用參數
+			code : 必須屬性。指定要從資源文件中獲取的訊息的鍵。
+				<spring:message code="greeting" />
+			text : 當指定的 code 在資源文件中找不到時，作為替代的默認訊息。
+				<spring:message code="nonexistent.key" text="Default message if key not found" />
+			var : 指定將訊息存儲到的變量名稱。與 scope 屬性結合使用
+				<spring:message code="greeting" var="greetMessage" />
+				${greetMessage}
+			scope : 指定變量 var 的作用域。可選值有 page, request, session, application。默認為 page。
+				<spring:message code="greeting" var="greetMessage" scope="session" />
+			arguments :　用於格式化訊息的參數。可以是單個參數或參數數組。
+				<spring:message code="welcome.message" arguments="John" />
+				或 <spring:message code="welcome.message" arguments="${username}, ${date}" />
+			htmlEscape : 指定是否對訊息進行 HTML 轉義。默認為 false。
+				<spring:message code="html.message" htmlEscape="true" />
+			javaScriptEscape : 指定是否對訊息進行 JavaScript 轉義。默認為 false。
+				<spring:message code="js.message" javaScriptEscape="true" />
