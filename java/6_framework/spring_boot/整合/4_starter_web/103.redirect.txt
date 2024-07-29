@@ -1,14 +1,16 @@
-Forward (轉發):
+ref
+	ChatGPT
 
-轉發是指將當前請求交給伺服器內部的另一個資源進行處理，而客戶端並不知道這個過程。在轉發過程中，URL 不會變化，客戶端的瀏覽器也不會收到新的回應。在 Spring Boot 中，轉發是通過 RequestDispatcher 來實現的。
+Forward  : 轉發
+	是指將當前請求交給伺服器內部的另一個資源進行處理，而客戶端並不知道這個過程。在轉發過程中，URL 不會變化，客戶端的瀏覽器也不會收到新的回應。在 Spring Boot 中，轉發是通過 RequestDispatcher 來實現的。
 	主要特點：
 		轉發是在伺服器內部進行的，客戶端瀏覽器並不知道實際的處理過程。
 		URL 不會改變，客戶端的瀏覽器地址欄保持原樣。
 		請求和回應對象都在同一個請求上下文中，可以共享資料。
 		Redirect (重定向):
 
-重定向是指伺服器返回一個特定的回應給客戶端瀏覽器，告訴瀏覽器應該發起一個新的請求去訪問另一個 URL。客戶端的瀏覽器會收到一個 3xx 狀態碼，然後發起新的請求到新的 URL。在 Spring Boot 中，重定向是通過返回特定的視圖名或 URL 來實現的。
-
+redirect : 重定向
+	是指伺服器返回一個特定的回應給客戶端瀏覽器，告訴瀏覽器應該發起一個新的請求去訪問另一個 URL。客戶端的瀏覽器會收到一個 3xx 狀態碼，然後發起新的請求到新的 URL。在 Spring Boot 中，重定向是通過返回特定的視圖名或 URL 來實現的。
 	主要特點：
 		客戶端瀏覽器會發起一個新的請求，URL 會發生變化。
 		伺服器返回的是一個新的回應，客戶端瀏覽器需要處理這個新的回應。
@@ -17,46 +19,134 @@ Forward (轉發):
 選擇使用的情況：
 
 	使用轉發時，適合在伺服器內部的不同組件之間共享資料，實現邏輯的拆分與複用。
+		適用情境：
+			1.內部處理： 當你需要在內部將請求轉發到另一個處理方法或視圖，但不希望改變瀏覽器的 URL。例如，將用戶提交的表單數據轉發到另一個處理方法進行進一步處理。
+			2.複用邏輯： 當多個請求需要共享相同的處理邏輯或視圖時，可以使用轉發來避免重複代碼。例如，將用戶請求轉發到同一處理邏輯以顯示相同的視圖。
+			3.無需變更 URL： 當你不希望使用者看到 URL 變化時，例如處理登錄頁面或錯誤頁面。
+			4.用於 JSP/HTML 視圖： 當使用 JSP 或 HTML 作為視圖，且希望將請求轉發到這些視圖以顯示結果時。
+
 	使用重定向時，適合在不同的頁面或資源之間進行導航，例如使用者登錄後跳轉到首頁、處理 POST 請求後避免刷新頁面時再次提交表單等。
+		適用情境：
+			1.用戶操作結果通知： 當你希望用戶在提交表單後看到更新的 URL，例如提交表單後將用戶重定向到結果頁面或確認頁面。
+			2.防止重複提交： 在處理表單提交或其他重要操作後，使用重定向可以防止用戶刷新頁面時重複提交數據（即 Post/Redirect/Get 模式）。
+			3.分頁或搜尋結果： 當用戶進行搜尋或分頁操作，並希望在結果頁面上看到更新的 URL。
+			4.安全性： 當處理敏感操作時（例如登錄或登出），希望通過新的請求來增加安全性，並避免在原始請求中暴露敏感信息。
+
 	總之，轉發和重定向各自適合不同的使用場景。在選擇使用時，需要根據實際需求和業務邏輯來決定哪種方式更為合適。
 
 
+=================================================================================================================
+========================================= 轉發 ==================================================================
+=================================================================================================================
+1.慣例回傳字串為轉發
+	在 Spring MVC 中，如果回傳的字串沒有特別宣告 redirect:，那麼這個字串會被視為視圖名稱，並進行轉導 (forward)。
+		@GetMapping("/some")
+		public String toForward() {
+			return "/test";
+		}
+
+2.使用 ModelAndView
+	適用情境：
+		需要在轉發時傳遞模型數據。
+		需要更靈活的視圖和數據處理。
+	@GetMapping("/some")
+	public ModelAndView forward() {
+		ModelAndView mav = new ModelAndView("/test");
+		mav.addObject("attributeName", "attributeValue");
+		return mav;
+	}
+3.使用 RequestDispatcher.forward()
+	適用情境：
+		需要使用原生的 Servlet API 進行轉發。
+		需要更低層的控制，特別是在處理複雜的請求和響應場景時。
+	@GetMapping("/some")
+	public void forward(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		request.getRequestDispatcher("/test").forward(request, response);
+	}
+4.使用 ForwardView
+	適用情境：
+		需要在控制器方法中顯式地指定視圖對象。
+		需要在程式中動態決定轉發的視圖。
+	@GetMapping("/some")
+	public View forward() {
+		return new InternalResourceView("/test");
+	}
+5.使用 RedirectAttributes
+	雖然 RedirectAttributes 更常用於重定向，但它也可以用於轉發操作。
+	適用情境：
+		需要在轉發或重定向過程中傳遞臨時的屬性。
+		想要避免 URL 中的參數暴露。
+	@GetMapping("/some")
+	public String forward(RedirectAttributes redirectAttributes) {
+		redirectAttributes.addFlashAttribute("attributeName", "attributeValue");
+		return "forward:/test";
+	}
+6.使用 Spring 的 WebApplicationContext
+	適用情境：
+		需要在轉發過程中動態決定視圖。
+		需要在應用程序上下文中查找並轉發到特定的視圖。
+	@Autowired
+	private WebApplicationContext webApplicationContext;
+
+	@GetMapping("/some")
+	public void forward(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		RequestDispatcher dispatcher = webApplicationContext.getServletContext().getRequestDispatcher("/test");
+		dispatcher.forward(request, response);
+	}
+
+=================================================================================================================
+========================================= 重定向 ================================================================
 =================================================================================================================
 https://www.baeldung.com/spring-redirect-and-forward
 https://matthung0807.blogspot.com/2021/02/spring-boot-redirect-url.html
 
 轉址/重定向 : 客戶端瀏覽器網址重定向
 	1.使用 RedirectView 可重新導向到指定的url
-		@Controller
-		public class DemoController {
+		適用情境：
+			需要更多控制重定向行為，比如設置不同的 HTTP 狀態碼或處理相對和絕對 URL。
+				@Controller
+				public class DemoController {
 
-			@GetMapping("/redirect")
-			public RedirectView redirect() {
-				String url = "https://www.google.tw"
-				return new RedirectView(url); // 重新導向到指定的url
-			}
+					@GetMapping("/redirect")
+					public RedirectView redirect() {
+						String url = "https://www.google.tw"
+						return new RedirectView(url); // 重新導向到指定的url
+					}
 
-		}
+				}
 
 	2.ModelAndView傳入 "redirect:" 前墜加上要導向的url字串。
-		@Controller
-		public class DemoController {
-			@GetMapping("/redirect")
-			public ModelAndView redirect() {
-				String url ="https://matthung0807.blogspot.com";
-				return new ModelAndView("redirect:" + url); // 重新導向到指定的url
-			}
-		}
+		適用情境：
+			需要在重定向時傳遞模型數據。
+			需要更多靈活性來處理視圖和數據。
+				@GetMapping("/some")
+				public ModelAndView redirect() {
+					ModelAndView mav = new ModelAndView();
+					mav.setViewName("redirect:/test");
+					mav.addObject("attributeName", "attributeValue");
+					return mav;
+				}
+				@Controller
+				public class DemoController {
+					@GetMapping("/redirect")
+					public ModelAndView redirect() {
+						String url ="https://matthung0807.blogspot.com";
+						return new ModelAndView("redirect:" + url); // 重新導向到指定的url
+					}
+				}
 	3.回傳"redirect:"前墜加上要導向的url字串
-		// 效果為僅轉址傳的 url，header、params 參數未在傳遞
-		@Controller
-		public class DemoController {
-			@GetMapping("/redirect")
-			public String redirect() {
-				String url ="https://matthung0807.blogspot.com";
-				return "redirect:" + url; // 重新導向到指定的url
-			}
-		}
+		適用情境：
+			需要從一個控制器方法重定向到另一個 URL。
+			瀏覽器的 URL 需要更新。
+				// 效果為僅轉址傳的 url，header、params 參數未在傳遞
+				@Controller
+				public class DemoController {
+					@GetMapping("/redirect")
+					public String redirect() {
+						String url ="https://matthung0807.blogspot.com";
+						return "redirect:" + url; // 重新導向到指定的url
+					}
+				}
 	4.透過HttpServletResponse設定response header的Location值為重新導向的url及HTTP狀態碼為302 Found(RFC 7231 - 6.4.3)。
 		@Controller
 		public class DemoController {
@@ -67,15 +157,17 @@ https://matthung0807.blogspot.com/2021/02/spring-boot-redirect-url.html
 				response.setStatus(HttpServletResponse.SC_FOUND); // 302 Found
 			}
 		}
-	5.字串 prefix
-		@GetMapping("/redirect")
-		public String redirect() {
-			// String url ="https://matthung0807.blogspot.com";
-			String url ="/targetPath";
-			return "redirect:" + url; // 重新導向到指定的url
-		}
+	5.使用 HttpServletResponse.sendRedirect()
+		適用情境：
+			1.需要完全控制重定向過程。
+			2.在控制器中有其他複雜的邏輯處理，並且需要明確地使用 Servlet API 進行重定向。
+				@GetMapping("/some")
+				public void redirect(HttpServletResponse response) throws IOException {
+					response.sendRedirect("/test");
+				}
+
 =================================================================================================================
-=================================== RedirectAttributes  =========================================================
+=================================== RedirectAttributes 重定向帶參數 =============================================
 =================================================================================================================
 
 RedirectAttributes
