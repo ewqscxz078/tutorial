@@ -10,7 +10,7 @@ server:
 	max-connections: 10000 #最大連接數，default=10,000
 	max-threads: 200 #最大工作執行緒，default=200
 	min-spare-threads: 10 #最小工作執行緒，default=10
-	
+
 # tomcat 9
 server:
   tomcat:
@@ -34,7 +34,7 @@ max-threads執行緒數的經驗值為：
 			threads:
 			  max: 800
 			  min-spare: 100
-			  
+
 常見優化設定
 	1.設置最大連接數
 		server:

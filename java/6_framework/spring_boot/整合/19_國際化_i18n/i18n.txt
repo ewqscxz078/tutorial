@@ -18,10 +18,10 @@
 	src/main/resources/i18n/
 		messages.properties
 			greeting=Hello
-		messages_zh_TW.properties 
+		messages_zh_TW.properties
 			greeting=您好
 
-專案 java 
+專案 java
 	範例以前端選擇的語系決定國際化
 		import org.springframework.context.annotation.Bean;
 		import org.springframework.context.annotation.Configuration;
@@ -69,7 +69,7 @@
 		</head>
 		<body>
 			<h2><spring:message code="example.message" /></h2>
-			
+
 			<form method="get" action="">
 				<select name="lang" onchange="this.form.submit()">
 					<option value="zh_TW" ${param.lang == 'zh_TW' ? 'selected' : ''}>繁體中文</option>
@@ -93,7 +93,7 @@
 			<p><spring:message code="html.message" htmlEscape="true" /></p>
 		</body>
 		</html>
-		
+
 		具體可用參數
 			code : 必須屬性。指定要從資源文件中獲取的訊息的鍵。
 				<spring:message code="greeting" />

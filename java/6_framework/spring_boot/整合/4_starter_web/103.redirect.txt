@@ -75,3 +75,95 @@ https://matthung0807.blogspot.com/2021/02/spring-boot-redirect-url.html
 			return "redirect:" + url; // 重新導向到指定的url
 		}
 =================================================================================================================
+=================================== RedirectAttributes  =========================================================
+=================================================================================================================
+
+RedirectAttributes
+	addFlashAttribute : 透過底層session傳遞參數經 redirect 到指定 url
+		用途：addFlashAttribute 方法用於在重定向時傳遞數據，但不透過 URL 傳遞。
+		傳遞方式：透過會話（Session）傳遞數據，這表示資料不會出現在 URL 中。
+		生命週期：資料在重定向後的請求中可以訪問，之後會被移除。
+		使用場景：適用於需要在重定向後傳遞複雜物件或不希望資料出現在 URL 中的場景。
+
+			import org.springframework.stereotype.Controller;
+			import org.springframework.web.bind.annotation.GetMapping;
+			import org.springframework.web.bind.annotation.PostMapping;
+			import org.springframework.web.bind.annotation.RequestParam;
+			import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+			@Controller
+			public class MyController {
+
+			 @PostMapping("/processForm")
+			 public String processForm(@RequestParam("data") String data, RedirectAttributes redirectAttributes) {
+				 // 處理表單數據
+				 redirectAttributes.addFlashAttribute("message", "Form processed successfully!");
+					return "redirect:/result";
+				 }
+
+				 @GetMapping("/result")
+				 public String resultPage() {
+					 // 在重定向後的頁面中取得訊息
+					 return "resultPage";
+				 }
+			}
+
+			在 resultPage 視圖中，你可以存取到 message 屬性，並在頁面上顯示它。
+
+		等於幕後使用 FlashMap 和 FlashMapManager
+			在某些特定場景下，可能需要直接操作 FlashMapManager，例如：
+				1.自訂 Flash 資料的儲存與復原：
+					在特殊情況下，你可能需要對 Flash 資料的儲存和復原進行更細粒度的控制。
+				2.整合第三方函式庫或框架：
+					當與某些第三方程式庫或框架整合時，可能需要直接操作 FlashMapManager。
+
+					@Autowired
+					private FlashMapManager flashMapManager;
+
+
+					// 放進去
+					public void saveFlashMessage(HttpServletRequest request, HttpServletResponse response) {
+						FlashMap flashMap = new FlashMap();
+						flashMap.put("flashMessage", "This is a flash message");
+						flashMapManager.saveOutputFlashMap(flashMap, request, response);
+					}
+
+					// 取出來
+					import org.springframework.stereotype.Controller;
+					import org.springframework.web.bind.annotation.GetMapping;
+					import org.springframework.web.context.request.RequestContextHolder;
+					import org.springframework.web.context.request.ServletRequestAttributes;
+					import org.springframework.web.servlet.FlashMap;
+					import org.springframework.web.servlet.FlashMapManager;
+					import org.springframework.web.servlet.support.RequestContextUtils;
+
+					import javax.servlet.http.HttpServletRequest;
+					import java.util.Map;
+
+					@Controller
+					public class MyController {
+
+						@GetMapping("/result")
+						public String resultPage(HttpServletRequest request, Map<String, Object> model) {
+							// 從 FlashMap 取得數據
+							FlashMapManager flashMapManager = RequestContextUtils.getFlashMapManager(request);
+							if (flashMapManager != null) {
+								FlashMap flashMap = flashMapManager.retrieveAndUpdate(request, null);
+								if (flashMap != null) {
+									model.putAll(flashMap);
+								}
+							}
+							return "resultPage";
+						}
+					}
+
+
+	addAttribute : 透過 URL 參數經 redirect 到指定 url
+		用途：addAttribute 方法用於在重定向 URL 中附加查詢參數。
+		傳遞方式：透過 URL 查詢參數傳遞數據，這表示資料會出現在重定向後的 URL 中。
+		生命週期：資料僅在重定向的過程中存在，不會在會話中保留。
+		使用場景：適用於需要透過 URL 傳遞簡單參數的場景。
+			redirectAttributes.addAttribute("paramName", "paramValue");
+			// 重定向後的 URL 會變成 /targetPage?paramName=paramValue
+			return "redirect:/targetPage";
+

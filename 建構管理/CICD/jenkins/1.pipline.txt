@@ -38,7 +38,7 @@ ref chatGPT
 					// 產生 output.txt 檔案
 					sh 'echo "Hello, World!" > output.txt'
 				}
-				
+
 				stage('Archive') {
 					// 將 output.txt 檔案儲存起來並生成指紋
 					archiveArtifacts artifacts: 'output.txt', fingerprint: true
