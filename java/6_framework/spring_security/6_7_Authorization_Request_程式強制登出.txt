@@ -33,3 +33,11 @@ spring security configuration
 				sessionInformation.expireNow();;
 			}
 		}
+
+		// 強制登出目前會話
+		SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
+		logoutHandler.logout(request, response, SecurityContextHolder.getContext().getAuthentication());
+
+sessionInformation.expireNow()：讓所有使用者的會話失效，適合需要強制登出的場景。
+SecurityContextLogoutHandler().logout()：處理目前會話的登出，確保目前使用者的認證資訊已清除。
+在需要全面處理使用者登出的場景下，結合使用這兩者可以確保使用者會話和認證資訊的徹底清除。
