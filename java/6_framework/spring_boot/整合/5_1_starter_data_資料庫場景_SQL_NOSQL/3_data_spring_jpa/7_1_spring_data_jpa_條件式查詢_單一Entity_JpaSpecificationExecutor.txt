@@ -6,6 +6,8 @@ https://blog.csdn.net/john_1023/article/details/118087600
 https://www.cnblogs.com/summerday152/p/14182138.html
 	簡易
 
+僅適合單一 entity 條件式查詢
+
 	public interface XxxxDao extends JpaRepository<${Entity}, ${Entity.id}>, JpaSpecificationExecutor<${Entity}> {
 	}
 

@@ -1,7 +1,0 @@
-@DynamicUpdate
-
-Entity entity = findById(key)
-entity.setXXX
-...
-當處理 save(entity) 時，會依據異動差異動態更新
-

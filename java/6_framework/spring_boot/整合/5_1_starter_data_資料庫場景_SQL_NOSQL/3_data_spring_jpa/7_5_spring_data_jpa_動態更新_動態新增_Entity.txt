@@ -1,0 +1,20 @@
+ref
+	https://blog.csdn.net/itguangit/article/details/78696767
+	https://www.baeldung.com/spring-data-jpa-dynamicupdate
+
+@DynamicUpdate : 特殊情境使用，會吃不到cache
+	設定為true,表示update物件的時候,產生動態的update語句,如果這個欄位的值是null就不會被加入到update語句中,預設false。
+@DynamicInsert : 通常不常使用，會吃不到cache
+	設定為true,表示insert物件的時候,產生動態的insert語句,如果這個欄位的值是null就不會加入到insert語句當中.預設false。
+
+	Entity entity = findById(key)
+	entity.setXXX
+	...
+	當處理 save(entity) 時，會依據異動差異動態更新
+
+具體例子
+	@DynamicInsert註解下Hibernate日誌列印SQL：
+		Hibernate: insert into Cat (cat_name, id) values (?, ?)
+	反之
+		Hibernate: insert into Cat (create_time, update_time, cat_name, id) values (?, ?, ?, ?)
+	同理 @DynamicUpdate

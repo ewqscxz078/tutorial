@@ -92,18 +92,25 @@ Repository
 	若 相關 @Entity 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
 		@EntityScan(basePackages = "你的 Entity package 路徑")
 
-
 8. JPA 寫 SQL 方式
 	1.JpaRepository 已存在 api
-		findByXXXX
 		save
 	2.方法名解析 Method Name Resolution
-		findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉換
-	3.@Query with entity
-	4.@Query with nativeSQL
+		findByXXXX
+			findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉換
+		deleteByXXXX
+		countByXXXX
+	3.@Query with entity SQL
+	4.@Query with native SQL
 	5.@Query 撈取部分欄位
 		1.with projections
 		2.select part Columns and return Object[]
-		3.@EntityGraph
-		4.自訂 bean 並且在 @Query 撈取欄位寫 new yourPackagePath.CustomBean(建構參數...)
+		3.select 單一欄位 return String/int/long
+		4.@EntityGraph
+		5.自訂 bean 並且在 @Query 撈取欄位寫 new yourPackagePath.CustomBean(建構參數...)
 	6.條件式查詢 Specification
+		單一entity : JpaSpecificationExecutor by Specification
+			(root, criteriaQuery, criteriaBuilder) -> {
+				....
+			}
+		多個 entity join 與取得部分欄位至DTO/VO : EntityManager with createTupleQuery、createQuery 後的 CriteriaQuery

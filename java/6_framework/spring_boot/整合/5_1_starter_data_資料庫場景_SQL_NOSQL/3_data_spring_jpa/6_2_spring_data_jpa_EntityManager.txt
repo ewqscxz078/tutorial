@@ -1,6 +1,11 @@
 ref
 	https://www.baeldung.com/spring-data-entitymanager
 
+適合情境
+	1.select 部分欄位的 distinct 之條件式查詢
+		Specification 僅能針對 entity 整個 distinct ，不能針對部分欄位 distinct
+	2.資料庫特殊語法 條件式查詢
+
 使用 DAO with EntityMananger
 
 	@Entity
@@ -29,14 +34,14 @@ ref
 			  .getSingleResult();
 		}
 	}
-	
+
 	// 注意要將 CustomUserRepository 整合到主 Repository，以利其間接注入 EntityMananger
 	@Repository
 	public interface UserRepository extends JpaRepository<User, Long>, CustomUserRepository {
 	}
-	
 
-entityManager.createQuery with entity 
+
+entityManager.createQuery with entity
 	public User customFindMethod(Long id) {
 		return (User) entityManager.createQuery("FROM User u WHERE u.id = :id")
 		  .setParameter("id", id)
@@ -63,7 +68,3 @@ entityManager.createNativeQuery with 原生 sql
 	query.setParameter(1, userName);
 
 
-適合情境
-	1.select 部分欄位的 distinct 之條件式查詢
-		Specification 僅能針對 entity 整個 distinct ，不能針對部分欄位 distinct
-	2.資料庫特殊語法 條件式查詢

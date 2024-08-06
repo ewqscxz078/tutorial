@@ -6,7 +6,7 @@ Specification<entity> spec = new Specification(ConditionDTO conditionDTO){
 	@Override
 	public Predicate toPredicate(Root<entity> root, CriteriaQuery<?> query, CriteriaBuilder cb){
 		List<Predicate> wherePredicates = new ArrayList<>();
-		// 1. column = 
+		// 1. column =
 		if(StringUtils.isNotBlank(conditionDTO.getColumn())){
 			wherePredicates.add(cb.equal(root.get("column"))); 			// 一般欄位
 			//wherePredicates.add(cb.equal(root.get("id").get("column"))); // 複合鍵欄位
@@ -19,12 +19,12 @@ Specification<entity> spec = new Specification(ConditionDTO conditionDTO){
 			}
 			wherePredicates.add(inClause);
 		}
-		
+
 		// 3. column like
 		if(StringUtils.isNotBlank(conditionDTO.getColumn())){
 			wherePredicates.add(cb.like(root.get("column")), "%" + column +  "%");
 		}
-		
+
 		// 4. column between
 		if(StringUtils.isNotBlank(conditionDTO.getColumn())){
 			// 大包裹方式

@@ -78,3 +78,6 @@ PropertyMapper
 			目前 PropertyMapper只會對應 LocalDateTime類型的欄位。
 
 			注意：如果from方法後面有when條件，則alwaysApplying中設定的初始化提交將會失效。
+
+
+objectprovider
