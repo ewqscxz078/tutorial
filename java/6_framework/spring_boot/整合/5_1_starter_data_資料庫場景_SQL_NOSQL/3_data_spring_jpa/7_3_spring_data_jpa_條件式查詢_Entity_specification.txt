@@ -1,3 +1,7 @@
+ref
+	https://medium.com/the-sixt-india-blog/implementing-dynamic-filtering-on-joined-queries-using-jpa-specification-and-criteria-api-db2a62ed8942
+	https://blog.wuwii.com/jpa-specification.html
+	chatGPT
 
 適合情境
 	Entity 條件式查詢且無資料庫特殊語法(也支援 entity 關聯)
@@ -42,3 +46,4 @@ Specification<entity> spec = new Specification(ConditionDTO conditionDTO){
 		}
 	}
 }
+

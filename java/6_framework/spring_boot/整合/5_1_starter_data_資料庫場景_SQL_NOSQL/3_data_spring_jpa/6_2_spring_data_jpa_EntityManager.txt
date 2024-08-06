@@ -68,3 +68,95 @@ entityManager.createNativeQuery with 原生 sql
 	query.setParameter(1, userName);
 
 
+
+多表/Entity join 查詢
+
+	自定義 Repository 介面和實現
+		import java.util.List;
+		import javax.persistence.Tuple;
+		import org.springframework.data.domain.Pageable;
+
+		public interface UserRepositoryCustom {
+			List<Tuple> findUserOrdersByUsername(String username, Pageable pageable);
+		}
+
+		@Repository
+		public class UserRepositoryCustomImpl implements UserRepositoryCustom {
+
+			@PersistenceContext
+			private EntityManager entityManager;
+
+			@Override
+			public List<Tuple> findUserOrdersByUsername(String username, Pageable pageable) {
+				CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+				CriteriaQuery<Tuple> cq = cb.createTupleQuery();
+				Root<User> userRoot = cq.from(User.class);
+				Join<User, Order> orderJoin = userRoot.join("orders");
+
+				// 設置選取的欄位
+				cq.multiselect(userRoot.get("id"), userRoot.get("username"), orderJoin.get("orderDetails"));
+
+				// 設置查詢條件
+				cq.where(cb.equal(userRoot.get("username"), username));
+
+				// 創建查詢
+				TypedQuery<Tuple> query = entityManager.createQuery(cq);
+
+				// 設置分頁參數
+				query.setFirstResult((int) pageable.getOffset());
+				query.setMaxResults(pageable.getPageSize());
+
+				// 獲取結果
+				return query.getResultList();
+			}
+		}
+	
+	擴展 Repository 並使用自定義方法
+		import org.springframework.data.jpa.repository.JpaRepository;
+		import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+		public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User>, UserRepositoryCustom {
+			// Repository methods
+		}
+
+	在服務層中使用
+		import org.springframework.beans.factory.annotation.Autowired;
+		import org.springframework.data.domain.Page;
+		import org.springframework.data.domain.PageImpl;
+		import org.springframework.data.domain.Pageable;
+		import org.springframework.stereotype.Service;
+		import javax.persistence.Tuple;
+		import java.util.List;
+
+		@Service
+		public class UserService {
+
+			@Autowired
+			private UserRepository userRepository;
+
+			public Page<Tuple> getUserOrders(String username, Pageable pageable) {
+				List<Tuple> tuples = userRepository.findUserOrdersByUsername(username, pageable);
+				return new PageImpl<>(tuples, pageable, tuples.size());
+			}
+		}
+
+	在控制器中使用
+		import org.springframework.beans.factory.annotation.Autowired;
+		import org.springframework.data.domain.Page;
+		import org.springframework.data.domain.Pageable;
+		import org.springframework.web.bind.annotation.GetMapping;
+		import org.springframework.web.bind.annotation.RequestParam;
+		import org.springframework.web.bind.annotation.RestController;
+		import javax.persistence.Tuple;
+
+		@RestController
+		public class UserController {
+
+			@Autowired
+			private UserService userService;
+
+			@GetMapping("/user-orders")
+			public Page<Tuple> getUserOrders(@RequestParam String username, Pageable pageable) {
+				return userService.getUserOrders(username, pageable);
+			}
+		}
