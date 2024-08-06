@@ -110,7 +110,7 @@ entityManager.createNativeQuery with 原生 sql
 				return query.getResultList();
 			}
 		}
-	
+
 	擴展 Repository 並使用自定義方法
 		import org.springframework.data.jpa.repository.JpaRepository;
 		import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
