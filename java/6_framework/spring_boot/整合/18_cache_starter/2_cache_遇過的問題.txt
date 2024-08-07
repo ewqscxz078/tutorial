@@ -1,0 +1,38 @@
+1. 若 cache method 宣告在 a servcie methodOne，同層 methodTwo 呼叫 methodOne 不會有 cache 效果
+	因為 Spring 的 AOP（Aspect-Oriented Programming）特性在同一個類別內的方法互相調用時無法攔截所導致的。
+	當你在同一個類別內調用一個被 @Cacheable 注解的方法時，Spring 不會通過代理來調用這個方法，
+	導致緩存機制無法生效。
+	解法 =>
+		解決這個問題的其中一種方法是將 loadSome() 方法提取到一個獨立的 Service 類別，
+		這樣即使在同一層內調用這個方法，Spring 也會通過代理來處理，
+		從而使緩存機制生效。
+
+	@Service
+	public class SomeService {
+
+		@Cacheable(value= "loadcache", cacheManager = "myCacheManager")
+		public SomeDTO loadSome(){
+			return getSomeDTO();
+		}
+
+		private SomeDTO getSomeDTO() {
+			// 你的實際邏輯
+		}
+	}
+
+	@Service
+	public class AService {
+
+		@Autowired
+		private SomeService someService;
+
+		public void doOther() {
+			SomeDTO someDTO = someService.loadSome();
+			// 其他邏輯
+		}
+
+		@Override
+		public SomeDTO loadSome() {
+			return someService.loadSome();
+		}
+	}

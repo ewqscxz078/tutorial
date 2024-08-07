@@ -1,0 +1,98 @@
+1. 若 cache method 宣告在 a servcie methodOne，同層 methodTwo 呼叫 methodOne 不會有 cache 效果
+	因為 Spring 的 AOP（Aspect-Oriented Programming）特性在同一個類別內的方法互相調用時無法攔截所導致的。
+	當你在同一個類別內調用一個被 @Cacheable 注解的方法時，Spring 不會通過代理來調用這個方法，
+	導致緩存機制無法生效。
+	解法 =>
+		解決這個問題的其中一種方法是將 loadSome() 方法提取到一個獨立的 Service 類別，
+		這樣即使在同一層內調用這個方法，Spring 也會通過代理來處理，
+		從而使緩存機制生效。
+
+	@Service
+	public class SomeService {
+
+		@Cacheable(value= "loadcache", cacheManager = "myCacheManager")
+		public SomeDTO loadSome(){
+			return getSomeDTO();
+		}
+
+		private SomeDTO getSomeDTO() {
+			// 你的實際邏輯
+		}
+	}
+
+	@Service
+	public class AService {
+
+		@Autowired
+		private SomeService someService;
+
+		public void doOther() {
+			SomeDTO someDTO = someService.loadSome();
+			// 其他邏輯
+		}
+
+		@Override
+		public SomeDTO loadSome() {
+			return someService.loadSome();
+		}
+	}
+
+具體範例
+	import static org.junit.jupiter.api.Assertions.assertNotNull;
+	import static org.junit.jupiter.api.Assertions.assertNull;
+
+	import org.junit.jupiter.api.Disabled;
+	import org.junit.jupiter.api.DisplayName;
+	import org.junit.jupiter.api.Test;
+	import org.slf4j.Logger;
+	import org.slf4j.LoggerFactory;
+	import org.springframework.beans.factory.annotation.Autowired;
+	import org.springframework.boot.test.context.SpringBootTest;
+	import org.springframework.cache.Cache;
+	import org.springframework.cache.Cache.ValueWrapper;
+	import org.springframework.cache.CacheManager;
+	import org.springframework.cache.interceptor.SimpleKey;
+	import org.springframework.test.context.ActiveProfiles;
+
+
+	@ActiveProfiles(profiles = "test")
+	@SpringBootTest
+	public class CacheGroupMenuServiceImplTest {
+	   
+
+		private static Logger LOGGER = LoggerFactory.getLogger(CacheGroupMenuServiceImplTest.class);
+
+
+		@Autowired
+		private CacheService cacheService;
+
+		@Autowired
+		private CacheManager cacheManager;
+
+		@Disabled("暫無用mock回假資料，需要資料庫連線取得資料cache，故要確認才註解關閉宣告")
+		@DisplayName("確認cache")
+		@Test
+		public void testCacheLoad() {
+
+			final Cache cache = this.cacheManager.getCache("loadGroupType");
+
+			// before cache check
+			final ValueWrapper valueWrapper = cache.get(SimpleKey.EMPTY); // 因為標記 loadGroupType 的 method 無參數故預設為 SimpleKey.EMPTY，反之應該是 method 上宣告的 key="#啥的"
+			LOGGER.debug("valueWrapper : {}", valueWrapper);
+			assertNull(valueWrapper, "還沒 cache 應該是null");
+
+			final SomeDto someDto = this.cacheService.cacheLoad();
+			LOGGER.debug("SomeDto {}", someDto);
+
+			final ValueWrapper valueWrapperCheck = cache.get(SimpleKey.EMPTY);
+			LOGGER.debug("valueWrapperCheck : {}", valueWrapperCheck);
+			assertNotNull(valueWrapperCheck, "應該已 Cache should contain value for SimpleKey.EMPTY");
+			final Object cacheObjectCheck = valueWrapperCheck.get();
+			LOGGER.debug("cacheObjectCheck : {}", cacheObjectCheck);
+			assertNotNull(cacheObjectCheck, "應要有值");
+
+			final SomeDto someDto = this.cacheService.cacheLoad();
+			LOGGER.debug("SomeDto {}", someDto2);
+		}
+
+	}
