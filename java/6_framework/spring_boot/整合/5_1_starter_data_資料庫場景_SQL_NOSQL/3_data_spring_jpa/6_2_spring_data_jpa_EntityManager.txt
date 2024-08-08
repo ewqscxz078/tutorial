@@ -67,7 +67,26 @@ entityManager.createNativeQuery with 原生 sql
 	Query query = entityManager.createNativeQuery(sql);
 	query.setParameter(1, userName);
 
+一般操作
+   // client 呼叫
+		   @SpringBootTest(classes = CustomRepositoryApplication.class)
+		   class CustomRepositoryUnitTest {
 
+				   //僅需註冊 UserRepository 即可，預設dao 與 自訂的 dao 都叫的到
+				   @Autowired
+				   private UserRepository userRepository;
+
+				   @Test
+				   public void givenCustomRepository_whenInvokeCustomFindMethod_thenEntityIsFound() {
+						   User user = new User();
+						   user.setEmail("foo@gmail.com");
+						   user.setName("userName");
+
+						   User persistedUser = userRepository.save(user);
+
+						   assertEquals(persistedUser, userRepository.customFindMethod(user.getId()));
+				   }
+		   }
 
 多表/Entity join 查詢
 

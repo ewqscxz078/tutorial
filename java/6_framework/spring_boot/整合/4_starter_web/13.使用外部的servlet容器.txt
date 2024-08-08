@@ -26,3 +26,11 @@
 					}
 				}
 		4.啟動服務器就可以使用
+
+預設session 30分鐘
+	修改方式
+		application.yml
+			server:
+			  servlet:
+			    session:
+				  timeout: 60s
