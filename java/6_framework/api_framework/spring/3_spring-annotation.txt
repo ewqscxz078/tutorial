@@ -62,7 +62,16 @@ https://hackmd.io/@LeeLo/leelo
 							this.fooFormatter = fooFormatter;
 						}
 					}
-
+				
+				spring 或 IDE idea 後來都不太建議使用 @Autowired
+				注意 
+					https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html#beans-setter-injection
+				
+					1.一般使用 Constructors 注入，若元件依賴過多，則建議重構
+					2.一般共用底層建議使用 Constructors DI
+					3.若仍有很多依賴注入，仍可使用 @Autowired，但建議重構
+					4.有循環依賴時，建議重構
+				
 			https://www.baeldung.com/spring-autowire
 			@Qualifier
 				當生成的 bean 名字有雷同可用該註解哪個才是預期的

@@ -36,3 +36,27 @@
 			return someService.loadSome();
 		}
 	}
+
+
+2.java.lang.IllegalStateException: refreshAfterWrite requires a LoadingCache 異常解決
+	僅使用 build()：當不需要 refreshAfterWrite 或自動加載功能時，可以直接使用。(代表使用自動刷新機制)
+		Cache<String, DataObject> cache = Caffeine.newBuilder()
+			.maximumSize(100)
+			.expireAfterWrite(10, TimeUnit.MINUTES)
+			.build();
+	使用 build(CacheLoader)：當需要 refreshAfterWrite 或自動加載數據時，必須使用。(代表非自動刷新機制，使用自訂刷新機制)
+		Caffeine.newBuilder()
+			.refreshAfterWrite(1, TimeUnit.HOURS)
+			.build(new CacheLoader<String, DataObject>() {
+				@Override
+				public DataObject load(String key) throws Exception {
+					// 實現加載邏輯
+					return fetchDataFromDataSource(key);
+				}
+
+				@Override
+				public DataObject reload(String key, DataObject oldValue) throws Exception {
+					// 實現重新加載邏輯
+					return fetchDataFromDataSource(key);
+				}
+			});

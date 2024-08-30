@@ -58,7 +58,7 @@ Caffeine
 				return caffeineCacheManager;
 			}
 	3.使用方式
-		加入緩存
+		加入緩存 : 當某個方法的返回值可以被重複使用時，適合使用 @Cacheable 來減少重複計算或查詢
 			直接使用
 				@Service
 				public class AddressService {
@@ -70,8 +70,8 @@ Caffeine
 			或宣告緩存key
 				@Service
 				public class AddressService {
-					@Cacheable(value = "address_cache", key = "#customerId")
-					public AddressDTO getAddress(long customerId) {
+					@Cacheable(value = "address_cache", key = "#customerId") // 代表cache key 僅 customerId，忽略 other
+					public AddressDTO getAddress(long customerId, String other) {
 						// lookup and return result
 					}
 				}
@@ -98,6 +98,15 @@ Caffeine
 						// lookup address, cache result, and return it
 					}
 				}
+		@CachePut
+			目的: 用於將方法結果直接放入緩存，但不影響方法的執行。
+			行為: 每次調用標記的方法時，該方法都會執行其邏輯，並將結果更新到緩存中。也就是說，即使緩存中已有值，方法仍然會執行，並用最新的返回值更新緩存。
+			適用場景: 用於寫入或更新操作。當你希望每次都強制更新緩存中的值時，可以使用 @CachePut。
+				@CachePut(cacheNames = "dataCache", key = "#data.id")
+				public DataObject updateData(DataObject data) {
+					return saveDataToDatabase(data); // 無論如何都會執行，並將結果放入緩存
+				}
+
 		移除緩存
 			@CacheEvict 依據 value 從 cacheManager 移除緩存
 			allEntries屬性設置為true，則將刪除所有數據；否則，只會刪除與指定鍵匹配的數據。
@@ -117,6 +126,12 @@ Caffeine
 						// do nothing
 					}
 				}
+		緩存使用時機:
+			@Cacheable 是在調用方法之前檢查緩存，如果緩存存在則不會執行方法邏輯。
+			@CachePut 是在執行方法邏輯後直接將結果放入緩存，不論緩存中是否已有值。
+		適用場景:
+			@Cacheable 適合用於需要減少重複查詢或計算的讀取操作。
+			@CachePut 適合用於需要同步更新緩存內容的寫入或更新操作。
 	4.使用限制
 		1.目標方法必須是公有方法
 		2.方法呼叫必須透過代理，也就是不能被間接呼叫的方式，容易因為這樣沒有採到cache效果，通常宣告在元件實作介面的方法
@@ -191,3 +206,18 @@ Caffeine
 		1.方法一: 於配置檔 @configuration 前宣告 @Profile("!dev") 非測試用的profile
 		2.方法二: 暫時註解
 			@Cacheable 宣告的地方
+	
+	8. CaffeineCacheManager 使用 <Object, Object> 作為泛型型別，
+		主要是為了提供靈活性和通用性。這樣的設計允許 CaffeineCacheManager 
+		能夠管理任何型別的快取資料，而不僅僅局限於某一特定的鍵值對型別。
+		以下是一些設計背後的原因
+			1. 通用性
+			2. 靈活性
+			3. 與 Spring Cache 抽象層的一致性
+			4. 快取操作中的型別推斷
+				雖然 CaffeineCacheManager 使用的是 <Object, Object>，但在實際使用中，
+				你仍然可以將特定型別的鍵和值放入快取中，Spring 框架會在你存取快取時進行型別推斷
+				和轉換。例如，當你使用 @Cacheable 註解時，Spring 會自動處理快取中的型別轉換，
+				這樣你就可以在業務邏輯中使用特定的型別，而不需要關心底層快取的泛型定義。
+		
+		因此 LoadingCache 的手動建構越來越少使用，在需要cache的method 宣告 @Cacheable 即可

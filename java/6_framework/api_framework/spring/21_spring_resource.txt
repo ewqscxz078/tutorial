@@ -71,3 +71,16 @@ https://www.baeldung.com/spring-classpath-file-access
 注意 project 打包後的 jar 下的 resource 為非 File 模式
 	僅能用 resource.getInputStream() 存取
 	反之外部檔案用 resource.getFile() 存取
+
+
+使用 ResourceLoader 或 @Value 注入資源時，可以使用 classpath 和 classpath* 前綴來指定資源位置
+	classpath:
+		描述: 指定從單一的類路徑 (classpath) 根據相對路徑或絕對路徑來查找資源。
+		用法: 用於尋找單一資源，通常會從應用程式的根類路徑開始尋找。
+		範例: classpath:config/app.properties 表示從類路徑的根目錄尋找 config/app.properties 檔案。
+		適用情境: 當你確定資源在特定類路徑上且只存在一個時使用。
+	classpath*:
+		描述: 指定從多個類路徑（包括 JAR 檔案內）中查找所有匹配的資源。
+		用法: 用於搜尋多個類路徑，並返回所有找到的匹配資源。
+		範例: classpath*:config/app.properties 會從所有的類路徑（包括外部依賴的 JAR 檔案）中尋找 config/app.properties 檔案，並返回所有匹配的資源。
+		適用情境: 當你需要在多個 JAR 檔案或類路徑下搜尋相同名稱的資源時使用。

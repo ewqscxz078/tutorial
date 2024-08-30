@@ -13,3 +13,6 @@ https://docs.oracle.com/javaee/5/tutorial/doc/bnamu.html
 
 	並注意測試時不要將 "獨立專案的tld、tag jar" 開啟
 		不然 eclipse 使用 main 啟動 spring boot 會有讀取不到目錄問題
+	
+spring boot with jsp tag in different-module	
+	https://stackoverflow.com/questions/53636363/spring-boot-jsp-tag-in-different-module
