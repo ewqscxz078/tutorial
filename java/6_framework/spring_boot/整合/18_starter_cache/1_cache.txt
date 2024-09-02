@@ -9,6 +9,9 @@ ref
 	https://dev.to/noelopez/spring-cache-with-caffeine-384l
 		稍微詳細的說明
 
+	https://www.cnblogs.com/mumage/p/12497025.html
+		不錯的說明
+
 緩存使用場景
 	1. 數據重複訪問：需要多次訪問同一數據時。
 	2. 數據更新較少：當需要訪問的數據較少更新時。
@@ -58,6 +61,9 @@ Caffeine
 				return caffeineCacheManager;
 			}
 	3.使用方式
+		啟動類或配置類上宣告，告知啟用快取
+			@EnableCaching
+
 		加入緩存 : 當某個方法的返回值可以被重複使用時，適合使用 @Cacheable 來減少重複計算或查詢
 			直接使用
 				@Service
@@ -206,9 +212,9 @@ Caffeine
 		1.方法一: 於配置檔 @configuration 前宣告 @Profile("!dev") 非測試用的profile
 		2.方法二: 暫時註解
 			@Cacheable 宣告的地方
-	
+
 	8. CaffeineCacheManager 使用 <Object, Object> 作為泛型型別，
-		主要是為了提供靈活性和通用性。這樣的設計允許 CaffeineCacheManager 
+		主要是為了提供靈活性和通用性。這樣的設計允許 CaffeineCacheManager
 		能夠管理任何型別的快取資料，而不僅僅局限於某一特定的鍵值對型別。
 		以下是一些設計背後的原因
 			1. 通用性
@@ -219,5 +225,5 @@ Caffeine
 				你仍然可以將特定型別的鍵和值放入快取中，Spring 框架會在你存取快取時進行型別推斷
 				和轉換。例如，當你使用 @Cacheable 註解時，Spring 會自動處理快取中的型別轉換，
 				這樣你就可以在業務邏輯中使用特定的型別，而不需要關心底層快取的泛型定義。
-		
+
 		因此 LoadingCache 的手動建構越來越少使用，在需要cache的method 宣告 @Cacheable 即可

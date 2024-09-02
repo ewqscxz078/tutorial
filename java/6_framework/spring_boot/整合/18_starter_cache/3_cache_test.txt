@@ -58,7 +58,7 @@
 	@ActiveProfiles(profiles = "test")
 	@SpringBootTest
 	public class CacheGroupMenuServiceImplTest {
-	   
+
 
 		private static Logger LOGGER = LoggerFactory.getLogger(CacheGroupMenuServiceImplTest.class);
 

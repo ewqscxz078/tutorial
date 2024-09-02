@@ -2,12 +2,19 @@
 ==================================================================================================================
 ========================================= shedlock-spring ========================================================
 ==================================================================================================================
-https://github.com/lukas-krecan/ShedLock
-https://www.baeldung.com/shedlock-spring
+官網
+	https://github.com/lukas-krecan/ShedLock
+		https://github.com/lukas-krecan/ShedLock#troubleshooting
+
+baeldung
+	https://www.baeldung.com/shedlock-spring
+
+簡易說明
+	https://medium.com/@josephshih_11394/%E8%A7%A3%E6%B1%BA-springboot-scheduled-%E5%A4%9A%E5%8F%B0%E6%A9%9F%E5%99%A8%E9%87%8D%E8%A4%87%E5%9F%B7%E8%A1%8C-b861c458beea
 
 依賴
-	4.xx 僅能使用到 1.8
-	5.xx 要求 Java 11 或更高版本
+	4.xx 版本僅能使用到 1.8
+	5.xx 版本要求 Java 11 或更高版本
 		<dependency>
 			<groupId>net.javacrumbs.shedlock</groupId>
 			<artifactId>shedlock-spring</artifactId>
@@ -18,7 +25,7 @@ https://www.baeldung.com/shedlock-spring
 			<artifactId>shedlock-provider-jdbc-template</artifactId>
 			<version>5.14.0</version>
 		</dependency>
-		
+
 		<!-- 非必要，依需求改成使用的資料庫 -->
 		<dependency>
 			 <groupId>com.h2database</groupId>
@@ -58,7 +65,7 @@ https://www.baeldung.com/shedlock-spring
 	class BaeldungTaskScheduler {
 
 		@Scheduled(cron = "0 0/15 * * * ?")
-		@SchedulerLock(name = "TaskScheduler_scheduledTask", 
+		@SchedulerLock(name = "TaskScheduler_scheduledTask",
 		  lockAtLeastFor = "PT5M", lockAtMostFor = "PT14M")
 		public void scheduledTask() {
 			// ...

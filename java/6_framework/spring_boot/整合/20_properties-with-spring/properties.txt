@@ -1,0 +1,194 @@
+https://www.baeldung.com/properties-with-spring
+
+1.Register a Properties File via Annotations
+	設定方式
+		靜態方式
+			@Configuration
+			@PropertySource("classpath:foo.properties")
+			public class PropertiesWithJavaConfig {
+				//...
+			}
+
+		動態的方式
+			@PropertySource({
+			  "classpath:persistence-${envTarget:mysql}.properties"
+			})
+			...
+
+		Defining Multiple Property Locations
+			@PropertySource("classpath:foo.properties")
+			@PropertySource("classpath:bar.properties")
+			public class PropertiesWithJavaConfig {
+				//...
+			}
+
+			或者
+
+			@PropertySources({
+				@PropertySource("classpath:foo.properties"),
+				@PropertySource("classpath:bar.properties")
+			})
+			public class PropertiesWithJavaConfig {
+				//...
+			}
+	使用方式
+		1.Using/Injecting Properties
+			@Value( "${jdbc.url}" )
+			private String jdbcUrl;
+
+			或著多指定預設值
+				@Value( "${jdbc.url:aDefaultUrl}" )
+				private String jdbcUrl;
+
+		2.obtain the value of a property using the Environment API:
+			@Autowired
+			private Environment env;
+			...
+			dataSource.setUrl(env.getProperty("jdbc.url"));
+
+2.Properties With Spring Boot
+	2.1 : application.properties: the Default Property File
+		專案內預設路徑
+			put an application.properties file in our src/main/resources directory, and it will be auto-detected
+				src/main/resources/application.properties/yml 預設掃描
+		專案外指定
+			外部單一檔案
+				java -jar app.jar --spring.config.location=classpath:/another-location.properties
+			外部多個檔案
+				java -jar app.jar --spring.config.location=config/*/
+
+			Since version 2.4.0, Spring Boot supports using multi-document properties files
+				baeldung.customProperty=defaultValue
+				#---
+				baeldung.customProperty=overriddenValue
+
+	2.2 : Environment-Specific Properties File
+		src/main/resources/application-${profile}.properties
+			若其內容key與 application.properties 內容重複，且有宣告 spring-active-profile=${profile}
+
+	2.3 : Test-Specific Properties File
+		src/test/resources
+			Spring Boot handles this for us by looking in our src/test/resources directory during a test run. Again,
+			default properties will still be injectable as normal but will be overridden by these if there is a collision.
+
+		@TestPropertySource Annotation
+			This allows us to set test properties for a specific test context, taking precedence over the default property sources:
+				by src/test/resources/foo.properties
+					@RunWith(SpringRunner.class)
+					@TestPropertySource("/foo.properties")
+					public class FilePropertyInjectionUnitTest {
+
+						@Value("${foo}")
+						private String foo;
+
+						@Test
+						public void whenFilePropertyProvided_thenProperlyInjected() {
+							assertThat(foo).isEqualTo("bar");
+						}
+					}
+
+				by test 執行期給予
+					@RunWith(SpringRunner.class)
+					@TestPropertySource(properties = {"foo=bar"})
+					public class PropertyInjectionUnitTest {
+
+						@Value("${foo}")
+						private String foo;
+
+						@Test
+						public void whenPropertyProvided_thenProperlyInjected() {
+							assertThat(foo).isEqualTo("bar");
+						}
+					}
+				by @SpringBootTest annotation
+					@RunWith(SpringRunner.class)
+					@SpringBootTest(
+					  properties = {"foo=bar"}, classes = SpringBootPropertiesTestApplication.class)
+					public class SpringBootPropertyInjectionIntegrationTest {
+
+						@Value("${foo}")
+						private String foo;
+
+						@Test
+						public void whenSpringBootPropertyProvided_thenProperlyInjected() {
+							assertThat(foo).isEqualTo("bar");
+						}
+					}
+	2.4 Hierarchical Properties
+		Properties 設定
+			database.url=jdbc:postgresql:/localhost:5432/instance
+			database.username=foo
+			database.password=bar
+
+		yml 設定
+			database:
+			  url: jdbc:postgresql:/localhost:5432/instance
+			  username: foo
+			  password: bar
+			secret: foo
+
+		java 轉換(不管是properties、yml)
+			@ConfigurationProperties(prefix = "database")
+			public class Database {
+				String url;
+				String username;
+				String password;
+
+				// standard getters and setters
+			}
+
+	2.5 Importing Additional Configuration Files
+		application.properties or application.yml
+			spring.config.import
+				1.adding several files or directories
+				2.the files can be loaded either from the classpath or from an external directory
+				3.indicating if the startup process should fail if a file is not found, or if it’s an optional file
+				4.importing extensionless files
+				簡言之大概就是可以把常用的設定封裝，於各個專案需要時匯入事前已定義好的設定
+
+				範例
+					spring.config.import=classpath:additional-application.properties,
+					  classpath:additional-application[.yml],
+					  optional:file:./external.properties,
+					  classpath:additional-application-properties/
+
+			spring.config.additional-location
+				適合環境上額外加裝或覆蓋
+
+	2.6 Properties From Command Line Arguments
+		java -jar app.jar --property="value"
+
+		java -Dproperty.name="value" -jar app.jar
+
+	2.7 Properties From Environment Variables
+		export name=value
+		java -jar app.jar
+
+	2.8 Randomization of Property Values
+		random.number=${random.int}
+		random.long=${random.long}
+		random.uuid=${random.uuid}
+
+3. Configuration Using Raw Beans — the PropertySourcesPlaceholderConfigurer
+	@Bean
+	public static PropertySourcesPlaceholderConfigurer properties(){
+		PropertySourcesPlaceholderConfigurer pspc
+		  = new PropertySourcesPlaceholderConfigurer();
+		Resource[] resources = new ClassPathResource[ ]
+		  { new ClassPathResource( "foo.properties" ) };
+		pspc.setLocations( resources );
+		pspc.setIgnoreUnresolvablePlaceholders( true );
+		return pspc;
+	}
+
+4. Properties in Parent-Child Contexts
+	If the file is defined in the Parent context:
+		@Value works in Child context: YES
+		@Value works in Parent context: YES
+		environment.getProperty in Child context: YES
+		environment.getProperty in Parent context: YES
+	If the file is defined in the Child context:
+		@Value works in Child context: YES
+		@Value works in Parent context: NO
+		environment.getProperty in Child context: YES
+		environment.getProperty in Parent context: NO

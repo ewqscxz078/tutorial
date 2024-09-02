@@ -21,8 +21,8 @@ https://www.baeldung.com/spring-boot-custom-starter
 			org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 			org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
 			org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
-			
-			// 其檔案內容順序沒有直接影響，實際與 xxxxAutoConfiguration 上的相關依賴配置有關係，影響配置順序 
+
+			// 其檔案內容順序沒有直接影響，實際與 xxxxAutoConfiguration 上的相關依賴配置有關係，影響配置順序
 3.模式:
 啟動器(starter)
 	啟動器模塊是一個空 jar文件，僅提供輔助性依賴管理，這些依賴可能用於自動裝配或著其他類庫

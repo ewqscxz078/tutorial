@@ -1,0 +1,233 @@
+ref https://www.baeldung.com/exception-handling-for-rest-with-spring
+
+Exception Handling with Spring for a REST API.
+
+1.各種版本與情境處理 rest exception
+	Before Spring 3.2
+		in a Spring MVC application
+			HandlerExceptionResolver class
+			@ExceptionHandler annotation
+			但皆有明顯的缺點
+
+	Since 3.2
+		@ControllerAdvice annotation
+			處理上述兩點的缺點
+				促進整個應用程式的統一異常處理
+
+	Spring 5
+		ResponseStatusException 類別
+			在 REST API 中進行基本錯誤處理的快速方法。
+
+2.rest exception
+	2.1 : the Controller-Level @ExceptionHandler
+		僅對特定的控制器有效，而不是對整個應用程式全域有效
+			public class FooController{
+
+				//...
+				@ExceptionHandler({ CustomException1.class, CustomException2.class })
+				public void handleException() {
+					//
+				}
+			}
+		雖然可以透過將其寫在父類別繼承讓其統一，但可能有其他已存在的 base controller ，且該類在另一個jar中或不可修改的問題
+
+	2.2 : HandlerExceptionResolver
+		提供一個針對性的異常處理機制
+			spring 已提供的實作
+				ExceptionHandlerExceptionResolver
+					in Spring 3.1 and is enabled by default in the DispatcherServlet
+					其實也就是 @ExceptionHandler 實作
+
+				DefaultHandlerExceptionResolver
+					in Spring 3.0, and it’s enabled by default in the DispatcherServlet.
+						用於將標準 Spring 異常解析為其相應的 HTTP 狀態代碼，即客戶端錯誤 4xx 和伺服器錯誤 5xx 狀態代碼。
+						這是它處理的 Spring 異常的完整列表以及它們如何映射到狀態代碼。
+
+						雖然它確實正確設定了回應的狀態代碼，但一個限制是它不會為回應正文設定任何內容。
+						對於 REST API（狀態代碼實際上不足以向客戶端提供足夠的資訊），回應還必須有一個正文，
+						以允許應用程式提供有關失敗的附加資訊。
+
+						可以透過ModelAndView配置視圖解析度並渲染錯誤內容來解決，但該解決方案顯然不是最優的。
+						這就是為什麼 Spring 3.2 引入了一個更好的選項
+
+				ResponseStatusExceptionResolver
+					in Spring 3.0 and is enabled by default in the DispatcherServlet.
+						主要職責是使用自訂異常上可用的@ResponseStatus註釋並將這些異常映射到HTTP狀態代碼。
+							@ResponseStatus(value = HttpStatus.NOT_FOUND)
+							public class MyResourceNotFoundException extends RuntimeException {
+								public MyResourceNotFoundException() {
+									super();
+								}
+								public MyResourceNotFoundException(String message, Throwable cause) {
+									super(message, cause);
+								}
+								public MyResourceNotFoundException(String message) {
+									super(message);
+								}
+								public MyResourceNotFoundException(Throwable cause) {
+									super(cause);
+								}
+							}
+						與 DefaultHandlerExceptionResolver 相同，此解析器在處理回應正文的方式上受到限制 -
+						它確實將狀態代碼映射到回應上，但正文仍然為空
+
+				 Custom HandlerExceptionResolver
+					基於上述兩個 class 無法控制回應的正文。
+					理想情況下，我們希望能夠輸出 JSON 或 XML，這取決於客戶端要求的格式（透過 Accept 標頭）。
+					僅此一點就證明創建一個新的自訂異常解析器是合理的：
+						@Component
+						public class RestResponseStatusExceptionResolver extends AbstractHandlerExceptionResolver {
+
+							@Override
+							protected ModelAndView doResolveException(
+							  HttpServletRequest request,
+							  HttpServletResponse response,
+							  Object handler,
+							  Exception ex) {
+								try {
+									if (ex instanceof IllegalArgumentException) {
+										return handleIllegalArgument(
+										  (IllegalArgumentException) ex, response, handler);
+									}
+									...
+								} catch (Exception handlerException) {
+									logger.warn("Handling of [" + ex.getClass().getName() + "]
+									  resulted in Exception", handlerException);
+								}
+								return null;
+							}
+
+							private ModelAndView
+							  handleIllegalArgument(IllegalArgumentException ex, HttpServletResponse response)
+							  throws IOException {
+								response.sendError(HttpServletResponse.SC_CONFLICT);
+								String accept = request.getHeader(HttpHeaders.ACCEPT);
+								...
+								return new ModelAndView();
+							}
+						}
+					有其限制：它與低階 HtttpServletResponse 交互，並且適合使用 ModelAndView 的舊 MVC 模型，因此仍有改進的空間
+
+	2.3 : @ControllerAdvice
+		Spring 3.2 brings support for a global @ExceptionHandler with the @ControllerAdvice annotation
+			@ControllerAdvice 註解允許我們將先前的多個分散的 @ExceptionHandler 合併到一個全域錯誤處理元件中
+			它使我們能夠完全控制響應正文以及狀態代碼。
+			它提供了多個異常到同一方法的映射，以便一起處理。
+			它充分利用了較新的 RESTful ResponseEntity 響應。
+			這裡要記住的一件事是將使用 @ExceptionHandler 聲明的異常與用作方法參數的異常相匹配。
+
+			@ControllerAdvice
+			public class RestResponseEntityExceptionHandler
+			  extends ResponseEntityExceptionHandler {
+
+				@ExceptionHandler(value
+				  = { IllegalArgumentException.class, IllegalStateException.class })
+				protected ResponseEntity<Object> handleConflict(
+				  RuntimeException ex, WebRequest request) {
+					String bodyOfResponse = "This should be application specific";
+					return handleExceptionInternal(ex, bodyOfResponse,
+					  new HttpHeaders(), HttpStatus.CONFLICT, request);
+				}
+			}
+
+			注意:若沒有匹配的 exception 則編譯與 spring 不會有任何錯誤
+			但執行期時會
+				java.lang.IllegalStateException: No suitable resolver for argument [0] [type=...]
+				HandlerMethod details: ...
+
+
+	2.4 : ResponseStatusException (Spring 5 and Above)
+		@GetMapping(value = "/{id}")
+		public Foo findById(@PathVariable("id") Long id, HttpServletResponse response) {
+			try {
+				Foo resourceById = RestPreconditions.checkFound(service.findOne(id));
+
+				eventPublisher.publishEvent(new SingleResourceRetrievedEvent(this, response));
+				return resourceById;
+			 }
+			catch (MyResourceNotFoundException exc) {
+				 throw new ResponseStatusException(
+				   HttpStatus.NOT_FOUND, "Foo Not Found", exc);
+			}
+		}
+
+
+
+3.Handle the Access Denied in Spring Security
+	當經過身份驗證的使用者嘗試存取他沒有足夠權限存取的資源時，就會發生存取被拒絕的情況。
+
+	3.1 : REST and Method-Level Security
+		handle Access Denied exception thrown by method-level security annotations –
+			@PreAuthorize
+			@PostAuthorize
+			@Secure
+
+		@ControllerAdvice
+		public class RestResponseEntityExceptionHandler
+		  extends ResponseEntityExceptionHandler {
+
+			@ExceptionHandler({ AccessDeniedException.class })
+			public ResponseEntity<Object> handleAccessDeniedException(
+			  Exception ex, WebRequest request) {
+				return new ResponseEntity<Object>(
+				  "Access denied message here", new HttpHeaders(), HttpStatus.FORBIDDEN);
+			}
+
+			...
+		}
+
+4.Spring Boot Support
+	ErrorController implementation to handle errors in a sensible way.
+		瀏覽器提供後備錯誤頁面（也稱為 Whitelabel 錯誤頁面），並為 RESTful、非 HTML 請求提供 JSON 回應
+			{
+				"timestamp": "2019-01-17T16:12:45.977+0000",
+				"status": 500,
+				"error": "Internal Server Error",
+				"message": "Error processing the request!",
+				"path": "/my-endpoint-with-exceptions"
+			}
+
+		可透過可控配置做適當的調整
+			server.error.whitelabel.enabled
+			server.error.include-stacktrace
+			server.error.include-message
+
+		透過在上下文中包含 ErrorAttributes bean 來自定義要在回應中顯示的屬性。
+		我們可以擴展 Spring Boot 提供的 DefaultErrorAttributes 類別來讓事情變得更簡單
+			@Component
+			public class MyCustomErrorAttributes extends DefaultErrorAttributes {
+
+				@Override
+				public Map<String, Object> getErrorAttributes(
+				  WebRequest webRequest, ErrorAttributeOptions options) {
+					Map<String, Object> errorAttributes =
+					  super.getErrorAttributes(webRequest, options);
+					errorAttributes.put("locale", webRequest.getLocale()
+						.toString());
+					errorAttributes.remove("error");
+
+					//...
+
+					return errorAttributes;
+				}
+			}
+
+		如果我們想進一步定義（或覆寫）應用程式如何處理特定內容類型的錯誤，我們可以註冊一個 ErrorController bean。
+		同樣，我們可以利用 Spring Boot 提供的預設 BasicErrorController 來幫助我們。
+
+		例如:自訂應用程式如何處理 XML 端點中觸發的錯誤
+			@Component
+			public class MyErrorController extends BasicErrorController {
+
+				public MyErrorController(
+				  ErrorAttributes errorAttributes, ServerProperties serverProperties) {
+					super(errorAttributes, serverProperties.getError());
+				}
+
+				@RequestMapping(produces = MediaType.APPLICATION_XML_VALUE)
+				public ResponseEntity<Map<String, Object>> xmlError(HttpServletRequest request) {
+
+				// ...
+
+				}
+			}

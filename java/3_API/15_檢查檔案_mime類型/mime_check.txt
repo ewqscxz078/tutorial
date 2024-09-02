@@ -1,0 +1,75 @@
+ref chatGPT
+	MIME 類型是一種用來表示檔案格式的標準方式，通常用於網頁伺服器、電子郵件客戶端等系統中來判斷如何處理不同類型的檔案
+
+常見用於
+	文件上傳: 在處理上傳的文件時，自動檢測文件的 MIME 類型，以確保文件是有效且安全的格式。
+	文件處理: 根據文件的 MIME 類型來決定如何處理或顯示文件，例如在網頁應用程式中，根據 MIME 類型來設置合適的 Content-Type 標頭。
+	數據檢測: 驗證文件格式與其文件擴展名是否一致，防止文件偽裝或意外的格式錯誤。
+
+已知常見 API LIB
+	1. 使用 URLConnection.guessContentTypeFromStream() 方法:
+		Java 標準庫中 URLConnection 類提供了 guessContentTypeFromStream() 方法，根據文件流的前幾個字節來判斷 MIME 類型。
+			InputStream is = new FileInputStream(file);
+			String mimeType = URLConnection.guessContentTypeFromStream(is);
+
+		抉擇
+			特點: 這個方法通過檢查文件流的前幾個字節來猜測 MIME 類型。
+			優勢:
+				輕量級: 不需要額外的庫依賴，直接使用 Java 標準庫。
+				簡單快速: 適合快速、簡單的 MIME 類型檢測。
+			限制:
+				準確性較低: 只分析文件的前幾個字節，可能無法正確檢測某些文件類型。
+				不支持所有類型: 支持的文件類型範圍有限。
+			適用情境:
+				當你的應用程式只需要非常基本的 MIME 類型檢測，且不需要高準確性或廣泛的文件類型支持時，可以使用此方法。
+
+
+	2. 使用 Apache Tika
+		Apache Tika 是一個強大且流行的內容檢測工具，可以比 jmimemagic 提供更廣泛的文件類型支持。Spring Boot 可以輕鬆地與 Apache Tika 集成：
+			<dependency>
+				<groupId>org.apache.tika</groupId>
+				<artifactId>tika-core</artifactId>
+				<version>2.5.0</version>
+			</dependency>
+		Tika tika = new Tika();
+		String mimeType = tika.detect(file);
+
+		抉擇
+			特點: Apache Tika 是一個強大且全面的內容檢測工具，可以處理各種類型的文件。
+			優勢:
+				高準確性: 支持多種文件類型，包括文本、圖像、音頻、視頻等。
+				靈活性: 可以解析文件的內容、元數據，甚至提取文本內容。
+			限制:
+				重量級: 相對較大，對於只需要簡單 MIME 類型檢測的應用來說，可能有點過度。
+				依賴庫多: 引入 Apache Tika 會增加依賴庫的數量和應用程式的體積。
+			適用情境:
+				當需要高準確性、支持多種文件格式或需要從文件中提取更多信息時（如元數據、文本內容），Apache Tika 是一個非常好的選擇。
+
+	3. 使用 Files.probeContentType() 方法
+		Java NIO 提供的 Files.probeContentType() 方法，可以根據文件擴展名來判斷 MIME 類型
+			Path path = file.toPath();
+			String mimeType = Files.probeContentType(path);
+
+		抉擇
+			特點: Java NIO 的方法，根據文件擴展名來推測 MIME 類型。
+			優勢:
+				標準庫支持: 直接使用 Java 標準庫，不需要額外的依賴。
+				簡單使用: 只需要文件的路徑即可進行 MIME 類型檢測。
+			限制:
+				依賴文件擴展名: 如果文件擴展名不正確或缺失，檢測結果可能不準確。
+				平臺依賴性: 在不同的操作系統上，支持的文件類型可能會有所不同。
+			適用情境:
+				當文件擴展名可靠，且不需要檢查文件內容時，這是一個簡單且輕量的選擇。
+
+	4. 使用 jmimemagic (輕量的選擇)
+
+		抉擇
+			特點: 這是一個專門用來檢測文件 MIME 類型的第三方庫，基於文件的二進位內容進行分析。
+			優勢:
+				準確性較高: 根據文件的實際內容進行 MIME 類型檢測，而不是依賴擴展名。
+				靈活: 可以自定義 MIME 類型的檢測規則。
+			限制:
+				第三方依賴: 需要額外引入一個外部庫。
+				功能相對單一: 主要專注於 MIME 類型檢測，沒有 Apache Tika 那麼全面。
+			適用情境:
+				當需要根據文件內容進行高準確性的 MIME 類型檢測，且應用程式需要一個專門的工具時，jmimemagic 是一個適合的選擇。
