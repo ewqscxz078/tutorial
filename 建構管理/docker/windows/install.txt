@@ -3,97 +3,122 @@ windows 11
 ref
 	https://learn.microsoft.com/zh-tw/windows/wsl/tutorials/wsl-containers#install-docker-desktop
 
-1.安裝 wsl : 開發人員可以在 Windows 電腦上同時存取 Windows 和 Linux 的功能
-	1.第一次執行
-		wsl --install
-			ref https://learn.microsoft.com/zh-tw/windows/wsl/install
-		會被要求重新開機
-	2.第二次執行
-		wsl --install
-			會多要求設定帳號密碼
-				設定 linux unbuntu 管理員帳號密碼
-					ref https://learn.microsoft.com/zh-tw/windows/wsl/setup/environment#set-up-your-linux-username-and-password
-						davidchiu
-						root
-		options 客製化訊息
-			/home/davidchiu/.hushlogin file.
+共安裝工具
+	1.wsl(windows Subsystem for Linux)
+		在 windows 環境下直接操作 linux ，不需要雙啟動或使用虛擬機
+	2.Windows Terminal
+		開啟多個 tab 的 powershell 延伸
+	3.Visual Studio Code
+		IDE 編輯器
+			外掛整合
+				WSL
+					可以存取操作到 wsl
+				Dev Containers of vscode
+					讓您在容器內開啟專案資料夾或存放庫，利用 Visual Studio Code 的完整功能集在容器內執行開發工作
+					也就是可以開啟容器內檔案、遠端機器
+				docker
+					也就是可以編輯 dockerFile 編譯 dockerFile 成 image，將 image 執行成 container
+					不透過指令的方式執行 docker 指令
+	4.Docker Desktop for windows
+		window gui for docker
 
-		針對 Ubuntu 或 Debian
-			更新和升級套件
-				sudo apt update && sudo apt upgrade
+安裝過程
+	1.安裝 wsl : 開發人員可以在 Windows 電腦上同時存取 Windows 和 Linux 的功能
+		1.第一次執行
+			wsl --install
+				ref https://learn.microsoft.com/zh-tw/windows/wsl/install
+				預設安裝 Ubuntu
+				變更安裝的發行版本
+					wsl --install -d <Distribution Name>
+					<Distribution Name> 可透過以下指令查詢
+						wsl --list --online 或 wsl -l -o
+			會被要求重新開機
+		2.第二次執行
+			wsl --install
+				會多要求設定帳號密碼
+					設定 linux unbuntu 管理員帳號密碼
+						ref https://learn.microsoft.com/zh-tw/windows/wsl/setup/environment#set-up-your-linux-username-and-password
+							davidchiu
+							root
+			options 客製化訊息
+				/home/davidchiu/.hushlogin file.
 
-	3.安裝 Windows Terminal : 就是可以開啟多個 tab 的 powershell 延伸 (取代 powershell 操作用，因為較為方便好用)
-		Windows Terminal 可以使用命令列介面執行任何應用程式。 其主要功能包括多個索引標籤、窗格、Unicode 和 UTF-8 字元支援、GPU 加速文字轉譯引擎，
-		以及讓您能夠建立自己的佈景主題並自訂文字、色彩、背景和快速鍵。
+			針對 Ubuntu 或 Debian
+				更新和升級套件
+					sudo apt update && sudo apt upgrade
 
-		每當安裝新的 WSL Linux 發行版本時，就會在 Windows Terminal 內為其建立新的執行個體，您可以針對自己的喜好設定自訂該執行個體。
+		3.安裝 Windows Terminal : 就是可以開啟多個 tab 的 powershell 延伸 (取代 powershell 操作用，因為較為方便好用)
+			Windows Terminal 可以使用命令列介面執行任何應用程式。 其主要功能包括多個索引標籤、窗格、Unicode 和 UTF-8 字元支援、GPU 加速文字轉譯引擎，
+			以及讓您能夠建立自己的佈景主題並自訂文字、色彩、背景和快速鍵。
 
-		建議您搭配 Windows Terminal 使用 WSL，特別是當您打算使用多個命令列時。
-		ref https://learn.microsoft.com/zh-tw/windows/terminal/install
+			每當安裝新的 WSL Linux 發行版本時，就會在 Windows Terminal 內為其建立新的執行個體，您可以針對自己的喜好設定自訂該執行個體。
 
-		開啟方式為
-			搜尋 : 終端機
+			建議您搭配 Windows Terminal 使用 WSL，特別是當您打算使用多個命令列時。
+			ref https://learn.microsoft.com/zh-tw/windows/terminal/install
 
-	4.檔案儲存時建議 : 檔案儲存體
-		若要在 Windows 檔案總管中開啟 WSL 專案，請輸入：explorer.exe .
-		請務必在命令結尾新增句點，以開啟目前的目錄。
+			開啟方式為
+				搜尋 : 終端機
 
-		將專案檔儲存在與您計畫使用之工具相同的作業系統上。
-		如需最快的效能速度，如果您是在 Linux 命令列 (Ubuntu、OpenSUSE 等) 中使用 Linux 工具處理這些檔案，請將檔案儲存在 WSL 檔案系統中。 如果您使用 Windows 工具在 Windows 命令列 (PowerShell、命令提示字元) 中運作，請將檔案儲存在 Windows 檔案系統中。 檔案可以跨作業系統存取，但可能會大幅降低效能。
+		4.檔案儲存時建議 : 檔案儲存體
+			若要在 Windows 檔案總管中開啟 WSL 專案，請輸入：explorer.exe .
+			請務必在命令結尾新增句點，以開啟目前的目錄。
 
-		例如，儲存 WSL 專案檔時：
-			使用 Linux 檔案系統根目錄：\\wsl$\<DistroName>\home\<UserName>\Project
-			不是 Windows 檔案系統根目錄：C:\Users\<UserName>\Project 或 /mnt/c/Users/<UserName>/Project$
+			將專案檔儲存在與您計畫使用之工具相同的作業系統上。
+			如需最快的效能速度，如果您是在 Linux 命令列 (Ubuntu、OpenSUSE 等) 中使用 Linux 工具處理這些檔案，請將檔案儲存在 WSL 檔案系統中。 如果您使用 Windows 工具在 Windows 命令列 (PowerShell、命令提示字元) 中運作，請將檔案儲存在 Windows 檔案系統中。 檔案可以跨作業系統存取，但可能會大幅降低效能。
 
-	5.安裝您慣用的程式碼編輯器
-		ref https://learn.microsoft.com/zh-tw/windows/wsl/tutorials/wsl-vscode
-			1.安裝 Visual Studio Code
-				請遵循此逐步指南以開始使用 Visual Studio Code 與 WSL，其中包括安裝遠端開發延伸模組套件。
-				此延伸模組可讓您執行 WSL、SSH 或開發容器，以使用完整的 Visual Studio Code 功能集進行編輯和偵錯。
-				在不同、個別的開發環境之間快速交換並進行更新，而不必擔心影響本機電腦。
-					將 Visual Studio Code 與 Windows 子系統 Linux 版搭配使用以開始使用
-						基本上下一步即可
+			例如，儲存 WSL 專案檔時：
+				使用 Linux 檔案系統根目錄：\\wsl$\<DistroName>\home\<UserName>\Project
+				不是 Windows 檔案系統根目錄：C:\Users\<UserName>\Project 或 /mnt/c/Users/<UserName>/Project$
 
-			2.使用 VS Code 在遠端容器中開發
-				安裝 VS Code WSL 擴充功能。 此擴充功能可讓您開啟在 VS Code 中的 WSL 上執行的 Linux 專案 (不需要擔心路徑問題、二進位相容性或其他跨 OS 挑戰)。
-					1.安裝遠端開發延伸模組套件
-						點擊安裝下載即可 : 會要求開啟 vs code 畫面 install
-							ref https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack
-				安裝 VS Code 開發容器擴充功能。 此擴充功能可讓您在容器內開啟專案資料夾或存放庫，利用 Visual Studio Code 的完整功能集在容器內執行開發工作。
-					1.安裝 Dev Containers of vscode
-						點擊安裝下載即可 : 會要求開啟 vs code 畫面 install : 看起來預設已經會自動安裝，若已安裝可忽略
-							ref https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers
-				安裝 VS Code Docker 擴充功能。 此擴充功能會新增功能，以便從 VS Code 內部建置、管理及部署容器化應用程式。 (您需要開發容器擴充功能，才能實際使用容器作為開發環境。)
-					1.安裝 docker of vsocde
-						點擊安裝下載即可 : 會要求開啟 vs code 畫面 install
-							ref https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker
+		5.安裝您慣用的程式碼編輯器
+			ref https://learn.microsoft.com/zh-tw/windows/wsl/tutorials/wsl-vscode
+				1.安裝 Visual Studio Code
+					請遵循此逐步指南以開始使用 Visual Studio Code 與 WSL，其中包括安裝遠端開發延伸模組套件。
+					此延伸模組可讓您執行 WSL、SSH 或開發容器，以使用完整的 Visual Studio Code 功能集進行編輯和偵錯。
+					在不同、個別的開發環境之間快速交換並進行更新，而不必擔心影響本機電腦。
+						將 Visual Studio Code 與 Windows 子系統 Linux 版搭配使用以開始使用
+							基本上下一步即可
 
-			3.更新您的 Linux 發行版本
-				更新 Debian 或 Ubuntu，請使用
-					sudo apt-get update
-				若要新增 wget (從網頁伺服器擷取內容) 和 ca-certificates (允許 SSL 型應用程式檢查 SSL 連線的真實性)
-					sudo apt-get install wget ca-certificates
-			4.重新開機
+				2.使用 VS Code 在遠端容器中開發
+					安裝 VS Code WSL 擴充功能。 此擴充功能可讓您開啟在 VS Code 中的 WSL 上執行的 Linux 專案 (不需要擔心路徑問題、二進位相容性或其他跨 OS 挑戰)。
+						1.安裝遠端開發延伸模組套件
+							點擊安裝下載即可 : 會要求開啟 vs code 畫面 install
+								ref https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack
+					安裝 VS Code 開發容器擴充功能。 此擴充功能可讓您在容器內開啟專案資料夾或存放庫，利用 Visual Studio Code 的完整功能集在容器內執行開發工作。
+						1.安裝 Dev Containers of vscode
+							點擊安裝下載即可 : 會要求開啟 vs code 畫面 install : 看起來預設已經會自動安裝，若已安裝可忽略
+								ref https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers
+					安裝 VS Code Docker 擴充功能。 此擴充功能會新增功能，以便從 VS Code 內部建置、管理及部署容器化應用程式。 (您需要開發容器擴充功能，才能實際使用容器作為開發環境。)
+						1.安裝 docker of vsocde
+							點擊安裝下載即可 : 會要求開啟 vs code 畫面 install
+								ref https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker
 
-			5.在 Visual Studio Code 中開啟 WSL 專案
-				從命令列中 透過 wsl
-					code .
-				從 VS Code
-					使用快捷方式來存取更多 VS Code WSL 選項： CTRL+SHIFT+P 在 VS Code 中顯示命令選擇區。
-					如果您接著輸入 WSL，您會看到可用的選項清單，可讓您重新開啟 WSL 工作階段中的資料夾、指定您要在其中開啟的發行版本等等。
+				3.更新您的 Linux 發行版本
+					更新 Debian 或 Ubuntu，請使用
+						sudo apt-get update
+					若要新增 wget (從網頁伺服器擷取內容) 和 ca-certificates (允許 SSL 型應用程式檢查 SSL 連線的真實性)
+						sudo apt-get install wget ca-certificates
+				4.重新開機
 
-	6.確認 wsl 版本
-		powershell with 管理員開啟
-			wsl --help
-				wsl -v
+				5.在 Visual Studio Code 中開啟 WSL 專案
+					從命令列中 透過 wsl
+						code .
+					從 VS Code
+						使用快捷方式來存取更多 VS Code WSL 選項： CTRL+SHIFT+P 在 VS Code 中顯示命令選擇區。
+						如果您接著輸入 WSL，您會看到可用的選項清單，可讓您重新開啟 WSL 工作階段中的資料夾、指定您要在其中開啟的發行版本等等。
 
-2.在 WSL 2 上開始使用 Docker 遠端容器
-	安裝下載 Docker Desktop 並遵循安裝指示
-		ref https://learn.microsoft.com/zh-tw/windows/wsl/tutorials/wsl-containers#install-docker-desktop
+		6.確認 wsl 版本
+			powershell with 管理員開啟
+				wsl --help
+					wsl -v
 
-		1.安裝 Docker Desktop on Windows
-			ref https://docs.docker.com/desktop/install/windows-install/
-			安裝完後會要求重開機
-		2.確認是否安裝成功
-			powershell with 管理員開啟 或 Windows Terminal
-				docker --version
+	2.在 WSL 2 上開始使用 Docker 遠端容器
+		安裝下載 Docker Desktop 並遵循安裝指示
+			ref https://learn.microsoft.com/zh-tw/windows/wsl/tutorials/wsl-containers#install-docker-desktop
+
+			1.安裝 Docker Desktop on Windows
+				ref https://docs.docker.com/desktop/install/windows-install/
+				安裝完後會要求重開機
+			2.確認是否安裝成功
+				powershell with 管理員開啟 或 Windows Terminal
+					docker --version

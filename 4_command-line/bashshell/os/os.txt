@@ -1,4 +1,4 @@
-看unix os version
+看 unix os version
 	uname -a
 
 	cat /etc/os-release
