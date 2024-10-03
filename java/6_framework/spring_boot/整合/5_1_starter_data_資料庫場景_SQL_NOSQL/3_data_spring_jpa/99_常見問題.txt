@@ -1,3 +1,4 @@
 Q1.jpa insert 時出現 當 identity_insert 設為 off 時,無法將外顯值插入資料表
 A1.意思為嘗試 insert 一個欄位為資料庫自增模式，應該將其排除在insert 的欄位語法
 	檢查 entity 的@Id是否有少宣告資料庫自增宣告
+	

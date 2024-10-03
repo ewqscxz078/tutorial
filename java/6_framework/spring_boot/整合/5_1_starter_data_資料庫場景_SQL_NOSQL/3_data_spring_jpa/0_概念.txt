@@ -20,3 +20,18 @@ JPA 與 Spring Data
 	3.@Query 自訂查詢，訂製查詢SQL
 
 	4.Specifications 查詢 (Spring Data JPA 支持 JAP2.0 的 Criteria 查詢)
+
+優勢
+	ref https://ithelp.ithome.com.tw/articles/10325963
+	減少樣板程式碼：
+		傳統的數據訪問層常常需要大量的樣板程式碼，如連接資料庫、處理事務、解析結果集等。使用Spring Data JPA，許多這些工作都由框架自動處理，從而減少了冗長的程式碼。
+	提高生產力：
+		由於Spring Data JPA自動生成基本的CRUD操作，開發人員能夠專注於業務邏輯的實現，而不必花費太多時間在數據訪問層的開發上。這提高了開發效率並加快了產品上市速度。
+	多資料庫支持：
+		g Data JPA支持多種關聯式資料庫，包括但不限於MySQL、PostgreSQL、Oracle、SQL Server等。這使得應用程式更具靈活性，可以輕鬆切換或兼容不同的資料庫。
+	關聯映射： 易於定義和管理不同實體類之間的關聯，提供了資料庫結構的靈活性。
+		開源社區支持：
+		Spring Data JPA是Spring框架的一部分，擁有強大的開源社區支持。這意味著您可以輕鬆獲取解答、示例程式碼和擴展，並參與社區的討論和貢獻。
+		
+ref jpa 教學
+	https://www.baeldung.com/tag/spring-data-jpa

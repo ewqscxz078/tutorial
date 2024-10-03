@@ -1,0 +1,89 @@
+繼承關係
+	單層次介面繼承
+		Repository
+			CrudRepository
+				ListCrudRepository
+			PagingAndSortingRepository
+				ListPagingAndSortingRepository
+		QueryByExampleExecutor
+	多層次介面繼承
+		JpaRepository extends ListCrudRepository<T, ID>, ListPagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T>
+
+API
+	CrudRepository
+		<S extends T> S save(S entity);
+		<S extends T> Iterable<S> saveAll(Iterable<S> entities);
+		Optional<T> findById(ID id);
+		boolean existsById(ID id);
+		Iterable<T> findAll();
+		Iterable<T> findAllById(Iterable<ID> ids);
+		long count();
+		void deleteById(ID id);
+		void delete(T entity);
+		void deleteAllById(Iterable<? extends ID> ids);
+		void deleteAll(Iterable<? extends T> entities);
+		void deleteAll();
+
+		ListCrudRepository
+			<S extends T> List<S> saveAll(Iterable<S> entities);
+			List<T> findAll();
+			List<T> findAllById(Iterable<ID> ids);
+
+	PagingAndSortingRepository
+		Iterable<T> findAll(Sort sort);
+		Page<T> findAll(Pageable pageable);
+	
+	ListPagingAndSortingRepository
+		List<T> findAll(Sort sort);
+	
+	QueryByExampleExecutor
+		<S extends T> Optional<S> findOne(Example<S> example);
+		<S extends T> Iterable<S> findAll(Example<S> example);
+		<S extends T> Iterable<S> findAll(Example<S> example, Sort sort);
+		<S extends T> Page<S> findAll(Example<S> example, Pageable pageable);
+		<S extends T> long count(Example<S> example);
+		<S extends T> boolean exists(Example<S> example);
+		<S extends T, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction);		
+	
+	JpaRepository
+		void flush();
+		<S extends T> S saveAndFlush(S entity);
+		<S extends T> List<S> saveAllAndFlush(Iterable<S> entities);
+		void deleteAllInBatch(Iterable<T> entities);
+		void deleteAllByIdInBatch(Iterable<ID> ids);
+		void deleteAllInBatch();
+		<S extends T> List<S> findAll(Example<S> example);
+		<S extends T> List<S> findAll(Example<S> example, Sort sort);
+
+	save() and saveAndFlush() 差異
+		ref
+			https://www.cnblogs.com/zouhong/p/13530900.html
+			https://www.baeldung.com/spring-data-jpa-save-saveandflush
+		
+				JPA => 內存/記憶體 => 資料庫
+
+				save(entity) 
+					1.save entity to 內存/記憶體
+					2.save 是 CrudRepository 下的
+				saveAndFlush(entity)
+					1.saveAndFlush entity to 資料庫 // 立即寫到資料庫
+					2.saveAndFlush 是 JpaRepository 下的
+					
+				1.一般情況下save就夠了
+
+				2.但是如果在同一個transaction裡，例如你在方法上標了@Transactional，這時你想先保存Order，
+					然後直接在這個Transaction裡保存OrderItem，但是OrderItem需要新建的Order的ID，這時候儲存Order就可以用saveAndFlush，你的Entity就會有儲存在資料裡的id了。
+					常見用於當在一個交易內裡，嘗試要馬上拿到存取到資料庫後自動生成的 id 的結果後以利其他 entity 設置其 id 後才最終寫到資料
+					通常，當我們的業務邏輯需要在同一事務期間但在提交之前讀取已儲存的變更時，我們會使用此方法。
+
+				3.Transaction是資料庫提供的服務，跟spring啥的沒啥關係，spring只是依照資料庫廠商提供的規格來擴充了一下。
+
+				4.要理解save和saveAndFlush原理的，可以先去資料裡試試Transaction，原來就是set auto_commit = 0; commit，rollback。
+					這裡的flush就是commit的意思。
+				5.Spring Data JPA高並發下，使用save()發現無論怎麼同步鎖定都會出現資料誤差，後來換成saveAndFlush()方法結果對了，以此推斷save()方法具有延遲性。
+			
+假設
+	public interface UserRepository extends JpaRepository<User,Integer>{
+	}
+	
+	findAll(Sort.by(Sort.Direction.ASC, "name")); // ref ListPagingAndSortingRepository List<T> findAll(Sort sort);
