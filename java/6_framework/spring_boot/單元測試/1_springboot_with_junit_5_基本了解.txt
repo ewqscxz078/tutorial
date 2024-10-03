@@ -47,5 +47,5 @@ https://www.youtube.com/watch?v=X60MOsSfSTk&list=PLmOn9nNkQxJFKh2PMfWbGT7RVuMows
 			@SpringBootTest + @RunWith(SpringTest.class)
 
 	SpringBoot整合Junit以後。
-	● 編寫測試方法：@Test標註（注意需要使用junit5版本的註解）
-	● Junit類具有Spring的功能，@Autowired、比如 @Transactional 標註測試方法，測試完成後自動回滾
+		● 編寫測試方法：@Test標註（注意需要使用junit5版本的註解）
+		● Junit類具有Spring的功能，@Autowired、比如 @Transactional 標註測試方法，測試完成後自動回滾

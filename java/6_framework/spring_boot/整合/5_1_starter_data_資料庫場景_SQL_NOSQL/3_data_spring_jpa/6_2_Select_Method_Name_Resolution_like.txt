@@ -30,7 +30,7 @@ https://www.baeldung.com/spring-jpa-like-queries
 
 1.預設提供
 	1.1. Containing, Contains, IsContaining and Like
-		target : SELECT * FROM movie WHERE title LIKE '%in%';
+		// target : SELECT * FROM movie WHERE title LIKE '%in%';
 
 		List<Movie> results = movieRepository.findByTitleContaining("in");
 		assertEquals(3, results.size());
@@ -47,13 +47,13 @@ https://www.baeldung.com/spring-jpa-like-queries
 		皆為相等意思
 
 	1.2. StartsWith
-		target : SELECT * FROM Movie WHERE Rating LIKE 'PG%';
+		// target : SELECT * FROM Movie WHERE Rating LIKE 'PG%';
 
 		List<Movie> results = movieRepository.findByRatingStartsWith("PG");
 		assertEquals(6, results.size());
 
 	1.3. EndsWith
-		target : SELECT * FROM Movie WHERE director LIKE '%Burton';
+		// target : SELECT * FROM Movie WHERE director LIKE '%Burton';
 
 		List<Movie> results = movieRepository.findByDirectorEndsWith("Burton");
 		assertEquals(1, results.size());

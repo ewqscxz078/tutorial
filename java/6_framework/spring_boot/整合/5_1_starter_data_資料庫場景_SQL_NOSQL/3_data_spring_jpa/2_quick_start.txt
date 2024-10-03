@@ -6,12 +6,12 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 4.創建 Repository 接口繼承 JpaRepository
 5.測試方法
 
-
-Repository
-	RevisionRepository
-	CrudRepository
-		PagingAndSortingRepository
-			JpaRepository
+繼承關係
+	Repository
+		RevisionRepository
+		CrudRepository
+			PagingAndSortingRepository
+				JpaRepository
 
 1.application.yml
 	撰寫 dataSource 資料庫來源設定
