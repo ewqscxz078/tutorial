@@ -32,10 +32,10 @@ API
 	PagingAndSortingRepository
 		Iterable<T> findAll(Sort sort);
 		Page<T> findAll(Pageable pageable);
-	
+
 	ListPagingAndSortingRepository
 		List<T> findAll(Sort sort);
-	
+
 	QueryByExampleExecutor
 		<S extends T> Optional<S> findOne(Example<S> example);
 		<S extends T> Iterable<S> findAll(Example<S> example);
@@ -43,8 +43,8 @@ API
 		<S extends T> Page<S> findAll(Example<S> example, Pageable pageable);
 		<S extends T> long count(Example<S> example);
 		<S extends T> boolean exists(Example<S> example);
-		<S extends T, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction);		
-	
+		<S extends T, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction);
+
 	JpaRepository
 		void flush();
 		<S extends T> S saveAndFlush(S entity);
@@ -59,16 +59,16 @@ API
 		ref
 			https://www.cnblogs.com/zouhong/p/13530900.html
 			https://www.baeldung.com/spring-data-jpa-save-saveandflush
-		
+
 				JPA => 內存/記憶體 => 資料庫
 
-				save(entity) 
+				save(entity)
 					1.save entity to 內存/記憶體
 					2.save 是 CrudRepository 下的
 				saveAndFlush(entity)
 					1.saveAndFlush entity to 資料庫 // 立即寫到資料庫
 					2.saveAndFlush 是 JpaRepository 下的
-					
+
 				1.一般情況下save就夠了
 
 				2.但是如果在同一個transaction裡，例如你在方法上標了@Transactional，這時你想先保存Order，
@@ -81,9 +81,9 @@ API
 				4.要理解save和saveAndFlush原理的，可以先去資料裡試試Transaction，原來就是set auto_commit = 0; commit，rollback。
 					這裡的flush就是commit的意思。
 				5.Spring Data JPA高並發下，使用save()發現無論怎麼同步鎖定都會出現資料誤差，後來換成saveAndFlush()方法結果對了，以此推斷save()方法具有延遲性。
-			
+
 假設
 	public interface UserRepository extends JpaRepository<User,Integer>{
 	}
-	
+
 	findAll(Sort.by(Sort.Direction.ASC, "name")); // ref ListPagingAndSortingRepository List<T> findAll(Sort sort);

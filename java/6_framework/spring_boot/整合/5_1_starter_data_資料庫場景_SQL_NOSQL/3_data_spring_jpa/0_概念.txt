@@ -32,6 +32,6 @@ JPA 與 Spring Data
 	關聯映射： 易於定義和管理不同實體類之間的關聯，提供了資料庫結構的靈活性。
 		開源社區支持：
 		Spring Data JPA是Spring框架的一部分，擁有強大的開源社區支持。這意味著您可以輕鬆獲取解答、示例程式碼和擴展，並參與社區的討論和貢獻。
-		
+
 ref jpa 教學
 	https://www.baeldung.com/tag/spring-data-jpa

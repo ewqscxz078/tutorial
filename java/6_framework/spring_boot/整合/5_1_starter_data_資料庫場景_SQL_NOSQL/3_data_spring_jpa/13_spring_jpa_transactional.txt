@@ -17,7 +17,7 @@ ref chatGPT
 寫操作或混合操作：
 	建議在 service 層手動加上 @Transactional，特別是當你有多個寫操作時，
 	需要確保它們在同一個事務中進行。
-	
+
 因此，雖然 Spring Boot JPA 對 repository 的部分操作有預設行為，
 但更複雜的操作場景還是需要你自行宣告 @Transactional。
 範例:

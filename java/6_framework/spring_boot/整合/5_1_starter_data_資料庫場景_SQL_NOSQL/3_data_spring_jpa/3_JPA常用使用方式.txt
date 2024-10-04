@@ -22,7 +22,7 @@ https://medium.com/@AlexanderObregon/optimizing-queries-with-query-annotation-in
 		ref https://www.baeldung.com/spring-data-query-by-example
 		根據實體的屬性值進行查詢，而不需要手動撰寫查詢語句
 		適合的場景
-			1.簡單查詢，靈活條件： 
+			1.簡單查詢，靈活條件：
 				當你有一個實體對象，並希望根據其多個屬性進行查詢時
 				而不需要手動編寫複雜的 JPQL 或 Criteria 查詢
 			2.動態查詢需求：
@@ -33,26 +33,26 @@ https://medium.com/@AlexanderObregon/optimizing-queries-with-query-annotation-in
 			3.避免複雜的查詢邏輯：
 				如果項目中需要經常根據對象的不同屬性進行查詢，QueryByExampleExecutor 可以幫助你減少大量手動編寫 JPQL 或 Criteria API 的工作，簡化開發流程。
 
-			4.無需手寫查詢語句的簡單匹配查詢： 
+			4.無需手寫查詢語句的簡單匹配查詢：
 				對於一些查詢場景，特別是條件較為靈活、動態的情況，QueryByExampleExecutor 能夠讓你快速進行簡單的查詢匹配（例如等值匹配），
 				而不需要額外編寫 repository 方法或 SQL。
 		不適合的場景
-			複雜的關聯查詢： 
+			複雜的關聯查詢：
 				如果你需要進行跨實體的關聯查詢或更複雜的條件（如子查詢、分組、排序等），QueryByExampleExecutor 可能不太適合，
 				這時應該考慮使用 JPQL、Criteria API 或 Spring Data JPA 提供的其他查詢機制。
 
-			精確控制查詢的效率： 
+			精確控制查詢的效率：
 				由於 QueryByExampleExecutor 是基於實體範例的自動生成查詢邏輯，對於一些性能敏感的應用場景，
 				你可能會希望對查詢進行更精細的控制（例如，使用原生 SQL 或優化的 JPQL 查詢），這樣可以避免自動生成查詢可能導致的效率問題。
 
 		使用 QueryByExampleExecutor 的好處
-			1.避免編寫動態 JPQL 查詢： 
+			1.避免編寫動態 JPQL 查詢：
 				在動態查詢中，傳統做法是使用 Criteria API 或拼接動態 JPQL 語句，但這樣會導致程式碼變得冗長且難以維護。
 				QueryByExampleExecutor 可以通過提供一個帶有查詢條件的實體範例來自動生成查詢邏輯，減少了繁瑣的查詢語句編寫
-			2.自動處理屬性判斷： 
+			2.自動處理屬性判斷：
 				QueryByExampleExecutor 會根據範例實體中的屬性來決定哪些屬性應該被包括在查詢中，
 				避免了手動處理是否為 null 或默認值的邏輯
-			3.結合 Matcher 擴展靈活性： 
+			3.結合 Matcher 擴展靈活性：
 				Spring Data 提供了 ExampleMatcher，可以讓你對查詢的匹配行為進行進一步配置。
 				例如，你可以控制是否忽略大小寫、是否進行部分匹配（如前綴、後綴匹配）等。
 					ExampleMatcher matcher = ExampleMatcher.matching()
@@ -60,7 +60,7 @@ https://medium.com/@AlexanderObregon/optimizing-queries-with-query-annotation-in
 										 .withMatcher("username", ExampleMatcher.GenericPropertyMatchers.startsWith());
 					Example<User> example = Example.of(probe, matcher);
 					List<User> users = userRepository.findAll(example);
-			4.與 Spring Data JPA 無縫整合： 
+			4.與 Spring Data JPA 無縫整合：
 				QueryByExampleExecutor 與 Spring Data JPA 原生的 Repository 機制結合使用，讓查詢功能變得更自然且易於使用。
 				你只需讓你的 repository 繼承 QueryByExampleExecutor，即可輕鬆使用這種查詢方式。
 
