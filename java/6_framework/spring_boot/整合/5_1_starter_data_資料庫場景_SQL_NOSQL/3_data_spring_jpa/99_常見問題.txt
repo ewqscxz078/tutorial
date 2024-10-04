@@ -1,4 +1,72 @@
 Q1.jpa insert 時出現 當 identity_insert 設為 off 時,無法將外顯值插入資料表
 A1.意思為嘗試 insert 一個欄位為資料庫自增模式，應該將其排除在insert 的欄位語法
 	檢查 entity 的@Id是否有少宣告資料庫自增宣告
-	
+
+Q2. 嘗試使用 repository.save(entity)
+	出現錯誤
+		com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Table 'test.hibernate_sequence' doesn't exist
+A2.
+	https://stackoverflow.com/questions/32968527/hibernate-sequence-doesnt-exist
+		application.yml
+			spring.jpa.hibernate.use-new-id-generator-mappings: false # 等於原本 hibernate 4 預設 id 生成策略
+
+
+Q3.出現編譯錯誤
+	|[ERROR] cannot access javax.interceptor.InterceptorBinding
+							 |  class file for javax.interceptor.InterceptorBinding not found
+							 |  Consult the following stack trace for details.
+							 |  com.sun.tools.javac.code.Symbol$CompletionFailure: class file for javax.interceptor.InterceptorBinding not found
+A3.交易宣告 @Transactional
+	   應使用 springframework Transactional
+			   -import javax.transaction.Transactional;
+					   若誤用會出現編譯錯誤
+							   除非加入依賴
+									   javax.interceptor.javax.interceptor-api
+			   +import org.springframework.transaction.annotation.Transactional;
+					   可能造成非預期問題
+							   1.功能限制
+									   javax.transaction.Transactional
+											   僅提供最基本事務控制
+									   springframework Transactional
+											   多提供了交易傳播行為(Propagation)、隔離級別(Isolation)、回滾規則(Rollback Rules)
+							   2.集成問題
+									   使用 javax.transaction.Transactional 無法有效與 spring 交易管理有效整合處理
+
+							   3.異常處理不同
+									   javax.transaction.Transactional
+											   對異常回滾行為與Spring 不同可能導致回滾邏輯與期望不一致
+									   springframework Transactional
+											   默認對未捕獲的RuntimeException進行回滾，可通過設置 RollbackFor指定那些異常應該觸發回滾
+							   4.跨平台移植性考量
+									   若是 Java EE 應用伺服器上 javax.transaction.Transactional，可能較適合
+									   但在 spring boot 則應使用 springframework Transactional 較為靈活管理
+
+Q4.客製 jpa dao 交易傳遞非預期
+A4.客製 jpa dao
+       -    @Autowired
+       +    @PersistenceContext
+			private EntityManager entityManager;
+				   沒法使用到 jpa 傳遞效果
+
+
+Q5.自訂 jpa query
+       出現 null return value from advice does not match primitive return type for 錯誤
+A5.當僅撈取數值欄位時，若條件不符合時，會傳會是 null ，應該使用 Integer 回傳並再針對 null 做後續處理
+       select top 1 order_id 若沒有會 null *，當條件不符合時
+               回傳應該 int => Integer
+       select count(0) 若沒有會 null，當條件不符合時
+               回傳應該 int => Integer
+       select ${任意欄位為數值} 若沒有會 null，當條件不符合時
+               回傳應該 int => Integer
+
+       同場加映
+               自訂 jpa with Modifying
+                       delete
+                               回傳 int 若沒有會 0
+                               回傳 Integer 若沒有會  null
+                       update 若沒有會 null
+                               回傳 int 若沒有會 0
+                               回傳 Integer 若沒有會  null
+                       insert 若沒有會 null
+                               回傳 int 若沒有會 0
+                               回傳 Integer 若沒有會  null

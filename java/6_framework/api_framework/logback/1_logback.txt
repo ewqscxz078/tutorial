@@ -20,15 +20,20 @@ https://logback.qos.ch/dependencies.html
     <artifactId>slf4j-api</artifactId>
     <version>1.7.30</version>
 </dependency>
-
-<dependency>
-	<groupId>ch.qos.logback</groupId>
-	<artifactId>logback-core</artifactId>
-</dependency>
 <dependency>
 	<groupId>ch.qos.logback</groupId>
 	<artifactId>logback-classic</artifactId>
 </dependency>
+
+1. logback-classic : (spring boot starter logging 裡面依賴的也是該項目)
+	用途：這是最常用的模組，用於一般的 Java 應用程式，提供核心的日誌功能，並與 SLF4J 介面集成。
+	適用場景：當你需要在普通 Java 應用、Spring 應用或其他基於 JVM 的應用中進行日誌記錄時，logback-classic 就是主要依賴。
+2. logback-core (非必要)
+	用途：這是 Logback 的核心模組，logback-classic 和 logback-access 都依賴於它。它定義了日誌記錄的基礎架構和元件，如 Appender、Layout 等。
+	適用場景：你通常不會直接在你的專案中只使用 logback-core，因為它是 logback-classic 或 logback-access 的底層依賴項。除非你打算實現自訂的 Appender、Encoder、Filter 等，否則你不需要單獨依賴 logback-core。
+3. logback-access
+	用途：這個模組主要用於網頁伺服器（如 Tomcat、Jetty）的 HTTP 日誌記錄。它可以記錄 HTTP 請求/回應，類似於 Apache HTTP 伺服器的 access.log。
+	適用場景：如果你想記錄 Web 應用伺服器的訪問日誌，特別是 HTTP 請求的相關信息（如 IP 地址、請求時間、HTTP 狀態碼等），那麼你可以使用 logback-access。這種情況通常出現在需要分析伺服器流量或進行 Web 安全審計時
 
 ========================================================================================================================
 =================================== log level ==========================================================================

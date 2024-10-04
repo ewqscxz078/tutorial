@@ -1,0 +1,42 @@
+ref chatGPT
+
+
+預設行為
+	Spring Data JPA 預設情況下
+		1.repository 層的查詢操作（如 findAll()、findById()）
+			是自動在只讀模式下被包裹在事務中的，不需要顯式地加上 @Transactional。
+			這是 Spring Data 的特性。
+		2.寫操作（如 save()、delete()）則不會自動啟用事務。
+			如果需要確保多個操作在同一個事務內進行，
+			或者需要更複雜的事務控制（例如手動回滾、隔離級別等），
+			你需要在 service 層 明確宣告 @Transactional。
+
+讀操作：
+	Spring Data JPA 會自動處理 repository 層的讀操作，不需要手動加 @Transactional，
+	但你可以選擇顯式加上 @Transactional(readOnly = true)，以提升查詢性能。
+寫操作或混合操作：
+	建議在 service 層手動加上 @Transactional，特別是當你有多個寫操作時，
+	需要確保它們在同一個事務中進行。
+	
+因此，雖然 Spring Boot JPA 對 repository 的部分操作有預設行為，
+但更複雜的操作場景還是需要你自行宣告 @Transactional。
+範例:
+	import org.springframework.stereotype.Service;
+	import org.springframework.transaction.annotation.Transactional;
+
+	@Service
+	public class MyService {
+
+		@Transactional
+		public void updateEntities() {
+			// 執行多個寫操作，這些操作會在同一個事務中進行
+			repository.save(entity1);
+			repository.save(entity2);
+		}
+
+		@Transactional(readOnly = true)
+		public List<MyEntity> fetchEntities() {
+			// 讀操作也可以顯式地設定為只讀事務
+			return repository.findAll();
+		}
+	}

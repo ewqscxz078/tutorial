@@ -1,0 +1,13 @@
+windows add 太長路徑會
+	node_..... 太長路徑 : Filename too long
+
+	ref https://mihirpipermitwala.com/blogs/solving-git-checkout-problems-windows-users-encounter-filename-too-long-error/s
+	ref https://stackoverflow.com/questions/22575662/filename-too-long-in-git-for-windows
+		git config --system core.longpaths true
+
+20240902 當時使用以下方法解決
+	Project-Specific Adjustment
+		git bash
+		開啟當前 vi .git/config
+		[core]
+			longpaths = true

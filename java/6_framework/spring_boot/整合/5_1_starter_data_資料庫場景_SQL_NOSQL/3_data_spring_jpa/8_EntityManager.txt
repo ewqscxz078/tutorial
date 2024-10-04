@@ -18,6 +18,8 @@ ref
 		// ...
 	}
 
+	// interface 名稱後墜不要跟domain name 有一樣到，不然會誤判到是一般domain bean
+	// 否則可能會引發非預期的錯誤 Spring Data JPA - "No Property Found for Type" Exception
 	public interface CustomUserRepository {
 		User customFindMethod(Long id);
 	}
@@ -41,21 +43,63 @@ ref
 	}
 
 
-entityManager.createQuery with entity
-	public User customFindMethod(Long id) {
-		return (User) entityManager.createQuery("FROM User u WHERE u.id = :id")
-		  .setParameter("id", id)
-		  .getSingleResult();
-	}
+	api 種類
+		entityManager.createQuery with entity （JPQL 查詢）
+			適合場景：
+				需要查詢實體，並且對象導向的查詢語言適合你的場景。
+				對數據庫的查詢需求可以通過 JPQL 來表達，無需用到資料庫特有的功能。
+			public User customFindMethod(Long id) {
+				return (User) entityManager.createQuery("FROM User u WHERE u.id = :id")
+				  .setParameter("id", id)
+				  .getSingleResult();
+			}
 
-entityManager.createNativeQuery with 原生 sql
-	public List<Object[]> findUsersByName(String userName) {
-        String sql = "SELECT * FROM user WHERE name = :name";
-        Query query = entityManager.createNativeQuery(sql);
-        query.setParameter("name", userName);
+		entityManager.createNativeQuery （原生 SQL 查詢）
+			適合場景：
+				查詢需要使用資料庫特有的功能。
+				查詢需要跨越多個資料表，或是查詢過於複雜，JPQL 無法輕易實現。
+			public List<Object[]> findUsersByName(String userName) {
+				String sql = "SELECT * FROM user WHERE name = :name";
+				Query query = entityManager.createNativeQuery(sql);
+				query.setParameter("name", userName);
 
-        return query.getResultList();
-    }
+				return query.getResultList();
+			}
+
+		entityManager.createNamedQuery（命名查詢）
+			適合場景：
+				查詢邏輯可以事先定義，並且希望在多處使用時保持一致性。
+				需要提高可讀性或可維護性，將查詢邏輯從程式碼中分離出來。
+
+			@Entity
+			@NamedQuery(name = "User.findByStatus", query = "SELECT u FROM User u WHERE u.status = :status")
+			public class User {
+				// fields and methods
+			}
+			TypedQuery<User> query = entityManager.createNamedQuery("User.findByStatus", User.class);
+			query.setParameter("status", "ACTIVE");
+			List<User> users = query.getResultList();
+		createStoredProcedureQuery（儲存過程查詢）
+			適合場景：
+				系統依賴於資料庫中的儲存過程來進行大量資料處理。
+				某些邏輯已經封裝在資料庫層的儲存過程中，並且難以在應用程式層實現。
+			StoredProcedureQuery query = entityManager.createStoredProcedureQuery("sp_find_users_by_status", User.class);
+			query.registerStoredProcedureParameter("status", String.class, ParameterMode.IN);
+			query.setParameter("status", "ACTIVE");
+
+			List<User> users = query.getResultList();
+
+		createCriteriaQuery（Criteria API 查詢）
+			適合場景：
+				查詢條件可能根據使用者輸入或其他因素動態變化。
+				需要一個類型安全的查詢語法，以減少查詢語法錯誤的機會。
+			CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+			CriteriaQuery<User> cq = cb.createQuery(User.class);
+			Root<User> user = cq.from(User.class);
+			cq.select(user).where(cb.equal(user.get("status"), "ACTIVE"));
+
+			TypedQuery<User> query = entityManager.createQuery(cq);
+			List<User> users = query.getResultList();
 
 命名參數
 	String sql = "SELECT * FROM user WHERE name = :name";
@@ -69,24 +113,24 @@ entityManager.createNativeQuery with 原生 sql
 
 一般操作
    // client 呼叫
-		   @SpringBootTest(classes = CustomRepositoryApplication.class)
-		   class CustomRepositoryUnitTest {
+	   @SpringBootTest(classes = CustomRepositoryApplication.class)
+	   class CustomRepositoryUnitTest {
 
-				   //僅需註冊 UserRepository 即可，預設dao 與 自訂的 dao 都叫的到
-				   @Autowired
-				   private UserRepository userRepository;
+			   //僅需註冊 UserRepository 即可，預設dao 與 自訂的 dao 都叫的到
+			   @Autowired
+			   private UserRepository userRepository;
 
-				   @Test
-				   public void givenCustomRepository_whenInvokeCustomFindMethod_thenEntityIsFound() {
-						   User user = new User();
-						   user.setEmail("foo@gmail.com");
-						   user.setName("userName");
+			   @Test
+			   public void givenCustomRepository_whenInvokeCustomFindMethod_thenEntityIsFound() {
+					   User user = new User();
+					   user.setEmail("foo@gmail.com");
+					   user.setName("userName");
 
-						   User persistedUser = userRepository.save(user);
+					   User persistedUser = userRepository.save(user);
 
-						   assertEquals(persistedUser, userRepository.customFindMethod(user.getId()));
-				   }
-		   }
+					   assertEquals(persistedUser, userRepository.customFindMethod(user.getId()));
+			   }
+	   }
 
 多表/Entity join 查詢
 
@@ -179,3 +223,59 @@ entityManager.createNativeQuery with 原生 sql
 				return userService.getUserOrders(username, pageable);
 			}
 		}
+
+TypedQuery<Tuple> 適合情境
+	1. 查詢部分欄位（Projection）
+		當你不需要查詢整個實體，而只需要查詢特定欄位時，Tuple 可以方便地用來返回部分欄位，
+		這避免了過多的資料讀取並提高查詢效能
+			String jpql = "SELECT a.name AS name, a.age AS age FROM User a WHERE a.status = :status";
+			TypedQuery<Tuple> query = entityManager.createQuery(jpql, Tuple.class);
+			query.setParameter("status", "ACTIVE");
+
+			List<Tuple> result = query.getResultList();
+			for (Tuple tuple : result) {
+				String name = tuple.get("name", String.class);
+				Integer age = tuple.get("age", Integer.class);
+			}
+
+	2. 多表查詢
+		當你需要進行多表聯結（JOIN），但只需要某些欄位（來自不同實體或表），
+		而不需要實體對象時，Tuple 是非常合適的選擇。它允許你根據欄位名或索引來存取不同表中的欄位，
+		而不用將結果綁定到某一特定實體中
+			String jpql = "SELECT a.name AS userName, b.orderDate AS orderDate FROM User a JOIN a.orders b WHERE a.id = :userId";
+			TypedQuery<Tuple> query = entityManager.createQuery(jpql, Tuple.class);
+			query.setParameter("userId", 1L);
+
+			List<Tuple> result = query.getResultList();
+			for (Tuple tuple : result) {
+				String userName = tuple.get("userName", String.class);
+				LocalDate orderDate = tuple.get("orderDate", LocalDate.class);
+			}
+	3. 避免 DTO 映射
+		Tuple 可以用來替代手動映射至 DTO 的過程，當你只需要臨時的欄位資料，
+		而不想要建立額外的 DTO 類型時，可以直接用 Tuple 來處理。
+		例如，當你只需要某些欄位來進行臨時的資料處理或顯示時，
+		使用 Tuple 可以避免額外的 DTO 寫入與維護，讓查詢更加簡潔。
+
+	4. 動態查詢結果
+		Tuple 允許查詢結果的動態性，特別是在動態查詢時。當查詢的返回欄位數和名稱
+		根據業務邏輯動態改變時，使用 Tuple 可以輕鬆地根據欄位名稱來取得結果，
+		這比映射成特定實體或 DTO 靈活得多。
+			String jpql = "SELECT CASE WHEN a.active = true THEN 'Active' ELSE 'Inactive' END AS status, a.name AS name FROM User a";
+			TypedQuery<Tuple> query = entityManager.createQuery(jpql, Tuple.class);
+
+			List<Tuple> result = query.getResultList();
+			for (Tuple tuple : result) {
+				String status = tuple.get("status", String.class);
+				String name = tuple.get("name", String.class);
+			}
+	5. 簡單統計查詢
+		如果你需要進行一些簡單的統計查詢，例如計算總和、平均值等，並且只返回部分欄位時，
+		Tuple 也可以派上用場
+			String jpql = "SELECT AVG(o.amount) AS avgAmount, COUNT(o) AS orderCount FROM Order o WHERE o.status = :status";
+			TypedQuery<Tuple> query = entityManager.createQuery(jpql, Tuple.class);
+			query.setParameter("status", "COMPLETED");
+
+			Tuple result = query.getSingleResult();
+			Double avgAmount = result.get("avgAmount", Double.class);
+			Long orderCount = result.get("orderCount", Long.class);
