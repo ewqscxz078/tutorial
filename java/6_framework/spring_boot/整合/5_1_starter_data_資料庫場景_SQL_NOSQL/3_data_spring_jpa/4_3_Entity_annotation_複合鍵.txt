@@ -36,7 +36,11 @@ ref
 
 			@Embeddable
 			public class YourCompositeKey implements Serializable {
+
+			    @Column
 				private Long keyPart1;
+
+				@Column
 				private Long keyPart2;
 
 				// 空的建構子(給 jpa 必要使用)、與含參數的建構子(方便 findById 建構傳入)

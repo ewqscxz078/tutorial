@@ -1,0 +1,6 @@
+
+官網下載
+	ref https://dbeaver.io/
+簡易操作說明
+	ref https://ithelp.ithome.com.tw/articles/10196383
+

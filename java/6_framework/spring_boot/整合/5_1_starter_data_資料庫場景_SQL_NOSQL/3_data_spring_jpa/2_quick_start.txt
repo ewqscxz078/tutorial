@@ -17,10 +17,10 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 	撰寫 dataSource 資料庫來源設定
 	spring:
 	  dataSource:
-	    url: jdbc:mysql://localhost/jpa
+	    driver-class-name: com.mysql.jdbc.Driver
+		url: jdbc:mysql://localhost/jpa
 		username:root
 		password:123456
-		driver-class-name: com.mysql.jdbc.Driver
 
 
 2.編寫一個實體類(bean)和資料表對應進行映射
@@ -55,10 +55,10 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 			show-sql: true # console顯示 sql 預設 false
 			hibernate:
 			  #ddl-auto: # 更新或創建資料表 : update 預設 none
-			  use-new-id-generator-mappings: false # 使用 hiberate 4 預設 id 生成策略 / 預設 true
+			  use-new-id-generator-mappings: false # 使用 hiberate 4 預設 id 生成策略 / 預設 true，新版將不再支援該設定
 			properties
 			  hibernate:
-			    format_sql: true # real pretty sql format
+			    '[format_sql]': true # real pretty sql format
 		logging.level.org.hibernate.type: trace # 可以看到 sql 佔位符號的實際值
 5.
 	src/main/java/.../controller/
@@ -95,6 +95,10 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 8. JPA 寫 SQL 方式
 	1.JpaRepository 已存在 api
 		save
+		saveAll
+		delete
+		findAll
+		...
 	2.方法名解析 Method Name Resolution
 		findByXXXX
 			findByXAndYorZOrderByA(X,Y,Z) // 暗示宣告 jpa 自動轉換

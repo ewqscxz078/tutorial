@@ -1,0 +1,114 @@
+<build>
+    <plugins>
+        <!-- 解壓 WebJars 依賴 -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>unpack-webjars</id>
+                    <phase>process-resources</phase>
+                    <goals>
+                        <goal>unpack</goal>
+                    </goals>
+                    <configuration>
+                        <artifactItems>
+                            <artifactItem>
+                                <groupId>org.webjars</groupId>
+                                <artifactId>your-webjar-artifact-id-one</artifactId>
+                                <outputDirectory>${project.build.directory}/webjars-one</outputDirectory>
+                            </artifactItem>
+                            <artifactItem>
+                                <groupId>org.webjars</groupId>
+                                <artifactId>your-webjar-artifact-id-two</artifactId>
+                                <outputDirectory>${project.build.directory}/webjars-two</outputDirectory>
+                            </artifactItem>
+                        </artifactItems>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <!-- 刪除 package.json 和 package-lock.json -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+                <execution>
+                    <phase>process-resources</phase>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                    <configuration>
+                        <target>
+                            <delete>
+                                <fileset dir="${project.build.directory}/webjars-one" includes="**/package.json, **/package-lock.json"/>
+                            </delete>
+                            <delete>
+                                <fileset dir="${project.build.directory}/webjars-two" includes="**/package.json, **/package-lock.json"/>
+                            </delete>
+                        </target>
+                        <target>
+                            <replaceregexp match="^/\*\!.*\*/\n" replace="" byline="true">
+                                <fileset dir="${project.build.directory}/webjars-one" includes="**/*.js"/>
+                            </replaceregexp>
+                            <replaceregexp match="^/\*\!.*\*/\n" replace="" byline="true">
+                                <fileset dir="${project.build.directory}/webjars-two" includes="**/*.js"/>
+                            </replaceregexp>
+                        </target>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <!-- 重新打包已處理過的 WebJars -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+                <!-- 第一個目錄打包 -->
+                <execution>
+                    <id>create-jar-from-first-dir</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>jar</goal>
+                    </goals>
+                    <configuration>
+                        <classesDirectory>${project.build.directory}/webjars-one</classesDirectory>
+                        <finalName>first-webjars</finalName>
+                    </configuration>
+                </execution>
+                <!-- 第二個目錄打包 -->
+                <execution>
+                    <id>create-jar-from-second-dir</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>jar</goal>
+                    </goals>
+                    <configuration>
+                        <classesDirectory>${project.build.directory}/webjars-two</classesDirectory>
+                        <finalName>second-webjars</finalName>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+        <!-- 打包為 WAR 文件 -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-war-plugin</artifactId>
+            <version>3.3.1</version>
+            <configuration>
+                <webResources>
+                    <resource>
+                        <directory>${project.build.directory}</directory>
+                        <includes>
+                            <include>first-webjars.jar</include>
+							<include>second-webjars.jar</include>
+                        </includes>
+                    </resource>
+                </webResources>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
