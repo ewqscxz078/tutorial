@@ -71,7 +71,7 @@ Exception Handling with Spring for a REST API.
 						與 DefaultHandlerExceptionResolver 相同，此解析器在處理回應正文的方式上受到限制 -
 						它確實將狀態代碼映射到回應上，但正文仍然為空
 
-				 Custom HandlerExceptionResolver
+				 Custom HandlerExceptionResolver(AbstractHandlerExceptionResolver)
 					基於上述兩個 class 無法控制回應的正文。
 					理想情況下，我們希望能夠輸出 JSON 或 XML，這取決於客戶端要求的格式（透過 Accept 標頭）。
 					僅此一點就證明創建一個新的自訂異常解析器是合理的：
@@ -231,3 +231,32 @@ Exception Handling with Spring for a REST API.
 
 				}
 			}
+
+
+總結
+	HandlerExceptionResolver
+		ExceptionHandlerExceptionResolver
+			1.若要某 controller 局部異常處理
+				某 controller
+					method 宣告 @ExceptionHandler
+
+		DefaultHandlerExceptionResolver
+			將標準 Spring 異常解析為其相應的 HTTP 狀態代碼，即客戶端錯誤 4xx 和伺服器錯誤 5xx 狀態代碼
+				正文仍然為空
+		ResponseStatusExceptionResolver
+			用的@ResponseStatus註釋並將這些異常映射到HTTP狀態代碼
+				正文仍然為空
+
+
+		Custom HandlerExceptionResolver(AbstractHandlerExceptionResolver)
+			若上述都還沒有處理到的異常
+
+			2.若要全域 controller 內部異常處理
+				使用
+					class 宣告 @ControllerAdvice
+					method 宣告 @ExceptionHandler
+
+
+
+	若上面都沒有接收處理到
+		最終異常處理由 ErrorController 相關處理
