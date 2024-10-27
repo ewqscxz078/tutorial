@@ -1,11 +1,44 @@
-<build>
-    <plugins>
-        <!-- 解壓 WebJars 依賴 -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-                <execution>
+以下為 spring boot 排除 webjar jquery、owl.carousel 之 package*.json、單行註解、跨行註解 可能含有  版本資訊的調整案例
+
+	<profiles>
+	    <profile>
+	        <id>unix</id>
+	        <activation>
+	            <os>
+	                <family>unix</family>
+	            </os>
+	        </activation>
+	        <properties>
+	            <execBase></execBase>
+	            <findCmd>find</findCmd>
+	            <sedCmd>sed</sedCmd> <!-- Unix/Linux/MacOS 系統會使用預設的 sed 命令 -->
+	            <!-- <removeCommentsCmd>${execBase}${findCmd} ${project.build.directory}/{jquery,owl.carousel} -name "*.js" -exec ${execBase}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
+	        </properties>
+	    </profile>
+	    <profile>
+	        <id>windows</id>
+	        <activation>
+	            <os>
+	                <family>windows</family>
+	            </os>
+	        </activation>
+	        <properties>
+	            <execBase>D:/Program_Files/Git/usr/bin/</execBase> <!-- Windows 使用 Git Bash 安裝的 sed 路徑 -->
+	            <findCmd>find.exe</findCmd>
+	            <sedCmd>sed.exe</sedCmd>
+	            <!-- <removeCommentsCmd>${execBase}${findCmd} "${project.build.directory}/jquery" "${project.build.directory}/owl.carousel" -name "*.js" -exec ${execBase}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
+	        </properties>
+	    </profile>
+	</profiles>
+
+	<build>
+		<plugins>
+        	<!-- 解壓縮特定 WebJars -->
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-dependency-plugin</artifactId>
+	            <executions>
+	              <execution>
                     <id>unpack-webjars</id>
                     <phase>process-resources</phase>
                     <goals>
@@ -15,100 +48,149 @@
                         <artifactItems>
                             <artifactItem>
                                 <groupId>org.webjars</groupId>
-                                <artifactId>your-webjar-artifact-id-one</artifactId>
-                                <outputDirectory>${project.build.directory}/webjars-one</outputDirectory>
+                                <artifactId>jquery</artifactId>
+                                <version>3.7.1</version>
+                                <outputDirectory>${project.build.directory}/jquery</outputDirectory>
                             </artifactItem>
                             <artifactItem>
-                                <groupId>org.webjars</groupId>
-                                <artifactId>your-webjar-artifact-id-two</artifactId>
-                                <outputDirectory>${project.build.directory}/webjars-two</outputDirectory>
+                                <groupId>org.webjars.bower</groupId>
+                                <artifactId>owl.carousel</artifactId>
+                                <version>2.3.3</version>
+                                <outputDirectory>${project.build.directory}/owl.carousel</outputDirectory>
                             </artifactItem>
                         </artifactItems>
                     </configuration>
-                </execution>
-            </executions>
-        </plugin>
+	              </execution>
+	            </executions>
+	        </plugin>
+	        <!-- 刪除含有版本資訊 package*.json、單行註解 -->
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-antrun-plugin</artifactId>
+	            <executions>
+	                <execution>
+	                    <phase>process-resources</phase>
+	                    <goals>
+	                        <goal>run</goal>
+	                    </goals>
+	                    <configuration>
+	                        <target>
+	                            <delete>
+	                                <fileset dir="${project.build.directory}/owl.carousel" includes="**/package*.json"/> <!-- "**/package.json, **/package-lock.json" -->
+	                            </delete>
+	                            <replaceregexp match="^/\*!\s.*\*/$" replace="" byline="true"> <!-- 單行註解 -->
+	                                <fileset dir="${project.build.directory}/owl.carousel" includes="**/*.js"/>
+	                            </replaceregexp>
+	                            <replaceregexp match="^/\*!\s.*\*/$" replace="" byline="true"> <!-- 單行註解 -->
+	                                <fileset dir="${project.build.directory}/jquery" includes="**/*.js"/>
+	                            </replaceregexp>
+	                        </target>
+	                    </configuration>
+	                </execution>
+	            </executions>
+	        </plugin>
+<!-- 為了跨行註解移除可能含有版本資訊
+	/*!
+	 *
+	 */
+	或
+	/**
+	 *
+	 */
+	cd 當前專案 target 目錄 並且 git bash
+	window 無法使用多目標括號方式{jquery,owl.carousel} 所以改指定多個具體方式 jquery owl.carousel 以利與 unix 兼容執行
+	移除前確認指令 : find jquery owl.carousel -name "*.js" -exec sed -n '/\/\*[\*\!]/,/ \*\//p' {} +
+	實際執行移除 : find jquery owl.carousel -name "*.js" -exec sed -i '/\/\*[\*\!]/,/ \*\//d' {} +
+-->
+			<plugin>
+			    <groupId>org.codehaus.mojo</groupId>
+			    <artifactId>exec-maven-plugin</artifactId>
+			    <version>3.0.0</version>
+			    <executions>
+			        <execution>
+			            <id>remove-comments</id>
+			            <phase>process-resources</phase>
+			            <goals>
+			                <goal>exec</goal>
+			            </goals>
+			            <configuration>
+			                <executable>${execBase}${findCmd}</executable>
+			                <arguments>
+			                    <argument>${project.build.directory}/jquery</argument>
+			                    <argument>${project.build.directory}/owl.carousel</argument>
+			                    <argument>-name</argument>
+			                    <argument>"*.js"</argument>
+			                    <argument>-exec</argument>
+			                    <argument>${execBase}${sedCmd}</argument>
+			                    <argument>-i</argument>
+			                    <argument>/\/\*[\*\!]/,/ \*\//d</argument>
+			                    <argument>{}</argument>
+			                    <argument>+</argument>
+			                </arguments>
+			            </configuration>
+			        </execution>
+			    </executions>
+			</plugin>
+	        <!-- 重新打包已處理過的 webJars -->
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-jar-plugin</artifactId>
+	            <executions>
+	                <execution>
+	                    <id>create-jar-from-jquery-dir</id>
+	                    <phase>prepare-package</phase>
+	                    <goals>
+	                        <goal>jar</goal>
+	                    </goals>
+	                    <configuration>
+	                        <classesDirectory>${project.build.directory}/jquery</classesDirectory>
+	                        <finalName>jquery</finalName>
+	                        <classifier>repackage</classifier>
+	                    </configuration>
+	                </execution>
+	                <execution>
+	                    <id>create-jar-from-owl.carousel-dir</id>
+	                    <phase>prepare-package</phase>
+	                    <goals>
+	                        <goal>jar</goal>
+	                    </goals>
+	                    <configuration>
+	                        <classesDirectory>${project.build.directory}/owl.carousel</classesDirectory>
+	                        <finalName>owl.carousel</finalName>
+	                        <classifier>repackage</classifier>
+	                    </configuration>
+	                </execution>
+	            </executions>
+	        </plugin>
 
-        <!-- 刪除 package.json 和 package-lock.json -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-                <execution>
-                    <phase>process-resources</phase>
-                    <goals>
-                        <goal>run</goal>
-                    </goals>
-                    <configuration>
-                        <target>
-                            <delete>
-                                <fileset dir="${project.build.directory}/webjars-one" includes="**/package.json, **/package-lock.json"/>
-                            </delete>
-                            <delete>
-                                <fileset dir="${project.build.directory}/webjars-two" includes="**/package.json, **/package-lock.json"/>
-                            </delete>
-                        </target>
-                        <target>
-                            <replaceregexp match="^/\*\!.*\*/\n" replace="" byline="true">
-                                <fileset dir="${project.build.directory}/webjars-one" includes="**/*.js"/>
-                            </replaceregexp>
-                            <replaceregexp match="^/\*\!.*\*/\n" replace="" byline="true">
-                                <fileset dir="${project.build.directory}/webjars-two" includes="**/*.js"/>
-                            </replaceregexp>
-                        </target>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration> <!-- spring boot 排除指定打包 -->
+                    <excludes>
+                        <exclude><groupId>org.webjars</groupId><artifactId>jquery</artifactId></exclude>
+                        <exclude><groupId>org.webjars.bower</groupId><artifactId>owl.carousel</artifactId></exclude>
+                    </excludes>
+                </configuration>
+			</plugin>
+	        <!-- 打包為 WAR 文件 -->
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-war-plugin</artifactId>
+	            <configuration>
+	            	<!-- 將重打包的jar加入 war -->
+			        <webResources>
+			            <resource>
+			                <directory>${project.build.directory}</directory>
+			                <includes>
+			                    <include>owl.carousel-repackage.jar</include>
+			                    <include>jquery-repackage.jar</include>
+			                </includes>
+			                <targetPath>WEB-INF/lib</targetPath>
+			            </resource>
+			        </webResources>
+	            </configuration>
+	        </plugin>
 
-        <!-- 重新打包已處理過的 WebJars -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <executions>
-                <!-- 第一個目錄打包 -->
-                <execution>
-                    <id>create-jar-from-first-dir</id>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>jar</goal>
-                    </goals>
-                    <configuration>
-                        <classesDirectory>${project.build.directory}/webjars-one</classesDirectory>
-                        <finalName>first-webjars</finalName>
-                    </configuration>
-                </execution>
-                <!-- 第二個目錄打包 -->
-                <execution>
-                    <id>create-jar-from-second-dir</id>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>jar</goal>
-                    </goals>
-                    <configuration>
-                        <classesDirectory>${project.build.directory}/webjars-two</classesDirectory>
-                        <finalName>second-webjars</finalName>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-
-        <!-- 打包為 WAR 文件 -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-war-plugin</artifactId>
-            <version>3.3.1</version>
-            <configuration>
-                <webResources>
-                    <resource>
-                        <directory>${project.build.directory}</directory>
-                        <includes>
-                            <include>first-webjars.jar</include>
-							<include>second-webjars.jar</include>
-                        </includes>
-                    </resource>
-                </webResources>
-            </configuration>
-        </plugin>
-    </plugins>
-</build>
+		</plugins>
+	</build>

@@ -88,3 +88,13 @@ https://officeguide.cc/linux-sed-delete-first-last-specific-line-tutorial-exampl
 https://stackoverflow.com/questions/4609949/what-does-1-in-sed-do
 插入每行前面
 	sed 's#\(.*\)#我要插入\1#g' <sed_file>
+
+
+===================================================================
+======================== 多行匹配 =================================
+===================================================================
+多行匹配處理
+	https://blog.csdn.net/cy413026/article/details/121257887
+
+	ex: 將 java script 多行註解取代
+		sed -i '/\/\*!/,/ \*\//d' 你的js檔案

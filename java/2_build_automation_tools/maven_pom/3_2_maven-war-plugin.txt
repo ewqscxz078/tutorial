@@ -1,0 +1,28 @@
+<!-- 打包為 WAR 文件 -->
+	<plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-war-plugin</artifactId>
+		<configuration>
+			<packagingExcludes> <!-- 僅適合非 spring boot : 排除指定jar -->
+				WEB-INF/lib/owl.carousel-*.jar,
+				WEB-INF/lib/jquery-*.jar
+			</packagingExcludes>
+		</configuration>
+	</plugin>
+
+	<plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-war-plugin</artifactId>
+		<configuration>
+			<webResources> <!-- 指定額外資源打包進來 -->
+				<resource>
+					<directory>${project.build.directory}</directory>
+					<includes>
+						<include>owl.carousel-repackage.jar</include>
+						<include>jquery-repackage.jar</include>
+					</includes>
+					<targetPath>WEB-INF/lib</targetPath>
+				</resource>
+			</webResources>
+		</configuration>
+	</plugin>

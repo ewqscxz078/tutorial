@@ -171,11 +171,10 @@ ref chatGPT
 ==================================================================================================
 作用：用來打包 Spring Boot 應用，支援打包成可執行的 JAR 或 WAR 檔案，並可直接啟動應用程式。
 
-常用配置：
-    <plugin>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-maven-plugin</artifactId>
-    </plugin>
+	<plugin>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-maven-plugin</artifactId>
+	</plugin>
 
 ==================================================================================================
 ============================== Docker Maven Plugin (Jib 或 Fabric8) ==============================
