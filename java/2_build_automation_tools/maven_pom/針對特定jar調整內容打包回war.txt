@@ -9,10 +9,10 @@
 	            </os>
 	        </activation>
 	        <properties>
-	            <execBase></execBase>
+	            <execBasePath></execBasePath>
 	            <findCmd>find</findCmd>
 	            <sedCmd>sed</sedCmd> <!-- Unix/Linux/MacOS 系統會使用預設的 sed 命令 -->
-	            <!-- <removeCommentsCmd>${execBase}${findCmd} ${project.build.directory}/{jquery,owl.carousel} -name "*.js" -exec ${execBase}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
+	            <!-- <removeCommentsCmd>${execBasePath}${findCmd} ${project.build.directory}/{jquery,owl.carousel} -name "*.js" -exec ${execBasePath}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
 	        </properties>
 	    </profile>
 	    <profile>
@@ -23,10 +23,10 @@
 	            </os>
 	        </activation>
 	        <properties>
-	            <execBase>D:/Program_Files/Git/usr/bin/</execBase> <!-- Windows 使用 Git Bash 安裝的 sed 路徑 -->
+	            <execBasePath>D:/Program_Files/Git/usr/bin/</execBasePath> <!-- Windows 使用 Git Bash 安裝的 sed 路徑 -->
 	            <findCmd>find.exe</findCmd>
 	            <sedCmd>sed.exe</sedCmd>
-	            <!-- <removeCommentsCmd>${execBase}${findCmd} "${project.build.directory}/jquery" "${project.build.directory}/owl.carousel" -name "*.js" -exec ${execBase}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
+	            <!-- <removeCommentsCmd>${execBasePath}${findCmd} "${project.build.directory}/jquery" "${project.build.directory}/owl.carousel" -name "*.js" -exec ${execBasePath}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
 	        </properties>
 	    </profile>
 	</profiles>
@@ -114,14 +114,14 @@
 			                <goal>exec</goal>
 			            </goals>
 			            <configuration>
-			                <executable>${execBase}${findCmd}</executable>
+			                <executable>${execBasePath}${findCmd}</executable>
 			                <arguments>
 			                    <argument>${project.build.directory}/jquery</argument>
 			                    <argument>${project.build.directory}/owl.carousel</argument>
 			                    <argument>-name</argument>
 			                    <argument>"*.js"</argument>
 			                    <argument>-exec</argument>
-			                    <argument>${execBase}${sedCmd}</argument>
+			                    <argument>${execBasePath}${sedCmd}</argument>
 			                    <argument>-i</argument>
 			                    <argument>/\/\*[\*\!]/,/ \*\//d</argument>
 			                    <argument>{}</argument>

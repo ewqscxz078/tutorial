@@ -1,0 +1,26 @@
+<!-- 刪除含有版本資訊 package*.json、單行註解 -->
+	<plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-antrun-plugin</artifactId>
+		<executions>
+			<execution>
+				<phase>process-resources</phase>
+				<goals>
+					<goal>run</goal>
+				</goals>
+				<configuration>
+					<target>
+						<delete>
+							<fileset dir="${project.build.directory}/owl.carousel" includes="**/package*.json"/> <!-- "**/package.json, **/package-lock.json" -->
+						</delete>
+						<replaceregexp match="^/\*!\s.*\*/$" replace="" byline="true"> <!-- 單行註解 -->
+							<fileset dir="${project.build.directory}/owl.carousel" includes="**/*.js"/>
+						</replaceregexp>
+						<replaceregexp match="^/\*!\s.*\*/$" replace="" byline="true"> <!-- 單行註解 -->
+							<fileset dir="${project.build.directory}/jquery" includes="**/*.js"/>
+						</replaceregexp>
+					</target>
+				</configuration>
+			</execution>
+		</executions>
+	</plugin>

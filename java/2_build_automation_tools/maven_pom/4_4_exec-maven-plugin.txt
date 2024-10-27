@@ -1,0 +1,42 @@
+<!-- 為了跨行註解移除可能含有版本資訊
+	/*!
+	 *
+	 */
+	或
+	/**
+	 *
+	 */
+	cd 當前專案 target 目錄 並且 git bash
+	window 無法使用多目標括號方式{jquery,owl.carousel} 所以改指定多個具體方式 jquery owl.carousel 以利與 unix 兼容執行
+	移除前確認指令 : find jquery owl.carousel -name "*.js" -exec sed -n '/\/\*[\*\!]/,/ \*\//p' {} +
+	實際執行移除 : find jquery owl.carousel -name "*.js" -exec sed -i '/\/\*[\*\!]/,/ \*\//d' {} +
+-->
+	<plugin>
+		<groupId>org.codehaus.mojo</groupId>
+		<artifactId>exec-maven-plugin</artifactId>
+		<version>3.0.0</version>
+		<executions>
+			<execution>
+				<id>remove-comments</id>
+				<phase>process-resources</phase>
+				<goals>
+					<goal>exec</goal>
+				</goals>
+				<configuration>
+					<executable>${execBase}${findCmd}</executable>
+					<arguments>
+						<argument>${project.build.directory}/jquery</argument>
+						<argument>${project.build.directory}/owl.carousel</argument>
+						<argument>-name</argument>
+						<argument>"*.js"</argument>
+						<argument>-exec</argument>
+						<argument>${execBase}${sedCmd}</argument>
+						<argument>-i</argument>
+						<argument>/\/\*[\*\!]/,/ \*\//d</argument>
+						<argument>{}</argument>
+						<argument>+</argument>
+					</arguments>
+				</configuration>
+			</execution>
+		</executions>
+	</plugin>

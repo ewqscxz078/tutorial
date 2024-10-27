@@ -1,0 +1,31 @@
+
+<!-- 解壓縮特定 WebJars -->
+	<plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-dependency-plugin</artifactId>
+		<executions>
+		  <execution>
+			<id>unpack-webjars</id>
+			<phase>process-resources</phase>
+			<goals>
+				<goal>unpack</goal>
+			</goals>
+			<configuration>
+				<artifactItems>
+					<artifactItem>
+						<groupId>org.webjars</groupId>
+						<artifactId>jquery</artifactId>
+						<version>3.7.1</version>
+						<outputDirectory>${project.build.directory}/jquery</outputDirectory>
+					</artifactItem>
+					<artifactItem>
+						<groupId>org.webjars.bower</groupId>
+						<artifactId>owl.carousel</artifactId>
+						<version>2.3.3</version>
+						<outputDirectory>${project.build.directory}/owl.carousel</outputDirectory>
+					</artifactItem>
+				</artifactItems>
+			</configuration>
+		  </execution>
+		</executions>
+	</plugin>

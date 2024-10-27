@@ -1,0 +1,211 @@
+ref chatGPT
+
+根據不同的需求和環境靈活地調整構建配置
+	1.環境特定配置：
+		可以為不同的環境（如開發、測試、生成環境）定義特定的構建配置，包括依賴、插件、屬性等，從而避免在不同環境間手動修改 pom.xml。
+			<profiles>
+				<profile>
+					<id>development</id>
+					<dependencies>
+						<dependency>
+							<groupId>org.slf4j</groupId>
+							<artifactId>slf4j-log4j12</artifactId>
+							<version>1.7.30</version>
+						</dependency>
+						<dependency>
+							<groupId>junit</groupId>
+							<artifactId>junit</artifactId>
+							<version>4.13.2</version>
+							<scope>test</scope>
+						</dependency>
+					</dependencies>
+				</profile>
+
+				<profile>
+					<id>production</id>
+					<dependencies>
+						<dependency>
+							<groupId>org.slf4j</groupId>
+							<artifactId>slf4j-api</artifactId>
+							<version>1.7.30</version>
+						</dependency>
+					</dependencies>
+				</profile>
+			</profiles>
+
+	2.依賴管理：
+		可以根據 Profile 的激活，自動添加或排除某些依賴。這對於有不同需求的不同環境特別有用，例如開發環境可能需要測試依賴，而生成環境則不需要。
+
+	3.插件配置：
+		允許根據特定的 Profile 配置不同的 Maven 插件及其參數，這對於需要在不同環境中使用不同構建行為的情況特別有用。
+			<profiles>
+				<profile>
+					<id>development</id>
+					<build>
+						<plugins>
+							<plugin>
+								<groupId>org.apache.maven.plugins</groupId>
+								<artifactId>maven-compiler-plugin</artifactId>
+								<version>3.8.1</version>
+								<configuration>
+									<source>1.8</source>
+									<target>1.8</target>
+								</configuration>
+							</plugin>
+						</plugins>
+					</build>
+				</profile>
+
+				<profile>
+					<id>production</id>
+					<build>
+						<plugins>
+							<plugin>
+								<groupId>org.apache.maven.plugins</groupId>
+								<artifactId>maven-compiler-plugin</artifactId>
+								<version>3.8.1</version>
+								<configuration>
+									<source>11</source>
+									<target>11</target>
+								</configuration>
+							</plugin>
+						</plugins>
+					</build>
+				</profile>
+			</profiles>
+
+
+	4.屬性設置：
+		可以在不同的 Profile 中定義屬性，這些屬性可以在 pom.xml 的其他部分中引用，使得配置更加靈活。
+			<profiles>
+				<profile>
+					<id>unix</id>
+					<activation>
+						<os>
+							<family>unix</family>
+						</os>
+					</activation>
+					<properties>
+						<execBase></execBase>
+						<findCmd>find</findCmd>
+						<sedCmd>sed</sedCmd> <!-- Unix/Linux/MacOS 系統會使用預設的 sed 命令 -->
+					</properties>
+				</profile>
+				<profile>
+					<id>windows</id>
+					<activation>
+						<os>
+							<family>windows</family>
+						</os>
+					</activation>
+					<properties>
+						<execBase>D:/Program_Files/Git/usr/bin/</execBase> <!-- Windows 使用 Git Bash 安裝的 sed 路徑 -->
+						<findCmd>find.exe</findCmd>
+						<sedCmd>sed.exe</sedCmd>
+					</properties>
+				</profile>
+			</profiles>
+			<!-- 後面語法可使用 ${findCmd} 當不同環境執行對應的內容 -->
+
+	5.依據系統特性激活：
+		支持根據系統屬性（如 JDK 版本、操作系統類型、Maven 版本等）來自動激活特定的 Profile，這使得構建過程更具適應性。
+			<profiles>
+				<profile>
+					<id>jdk8</id>
+					<activation>
+						<jdk>[1.8,1.9)</jdk>
+					</activation>
+					<properties>
+						<java.version>1.8</java.version>
+					</properties>
+				</profile>
+
+				<profile>
+					<id>jdk11</id>
+					<activation>
+						<jdk>[11,)</jdk>
+					</activation>
+					<properties>
+						<java.version>11</java.version>
+					</properties>
+				</profile>
+			</profiles>
+
+
+
+	6.文件存在檢查：
+		可以根據特定文件的存在或缺失來激活 Profile，這樣可以針對特定情況自動調整構建行為。
+			<profiles>
+				<profile>
+					<id>with-configuration</id>
+					<activation>
+						<file>
+							<exists>config/app-config.xml</exists>
+						</file>
+					</activation>
+					<properties>
+						<use.config>true</use.config>
+					</properties>
+				</profile>
+			</profiles>
+
+
+
+	7.運行命令行參數激活：
+		可以在命令行中使用 -P 參數指定要激活的 Profile，這讓開發者在運行構建時可以靈活選擇使用哪個配置。
+			mvn clean install -Pdevelopment
+
+
+	8.多個 Profiles 組合：
+		可以定義多個 Profiles 並根據需要組合使用，從而滿足複雜的構建需求。
+			<profiles>
+				<profile>
+					<id>development</id>
+					<properties>
+						<env>dev</env>
+					</properties>
+					<dependencies>
+						<dependency>
+							<groupId>junit</groupId>
+							<artifactId>junit</artifactId>
+							<version>4.13.2</version>
+							<scope>test</scope>
+						</dependency>
+					</dependencies>
+					<build>
+						<plugins>
+							<plugin>
+								<groupId>org.apache.maven.plugins</groupId>
+								<artifactId>maven-compiler-plugin</artifactId>
+								<version>3.8.1</version>
+								<configuration>
+									<source>1.8</source>
+									<target>1.8</target>
+								</configuration>
+							</plugin>
+						</plugins>
+					</build>
+				</profile>
+
+				<profile>
+					<id>docker</id>
+					<properties>
+						<env>docker</env>
+					</properties>
+					<build>
+						<plugins>
+							<plugin>
+								<groupId>com.spotify</groupId>
+								<artifactId>docker-maven-plugin</artifactId>
+								<version>1.4.12</version>
+								<configuration>
+									<imageName>my-app:${project.version}</imageName>
+									<dockerDirectory>${project.basedir}/src/main/docker</dockerDirectory>
+								</configuration>
+							</plugin>
+						</plugins>
+					</build>
+				</profile>
+			</profiles>
+
+			mvn clean install -Pdevelopment,docker
