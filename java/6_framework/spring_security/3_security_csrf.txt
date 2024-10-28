@@ -94,3 +94,12 @@ csrf 處理方式
 			.formLogin().disable().htpBasic();
 		return http.build();
 	}
+
+
+預設 csrf token 會與 session timeout 有關係，預設 session timeout 三十分鐘
+	若要調整
+		server:
+		  servlet:
+			session:
+			  timeout: 60m  # 設定為一小時
+ 

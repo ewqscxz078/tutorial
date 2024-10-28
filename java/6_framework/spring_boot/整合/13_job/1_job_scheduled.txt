@@ -141,3 +141,7 @@ Running Tasks in Parallel
 同場加碼
 	task async scheduled with logback mdc
 	https://salahuddin-s.medium.com/mdc-logging-with-async-scheduled-threads-in-spring-boot-6675c2b4a074
+
+
+Q: @Scheduled method 的方法僅能無參數
+	不然會噴出錯誤 Encountered invalid @Scheduled method 'xxxx': Only no-arg methods may be annotated with @Scheduled
