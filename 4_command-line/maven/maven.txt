@@ -209,7 +209,7 @@ This command build the project, runs all the test cases and run any checks on th
 
 打包專案成 jar 檔
 	mvn package
-		於有mavne 專案下
+		於有maven 專案下
 			執行 mvn package
 				將會產生
 				maven-archiver folder

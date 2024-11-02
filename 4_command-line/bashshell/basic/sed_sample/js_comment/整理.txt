@@ -1,0 +1,40 @@
+單行註解
+	/*! .... */
+	/** .... */
+	/*  .... */	
+		sed -n -E '/\/\*(\*?|!).*\*\//p' sample_data.txt
+
+跨行註解含單行註解
+	/*! 
+		.... 
+	 */
+
+	/** 
+		....
+	 */
+
+	/*  
+		.... 
+	 */	
+	
+
+最接近
+	sed -n    ':a; /\/\*/{N; /.* \*\//!ba; s/.*\(\/\*.*\*\/\).*/\1/p}' sample_data.txt
+
+		jquery.mim.js
+			非預期
+		
+		jquery.js
+		jquery.touchSwipe.js
+		jquery.touchSwipe.min.js
+		owl.carousel.js
+		owl.carousel.min.js
+			ok
+
+
+sed -n '/\/\*\*/,/\*\//{N; /\*\//!b; s/\(\/\*.*\*\//\1/p}' yourfile.js
+
+注意特殊情境
+/* */
+*/
+會判斷到跨行
