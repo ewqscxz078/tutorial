@@ -4,7 +4,7 @@
 
 單行註解之不要刪我2
 /** jQuery v3.7.1 | (c) OpenJS Foundation and other contributors | jquery.org/license 單行註解 */
-!function(e,t){"use strict";"objeypeof module&&"object"==typeof 
+!function(e,t){"use strict";"objeypeof module&&"object"==typeof
 
 單行註解之不要刪我3
 /* jQuery v3.7.1 | (c) OpenJS Foundation and other contributors | jquery.org/license 單行註解 */
@@ -44,7 +44,7 @@ xxxxx*/
 function createCache() {
 
 跨行註解之不要刪我3
-/* QSA/matchesSelector 
+/* QSA/matchesSelector
 123 跨行註解3
 ---------------------------------------------------------------------- */
 

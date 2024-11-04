@@ -1,29 +1,29 @@
 單行註解
 	/*! .... */
 	/** .... */
-	/*  .... */	
+	/*  .... */
 		sed -n -E '/\/\*(\*?|!).*\*\//p' sample_data.txt
 
 跨行註解含單行註解
-	/*! 
-		.... 
-	 */
-
-	/** 
+	/*!
 		....
 	 */
 
-	/*  
-		.... 
-	 */	
-	
+	/**
+		....
+	 */
+
+	/*
+		....
+	 */
+
 
 最接近
-	sed -n    ':a; /\/\*/{N; /.* \*\//!ba; s/.*\(\/\*.*\*\/\).*/\1/p}' sample_data.txt
+	sed -n  -E  ':a; /\/\*/{N; /.* \*\//!ba; s/.*\(\/\*.*\*\/\).*/\1/p}' sample_data.txt
 
 		jquery.mim.js
-			非預期
-		
+			非預期 : 前提要先將單行註解處理完畢才處理跨行註解
+
 		jquery.js
 		jquery.touchSwipe.js
 		jquery.touchSwipe.min.js
@@ -31,6 +31,7 @@
 		owl.carousel.min.js
 			ok
 
+	sed -n    ':a; /\/\*/{N; /.* \*\//!ba; /\*\n/!d; s/.*\(\/\*.*\*\/\).*/\1/p}' sample_data.txt
 
 sed -n '/\/\*\*/,/\*\//{N; /\*\//!b; s/\(\/\*.*\*\//\1/p}' yourfile.js
 

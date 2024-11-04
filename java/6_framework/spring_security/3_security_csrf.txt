@@ -102,4 +102,3 @@ csrf 處理方式
 		  servlet:
 			session:
 			  timeout: 60m  # 設定為一小時
- 
