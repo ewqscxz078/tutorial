@@ -1,0 +1,57 @@
+1.session.setAttribute
+	適合情境：使用 session.setAttribute 可以在多個請求之間共享資料。這個方式適合需要在同一個使用者的多個請求中保持的資料，例如登入後的用戶資訊或一些狀態變量。
+	優點：適合跨請求的資料保存。
+	缺點：資料保存於 session，必須小心管理，避免不必要的 session 占用資源
+
+2.request.setAttribute（適用於 forward）
+	適合情境：當請求在後端轉發（forward）時，使用 request.setAttribute 將資料傳遞給目標控制器或 JSP。
+		此方式僅適用於同一個請求之內，無法在多次請求間保留。
+		例如：request.getRequestDispatcher("/targetPage").forward(request, response);
+
+3.request URL 或 RedirectAttributes（適用於 redirect）
+	在重導（redirect）時，直接透過 URL 附加參數（如 redirect:/home?msg=success）也可以傳遞簡單的資料。不過，這方式較適合小型訊息或 ID 等單一值。
+
+	RedirectAttributes 是 Spring 提供的專門用於重導向時傳遞一次性訊息的機制，會將訊息暫時保存在 session 中並在下一次請求中移除。適合短暫顯示的通知，如成功或失敗訊息。
+		@PostMapping("/login")
+		public String login(RedirectAttributes redirectAttributes) {
+			redirectAttributes.addFlashAttribute("message", "Login successful!");
+			return "redirect:/home";
+		}
+
+4.FlashMap 和 FlashAttributes 
+	Spring MVC 中的 FlashMap 也可以達到類似 RedirectAttributes 的效果，但這是更底層的方式。
+	適合 : 非 spring mvc 操作的情境
+		FlashMap 使用場景較少，RedirectAttributes 更常用於應用層級的需求。
+	
+	範例
+		in spring security override use
+			@Component
+			public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+				@Override
+				public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
+													Authentication authentication) throws IOException, ServletException {
+					FlashMap flashMap = new FlashMap();
+					flashMap.put("message", "登入成功！");
+					FlashMapManager flashMapManager = RequestContextUtils.getFlashMapManager(request);
+					if (flashMapManager != null) {
+						flashMapManager.saveOutputFlashMap(flashMap, request, response);
+					}
+					setDefaultTargetUrl("/home");
+					super.onAuthenticationSuccess(request, response, authentication);
+				}
+			}
+
+			@GetMapping("/home")
+			public String home(Model model) {
+				// Flash attributes will be automatically available in the model
+				return "home";
+			}
+
+
+
+5.使用 Model 傳遞資料
+	對於需要顯示於頁面上的數據，可以使用 Model 或 ModelAndView 傳遞，特別是當頁面直接回應當前請求時（如表單提交後回到同一頁）。
+
+6.Security Context：對於需要跨頁的用戶訊息
+	SecurityContextHolder.getContext().getAuthentication() 獲取用戶資訊，但這僅限於安全相關的資料，如用戶角色等
