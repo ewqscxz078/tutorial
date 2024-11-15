@@ -1,0 +1,104 @@
+順序為最先到最後排序
+
+org.apache.catalina.core
+	ApplicationFilterChain [debug mode 關鍵地方]
+		private void internalDoFilter(ServletRequest request, ServletResponse response)
+					throws IOException, ServletException {
+			....
+				ApplicationFilterConfig filterConfig = filters[pos++];
+					也就是如下偷看結果
+					ApplicationFilterConfig[name=characterEncodingFilter, filterClass=org.springframework.boot.web.servlet.filter.OrderedCharacterEncodingFilter]
+					ApplicationFilterConfig[name=webMvcMetricsFilter, filterClass=org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter]
+					ApplicationFilterConfig[name=formContentFilter, filterClass=org.springframework.boot.web.servlet.filter.OrderedFormContentFilter]
+					ApplicationFilterConfig[name=requestContextFilter, filterClass=org.springframework.boot.web.servlet.filter.OrderedRequestContextFilter]
+					ApplicationFilterConfig[name=springSecurityFilterChain, filterClass=org.springframework.boot.web.servlet.DelegatingFilterProxyRegistrationBean$1]
+					ApplicationFilterConfig[name=Tomcat WebSocket (JSR356) Filter, filterClass=org.apache.tomcat.websocket.server.WsFilter]
+
+			....
+		
+新 spring security filter(springSecurityFilterChain)
+	Security filter chain: [
+	  DisableEncodeUrlFilter
+	  WebAsyncManagerIntegrationFilter
+	  SecurityContextPersistenceFilter
+	  HeaderWriterFilter
+	  CsrfFilter
+	  LogoutFilter
+	  UsernamePasswordAuthenticationFilter
+	  RequestCacheAwareFilter
+	  SecurityContextHolderAwareRequestFilter
+	  AnonymousAuthenticationFilter
+	  SessionManagementFilter
+	  ExceptionTranslationFilter
+	  AuthorizationFilter
+	]
+	
+	補上自訂filter後
+		org.springframework.security.web
+			FilterChainProxy [debug mode 關鍵地方]
+				VirtualFilterChain
+					public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
+						....
+						Filter nextFilter = this.additionalFilters.get(this.currentPosition - 1); // additionalFilters 觀察內容如下結果
+						....
+					}
+		// 增加 session 管理
+		Security filter chain: [
+		  DisableEncodeUrlFilter
+		  WebAsyncManagerIntegrationFilter
+		  SecurityContextPersistenceFilter
+		  HeaderWriterFilter
+		  CsrfFilter
+		  LogoutFilter
+		  MyAuthenticationFilter				// 自訂驗證
+		  ConcurrentSessionFilter
+		  RequestCacheAwareFilter
+		  SecurityContextHolderAwareRequestFilter
+		  AnonymousAuthenticationFilter
+		  SessionManagementFilter
+		  ExceptionTranslationFilter
+		  AuthorizationFilter
+		]
+
+
+
+
+舊 spring secrutiy filter
+	[org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@798113ec, 
+	org.springframework.security.web.context.SecurityContextPersistenceFilter@23198979, 
+	org.springframework.security.web.header.HeaderWriterFilter@7592ef97, 
+	org.springframework.security.web.authentication.logout.LogoutFilter@647347f4, 
+	org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@237d758b, 
+	org.springframework.security.web.savedrequest.RequestCacheAwareFilter@24eb65e4, 
+	org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@4aeedd58, 
+	org.springframework.security.web.authentication.AnonymousAuthenticationFilter@60ac4c6f, 
+	org.springframework.security.web.session.SessionManagementFilter@37a844cb, 
+	org.springframework.security.web.access.ExceptionTranslationFilter@229c67ed, 
+	org.springframework.security.web.access.intercept.FilterSecurityInterceptor@511d6ac]
+
+	優先順序為 上到下
+		spring boot filter debug 後看到的順序
+			org.apache.catalina.core.StandardWrapperValve
+				142	ApplicationFilterChain filterChain = ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);
+			
+				ApplicationFilterConfig[name=characterEncodingFilter, filterClass=org.springframework.boot.web.servlet.filter.OrderedCharacterEncodingFilter]
+				ApplicationFilterConfig[name=webMvcMetricsFilter, filterClass=org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter]
+				ApplicationFilterConfig[name=formContentFilter, filterClass=org.springframework.boot.web.servlet.filter.OrderedFormContentFilter]
+				ApplicationFilterConfig[name=requestContextFilter, filterClass=org.springframework.boot.web.servlet.filter.OrderedRequestContextFilter]
+				ApplicationFilterConfig[name=springSecurityFilterChain, filterClass=org.springframework.boot.web.servlet.DelegatingFilterProxyRegistrationBean$1]
+				ApplicationFilterConfig[name=XSSFilter, filterClass=tw.gov.moi.aw3.webkit.springmvc.filters.XSSFilter]
+				ApplicationFilterConfig[name=resourceAccessFilter, filterClass=tw.gov.moi.aw3.webkit.springmvc.filters.ResourceAccessFilter]
+				ApplicationFilterConfig[name=authorityFilter, filterClass=tw.gov.moi.aw3.webkit.springmvc.auth.configuration.AwMvcAuthorityFilter]
+				ApplicationFilterConfig[name=httpMDCTracingUUIDFilter, filterClass=tw.gov.moi.aw3.autoconfigure.logback.web.filter.HttpMDCTracingUUIDFilter]
+				ApplicationFilterConfig[name=Tomcat WebSocket (JSR356) Filter, filterClass=org.apache.tomcat.websocket.server.WsFilter]
+				
+		舊程式 tocmat spring mvc filter debug 後看到的順序		
+			org.apache.catalina.core.StandardWrapperValve
+				ApplicationFilterConfig[name=XSSFilter, filterClass=tw.gov.moi.aw3.webkit.springmvc.filters.XSSFilter]
+				ApplicationFilterConfig[name=resourceAccessFilter, filterClass=tw.gov.moi.aw3.webkit.springmvc.filters.ResourceAccessFilter]
+				ApplicationFilterConfig[name=encodingFilter, filterClass=org.springframework.web.filter.CharacterEncodingFilter]
+				ApplicationFilterConfig[name=authorityFilter, filterClass=org.springframework.web.filter.DelegatingFilterProxy]
+				ApplicationFilterConfig[name=Tomcat WebSocket (JSR356) Filter, filterClass=org.apache.tomcat.websocket.server.WsFilter]
+
+
+

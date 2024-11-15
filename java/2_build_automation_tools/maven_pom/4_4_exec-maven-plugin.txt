@@ -1,3 +1,10 @@
+ref https://www.mojohaus.org/exec-maven-plugin/plugin-info.html
+	注意 maven 版本與 其 plugin version 對應
+		Plugin Version			Maven version	JDK
+		from 3.1.1 to 3.5.0		3.6.3			8
+		3.1.0					3.2.5			8
+		3.0.0					3.0				7
+
 <!-- 為了跨行註解移除可能含有版本資訊
 	/*!
 	 *

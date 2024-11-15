@@ -1,0 +1,382 @@
+
+// 使用預設 UsernamePasswordAuthenticationFilter 的設定方式
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfiguration {
+
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(WebSecurityConfiguration.class);
+
+
+    @Bean
+    MyLogoutSuccessHandler myLogoutSuccessHandler() {
+        return new MyLogoutSuccessHandler();
+    }
+
+    // 未驗證直接打
+    @Bean
+    AuthenticationEntryPoint myAuthenticationEntryPoint() {
+        final AuthenticationEntryPoint authenticationEntryPoint = new LoginUrlAuthenticationEntryPoint("/app/defer/login");
+        return authenticationEntryPoint;
+    }
+
+    // 存取被拒; 授權角色條件不合
+    @Bean
+    AccessDeniedHandler myAccessDeniedHandler() {
+        return (request, reqsponse, accessdDeniedException) -> {
+            LOGGER.error("發生 AccessDeniedHandler :　存取被拒; 授權角色條件不合");
+            request.getRequestDispatcher("/error").forward(request, reqsponse);
+        };
+    }
+
+    @Bean
+    @Order(30) // TODO 整合預設 SecurityFilterChain 順序
+    SecurityFilterChain loginFilterChain(final HttpSecurity http, //
+            final AuthenticationManager myAuthenticationManager,// for MyAuthenticationFilter
+            final SimpleUrlAuthenticationSuccessHandler myAuthenticationSuccessHandler,// for MyAuthenticationFilter
+            final SimpleUrlAuthenticationFailureHandler myAuthenticationFailureHandler,// for MyAuthenticationFilter
+            final SessionAuthenticationStrategy mySessionAuthenticationStrategy, // for MyAuthenticationFilter
+            final DeferredService deferredService, // for MyAuthenticationFilter
+            final CaptchaService captchaService, // for MyAuthenticationFilter
+            final SessionRegistry sessionRegistry,// for sessionManagement
+            final MyLogoutSuccessHandler myLogoutSuccessHandler, //
+            final AuthenticationEntryPoint myAuthenticationEntryPoint, //
+            final AccessDeniedHandler myAccessDeniedHandler //
+    ) throws Exception {
+
+        // 1.為了允許被 X-Frame-Options 相同源
+        http.headers(headers -> headers.frameOptions().sameOrigin());
+
+        // 2.過濾器處理 SecurityFilter
+        //http.addFilterAfter(myAuthenticationFilter, LogoutFilter.class);// addFilterAfter UsernamePasswordAuthenticationFilter.class
+
+        // 3.授權 url 控制
+        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests //
+                .antMatchers( //
+                        "/app/defer/login",  // 登入 , "/app/defer/doLogin"
+                        "/app/defer/sesson-invalid", // session 無效
+                        "/app/defer/sesson-expired", // session 過期
+                        "/webjars/**", // ref java lib of webjars
+                ).permitAll() // 可不授權存取
+                .anyRequest().authenticated()); // 除了以上其他都需驗證
+
+        // 4.未驗證直接打、未授權等例外處理
+        http.exceptionHandling((exceptionHandling) -> exceptionHandling //
+                .authenticationEntryPoint(myAuthenticationEntryPoint) //
+                .accessDeniedHandler(myAccessDeniedHandler) //
+        );
+
+        // 5.登入
+        http.formLogin(formLogin -> formLogin // 沒有使用預設的 formLogin配置方式因為 使用自訂義的 MyAuthenticationFilter 登入方式
+            .loginPage("/login") // 登入的首頁
+			.loginProcessingUrl("/performLogin") // 也就是 post login url
+			.usernameParameter("username")
+			.passwordParameter("password")
+			.failureUrl("/login?error=true")
+			.successHandler()
+		);
+
+        // 6.登出
+        http.logout(logout -> logout //
+                .logoutUrl("/app/defer/doLogout") // 對應jsp 登出post url 、給底層後端 match 登出 url(虛擬) 處理用
+                .logoutSuccessHandler(myLogoutSuccessHandler) // 登出成功後額外處理邏輯
+                .logoutSuccessUrl("/app/defer/login") // 登出成功後轉跳 url
+                .invalidateHttpSession(true).deleteCookies("JSESSIONID") //
+        );
+
+        // 7.session 管理
+        http.sessionManagement(session -> session //
+                .sessionAuthenticationStrategy(mySessionAuthenticationStrategy) // 為了配置到底層配置給 SessionManagementFilter 用
+                .invalidSessionUrl("/app/defer/sesson-invalid") // 處理 session timeout 後 sessionId 不存在或非法 session 遭意外清除或從瀏覽器刪除
+                .maximumSessions(1) // 一個使用者多個瀏覽器僅能登入一次 ref allowableSessionsExceeded 具體處理方針，仍要設定以利後面才能設定 expiredUrl、sessionRegistry
+                .expiredUrl("/app/defer/sesson-expired") // 處裡跨瀏覽器重複帳號登入被強制過期
+                .sessionRegistry(sessionRegistry));
+
+        return http.build();
+    }
+
+    //    @Bean
+    //    WebSecurityCustomizer webSecurityCustomizer() {
+    //        return web -> web //
+    //                .debug(true); // 可以看到每個存取資源經過 SecurityFilterChain 詳細狀況
+    //    }
+
+    //####################################################################
+    //## [Method] sub-block : 自訂認證與 session 過期策略
+    //## ref https://docs.spring.io/spring-security/reference/5.7/servlet/authentication/session-management.html
+    //####################################################################
+
+    // session 管理用需要
+    @Bean
+    HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+    // 管理用戶 session
+    @Bean
+    SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    /**
+     * 1_1.自訂 DaoAuthenticationProvider 給 AuthenticationManager 用
+     *
+     * @param myUserDetailsService
+     * @param awmPasswordEncoder
+     * @return
+     */
+    @Bean
+    DaoAuthenticationProvider myDaoAuthenticationProvider(final UserDetailsService myUserDetailsService, //
+            final PasswordEncoder awmPasswordEncoder) {
+        final DaoAuthenticationProvider provider = new MyDaoAuthenticationProvider();
+        provider.setUserDetailsService(myUserDetailsService);
+        provider.setPasswordEncoder(awmPasswordEncoder);
+        return provider;
+    }
+
+    /**
+     * 1_2.自訂 AuthenticationManager 給 MyAuthenticationFilter 用
+     *
+     */
+    @Bean
+    AuthenticationManager myAuthenticationManager(final DaoAuthenticationProvider myDaoAuthenticationProvider) {
+        final ProviderManager providerManager = new ProviderManager(Arrays.asList(myDaoAuthenticationProvider));
+        return providerManager;
+    }
+
+    @Bean
+    SimpleUrlAuthenticationSuccessHandler myAuthenticationSuccessHandler() {
+        final MyAuthenticationSuccessHandler myAuthenticationSuccessHandler = new MyAuthenticationSuccessHandler();
+        myAuthenticationSuccessHandler.setTargetUrlParameter(MyAuthenticationFilter.REQUEST_ATTRIBUTE_SUCCESS_TARGET_URL);
+        return myAuthenticationSuccessHandler;
+    }
+
+    @Bean
+    SimpleUrlAuthenticationFailureHandler myAuthenticationFailureHandler() {
+        final MyAuthenticationFailureHandler myAuthenticationFailureHandler = new MyAuthenticationFailureHandler(//
+                "/app/defer/login");
+        myAuthenticationFailureHandler.setUseForward(true);
+        return myAuthenticationFailureHandler;
+    }
+
+    @Bean
+    PasswordEncoder awmPasswordEncoder() {
+        //        PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        return new BCryptPasswordEncoder(); // 沒有前墜 ${} 處理模式
+    }
+
+    @Bean
+    UserDetailsService myUserDetailsService(final PasswordEncoder awmPasswordEncoder, final AwdfMilitaryAccountDAO accountDao) {
+
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
+
+                if (StringUtils.isBlank(username)) {
+                    throw new UsernameNotFoundException("使用者名稱為空");
+                }
+                try {
+                    // 提供帳號實際的 bean 轉成實作UserDetails class 給 spring security
+                    final AwdfMilitaryAccount accountType = accountDao.findById(username).orElse(null);
+                    if (accountType == null) {
+                        throw new UsernameNotFoundException("使用者不存在");
+                    }
+
+                    final SysUser user = new SysUser();
+                    user.setUsername(username);
+                    user.setEncMima(accountType.getVerify()); // 通常是已經加密的內容
+                    user.setPersonName(accountType.getPersonName());
+                    user.setCompanyId(accountType.getCompanyId());
+                    user.setCompanyName(accountType.getCompanyName());
+                    user.setRole(accountType.getRole());
+                    user.setAreaCode(accountType.getAreaCode());
+                    user.addRoles(accountType.getRole());
+                    //user.addRoles(WebSecurityConfiguration.this.sysRole);
+                    return user;
+                } catch (final Exception e) {
+                    throw new UsernameNotFoundException("資料不存在", e);
+                }
+            }
+        };
+
+    }
+
+    public static class SysUser implements UserDetails {
+        private static final long serialVersionUID = -1920720932646344414L;
+
+        private String username;
+
+        private String personName; // 目前已知僅 insert log 時需要用到而已
+
+        private String companyId; // session 需要
+
+        private String companyName;  // session 需要
+
+        private String role; // session 需要
+
+        private String areaCode; // session 需要
+
+        private String encMima;
+
+        private List<GrantedAuthority> authorities = new ArrayList<>();
+
+        @Override
+        // 取得所有權限
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return this.authorities;
+        }
+
+        @Override
+        // 取得使用者名稱
+        public String getUsername() {
+            return this.username;
+        }
+
+        @Override
+        // 取得密碼
+        public String getPassword() {
+            return this.encMima;
+        }
+
+        @Override
+        // 帳號是否過期
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        // 帳號是否被鎖定
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        // 憑證/密碼是否過期
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        // 帳號是否可用
+        public boolean isEnabled() {
+            return true;
+        }
+
+        public void setEncMima(final String encMima) {
+            this.encMima = encMima;
+        }
+
+        public void setUsername(final String username) {
+            this.username = username;
+        }
+
+        public String getPersonName() {
+            return this.personName;
+        }
+
+        public void setPersonName(final String personName) {
+            this.personName = personName;
+        }
+
+        public String getCompanyId() {
+            return this.companyId;
+        }
+
+        public void setCompanyId(final String companyId) {
+            this.companyId = companyId;
+        }
+
+        public String getCompanyName() {
+            return this.companyName;
+        }
+
+        public void setCompanyName(final String companyName) {
+            this.companyName = companyName;
+        }
+
+        public String getRole() {
+            return this.role;
+        }
+
+        public void setRole(final String role) {
+            this.role = role;
+        }
+
+        public String getAreaCode() {
+            return this.areaCode;
+        }
+
+        public void setAreaCode(final String areaCode) {
+            this.areaCode = areaCode;
+        }
+
+        public void addRoles(final String... roles) {
+            for (final String role : roles) {
+                this.authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.authorities, this.personName, this.username);
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final SysUser other = (SysUser) obj;
+            return Objects.equals(this.authorities, other.authorities) && Objects.equals(this.personName, other.personName)
+                    && Objects.equals(this.username, other.username);
+        }
+
+    }
+}

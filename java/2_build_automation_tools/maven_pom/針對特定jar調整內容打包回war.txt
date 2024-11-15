@@ -12,7 +12,6 @@
 	            <execBasePath></execBasePath>
 	            <findCmd>find</findCmd>
 	            <sedCmd>sed</sedCmd> <!-- Unix/Linux/MacOS 系統會使用預設的 sed 命令 -->
-	            <!-- <removeCommentsCmd>${execBasePath}${findCmd} ${project.build.directory}/{jquery,owl.carousel} -name "*.js" -exec ${execBasePath}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
 	        </properties>
 	    </profile>
 	    <profile>
@@ -26,7 +25,6 @@
 	            <execBasePath>D:/Program_Files/Git/usr/bin/</execBasePath> <!-- Windows 使用 Git Bash 安裝的 sed 路徑 -->
 	            <findCmd>find.exe</findCmd>
 	            <sedCmd>sed.exe</sedCmd>
-	            <!-- <removeCommentsCmd>${execBasePath}${findCmd} "${project.build.directory}/jquery" "${project.build.directory}/owl.carousel" -name "*.js" -exec ${execBasePath}${sedCmd} -i '/\/\*!/,/ \*\//d' {} +</removeCommentsCmd> -->
 	        </properties>
 	    </profile>
 	</profiles>
@@ -110,7 +108,7 @@
 			<plugin>
 			    <groupId>org.codehaus.mojo</groupId>
 			    <artifactId>exec-maven-plugin</artifactId>
-			    <version>3.0.0</version>
+			    <version>3.1.0</version>
 			    <executions>
 			        <execution>
 			            <id>remove-comments</id>
@@ -128,7 +126,7 @@
 			                    <argument>-exec</argument>
 			                    <argument>${execBasePath}${sedCmd}</argument>
 			                    <argument>-i</argument>
-			                    <argument>/\/\*[\*\!]\?/,/ \*\//d</argument>
+			                    <argument>/\/\*/,/\*\//d</argument>
 			                    <argument>{}</argument>
 			                    <argument>+</argument>
 			                </arguments>

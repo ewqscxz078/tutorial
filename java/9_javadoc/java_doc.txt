@@ -1,0 +1,61 @@
+可用在 /** .... */ 裡
+	1. @param
+		說明方法的參數。
+		格式：@param parameterName 描述
+		範例：@param name 用戶名稱
+	2. @return
+		說明方法的回傳值。
+		格式：@return 描述
+		範例：@return 用戶的完整名稱
+	3. @throws / @exception
+		說明方法可能拋出的例外狀況或異常。
+		格式：@throws ExceptionClass 描述
+		範例：@throws IllegalArgumentException 當參數無效時拋出
+	4. @see
+		提供參考的連結，通常用於指向相關的類別、方法或文件。
+		格式：@see package.ClassName
+		範例：@see java.util.List
+	5. @link
+		嵌入式連結，用來在文件中直接引用特定類別或方法。
+		格式：{@link package.ClassName#methodName}
+		範例：{@link java.util.ArrayList#add(Object)}
+	6. @linkplain
+		與 @link 類似，但產生的是純文字連結（不會用粗體顯示）。
+		格式：{@linkplain package.ClassName#methodName}
+		範例：{@linkplain java.util.ArrayList}
+	7. @since
+		說明這個類別或方法從哪個版本開始提供。
+		格式：@since version
+		範例：@since 1.8
+	8. @deprecated
+		標示方法或類別已過時，並通常提供建議的替代方案。
+		格式：@deprecated 描述
+		範例：@deprecated 使用 newMethod() 來替代
+	9. @author
+		指定類別或文件的作者。
+		格式：@author name
+		範例：@author John Doe
+	10. @version
+		- 指定類別或文件的版本資訊。
+		- **格式**：`@version version`
+		- **範例**：`@version 1.0`
+
+	11. @serial
+		- 用於序列化欄位，說明欄位的序列化細節。
+		- **格式**：`@serial 描述`
+		- **範例**：`@serial 用戶的序列化ID`
+	
+	12. @serialField
+		- 用於序列化類別中的欄位，通常和 `@serial` 配合使用。
+		- **格式**：`@serialField name type 描述`
+		- **範例**：`@serialField userId int 用戶ID`
+
+	13. @serialData
+		- 說明自訂序列化的數據。
+		- **格式**：`@serialData 描述`
+		- **範例**：`@serialData 儲存用戶資訊`
+
+	14. @hidden (Java 9 之後)
+		- 用來隱藏特定的 JavaDoc 項目，不顯示於生成的文件中。
+		- **格式**：`@hidden`
+		- **範例**：`@hidden 此方法為內部使用`
