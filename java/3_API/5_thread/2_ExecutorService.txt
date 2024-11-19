@@ -1,43 +1,193 @@
+ref GhatGPT
+
+Java 1.0 提供了基本的多執行緒功能
+	繼承 Thread 類，並覆寫 run() 方法來定義執行緒行為。
+	或者實現 Runnable 接口，將執行緒邏輯交給 Thread 類來執行。
+		public class MyThread extends Thread {
+			@Override
+			public void run() {
+				System.out.println("執行緒 " + Thread.currentThread().getName() + " 正在執行");
+			}
+
+			public static void main(String[] args) {
+				MyThread thread = new MyThread();
+				thread.start(); // 啟動執行緒
+			}
+		}
+
+		public class MyRunnable implements Runnable {
+			@Override
+			public void run() {
+				System.out.println("執行緒 " + Thread.currentThread().getName() + " 正在執行");
+			}
+
+			public static void main(String[] args) {
+				Thread thread = new Thread(new MyRunnable());
+				thread.start(); // 啟動執行緒
+			}
+		}
+
+
 Java 5新增了Concurrency API，其利用T hread Pool（執行緒池）來減少每次產生新執行緒的成本，
 	也就是用 ExecutorService 執行多執行緒的效能較好
 
-java.util.concurrent.Executors
-	已提供常用的幾個模式
-		1. newCachedThreadPool創建一個可緩存線程池，如果線程池長度超過處理需要，可靈活回收空閒線程，若無可回收，則新建線程。
-		2. newFixedThreadPool 創建一個定長線程池，可控制線程最大並發數，超出的線程會在隊列中等待。
-		3. newScheduledThreadPool 創建一個定長線程池，支持定時及週期性任務執行。
-		4. newSingleThreadExecutor 創建一個單線程化的線程池，它只會用唯一的工作線程來執行任務，保證所有任務按照指定順序(FIFO, LIFO, 優先級)執行。
+	java.util.concurrent.Executors
+		已提供常用的幾個模式
+			1. newCachedThreadPool創建一個可緩存線程池，如果線程池長度超過處理需要，可靈活回收空閒線程，若無可回收，則新建線程。
+			2. newFixedThreadPool 創建一個定長線程池，可控制線程最大並發數，超出的線程會在隊列中等待。
+			3. newScheduledThreadPool 創建一個定長線程池，支持定時及週期性任務執行。
+			4. newSingleThreadExecutor 創建一個單線程化的線程池，它只會用唯一的工作線程來執行任務，保證所有任務按照指定順序(FIFO, LIFO, 優先級)執行。
 
-		1.固定 pool
-			Executors.newFixedThreadPool
+			1.固定 pool
+				Executors.newFixedThreadPool
 
-		2.單一 pool
-			Executors.newSingleThreadExecutor
+			2.單一 pool
+				Executors.newSingleThreadExecutor
 
-		3.週期 pool
-			Executors.newScheduledThreadPool
+			3.週期 pool
+				Executors.newScheduledThreadPool
 
-		4.單一週期 pool
-			Executors.newSingleThreadScheduledExecutor
+			4.單一週期 pool
+				Executors.newSingleThreadScheduledExecutor
 
+				public static void main(String[] args) {
+					ExecutorService ex = Executors.newSingleThreadExecutor();
+					// 執行一個新的執行緒a
+					ex.execute(new Runnable() {
+						@Override
+						public void run() {
+							System.out.println("執行緒a");
+						}
+					});
+					// 執行一個新的執行緒b
+					ex.execute(new Runnable() {
+						@Override
+						public void run() {
+							System.out.println("執行緒b");
+						}
+					});
+					ex.shutdown(); // 關閉ExecutorService的Thread pool
+				}
+
+			5.
+				Executors.newCachedThreadPool
+
+java 1.7
+	新增 ForkJoinPool，用於分而治之的任務處理
+
+java 1.8
+	建議直接使用 ThreadPoolExecutor 的構造函數來代替 Executors 工具類方法，這樣可以更靈活地配置參數，如核心池大小、最大池大小、佇列類型
+		問題				Executors.newFixedThreadPool 的缺點			改進建議
+		無界任務佇列		任務可能無限制堆積，導致 OutOfMemoryError	使用有界佇列（如 ArrayBlockingQueue）
+		固定執行緒數量		無法動態調整執行緒數量						使用 ThreadPoolExecutor 自定義核心池和最大池大小
+		資源管理不靈活		所有執行緒啟動時即創建，可能浪費資源		設置核心池大小與最大池大小的分離
+		缺乏監控細節		無法監控佇列大小、執行緒數量等細節			使用 ThreadPoolExecutor 並配合監控工具
+		官方建議不直接使用	隱藏了執行緒池的細節，可能不符合高級需求	優先使用 ThreadPoolExecutor 進行定制
+
+	來自 JDK（java.util.concurrent）：
+		是 Java 標準庫提供的多執行緒管理工具。
+		直接操作執行緒池，適合精細控制執行緒的行為。
+		用於一般的多執行緒應用程序。
+	使用場景：
+		適用於所有基於 Java 的應用程序，無需依賴 Spring 框架。
+		當需要定制執行緒池的行為（如拒絕策略、佇列類型）時使用。
+	範例：
+		import java.util.concurrent.*;
+
+		public class ThreadPoolExecutorExample {
 			public static void main(String[] args) {
-				ExecutorService ex = Executors.newSingleThreadExecutor();
-				// 執行一個新的執行緒a
-				ex.execute(new Runnable() {
-					@Override
-					public void run() {
-						System.out.println("執行緒a");
-					}
-				});
-				// 執行一個新的執行緒b
-				ex.execute(new Runnable() {
-					@Override
-					public void run() {
-						System.out.println("執行緒b");
-					}
-				});
-				ex.shutdown(); // 關閉ExecutorService的Thread pool
-			}
+				ThreadPoolExecutor executor = new ThreadPoolExecutor(
+					2,                   // 核心執行緒數量
+					4,                   // 最大執行緒數量
+					60, TimeUnit.SECONDS, // 空閒執行緒存活時間
+					new ArrayBlockingQueue<>(100), // 有界任務佇列,避免無限的任務進來然後沒法對應時間內消耗完而造成 outOfMemory
+					new ThreadPoolExecutor.CallerRunsPolicy() // 拒絕策略
+						// 拒絕策略	描述
+						// AbortPolicy（默認）	直接拋出 RejectedExecutionException，表示任務被拒絕。
+						// CallerRunsPolicy	由提交任務的執行緒（呼叫者）直接執行該任務（同步執行）。
+						// DiscardPolicy	靜默丟棄被拒絕的任務，不做任何處理。
+						// DiscardOldestPolicy	丟棄佇列中最舊的任務，然後重新嘗試提交新任務。
+				);
 
-		5.
-			Executors.newCachedThreadPool
+				for (int i = 0; i < 10; i++) {
+					executor.execute(() -> {
+						System.out.println("執行任務: " + Thread.currentThread().getName());
+					});
+				}
+
+				executor.shutdown();
+			}
+		}
+
+
+	相對比較
+		ThreadPoolTaskExecutor
+			來自 Spring Framework：
+				對 ThreadPoolExecutor 的封裝，提供與 Spring 生態系統的深度整合。
+				繼承自 org.springframework.core.task.TaskExecutor 接口，並實現了 Spring 的 AsyncTaskExecutor。
+			使用場景：
+				適用於 Spring 應用程序，尤其是需要使用 Spring 的功能（如 @Async 支援）時。
+				提供更簡單的配置方式（如 XML 或 Java Config）來統一管理執行緒池。
+
+			範例：
+				import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+				public class ThreadPoolTaskExecutorExample {
+					public static void main(String[] args) {
+						ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+						executor.setCorePoolSize(2); // 核心執行緒數量
+						executor.setMaxPoolSize(4);	// 最大執行緒數量
+						executor.setQueueCapacity(100);  // 有界任務佇列,避免無限的任務進來然後沒法對應時間內消耗完而造成 outOfMemory
+						executor.setThreadNamePrefix("SpringExecutor-");
+						executor.initialize();
+
+						for (int i = 0; i < 10; i++) {
+							executor.execute(() -> {
+								System.out.println("執行任務: " + Thread.currentThread().getName());
+							});
+						}
+
+						executor.shutdown();
+					}
+				}
+	功能比較
+		功能特性				ThreadPoolExecutor										ThreadPoolTaskExecutor
+		核心執行緒與最大執行緒	需要明確指定											支援直接設置
+		佇列類型				可選（如 ArrayBlockingQueue 或 LinkedBlockingQueue）	默認使用無界佇列（可自定義）
+		拒絕策略				內建多種策略（如 CallerRunsPolicy）						基於 Spring 配置，默認策略相同
+		佇列監控				可通過程式碼獲取執行緒池狀態							支援調用 Spring 的方法檢查執行緒狀態
+		動態調整能力			支援動態調整（如修改核心執行緒數量）					同樣支援動態調整，但更方便
+
+
+	如何避免 OutOfMemory 問題(不管 jdk ThreadPoolExecutor 還是 spring ThreadPoolTaskExecutor)
+		防止任務積壓和內存不足的改進建議
+			1. 使用有界佇列
+				ThreadPoolExecutor executor = new ThreadPoolExecutor(
+					....
+					new ArrayBlockingQueue<>(100),
+					....
+				)
+				ThreadPoolTaskExecutor
+					executor.setQueueCapacity(20); // 佇列大小
+
+			2. 動態調整執行緒池參數
+				1.設置一個合理的 corePoolSize 和 maxPoolSize，讓執行緒池能在高負載時啟動更多執行緒。
+				2.根據業務需求調整 keepAliveSeconds，控制空閒執行緒的存活時間。
+					executor.setCorePoolSize(10);
+					executor.setMaxPoolSize(50);
+					executor.setKeepAliveSeconds(60);
+					executor.setQueueCapacity(30);
+			3. 定期監控執行緒池
+				透過執行緒池的監控 API（如 ThreadPoolExecutor 提供的 getPoolSize()、getQueue().size() 等），監控執行緒池的狀態，避免隊列長期積壓。
+					System.out.println("當前執行緒數量: " + executor.getPoolSize());
+					System.out.println("當前佇列大小: " + executor.getThreadPoolExecutor().getQueue().size());
+
+			4. 降級或限流機制
+				1.任務降級：對非關鍵任務進行降級或丟棄。
+				2.限流機制：限制每秒允許的任務提交數，避免執行緒池過載。
+
+			5. 避免高峰期大量任務同時提交
+				優化應用程式中的任務提交邏輯，避免高峰期間短時間內提交大量任務。
+
+Java 9
+	引入了 Flow API，提供對反應式編程的支援，應對現代高並發和非阻塞場景

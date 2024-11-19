@@ -18,18 +18,18 @@
 			return "redirect:/home";
 		}
 
-4.FlashMap 和 FlashAttributes 
+4.FlashMap 和 FlashAttributes
 	Spring MVC 中的 FlashMap 也可以達到類似 RedirectAttributes 的效果，但這是更底層的方式。
 	適合 : 非 spring mvc 操作的情境
 		FlashMap 使用場景較少，RedirectAttributes 更常用於應用層級的需求。
-	
+
 	範例
 		in spring security override use
 			@Component
 			public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 				@Override
-				public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
+				public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 													Authentication authentication) throws IOException, ServletException {
 					FlashMap flashMap = new FlashMap();
 					flashMap.put("message", "登入成功！");

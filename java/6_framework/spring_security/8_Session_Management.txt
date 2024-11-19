@@ -44,7 +44,7 @@
 		public SecurityFilterChain filterChain(HttpSecurity http) {
 			http
 				.sessionManagement(session -> session
-					.maximumSessions(1) 
+					.maximumSessions(1)
 				);
 			return http.build();
 		}
@@ -61,23 +61,23 @@
 			return http.build();
 		}
 
-	若 maximumSessions != null 
+	若 maximumSessions != null
 		則預設 SessionManagementConfigurer.configure 會協助建立 ConcurrentSessionFilter
-	
+
 
 4.Session Fixation Attack Protection
 	控制 session 固定保護策略
 		session 固定攻擊（Session Fixation Attack）是一種利用 session ID 劫持用戶 session 的攻擊方式。sessionFixation 提供了幾種不同的保護策略來防止這類攻擊。
-			1.migrateSession()（預設）: 
+			1.migrateSession()（預設）:
 				當用戶成功登入時，創建一個新的 session，並將舊的 session 屬性遷移到新 session。
-			2.none(): 
+			2.none():
 				不執行任何 session 保護措施，僅用於不需要 session 固定保護的場景。
-			3.newSession(): 
+			3.newSession():
 				用戶登入時創建一個全新的 session，且不保留任何原先 session 的屬性。
-			4.changeSessionId(): 
+			4.changeSessionId():
 				使用 Servlet 規範中的 changeSessionId() 方法更改 session ID，適用於 Servlet 3.1+ 的應用。
 
-	一般建議使用 migrateSession() 
+	一般建議使用 migrateSession()
 		這是 Spring Security 的預設配置，兼顧安全性和 session 屬性的保留。
 	高安全性需求選擇 newSession()
 		適合敏感數據或要求高度隔離的場景。
@@ -85,18 +85,18 @@
 		在保持 session 屬性不變的情況下改變 session ID。
 	無狀態應用選擇 none()
 		適用於不需要 session 的 REST API 等場景。
-	
+
 	預設 5.7.11 自動配置使用
 		SessionManagementConfigurer 當如果未配置 sessionManagement.sessionAuthenticationStrategy()
 			則會預設使用 ChangeSessionIdAuthenticationStrategy
 				private static SessionAuthenticationStrategy createDefaultSessionFixationProtextionStrateg(){
 					return new ChangeSessionIdAuthenticationStrategy();
 				}
-	
+
 5.SessionManagementFilter
 
 6.SessionAuthenticationStrategy
-	自訂 session 驗證策略；通常不用特別配置因為預設總共會有 
+	自訂 session 驗證策略；通常不用特別配置因為預設總共會有
 		當 maximumSessions != null
 			CsrfAuthenticationStrategy
 			ConcurrentSessionControlAuthenticationStrategy
@@ -108,7 +108,7 @@
 				若使用者無設定則預設設定 sessionFixationAuthenticationStrategy
 	http.sessionManagement()
 			.sessionAuthenticationStrategy(new CustomSessionAuthenticationStrategy());
-	
+
 7.Concurrency Control
 
 ========================================================================================================================
@@ -141,7 +141,7 @@ http.sessionManagement(session -> session
 		.expriedUrl("/session-expried")
 			觸發場景：當用戶的 session 因超過時限或達到最大登入數量而過期時，會觸發 expiredSessionStrategy。這通常出現在以下情況：
 				1.session 被新的登入頂替（通常用於限制同一帳號的同時登入數量）。
-		// .expiredSessionStrategy(SessionInformationExpiredStrategy) 
+		// .expiredSessionStrategy(SessionInformationExpiredStrategy)
 
 		.sessionRegistry(sessionRegistry())          // 使用 SessionRegistry 管理 session
 	);
@@ -153,11 +153,11 @@ http.sessionManagement(session -> session
 	server:
 	  servlet:
 		session:
-		  timeout: 30s #10m 
+		  timeout: 30s #10m
 
-當 csrf 未特別設定 sessionAuthicationStrategy 
+當 csrf 未特別設定 sessionAuthicationStrategy
 	則預設會使用 new CsrfAuthenticationStrategy() 經 addSessionAuthenticationStrategy(sessionAuthicationStrategy)
-		加到 sessionManagementConfigurer 
+		加到 sessionManagementConfigurer
 			private SessionAuthenticationStrategy getSessionAuthenticationStrategy(H http){
 				....
 				List<SessionAuthenticationStrategy> delegateStrategies = this.sessionAuthicationStrategy

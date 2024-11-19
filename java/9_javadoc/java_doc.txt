@@ -44,7 +44,7 @@
 		- 用於序列化欄位，說明欄位的序列化細節。
 		- **格式**：`@serial 描述`
 		- **範例**：`@serial 用戶的序列化ID`
-	
+
 	12. @serialField
 		- 用於序列化類別中的欄位，通常和 `@serial` 配合使用。
 		- **格式**：`@serialField name type 描述`
