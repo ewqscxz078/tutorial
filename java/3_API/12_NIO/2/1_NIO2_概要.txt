@@ -1,0 +1,35 @@
+JDK 7（2011 年）中引入的增強版本，正式名稱為 New Input/Output 2
+
+1.Path 和 Files
+	引入了 Path 和 Files 類，取代了 File，提供更強大的檔案操作能力，支援符號連結和檔案屬性
+
+2.異步 I/O
+	引入了 AsynchronousChannel，支援非同步的檔案和網路操作，例如 AsynchronousFileChannel 和 AsynchronousSocketChannel
+	適合處理高併發場景，例如 WebSocket 伺服器
+
+3.DirectoryStream
+	提供高效遍歷目錄內容的方式
+		try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("."))) {
+			for (Path file : stream) {
+				System.out.println(file.getFileName());
+			}
+		}
+
+4.檔案屬性 API
+	支援檔案屬性的檢查和修改，例如權限、大小、創建時間等
+		Path path = Paths.get("example.txt");
+		System.out.println("檔案大小: " + Files.size(path));
+
+5.Watcher Service
+	引入檔案系統事件監聽功能，支援監控檔案或目錄的變化，例如新增、刪除或修改
+		WatchService watchService = FileSystems.getDefault().newWatchService();
+		Path path = Paths.get(".");
+		path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
+
+		WatchKey key;
+		while ((key = watchService.take()) != null) {
+			for (WatchEvent<?> event : key.pollEvents()) {
+				System.out.println("發生事件: " + event.kind() + "，檔案: " + event.context());
+			}
+			key.reset();
+		}

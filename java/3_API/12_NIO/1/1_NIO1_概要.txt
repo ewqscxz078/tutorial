@@ -1,0 +1,20 @@
+JDK 1.4（2002 年）中首次引入的一組新的 I/O 工具，全名為 New Input/Output，
+	目的是解決傳統 java.io 的性能和靈活性限制
+
+1.非阻塞 I/O（Non-blocking I/O）
+	提供了一種非同步的 I/O 操作模式，例如使用 Selector 配合 Channel 來處理多個連接，而不是每個連接使用一個線程
+
+2.Channel
+	1.引入了 Channel 作為一個更現代化的 I/O 抽象，比傳統的流（Stream）更高效
+	2.支援讀寫操作共用（雙向操作），不像傳統流是單向的（InputStream 或 OutputStream）
+
+3.Buffer
+	1.引入了 Buffer 來取代原有的 byte[]，專為 I/O 設計，允許進行更高效的資料操作。
+	2.Buffer 支援多種型別，如 ByteBuffer、CharBuffer、IntBuffer 等
+
+4.Selector
+	1.支援事件驅動的非阻塞 I/O，可以同時監控多個通道（Channel）。
+	2.適合實現高效的多路複用（Multiplexing），尤其是網路伺服器應用
+
+5.FileChannel
+	1.支援直接檔案傳輸（零拷貝操作，例如 transferTo 和 transferFrom），提升了檔案處理效能

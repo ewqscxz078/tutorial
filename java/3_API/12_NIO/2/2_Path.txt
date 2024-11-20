@@ -1,0 +1,49 @@
+java.nio.file.Path
+	提供了多種檔案和目錄操作的支援，主要用於處理路徑相關的工作
+
+1. 路徑資訊檢索
+	取得基本資訊
+		getFileName()：取得檔案或目錄的名稱。
+		getParent()：取得父目錄。
+		getRoot()：取得根目錄（例如 Windows 的 C:\）。
+		getNameCount()：取得路徑中名稱的數量。
+			Path path = Paths.get("/home/user/docs/file.txt");
+
+			System.out.println("檔案名稱: " + path.getFileName());    // file.txt
+			System.out.println("父目錄: " + path.getParent());        // /home/user/docs
+			System.out.println("根目錄: " + path.getRoot());          // /
+			System.out.println("路徑層數: " + path.getNameCount());   // 4
+
+2. 路徑操作
+	合併路徑
+		resolve()：將另一個路徑附加到當前路徑上。
+		resolveSibling()：在當前路徑的父目錄下解析新路徑。
+			Path basePath = Paths.get("/home/user/docs");
+			Path filePath = basePath.resolve("file.txt"); // /home/user/docs/file.txt
+			Path siblingPath = basePath.resolveSibling("newDocs"); // /home/user/newDocs
+			System.out.println(filePath);
+			System.out.println(siblingPath);
+
+	相對路徑計算
+		relativize()：計算當前路徑和另一個路徑之間的相對路徑。
+			Path path1 = Paths.get("/home/user/docs");
+			Path path2 = Paths.get("/home/user/images");
+
+			Path relativePath = path1.relativize(path2); // ../images
+			System.out.println(relativePath);
+
+3. 路徑標準化和絕對化
+	標準化路徑
+		normalize()：刪除冗餘的 . 和 ..。
+			Path path = Paths.get("/home/user/docs/../file.txt");
+			System.out.println(path.normalize()); // /home/user/file.txt
+	
+	轉為絕對路徑
+		toAbsolutePath()：將路徑轉為絕對路徑。
+			Path path = Paths.get("file.txt");
+			System.out.println(path.toAbsolutePath()); // /home/user/docs/file.txt
+			
+	生成真正完整且乾淨的絕對路徑
+		假設 path 為相對路徑
+			../xxxx/yyy
+				應該先使用 toAbsolutePath()，再使用 normalize()

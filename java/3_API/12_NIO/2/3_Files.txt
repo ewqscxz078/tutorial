@@ -1,0 +1,70 @@
+
+1. 路徑檢查
+	判斷檔案/目錄是否存在
+		使用 Files.exists() 和 Files.notExists()。
+			Path path = Paths.get("file.txt");
+			if (Files.exists(path)) {
+				System.out.println("檔案存在");
+			} else {
+				System.out.println("檔案不存在");
+			}
+
+	判斷是否為目錄或檔案
+		使用 Files.isDirectory() 和 Files.isRegularFile()。
+
+2. 檔案系統操作
+	建立目錄
+		建立單一目錄 Files.createDirectory() 
+			即使存在也不會拋例外
+				Path dir = Paths.get("newDir");
+				Files.createDirectory(dir);
+		建立多層目錄 Files.createDirectories()
+			即使存在也不會拋例外
+				Files.createDirectories(Paths.get("parent/newDir"));
+	
+	檔案/目錄刪除
+		使用 Files.delete()。
+
+		Files.deleteIfExists(Path) 
+			檔案：如果指定的 Path 是檔案，則刪除該檔案。
+			空目錄：如果指定的 Path 是目錄，且該目錄為空，則刪除該目錄。
+			非空目錄：如果目錄包含檔案或子目錄，將會拋出 DirectoryNotEmptyException。
+			
+			但一般建議使用 Files.walkFileTree
+				更高效和現代化的方法，使用 FileVisitor 來遍歷目錄樹
+			
+3. 檔案屬性
+	讀取屬性
+		使用 Files.size()：取得檔案大小。
+		使用 Files.getLastModifiedTime()：取得最後修改時間。
+		使用 Files.isReadable() 等檢查檔案權限。
+			Path path = Paths.get("file.txt");
+			System.out.println("檔案大小: " + Files.size(path));
+			System.out.println("最後修改時間: " + Files.getLastModifiedTime(path));
+			System.out.println("是否可讀: " + Files.isReadable(path));
+
+4. 目錄遍歷
+	使用 Files.newDirectoryStream() 來高效遍歷目錄。
+		Path dir = Paths.get("/home/user/docs");
+		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+			for (Path entry : stream) {
+				System.out.println(entry.getFileName());
+			}
+		}
+
+5. 檔案內容操作
+	讀取和寫入
+		Files.readAllLines()：讀取檔案所有行。
+		Files.write()：寫入資料到檔案。
+			當在嘗試寫入檔案的路徑為相對路徑時可以操作
+			但要注意目標檔案的父目錄不存在時，拋出 NoSuchFileException
+			只會自動建立檔案本身，但不會自動建立父目錄
+			
+				Path path = Paths.get("file.txt");
+
+				// 寫入內容
+				Files.write(path, Arrays.asList("Hello", "World"));
+
+				// 讀取內容
+				List<String> lines = Files.readAllLines(path);
+				lines.forEach(System.out::println);

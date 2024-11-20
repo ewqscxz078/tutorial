@@ -2,20 +2,31 @@ https://www.baeldung.com/spring-classpath-file-access
 
 取得資源方式
 	1.專案下 : ClassPathResource
-		public Resource loadEmployeesWithClassPathResource() {
-			// 等於 return new ClassPathResource("data/employees.dat", this.getClass().getClassLoader());
-			return new ClassPathResource("data/employees.dat");
+		適用場景
+			處理 classpath 中的靜態資源，例如 /src/main/resources 或 JAR 包內資源
+				public Resource loadEmployeesWithClassPathResource() {
+					// 等於 return new ClassPathResource("data/employees.dat", this.getClass().getClassLoader());
+					return new ClassPathResource("data/employees.dat");
 
-			// 間接指定類別取得路徑資源
-			// return new ClassPathResource("data/employees.dat", Employee.class.getClassLoader());
-		}
+					// 間接指定類別取得路徑資源
+					// return new ClassPathResource("data/employees.dat", Employee.class.getClassLoader());
+				}
+
+	2.外部檔案 : FileUrlResource
+		適用場景
+			資源在檔案系統外部，例如外部配置檔案或用戶上傳檔案的存放路徑。
 
 	2. Using @Value
-		@Value("classpath:data/resource-data.txt")
-		Resource resourceFile;
-			// 並可將佔位正確解析
+		適用場景
+			在 application.yml 或 application.properties 中配置了資源路徑，且資源位置不會動態變化。
+				@Value("classpath:data/resource-data.txt")
+				Resource resourceFile;
+					// 並可將佔位正確解析
 
 	3. Using ResourceLoader
+		適用情境
+			需要載入多種類型的資源（例如同時支持 classpath:、file:、http: 等）。
+			動態解析資源類型，而不確定具體的資源位置。
 		延遲載入 If we want to lazily load our resource
 
 		方法一
@@ -35,6 +46,11 @@ https://www.baeldung.com/spring-classpath-file-access
 			}
 
 	4. Using ResourceUtils
+		主要用於靜態方法，將資源位置轉換為對應的 File 或 URL
+		適用情境
+			需要操作檔案對象（File），而非 Resource。
+			資源的定位位置需要明確為 classpath 或其他 URL。
+		
 		public File loadEmployeesWithSpringInternalClass()
 		  throws FileNotFoundException {
 			return ResourceUtils.getFile(

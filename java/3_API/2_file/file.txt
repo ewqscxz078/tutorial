@@ -52,3 +52,6 @@ character 處理
 			Files.write(Path,byte[],StandardOpenOption.CREATE)
 		read file to byte[]
 			Files.readAllBytes(Path)
+	
+	Path 轉為 file
+		path.toFile()
