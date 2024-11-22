@@ -37,12 +37,12 @@ java.nio.file.Path
 		normalize()：刪除冗餘的 . 和 ..。
 			Path path = Paths.get("/home/user/docs/../file.txt");
 			System.out.println(path.normalize()); // /home/user/file.txt
-	
+
 	轉為絕對路徑
 		toAbsolutePath()：將路徑轉為絕對路徑。
 			Path path = Paths.get("file.txt");
 			System.out.println(path.toAbsolutePath()); // /home/user/docs/file.txt
-			
+
 	生成真正完整且乾淨的絕對路徑
 		假設 path 為相對路徑
 			../xxxx/yyy

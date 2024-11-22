@@ -50,7 +50,7 @@ https://www.baeldung.com/spring-classpath-file-access
 		適用情境
 			需要操作檔案對象（File），而非 Resource。
 			資源的定位位置需要明確為 classpath 或其他 URL。
-		
+
 		public File loadEmployeesWithSpringInternalClass()
 		  throws FileNotFoundException {
 			return ResourceUtils.getFile(

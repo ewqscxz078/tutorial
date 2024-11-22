@@ -28,55 +28,52 @@ Java 1.0 提供了基本的多執行緒功能
 		}
 
 
-Java 5新增了Concurrency API，其利用T hread Pool（執行緒池）來減少每次產生新執行緒的成本，
-	也就是用 ExecutorService 執行多執行緒的效能較好
+Java 1.5
+	新增了Concurrency API，其利用 Thread Pool（執行緒池）來減少每次產生新執行緒的成本，
+		也就是用 ExecutorService 執行多執行緒的效能較好
+			java.util.concurrent.Executors
+				已提供常用的幾個模式
+					1. newCachedThreadPool創建一個可緩存線程池，如果線程池長度超過處理需要，可靈活回收空閒線程，若無可回收，則新建線程。
+					2. newFixedThreadPool 創建一個定長線程池，可控制線程最大並發數，超出的線程會在隊列中等待。
+					3. newScheduledThreadPool 創建一個定長線程池，支持定時及週期性任務執行。
+					4. newSingleThreadExecutor 創建一個單線程化的線程池，它只會用唯一的工作線程來執行任務，保證所有任務按照指定順序(FIFO, LIFO, 優先級)執行。
 
-	java.util.concurrent.Executors
-		已提供常用的幾個模式
-			1. newCachedThreadPool創建一個可緩存線程池，如果線程池長度超過處理需要，可靈活回收空閒線程，若無可回收，則新建線程。
-			2. newFixedThreadPool 創建一個定長線程池，可控制線程最大並發數，超出的線程會在隊列中等待。
-			3. newScheduledThreadPool 創建一個定長線程池，支持定時及週期性任務執行。
-			4. newSingleThreadExecutor 創建一個單線程化的線程池，它只會用唯一的工作線程來執行任務，保證所有任務按照指定順序(FIFO, LIFO, 優先級)執行。
+					1.固定 pool
+						Executors.newFixedThreadPool
 
-			1.固定 pool
-				Executors.newFixedThreadPool
+					2.單一 pool
+						Executors.newSingleThreadExecutor
 
-			2.單一 pool
-				Executors.newSingleThreadExecutor
+					3.週期 pool
+						Executors.newScheduledThreadPool
 
-			3.週期 pool
-				Executors.newScheduledThreadPool
+					4.單一週期 pool
+						Executors.newSingleThreadScheduledExecutor
 
-			4.單一週期 pool
-				Executors.newSingleThreadScheduledExecutor
-
-				public static void main(String[] args) {
-					ExecutorService ex = Executors.newSingleThreadExecutor();
-					// 執行一個新的執行緒a
-					ex.execute(new Runnable() {
-						@Override
-						public void run() {
-							System.out.println("執行緒a");
+						public static void main(String[] args) {
+							ExecutorService ex = Executors.newSingleThreadExecutor();
+							// 執行一個新的執行緒a
+							ex.execute(new Runnable() {
+								@Override
+								public void run() {
+									System.out.println("執行緒a");
+								}
+							});
+							// 執行一個新的執行緒b
+							ex.execute(new Runnable() {
+								@Override
+								public void run() {
+									System.out.println("執行緒b");
+								}
+							});
+							ex.shutdown(); // 關閉ExecutorService的Thread pool
 						}
-					});
-					// 執行一個新的執行緒b
-					ex.execute(new Runnable() {
-						@Override
-						public void run() {
-							System.out.println("執行緒b");
-						}
-					});
-					ex.shutdown(); // 關閉ExecutorService的Thread pool
-				}
 
-			5.
-				Executors.newCachedThreadPool
+					5.
+						Executors.newCachedThreadPool
 
-java 1.7
-	新增 ForkJoinPool，用於分而治之的任務處理
 
-java 1.8
-	建議直接使用 ThreadPoolExecutor 的構造函數來代替 Executors 工具類方法，這樣可以更靈活地配置參數，如核心池大小、最大池大小、佇列類型
+	後來改建議直接使用 ThreadPoolExecutor 的構造函數來代替 Executors 工具類方法，這樣可以更靈活地配置參數，如核心池大小、最大池大小、佇列類型
 		問題				Executors.newFixedThreadPool 的缺點			改進建議
 		無界任務佇列		任務可能無限制堆積，導致 OutOfMemoryError	使用有界佇列（如 ArrayBlockingQueue）
 		固定執行緒數量		無法動態調整執行緒數量						使用 ThreadPoolExecutor 自定義核心池和最大池大小
@@ -179,8 +176,10 @@ java 1.8
 					executor.setQueueCapacity(30);
 			3. 定期監控執行緒池
 				透過執行緒池的監控 API（如 ThreadPoolExecutor 提供的 getPoolSize()、getQueue().size() 等），監控執行緒池的狀態，避免隊列長期積壓。
-					System.out.println("當前執行緒數量: " + executor.getPoolSize());
-					System.out.println("當前佇列大小: " + executor.getThreadPoolExecutor().getQueue().size());
+					System.out.println("執行緒池大小: " + executor.getPoolSize());
+					System.out.println("活動執行緒數量: " + executor.getActiveCount());
+					System.out.println("佇列中等待的任務數量: " + executor.getQueue().size());
+					System.out.println("已完成的任務數量: " + executor.getCompletedTaskCount());
 
 			4. 降級或限流機制
 				1.任務降級：對非關鍵任務進行降級或丟棄。
@@ -189,5 +188,16 @@ java 1.8
 			5. 避免高峰期大量任務同時提交
 				優化應用程式中的任務提交邏輯，避免高峰期間短時間內提交大量任務。
 
+
+java 1.7
+	新增 ForkJoinPool，用於分而治之的任務處理
+
+java 1.8
+	新增專注於簡化並發處理的工具：
+		CompletableFuture：更強大的非同步任務處理。
+		Stream 並行流：簡化數據處理的多執行緒支持。
+		Lambda 表達式：讓多執行緒任務定義更加簡潔。
+	面向高級開發者的新選擇：
+		通過 CompletableFuture 和並行流減少直接操作執行緒或執行緒池的需求。
 Java 9
 	引入了 Flow API，提供對反應式編程的支援，應對現代高並發和非阻塞場景
