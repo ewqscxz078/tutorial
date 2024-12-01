@@ -1,3 +1,5 @@
+ref ChatGPT
+
 java.io
 	範例
 		import java.io.*;

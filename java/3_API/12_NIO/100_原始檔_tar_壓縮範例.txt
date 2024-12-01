@@ -1,0 +1,60 @@
+原始檔案 → 假設 tar 打包 → 壓縮 (gzip)
+
+程式邏輯
+	1.使用 FileChannel 讀取原始檔案。
+	2.將資料寫入「打包處理」的目標檔案。
+	3.使用壓縮（例如 GZIP）處理打包檔案，並生成最終的壓縮檔案。
+
+範例
+	import java.io.*;
+	import java.nio.ByteBuffer;
+	import java.nio.channels.FileChannel;
+	import java.nio.file.*;
+
+	public class FileChannelExample {
+		public static void main(String[] args) {
+			Path sourceFile = Path.of("example.txt"); // 原始檔案
+			Path tarFile = Path.of("example.tar");   // 模擬 tar 打包檔案
+			Path gzipFile = Path.of("example.tar.gz"); // 壓縮後的檔案
+
+			try {
+				// 1. 用 FileChannel 讀取原始檔案，並模擬打包處理 (tar)
+				try (FileChannel inputChannel = FileChannel.open(sourceFile, StandardOpenOption.READ);
+					 FileChannel outputChannel = FileChannel.open(tarFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+					ByteBuffer buffer = ByteBuffer.allocate(1024);
+					while (inputChannel.read(buffer) > 0) {
+						buffer.flip();
+						outputChannel.write(buffer);
+						buffer.clear();
+					}
+				}
+
+				// 2. 壓縮打包後的檔案 (gzip)
+				try (FileInputStream tarInput = new FileInputStream(tarFile.toFile());
+					 FileOutputStream gzipOutput = new FileOutputStream(gzipFile.toFile());
+					 BufferedInputStream bufferedInput = new BufferedInputStream(tarInput);
+					 BufferedOutputStream bufferedOutput = new BufferedOutputStream(new GZIPOutputStream(gzipOutput))) {
+
+					byte[] buffer = new byte[1024];
+					int bytesRead;
+					while ((bytesRead = bufferedInput.read(buffer)) != -1) {
+						bufferedOutput.write(buffer, 0, bytesRead);
+					}
+				}
+
+				System.out.println("檔案處理完成！生成檔案: " + gzipFile.toAbsolutePath());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+關鍵點
+	1.FileChannel 的優勢：
+		高效處理檔案 I/O。
+		支援檔案的隨機訪問（雖然這裡未用到）。
+		比傳統 InputStream 和 OutputStream 更靈活，適合處理大檔案。
+	2.傳統流與 FileChannel 的結合：
+		在壓縮部分，仍需使用傳統流（如 GZIPOutputStream），因為壓縮相關類尚未完全整合進 nio。
+	3.可擴展性：
+		可以輕鬆擴展處理邏輯，例如加入額外的處理步驟（加密、校驗等）。
