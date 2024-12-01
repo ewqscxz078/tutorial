@@ -18,3 +18,6 @@ JDK 1.4（2002 年）中首次引入的一組新的 I/O 工具，全名為 New I
 
 5.FileChannel
 	1.支援直接檔案傳輸（零拷貝操作，例如 transferTo 和 transferFrom），提升了檔案處理效能
+
+
+ref https://hackmd.io/@AlienHackMd/HyM5BOR1a

@@ -1,0 +1,87 @@
+java.io
+	範例
+		import java.io.*;
+
+		public class OldFileIOExample {
+			public static void main(String[] args) {
+				File file = new File("example.txt");
+				try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+					String line;
+					while ((line = reader.readLine()) != null) {
+						System.out.println(line);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	特點：
+		使用 File 類表示檔案，但只能進行檔案屬性操作，無法直接讀寫內容。
+		需要額外使用 FileReader 和 BufferedReader。
+		繁瑣且容易出錯（例如忘記關閉流）。
+
+
+java.nio
+	範例
+		import java.io.IOException;
+		import java.nio.ByteBuffer;
+		import java.nio.channels.FileChannel;
+		import java.nio.file.Path;
+		import java.nio.file.StandardOpenOption;
+
+		public class NIOFileExample {
+			public static void main(String[] args) {
+				Path filePath = Path.of("example.txt");
+				try (FileChannel fileChannel = FileChannel.open(filePath, StandardOpenOption.READ)) {
+					ByteBuffer buffer = ByteBuffer.allocate(1024);
+					while (fileChannel.read(buffer) > 0) {
+						buffer.flip(); // 切換到讀模式
+						while (buffer.hasRemaining()) {
+							System.out.print((char) buffer.get());
+						}
+						buffer.clear(); // 清空以便寫入新數據
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	特點：
+		使用 FileChannel 和 ByteBuffer 進行檔案讀取，性能更高。
+		操作更底層且靈活，但相對複雜。
+		適合處理大檔案和非阻塞操作。
+
+java.nio.file(2)
+	範例
+		import java.io.IOException;
+		import java.nio.file.Files;
+		import java.nio.file.Path;
+
+		public class ModernFileExample {
+			public static void main(String[] args) {
+				Path filePath = Path.of("example.txt");
+				try {
+					Files.lines(filePath).forEach(System.out::println);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	特點：
+		使用 Path 類代替 File，操作更簡潔。
+		Files 工具類提供大量實用方法（例如讀取整行）。
+		支援符號連結、檔案屬性操作，功能更全面。
+
+差異對比總結
+	特性					java.io							java.nio				java.nio.file
+	操作對象				File 類							Path 和 FileChannel		Path 類
+	讀寫檔案方式			流（InputStream / Reader）		緩衝區（ByteBuffer）	Files 的高級工具方法
+	代碼複雜度				高								中						低
+	效能					普通							高效，適用大檔案		與 java.nio 相當
+	高級功能（符號連結等）	不支援							支援（需額外實現）		支援，開箱即用
+
+選擇建議
+	簡單任務（例如小檔案讀寫）：使用 java.nio.file。
+	高性能任務（例如大檔案或非阻塞操作）：使用 java.nio。
+	歷史代碼或簡單應用：仍可使用 java.io。
