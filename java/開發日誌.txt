@@ -1,0 +1,7 @@
+20241229
+	如何初始 test of data insert init
+		卡到 如何 schema with data insert init 問題
+
+20241228
+	spring boot metamodel gen
+	ecilpse 2024-12 IDE install

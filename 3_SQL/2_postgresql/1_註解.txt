@@ -1,0 +1,7 @@
+-- 添加資料表註解
+	COMMENT ON TABLE your_table_name IS '這是資料表的註解';
+
+-- 添加欄位註解
+	COMMENT ON COLUMN your_table_name.id IS '主鍵 ID';
+	COMMENT ON COLUMN your_table_name.name IS '使用者名稱';
+	COMMENT ON COLUMN your_table_name.created_at IS '建立時間';

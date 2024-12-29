@@ -1,0 +1,14 @@
+
+Database Initialization
+	https://www.baeldung.com/spring-boot-data-sql-and-schema-sql
+
+
+1.@Entity  class > Spring Boot will create an empty table
+
+2.application.yml
+	spring.jpa.defer-datasource-initialization=true 告知 Hibernate 初始資料表後才執行  data.sql
+
+3.data.sql # 預設情況下，data.sql 腳本在 Hibernate 初始化之前執行
+
+4.並搭配
+	spring.sql.init.mode=always 初始化腳本

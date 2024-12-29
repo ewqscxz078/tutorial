@@ -13,6 +13,8 @@ once
 			https://www.eclipse.org/downloads/
 				Home / Downloads / Packages / Release / Eclipse IDE 2022-06 R
 					Eclipse IDE for Enterprise Java and Web Developers / Windows x86_64
+					// 下載後建議使用 最新的 7zip 解壓縮，已知使用 7zip 22版 以下會有解壓縮超久問題
+
 		options
 			xmind : 繪製心智圖工具
 				畫技能樹、整理相關概念
@@ -47,39 +49,41 @@ once
 					unix
 			java
 				Installed JREs
-					add 開發用的 jdk位置，預設的eclipse jdk 會有點差別
+					add 開發用的 jdk 位置，預設的eclipse jdk 會有點差別(if want)
 			maven
 				User Settings
-					User Settings 指定自己用的 maven settings
+					User Settings 指定自己用的 maven settings(if want)
 			General
 				Appearance
 					Colors and Fonts
-						Text Font / Edit
+						Basic / Text Font / Edit
 							10 -> 12
 			java/
 				Code syle
 					clean up
-						Code Organizing
-							Formatter
-								Format source code 勾選
+						new / 命名 : my-ccd
+							Code Organizing
+								Formatter
+									Format source code 勾選
 
-						Code Style
-							Control statments
-								Use blocks in if/while/for/do statements
-									Always
-							Variable declarations
-								Use modifier 'final' where possible
-									Private fields 、 Parameter、 Local variables 皆勾選
-						Member Access
-							Non static access
-								Use 'this' qualifier for field access
-									Always
-								Use 'this' qualifier for method access
-									Always
+							Code Style
+								Control statments
+									Use blocks in if/while/for/do statements
+										Always
+								Variable declarations
+									Use modifier 'final' where possible
+										Private fields 、 Parameter、 Local variables 皆勾選
+							Member Access
+								Non static access
+									Use 'this' qualifier for field access
+										Always
+									Use 'this' qualifier for method access
+										Always
 					Formatter(Editor)
-						Comments
-							Format line comments on first column 勾選
-							Enable header comment formatting 勾選
+						new / 命名 : my-ccd
+							Comments
+								Format line comments on first column 勾選
+								Enable header comment formatting 勾選
 
 				Editor
 					save actions
@@ -92,25 +96,32 @@ once
 						Additional actions
 							勾選
 								Code Style
-									Variable 'final' where possible
-										Private fields
-											取消
-										Parameter
-											勾選
-									Member Accesses
+									Control statments
+										Use blocks in if/while/for/do statements
+											Always
+									Variable declarations
+										Use modifier 'final' where possible
+											Private fields 、 Parameter、 Local variables 皆勾選
+								Member Access
+									Non static access
 										Use 'this' qualifier for field access
-											Always 勾選
+											Always
+										Use 'this' qualifier for method access
+											Always
 
 		Project
 			Build Automatically
 				cancel
 		Help[options]
 			Eclipse Marketplace
-				in Find input text type springboot
+				in Find input text type spring boot
 					install Spring Tools 4
 						1.提供 application.properties 輔助資訊
 						2.Spring Initailizr tool
 						3.執行 spring boot 啟動輔助
+			安裝後確認匯入專案且為spring boot 專案
+				對其 main 右鍵 run as
+					應該會有 spring boot app 選項
 	5. 常用語法 alias
 		alias grep="grep --color=always" >> ~/.bashrc
 

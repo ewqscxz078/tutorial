@@ -1,2 +1,20 @@
 ref
 	https://www.baeldung.com/hibernate-criteria-queries-metamodel
+
+	https://stackoverflow.com/questions/57290897/configure-hibernate-jpamodelgen-in-maven
+		設定經驗，但新版的 IDE ecilpse 都已整合好了僅需要 maven 加入依賴後即可，不用特別設定plugin
+
+1. maven 依賴
+	spring boot 3
+		<dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-jpamodelgen</artifactId><scope>provided</scope></dependency> <!-- 輔助生成 JPA Metamodel -->
+
+2.安裝最新 ecipse 後 clean up 則
+	target\generated-sources\annotations 下就會生成對應
+		package 路徑的 metamodel class
+
+備註:
+	1.Metamodel 文件是編譯時生成的源代碼，屬於標準輸出的一部分。
+	2.不需要特別入庫，只需正確配置 Maven/Gradle 和 IDE 即可。
+	3.運行時與打包時都會自動包含這些文件，無需手動操作。
+
+	4.如果有更複雜的需求（如自定義生成路徑或構建過程），可以通過 Maven 的 build-helper-maven-plugin 或 Gradle 的 sourceSets 進行額外配置
