@@ -27,8 +27,6 @@ springboot2 看到87/87
 		https://spring.io/projects/spring-boot#overview
 			點擊 the project release notes section
 
-todo
-	eclipse 開啟入門專案
 
 
 

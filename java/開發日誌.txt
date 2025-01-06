@@ -1,3 +1,16 @@
+20250105
+	調整專案有 自訂 parent
+	調整專案改java 21
+	搬移專案到更外層點
+	待調整自訂的 autoconfiguration of system and default setting yml
+
+20250104
+	紀錄 gen entity tool by postgresql driver of jar
+	如何初始 test of data insert init
+		情境一
+			h2 schema by entity generate
+			data insert by sql
+
 20241229
 	如何初始 test of data insert init
 		卡到 如何 schema with data insert init 問題

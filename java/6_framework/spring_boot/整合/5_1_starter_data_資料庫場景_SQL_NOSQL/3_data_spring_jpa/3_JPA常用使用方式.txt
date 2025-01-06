@@ -7,26 +7,26 @@ https://blog.wuwii.com/jpa-specification.html
 https://medium.com/@AlexanderObregon/optimizing-queries-with-query-annotation-in-spring-data-jpa-fe213c8a60a
 
 
-https://medium.com/learning-from-jhipster/19-%E5%B0%8E%E5%85%A5spring-data-jpa-%E5%B0%87%E8%B3%87%E6%96%99%E5%BA%AB%E8%88%87%E7%89%A9%E4%BB%B6%E9%80%B2%E8%A1%8C%E7%B6%81%E5%AE%9A%E8%88%87-sequence-%E7%9A%84%E8%A8%AD%E5%AE%9A-d96724c03458
-	Spring-Data-JPA 的 yml 相關配置 詳解
+Spring-Data-JPA 的 yml 相關配置 詳解
+	https://medium.com/learning-from-jhipster/19-%E5%B0%8E%E5%85%A5spring-data-jpa-%E5%B0%87%E8%B3%87%E6%96%99%E5%BA%AB%E8%88%87%E7%89%A9%E4%BB%B6%E9%80%B2%E8%A1%8C%E7%B6%81%E5%AE%9A%E8%88%87-sequence-%E7%9A%84%E8%A8%AD%E5%AE%9A-d96724c03458
 
-application.yml # 配置
-	spring:
-	  jpa:
-		database: 設定要操作的資料庫是哪一種，不設定或預設值時，為系統自動檢測
-		database-platform: 可以選擇要使用的資料庫的「平台」(或者說「方言」)，預設值為系統自動檢測
-		defer-datasource-initialization: 延遲數據源初始化，預設值為false(此用於當有需要使用data.sql描述檔時使用)
-		generate-ddl: 是否在初系統啟動的時候就初始化Table的Schema，預設值為false
-		mapping-resources: 如果有客製化的mapping-file，可以設定於此(這個值的作用同等於在Hibernate的persistence.xml中的<mapping-file>)
-		open-in-view: 是否在ViewLayer就開啟EntityManager，預設值為true(祥見解釋)
-		show-sql: 是否於Log中印出跟SQL相關的語句內容，預設值為false
-		properties.*: 其他與JPA相關Provider的設定
-		hibernate:
-		  ddl-auto: 可以設定DDL模式，預設值為none(這個值的作用同等於在Hibernate的hibernate.hbm2ddl.auto屬性配置)
-		  use-new-id-generator-mappings: 是否使用Hibernate的Sequence生成策略，預設值為true(這個值的作用同等於在Hibernate的hibernate.id.new_generator_mappings屬性配置)
-		  naming:
-			implicit-strategy: 可以指定表名稱或欄位名稱的Implicit Naming Strategy
-			physical-strategy: 可以指定表名稱或欄位名稱的Physical Naming Strategy
+	application.yml # 配置
+		spring:
+		  jpa:
+			database: 設定要操作的資料庫是哪一種，不設定或預設值時，為系統自動檢測
+			database-platform: 可以選擇要使用的資料庫的「平台」(或者說「方言」)，預設值為系統自動檢測
+			defer-datasource-initialization: 延遲數據源初始化，預設值為false(此用於當有需要使用data.sql描述檔時使用)
+			generate-ddl: 是否在初系統啟動的時候就初始化Table的Schema，預設值為false
+			mapping-resources: 如果有客製化的mapping-file，可以設定於此(這個值的作用同等於在Hibernate的persistence.xml中的<mapping-file>)
+			open-in-view: 是否在ViewLayer就開啟EntityManager，預設值為true(祥見解釋)
+			show-sql: 是否於Log中印出跟SQL相關的語句內容，預設值為false
+			properties.*: 其他與JPA相關Provider的設定
+			hibernate:
+			  ddl-auto: 可以設定DDL模式，預設值為none(這個值的作用同等於在Hibernate的hibernate.hbm2ddl.auto屬性配置)
+			  use-new-id-generator-mappings: 是否使用Hibernate的Sequence生成策略，預設值為true(這個值的作用同等於在Hibernate的hibernate.id.new_generator_mappings屬性配置)
+			  naming:
+				implicit-strategy: 可以指定表名稱或欄位名稱的Implicit Naming Strategy
+				physical-strategy: 可以指定表名稱或欄位名稱的Physical Naming Strategy
 
 
 六大類呼叫方式

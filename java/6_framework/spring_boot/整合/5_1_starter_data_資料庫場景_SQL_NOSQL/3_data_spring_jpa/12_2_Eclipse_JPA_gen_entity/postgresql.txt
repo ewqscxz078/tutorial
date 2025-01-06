@@ -1,3 +1,8 @@
 ecilipse
-	postGreSQL 15 對應 jdbc driver 42.3.8 ，使用 JPA TOOLS 才比較正常可以顯示出 schema table
+	postgresql 15 對應 jar jdbc driver 42.3.8 ，使用 JPA TOOLS 才比較正常可以顯示出 schema table
 		才能用 table generate entity
+
+		tw_stock
+		jdbc:postgresql://localhost:5432/tw_stock
+		postgres
+		admin

@@ -21,69 +21,20 @@ ref
 		  #settings:
 		  #  web-allow-others: true  # 允許其他電腦存取 Web Console；預設 false
 
+參數說明
+	#MODE 有哪些可參考
+		ref org.h2.engine.Mode.ModeEnum
+			public enum ModeEnum {
+				REGULAR, STRICT, LEGACY, DB2, Derby, MariaDB, MSSQLServer, HSQLDB, MySQL, Oracle, PostgreSQL
+			}
+
+		雖然 MODE=xxxxx 會提供一些語法和行為的兼容，但 H2 並不完全支持 xxxxx 的所有特性和數據類型。因此，對於不支持的數據類型，建議使用 H2 支持的類型（例如將 text 改為 CLOB）
+			簡單來說就是 H2 兼容部分資料庫行為而已但不完全
+
+	#DB_CLOSE_DELAY=-1
+		因 H2 Database 是 in-memory 的資料庫，所以在每次關閉連線的時候，資料都會不見。使用 DB_CLOSE_DELAY=-1; 可以在每次虛擬機器還在時，資料都會存在。
+
+	#DATABASE_TO_UPPER=false
+		預設會建立名稱為大寫的表格。有時您不希望發生這種情況，若要防止這種情況 使用 DATABASE_TO_UPPER=false
 
 
-#jpa 兩種模式
-	1.適合開發或測試階段，實體類修改後可以自動生成新表 ddl-auto: create-drop
-	  jpa:
-		show-sql: true # console顯示 sql 預設 false
-		hibernate:
-		  ddl-auto: create-drop # DDL 生成模式 : none, validate, update, create, and create-drop
-		properties:
-		  hibernate:
-			'[format_sql]': true # real pretty sql format
-			'[globally_quoted_identifiers]': true #確保將保留字使用雙引號處理
-
-	2.適合生產環境，數據表不會因實體變化自動生成或刪除，減少風險 ddl-auto: none + 指定資料匯入
-	  jpa:
-		defer-datasource-initialization: true # 確保資料表與資料初始化在 jpa 執行前
-		show-sql: true # console顯示 sql 預設 false
-		hibernate:
-		  ddl-auto: none # DDL 生成模式 : none, validate, update, create, and create-drop
-		properties:
-		  hibernate:
-			'[format_sql]': true # real pretty sql format
-			'[globally_quoted_identifiers]': true #確保將保留字使用雙引號處理
-
-	  sql:
-		init: # ref SqlInitializationProperties
-	#     1.直接指定路徑方式
-		  schema-locations: classpath:db/schema/*.sql
-		  data-locations: classpath:db/data/*.sql
-		  mode: always #確保每次啟動都執行初始化 SQL
-	#     2.透過 platform 載入預定的檔案
-	#     platform: postgresql # 確保使用什麼資料庫平台初始化 schema-locations、data-locations 語法正確 (hsqldb, h2, oracle, mysql, postgresql)
-	#     data-${platform}.sql 指定載入
-	#     schema-${platform}.sql 指定載入
-
-
-#MODE 有哪些可參考
-	ref org.h2.engine.Mode.ModeEnum
-		public enum ModeEnum {
-			REGULAR, STRICT, LEGACY, DB2, Derby, MariaDB, MSSQLServer, HSQLDB, MySQL, Oracle, PostgreSQL
-		}
-
-    雖然 MODE=xxxxx 會提供一些語法和行為的兼容，但 H2 並不完全支持 xxxxx 的所有特性和數據類型。因此，對於不支持的數據類型，建議使用 H2 支持的類型（例如將 text 改為 CLOB）
-		簡單來說就是 H2 兼容部分資料庫行為而已但不完全
-
-#DB_CLOSE_DELAY=-1
-	因 H2 Database 是 in-memory 的資料庫，所以在每次關閉連線的時候，資料都會不見。使用 DB_CLOSE_DELAY=-1; 可以在每次虛擬機器還在時，資料都會存在。
-
-#DATABASE_TO_UPPER=false
-	預設會建立名稱為大寫的表格。有時您不希望發生這種情況，若要防止這種情況 使用 DATABASE_TO_UPPER=false
-
-
-spring:
-  jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-			#告訴 Hibernate 使用 PostgreSQL 的方言來生成 SQL 語句，並為 PostgreSQL 提供特定的支持。這影響到 Hibernate 如何構造查詢和 DDL，並確保使用 PostgreSQL 的特定功能和數據類型
-
-    hibernate:
-	  ddl-auto: none
-		# Hibernate 不會對資料庫結構進行任何操作，適合於穩定的生產環境。
-	  ddl-auto: create-drop
-		# Hibernate 會在每次啟動和關閉應用程式時自動創建和刪除資料表，適合於開發或測試階段
-	  ddl-auto: updat
-	    # Hibernate 僅更新資料表結構，不刪除或重建
