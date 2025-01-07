@@ -306,7 +306,7 @@ container 匯出匯入
 docker system df
 	確認刪除前的磁碟空間影響
 
-docker system prune 
+docker system prune
 	是用來清理 Docker 中不再使用的資源，釋放磁碟空間的工具。執行此指令後，會移除以下資源：
 		1. 停止的容器 (Stopped containers)
 			不再運行的容器。

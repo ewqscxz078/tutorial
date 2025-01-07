@@ -21,7 +21,7 @@ Spring BeanUtils
 				1.由於是利用反射來達到複製的效果，因此效能上會比手動寫set方法來得差。
 				2.屬性的命名上必須統一，所以系統中各屬性的命名規則必須嚴格規範。
 				3.不好除錯，例如屬性中有Enum型態，但資料庫為字串等型態不一致，或是Entity類與DTO類命名不一致等也會造成屬性結果為null的情況。
-	
+
 	import org.springframework.beans.BeanUtils;
 
 	SourceBean source = new SourceBean();
