@@ -4,8 +4,8 @@
 -c  ：建立一個壓縮檔案的參數指令
 -v  ：壓縮的過程中顯示檔案！
 -f  ：使用檔名，請留意，在 f 之後要立即接檔名喔！不要再加參數！
-　　　例如使用『 tar -zcvfP tfile sfile』就是錯誤的寫法，要寫成
-　　　『 tar -zcvPf tfile sfile』才對喔！
+	例如使用『 tar -zcvfP tfile sfile』就是錯誤的寫法，要寫成
+	『 tar -zcvPf tfile sfile』才對喔！
 -p  ：使用原檔案的原來屬性（屬性不會依據使用者而變）
 -P  ：可以使用絕對路徑
 -N  ：比後面接的日期(yyyy/mm/dd)還要新的才會被打包進新建的檔案中！

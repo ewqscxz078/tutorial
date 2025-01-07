@@ -12,8 +12,9 @@ Enable Support for Scheduling
 Fixed Delay
 	@Component
 	public class ScheduledJobs {
-
-		// fixedDelay 屬性確保任務執行的完成時間和任務下一次執行的開始時間之間有 n 毫秒的延遲。
+		
+		// 表示在前一次任務完成後，間隔固定時間再觸發下一次執行。
+		// fixedDelay 屬性確保任務執行的完成時間和任務下一次執行的開始時間之間有 fixedDelay 毫秒的延遲。
 		@Scheduled(fixedDelay = 1000)
 		public void scheduleFixedDelayTask() {
 			System.out.println(

@@ -1,0 +1,38 @@
+ref ChatGPT
+
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-core</artifactId>
+</dependency>
+
+
+範例
+	import org.springframework.beans.BeanUtils;
+
+	public class SpringBeanCopyExample {
+		public static void main(String[] args) {
+			SourceBean source = new SourceBean();
+			source.setName("Spring Test");
+			source.setAge(25);
+
+			TargetBean target = new TargetBean();
+			BeanUtils.copyProperties(source, target);
+
+			System.out.println(target.getName()); // Output: Spring Test
+			System.out.println(target.getAge());  // Output: 25
+		}
+	}
+
+	class SourceBean {
+		private String name;
+		private int age;
+
+		// Getters and setters
+	}
+
+	class TargetBean {
+		private String name;
+		private int age;
+
+		// Getters and setters
+	}

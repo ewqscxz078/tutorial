@@ -1,0 +1,45 @@
+ref ChatGPT
+
+<dependency>
+    <groupId>commons-beanutils</groupId>
+    <artifactId>commons-beanutils</artifactId>
+</dependency>
+
+範例
+	import org.apache.commons.beanutils.BeanUtils;
+
+	public class BeanCopyExample {
+		public static void main(String[] args) {
+			try {
+				SourceBean source = new SourceBean();
+				source.setName("Test");
+				source.setAge(30);
+
+				TargetBean target = new TargetBean();
+				BeanUtils.copyProperties(target, source);
+
+				System.out.println(target.getName()); // Output: Test
+				System.out.println(target.getAge());  // Output: 30
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	class SourceBean {
+		private String name;
+		private int age;
+
+		// Getters and setters
+	}
+
+	class TargetBean {
+		private String name;
+		private int age;
+
+		// Getters and setters
+	}
+
+注意：
+	BeanUtils 只會進行淺層複製（Shallow Copy）。
+	如果目標對象中的某些屬性名稱與來源對象不匹配，則會被忽略。

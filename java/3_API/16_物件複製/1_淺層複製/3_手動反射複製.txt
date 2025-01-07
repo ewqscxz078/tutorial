@@ -1,0 +1,45 @@
+ref ChatGPT
+
+如果不想使用第三方庫，可以手動透過反射來進行屬性複製
+
+
+範例
+	import java.lang.reflect.Field;
+
+	public class ReflectionBeanCopy {
+		public static void main(String[] args) throws Exception {
+			SourceBean source = new SourceBean();
+			source.setName("Reflection Test");
+			source.setAge(40);
+
+			TargetBean target = new TargetBean();
+			copyProperties(source, target);
+
+			System.out.println(target.getName()); // Output: Reflection Test
+			System.out.println(target.getAge());  // Output: 40
+		}
+
+		public static void copyProperties(Object source, Object target) throws Exception {
+			Field[] fields = source.getClass().getDeclaredFields();
+			for (Field field : fields) {
+				field.setAccessible(true);
+				Field targetField = target.getClass().getDeclaredField(field.getName());
+				targetField.setAccessible(true);
+				targetField.set(target, field.get(source));
+			}
+		}
+	}
+
+	class SourceBean {
+		private String name;
+		private int age;
+
+		// Getters and setters
+	}
+
+	class TargetBean {
+		private String name;
+		private int age;
+
+		// Getters and setters
+	}

@@ -176,10 +176,14 @@ Java 1.5
 					executor.setQueueCapacity(30);
 			3. 定期監控執行緒池
 				透過執行緒池的監控 API（如 ThreadPoolExecutor 提供的 getPoolSize()、getQueue().size() 等），監控執行緒池的狀態，避免隊列長期積壓。
-					System.out.println("執行緒池大小: " + executor.getPoolSize());
-					System.out.println("活動執行緒數量: " + executor.getActiveCount());
-					System.out.println("佇列中等待的任務數量: " + executor.getQueue().size());
-					System.out.println("已完成的任務數量: " + executor.getCompletedTaskCount());
+					// 檢查執行緒池的狀態
+					System.out.println("Core pool size: " + executor.getCorePoolSize());
+					System.out.println("Maximum pool size: " + executor.getMaximumPoolSize());
+					System.out.println("Pool size: " + executor.getPoolSize());
+					System.out.println("Active threads: " + executor.getActiveCount());
+					System.out.println("Task count: " + executor.getTaskCount());
+					System.out.println("Completed task count: " + executor.getCompletedTaskCount());
+					System.out.println("Queue size: " + executor.getQueue().size());
 
 			4. 降級或限流機制
 				1.任務降級：對非關鍵任務進行降級或丟棄。
