@@ -10,6 +10,10 @@ https://www.baeldung.com/parameterized-tests-junit-5
 		@CsvFileSource：表示讀取指定CSV文件內容作為參數化測試入參
 		@MethodSource：表示讀取指定方法的返回值作為參數化測試入參(注意方法返回需要是一個流)
 
+	適合情境
+		@CsvSource：適合靜態、簡單的數據。
+		@MethodSource：適合動態生成數據或需要進行較複雜邏輯的數據組合。
+
 	當然如果參數化測試僅僅只能做到指定普通的入參還達不到讓我覺得驚豔的地步。
 	讓我真正感到他的強大之處的地方在於他可以支持外部的各類入參。如:CSV,YML,JSON 文件甚至方法的返回值也可以作為入參。
 	只需要去實現ArgumentsProvider接口，任何外部文件都可以作為它的入參。
@@ -40,3 +44,19 @@ https://www.baeldung.com/parameterized-tests-junit-5
 		static Stream<String> method() {
 			return Stream.of("apple", "banana");
 		}
+		
+		參數對測試
+			// 方法用來生成排列組合
+			static Stream<org.junit.jupiter.params.provider.Arguments> provideEnumCombinations() {
+				// 使用 flatMap 生成排列組合
+				return Stream.of(EnumA.values())
+						.flatMap(a -> Stream.of(EnumB.values())
+								.map(b -> org.junit.jupiter.params.provider.Arguments.of(a, b)));
+			}
+
+			@ParameterizedTest
+			@MethodSource("provideEnumCombinations")
+			void testEnumCombinations(EnumA enumA, EnumB enumB) {
+				System.out.println("Testing combination: " + enumA + " and " + enumB);
+				// 在這裡撰寫你的測試邏輯
+			}
