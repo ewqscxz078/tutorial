@@ -1,0 +1,24 @@
+
+java 啟動時預編譯
+    // ref https://stackoverflow.com/questions/34944004/how-to-precompile-jsp-in-a-spring-boot-application
+    // 沒有使用 pom.xml plugin 方式啟用 jsp 預編譯，因為設定太複雜也不容易理解
+    // 改使用 java 端間接觸發 jsp 預編譯(spring boot 內嵌式 tomcat 講求啟動快速，所以沒有 jsp 預編譯，本身也沒有支援 jsp 預編譯設定啟用，預設為瀏覽到 jsp 第一次時及時編譯)
+    // 缺點啟用預編譯後，啟動時間至少要39秒以上(依據 jsp 要編譯的量)
+    @Bean
+    ServletContextInitializer preCompileJspsAtStartup() {
+        return servletContext -> {
+            getDeepResourcePaths(servletContext, "/WEB-INF/jsp/").forEach(jspPath -> {
+                LOGGER.debug("Registering JSP: {}", jspPath);
+                final ServletRegistration.Dynamic reg = servletContext.addServlet(jspPath, Constants.JSP_SERVLET_CLASS);
+                reg.setInitParameter("jspFile", jspPath);
+                reg.setLoadOnStartup(99);
+                reg.addMapping(jspPath);
+            });
+        };
+    }
+	
+    private static Stream<String> getDeepResourcePaths(final ServletContext servletContext, final String path) {
+        return (path.endsWith("/"))
+                ? servletContext.getResourcePaths(path).stream().flatMap(p -> getDeepResourcePaths(servletContext, p))
+                : Stream.of(path);
+    }
