@@ -1,0 +1,51 @@
+===============================================================================
+============================ git merge ========================================
+===============================================================================
+
+注意事項
+	1.請小心不要 merge 到 編譯失敗的 branch
+
+windows/linux
+	prepare git repos
+		1.0 cd <git folder>
+		2.0 curl -sSf --insecure https://sris.pj/sris-bin/team/Greenc?install={你的戶役政帳號}|bash
+		4.0 git clone <xxx.git>
+
+	try merge
+		1.0 cd <git folder>
+			ex:
+				cd /CODE/ccd
+		1.1 輸入適當的 git 帳密權限才能 merge
+
+		2.0 git status
+			若有修改的程式請先備份或清除掉
+				git clean -fd
+		2.1 git pull
+		2.2 git checkout ${branch_name}
+
+		2.3 check 衝突檔案的 branch，才能知道要 merge 哪個 branch
+			git blame ${file_path} // 查看哪行修改的 sha256
+
+		2.4 git merge origin/${branch_name} --no-verify --no-edit --no-ff // merge
+			ex:
+				// git merge origin/master --no-verify --no-edit --no-ff
+				git merge origin/issue/465 --no-verify --no-edit --no-ff
+				git merge origin/issue/734 --no-verify --no-edit --no-ff
+
+		2.5	git add <file1> <file2> .... 或 git add --all
+
+		2.6	GIT_NO_VERIFY=1 git commit -m 'issue/<branch....> merge into issue/<branch> and fix CONFLICT ???'
+			ex:
+				GIT_NO_VERIFY=1 git commit -m 'issue/465、734 merge into issue/30 and fix CONFLICT rc11010.xhtml、rc11020.xhtml'
+				GIT_NO_VERIFY=1 git commit -m 'issue/465、734 merge into temp/greenc-tune and fix CONFLICT rc11010.xhtml、rc11020.xhtml'
+
+		2.7 teamctl exec -- git status // check no conflct
+		2.8 // git diff // for 障礙排除
+		2.9 // git merge --abort // if merge 有問題可還原
+		2.10 // teamctl checkout-issue --reset-to-remote <#issue> // 若尚未push 則會還原遠端最新的節點
+			// teamctl checkout-branch --reset-to-remote <branchName>
+			// teamctl checkout-branch --reset-to-remote temp/greenc-tune
+			// --reset-to-remote // 還原當前branch to 遠端節點
+
+		2.11 git push // if no conflct
+		2.12 git status // double check

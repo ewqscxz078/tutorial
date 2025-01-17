@@ -16,7 +16,7 @@ java 啟動時預編譯
             });
         };
     }
-	
+
     private static Stream<String> getDeepResourcePaths(final ServletContext servletContext, final String path) {
         return (path.endsWith("/"))
                 ? servletContext.getResourcePaths(path).stream().flatMap(p -> getDeepResourcePaths(servletContext, p))

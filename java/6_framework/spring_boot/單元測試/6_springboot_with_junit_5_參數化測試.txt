@@ -44,7 +44,7 @@ https://www.baeldung.com/parameterized-tests-junit-5
 		static Stream<String> method() {
 			return Stream.of("apple", "banana");
 		}
-		
+
 		參數對測試
 			// 方法用來生成排列組合
 			static Stream<org.junit.jupiter.params.provider.Arguments> provideEnumCombinations() {
