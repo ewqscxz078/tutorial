@@ -1,0 +1,77 @@
+spring boot 3.4.1 ref
+
+特徵
+	spring-boot-starter-xxx 裡面都僅只是個 pom 沒有程式
+		為了觸發 spring-boot-autoconfigure maven optional 而真正的啟用依賴
+
+================================================================================================
+
+spring-boot								// 基礎核心依賴
+	spring-core
+	spring-context
+
+spring-boot-autoconfigure				// 決定依賴是否自動配置
+	spring-boot
+
+spring-boot-starter  					// 基底自動配置啟動器，代表任意 starter 都會含該項目
+	spring-boot
+	spring-boot-autoconfigure
+
+spring-boot-starter-web					// web 啟動器
+	spring-boot-starter
+	spring-boot-starter-json			// 強化啟動器
+	spring-boot-starter-tomcat			// 強化啟動器
+	spring-web							// 核心依賴
+	spring-webmvc 						// 核心依賴
+
+spring-boot-starter-data-jpa			// data-jpa 啟動器
+	spring-boot-starter
+	spring-boot-starter-jdbc			// 強化啟動器
+	hibernate-core						// 核心依賴
+	spring-data-jpa						// 核心依賴
+	spring-aspects						// 核心依賴
+
+================================================================================================
+
+spring-boot-actuator					// actuator 基礎核心依賴
+	spring-boot
+
+spring-boot-actuator-autoconfigure		// actuator 決定依賴是否自動配置
+	spring-boot-actuator
+	spring-boot
+	spring-boot-autoconfigure
+
+spring-boot-starter-actuator			// actuator 啟動器
+	spring-boot-starter
+	spring-boot-actuator-autoconfigure
+	micrometer-observation				// 核心依賴
+	micrometer-jakarta9					// 核心依賴
+
+================================================================================================
+
+spring-boot-test						// test 基礎核心依賴
+	spring-boot
+	spring-test
+
+spring-boot-test-autoconfigure			// test 決定依賴是否自動配置
+	spring-boot
+	spring-boot-test
+	spring-boot-autoconfigure
+
+spring-boot-starter-test				// test 啟動器
+	spring-boot-starter
+	spring-boot-test
+	spring-boot-test-autoconfigure
+	json-path							// 核心依賴
+	jakarta.xml.bind-api				// 核心依賴
+	json-smart							// 核心依賴
+	assertj-core						// 核心依賴
+	awaitility							// 核心依賴
+	hamcrest							// 核心依賴
+	junit-jupiter						// 核心依賴
+	mockito-core						// 核心依賴
+	mockito-junit-jupiter				// 核心依賴
+	jsonassert							// 核心依賴
+	spring-core							// 核心依賴
+	spring-test							// 核心依賴
+	xmlunit-core						// 核心依賴

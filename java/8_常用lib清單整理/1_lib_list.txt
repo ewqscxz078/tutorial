@@ -13,3 +13,22 @@ javax.servlet
 	spring boot 專案 with 嵌入式 tomcat
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
 			自動包含 Tomcat 作為內嵌伺服器，並包括 javax.servlet 相關依賴
+
+
+runtime 系列
+	驅動程式
+		<dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
+
+解析 html
+	<dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId></dependency>
+
+文字處理
+	<dependency><groupId>org.apache.commons</groupId><artifactId>commons-text</artifactId></dependency>
+	<dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId></dependency>
+
+csv 處理
+	<dependency><groupId>org.apache.commons</groupId><artifactId>commons-csv</artifactId></dependency>
+
+PDF
+	itext
+	pdfbox
