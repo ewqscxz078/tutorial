@@ -1,4 +1,7 @@
 20250202
+	卡到 yml 讀不到 TwseScrapingProperties prefix
+		貌似使用多層次 MonthlyRevenue 關係?
+20250202
 	預到 yml 陣列第二筆會出錯異常問題
 		=> 因為eclipse yml 按下enter換行後的前面是使用tab 非 兩個 space 關係
 20250105

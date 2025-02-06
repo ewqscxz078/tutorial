@@ -1,0 +1,115 @@
+ref https://bencane.com/troubleshooting-high-i-o-wait-in-linux-358080d57b69
+
+
+1.Answering whether or not I/O is causing system slowness
+	範例
+		 # top
+		 top - 14:31:20 up 35 min, 4 users, load average: 2.25, 1.74, 1.68
+		 Tasks: 71 total, 1 running, 70 sleeping, 0 stopped, 0 zombie
+		 Cpu(s): 2.3%us, 1.7%sy, 0.0%ni, 0.0%id, 96.0%wa, 0.0%hi, 0.0%si, 0.0%st
+		 Mem: 245440k total, 241004k used, 4436k free, 496k buffers
+		 Swap: 409596k total, 5436k used, 404160k free, 182812k cached
+
+
+		 96% waiting for I/O access
+			代表 Amount of time the CPU has been waiting for I/O to complete
+
+2.Finding which disk is being written to
+	範例
+		$ iostat -x 2 5
+		 avg-cpu: %user %nice %system %iowait %steal %idle
+		  3.66 0.00 47.64 48.69 0.00 0.00
+
+		 Device: rrqm/s wrqm/s r/s w/s rkB/s wkB/s avgrq-sz avgqu-sz await r_await w_await svctm %util
+		 sda 44.50 39.27 117.28 29.32 11220.94 13126.70 332.17 65.77 462.79 9.80 2274.71 7.60 111.41
+		 dm-0 0.00 0.00 83.25 9.95 10515.18 4295.29 317.84 57.01 648.54 16.73 5935.79 11.48 107.02
+		 dm-1 0.00 0.00 57.07 40.84 228.27 163.35 8.00 93.84 979.61 13.94 2329.08 10.93 107.02
+
+		 The iostat command in the example above will print a report every 2 seconds for 5 intervals; the -x flag tells iostat to print out an extended report.
+
+		 In the above example, the percent utilized on disk sda is 111.41% this is a good indicator that our problem lies with processes writing to sda.
+
+3.Finding the processes that are causing high I/O
+	範例
+		# iotop
+		 Total DISK READ: 8.00 M/s | Total DISK WRITE: 20.36 M/s
+		  TID PRIO USER DISK READ DISK WRITE SWAPIN IO> COMMAND
+		 15758 be/4 root 7.99 M/s 8.01 M/s 0.00 % 61.97 % bonnie++ -n 0 -u 0 -r 239 -s 478 -f -b -d /tmp
+
+		After looking at the output of iotop it is easy to see that the program bonnie++ is causing the most I/O utilization on this machine.
+
+		缺點該指令unix預設不會安裝
+
+		替代方案
+			ps
+				ps 命令是許多人熟悉的命令，但很少有人意識到它具有記憶體和 CPU 使用情況的統計資料。
+				不幸的是，它沒有磁碟 I/O 的統計信息，但它確實顯示了進程狀態，我們可以用它來指示進程是否正在等待 I/O。
+
+					ps 指令狀態欄位提供了該行程目前正在執行的操作的便捷視圖。為了更好地解釋這一點，讓我們根據 ps 指令的手冊頁來分解可能的狀態。
+						D：不間斷睡眠（通常是IO）
+						R：正在運行或可運行（在運行隊列上）
+						S：可中斷睡眠（等待事件完成）
+						T：透過作業控制訊號或因為正在追蹤而停止
+						W：分頁（自 2.6.xx 核心起無效）
+						X：死了（永遠不該被看見）
+						Z：已失效（「殭屍」）進程，已終止但未被其父進程收割
+				範例
+					# for x in `seq 1 1 10`; do ps -eo state,pid,cmd | grep "^D"; echo "----"; sleep 5; done
+					 D 248 [jbd2/dm-0-8]
+					 D 16528 bonnie++ -n 0 -u 0 -r 239 -s 478 -f -b -d /tmp
+					 ----
+					 D 22 [kswapd0]
+					 D 16528 bonnie++ -n 0 -u 0 -r 239 -s 478 -f -b -d /tmp
+					 ----
+					 D 22 [kswapd0]
+					 D 16528 bonnie++ -n 0 -u 0 -r 239 -s 478 -f -b -d /tmp
+					 ----
+					 D 22 [kswapd0]
+					 D 16528 bonnie++ -n 0 -u 0 -r 239 -s 478 -f -b -d /tmp
+					 ----
+					 D 16528 bonnie++ -n 0 -u 0 -r 239 -s 478 -f -b -d /tmp
+					 ----
+
+				為了幫助證實我們的懷疑，我們可以使用 /proc 檔案系統。在每個進程目錄中，都有一個名為 io 的文件，其中包含 iotop 正在使用的相同 I/O 統計資料。
+
+					# cat /proc/16528/io
+					 rchar: 48752567
+					 wchar: 549961789
+					 syscr: 5967
+					 syscw: 67138
+					 read_bytes: 49020928
+					 write_bytes: 549961728
+					 cancelled_write_bytes:
+
+4.Finding what files are being written too heavily
+	使用lsof指令來查看特定進程開啟了哪些檔案
+		# lsof -p 16528
+		 COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
+		 bonnie++ 16528 root cwd DIR 252,0 4096 130597 /tmp
+		 <truncated>
+		 bonnie++ 16528 root 8u REG 252,0 501219328 131869 /tmp/Bonnie.16528
+		 bonnie++ 16528 root 9u REG 252,0 501219328 131869 /tmp/Bonnie.16528
+		 bonnie++ 16528 root 10u REG 252,0 501219328 131869 /tmp/Bonnie.16528
+		 bonnie++ 16528 root 11u REG 252,0 501219328 131869 /tmp/Bonnie.16528
+		 bonnie++ 16528 root 12u REG 252,0 501219328 131869 /tmp/Bonnie.16528
+
+	進一步確認這些檔案是被寫入的文件，我們可以查看 /tmp 檔案系統位於哪個磁碟上。
+
+		# df /tmp
+		 Filesystem 1K-blocks Used Available Use% Mounted on
+		 /dev/mapper/workstation-root 7667140 2628608 4653920 37% /
+
+		確定 /tmp 檔案系統是工作站磁碟區組中根邏輯磁碟區的一部分。
+			# pvdisplay
+			  --- Physical volume ---
+			  PV Name /dev/sda5
+			  VG Name workstation
+			  PV Size 7.76 GiB / not usable 2.00 MiB
+			  Allocatable yes
+			  PE Size 4.00 MiB
+			  Total PE 1986
+			  Free PE 8
+			  Allocated PE 1978
+			  PV UUID CLbABb-GcLB-l5z3-TCj3-IOK3-SQ2p-RDPW5S
+
+			  看到 sda 磁碟的 /dev/sda5 分割區部分是工作站磁碟區組正在使用的分割區，也是 /tmp 檔案系統所在的位置。

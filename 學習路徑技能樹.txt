@@ -32,6 +32,9 @@
 					jpa
 					mybatis
 
+				spring security
+					jwt
+
 				第三方 starter
 					Springfox3 of swagger 整合(swagger 為遵循 OpenAPI 規範的開源工具，可以幫助我們快速的設計、建構 RESTful API，透過 Swagger Codegen 產生出OpenAPI 所規範的 JSON 文件 )
 						https://medium.com/learning-from-jhipster/7-%E4%BD%BF%E7%94%A8-springfox-%E5%B0%8E%E5%85%A5swagger-3-0-0-e1067cb1c565
