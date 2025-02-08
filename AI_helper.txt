@@ -1,4 +1,4 @@
-https://www.youtube.com/watch?v=nod5ZL8UPmk&ab_channel=LittleBoatTan%E5%B0%8F%E8%88%B9
+ref https://www.youtube.com/watch?v=nod5ZL8UPmk&ab_channel=LittleBoatTan%E5%B0%8F%E8%88%B9
 
 01:14
 	AI工具①： 我的全自動數位助理
@@ -34,11 +34,19 @@ https://www.youtube.com/watch?v=nod5ZL8UPmk&ab_channel=LittleBoatTan%E5%B0%8F%E8
 
 
 
-查資料/創意
+綜合/查資料/創意/寫程式幫手
 	chatGPT
 		https://chatgpt.com/
 	perplexity(跟 chatGPT 比擬的 AI)
 		https://www.perplexity.ai/
+	google gemini(透過google chrome 輸入 @gemini 可快速與其對話)
+		https://gemini.google.com/
+
+寫程式幫手
+	GitHub Copilot
+		https://github.com/features/copilot
+	cursor
+		https://www.cursor.com/
 
 設計
 	Canva
