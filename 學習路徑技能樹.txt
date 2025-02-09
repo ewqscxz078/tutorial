@@ -1,3 +1,7 @@
+java roadmap
+	https://roadmap.sh/java
+	https://github.com/s4kibs4mi/java-developer-roadmap
+
 資料庫
 	輔助工具
 		Liquibase
@@ -11,7 +15,7 @@
 				而另一方面，這些文件中每個要新增或修改的部分都會有一個「Changelog ID」，這會在所在環境中的資料庫，檢查哪些 ID 是已經有執行，而哪些 ID 尚未被執行，接著執行這些尚未被執行的內容，以達到對資料庫部分的版本控管
 程式語言
 	java
-		java jdk 6(done) => 17
+		java jdk 6(done) => 17 => 21
 		第三方 lib
 			junit 5
 			apache ....

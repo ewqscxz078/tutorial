@@ -22,5 +22,5 @@
 		取代方式
 		https://www.baeldung.com/jvm-log-forging
 		https://blog.csdn.net/riemann_/article/details/93358316
-	3. use StringEscapeUtils.escapeJava(....) 包裹打印到 log by 家銘告知的方式
+	3. use StringEscapeUtils.escapeJava(....) 包裹打印到 log
 		Apache Commons lang3 3.6 後 建議改用 Apache Commons Text lib

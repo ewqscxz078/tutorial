@@ -49,3 +49,22 @@ windows/linux
 
 		2.11 git push // if no conflct
 		2.12 git status // double check
+
+
+===============================================================================
+============================ 實務經驗 =========================================
+===============================================================================
+
+
+branch 類型:
+	master 為目前 production branch(為上次版更 BASE)
+	issue/${redmine_number} 為 redmine 自動生成
+	DEVEOP/main 為 SIT 環境佈署用(於 SIT CICD 自動合併後的 BRANCH)
+	PRE-RELEASE/main 為 UAT 環境佈署用(於 UAT CICD 依據指定 REDMINE 版號那群的 issue/${redmine_number} 合併後的 BRANCH)
+		release 時將其合併的結果合併回 master 並 tag 版號(RELEASE-YYYY-MM-DD)
+環境說明:
+	1.透過 redmine 開單自動生成 branch：issue/${redmine_number}
+	2.開發環境 jenkins 依據 master、
+		每季約有 100 個 branch 開發
+		開發環境 ：DEVELOP
+		使用者測試環境：RELEASE-YYYY-MM-DD

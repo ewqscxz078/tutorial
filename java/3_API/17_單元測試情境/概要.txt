@@ -1,0 +1,16 @@
+單元測試情境
+
+1.邏輯驗證（一般api輸入輸出驗證）
+2.spring boot web rest 驗證
+3.service 驗證
+4.config 驗證(gw 有效url，class 找的到）
+5.dao 驗證（jpa、mybatis crud後的驗證、交易、回滾驗證）
+6.前端驗證
+7.web security 驗證
+  各種登入測試
+8.web servlet 驗證
+9.spring mvc 驗證
+10.json 驗證
+11.瀏覽器前端驗證
+12.log 驗證（比如log forging 驗證）
+13.file 加解密後sha256驗證
