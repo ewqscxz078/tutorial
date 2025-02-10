@@ -36,3 +36,10 @@ ref ChatGPT
 
 		// Getters and setters
 	}
+
+特性：
+	BeanUtils 只會進行淺層複製（Shallow Copy）。
+	不會 拋出受檢（checked）例外。
+	如果遇到類型不匹配或無法轉換的情況，它不會自動嘗試轉換，而是直接忽略該屬性。
+	只會對名稱和類型完全匹配的屬性進行複製
+	不會 進行數據類型轉換（例如 String 轉 Integer）。

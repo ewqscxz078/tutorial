@@ -40,6 +40,10 @@ ref ChatGPT
 		// Getters and setters
 	}
 
-注意：
+特性：
 	BeanUtils 只會進行淺層複製（Shallow Copy）。
-	如果目標對象中的某些屬性名稱與來源對象不匹配，則會被忽略。
+	會拋出 InvocationTargetException、IllegalAccessException 等受檢例外。
+	嘗試將 String 轉換為其他基本類型，例如 int、boolean 等（但不適用於自訂類型）。
+	允許進行基本類型轉換，例如 String → Integer、boolean 等。
+	
+	
