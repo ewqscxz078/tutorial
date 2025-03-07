@@ -1,0 +1,32 @@
+ref ChatGPT
+
+@TestInstance(TestInstance.Lifecycle.PER_METHOD) 預設
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+1.僅能宣告在 class 上 
+2.改變 JUnit 5 測試的生命週期
+	1.預設 PER_METHOD：每個 @Test 方法 都會建立一個新的測試實例。
+		如果沒有 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+		JUnit 預設使用 PER_METHOD
+		這代表 每個 @Test 方法都會重新建立測試類別的實例
+		但 @BeforeAll 和 @AfterAll 必須是 static 方法
+	2.使用 PER_CLASS：整個測試類別只會建立 一個測試實例。
+		測試類別只會建立 一個實例（所有測試方法共享同一個 @BeforeAll 和 @AfterAll 裡的資源 ）
+			例如內嵌 sftp server 測試用
+		@BeforeAll 和 @AfterAll 不需要是 static
+		適合需要 共享資源（例如內嵌 SFTP Server）
+
+	3.Lifecycle.PER_CLASS
+		適合
+			測試類別內的所有測試方法需要共享狀態或資源，減少重複初始化的開銷，提高測試效能
+				例如需要共用狀態（例如 Mock Server、資料庫連線） 的測試
+		不適合
+			如果測試方法之間 完全沒有關聯，每次執行測試都應該獨立，則 不需要 PER_CLASS
+
+
+使用範例
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	class SftpServerTest {
+	}
+	
+	

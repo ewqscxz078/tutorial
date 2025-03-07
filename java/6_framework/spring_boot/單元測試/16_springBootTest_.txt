@@ -1,0 +1,31 @@
+ref ChatGPT
+
+單元測試的靜態附值到 application.yml
+	@TestPropertySource(properties = { "aa=1", "bb=2" })
+	public class xxx
+	特性
+		1.直接在 測試類別註解 或 讀取外部屬性檔案
+		2.屬性是固定的，測試時不變動
+		3.屬性是 靜態 的，測試開始前就確定
+		4.單元測試、整合測試（適合靜態配置）
+		5.支援 @Value("${property}")
+		6.支援 @ConfigurationProperties
+
+動態附值到 application.yml
+	允許我們在 Spring Boot 測試 中動態設定屬性，類似於在 application.yml 或 application.properties 中的配置
+		@DynamicPropertySource
+		static void configureSftpProperties(DynamicPropertyRegistry registry) {
+			registry.add("sftp.host", () -> "localhost");
+			registry.add("sftp.port", () -> SFTP_PORT);
+			registry.add("sftp.username", () -> SFTP_USERNAME);
+			registry.add("sftp.password", () -> SFTP_PASSWORD);
+		}
+	特性
+		1.透過程式碼 動態設定屬性
+		2.測試時可能會根據情境動態改變屬性
+		3.可以 動態調整，測試執行中可修改
+		4.整合測試（適合模擬外部服務）
+		5.支援 @Value("${property}")
+		6.支援 @ConfigurationProperties
+
+	

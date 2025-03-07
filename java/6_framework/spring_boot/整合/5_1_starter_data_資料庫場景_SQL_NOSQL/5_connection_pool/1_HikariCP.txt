@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: ${db.url}
+    username: ${db.username}
+    password: ${db.password}
+    driver-class-name: ${db.driverClassName}
+    
+    hikari: # HikariCP 連接池相關配置 ref HikariConfig
+      minimum-idle: 4                # 對應 DBCP2 的 minIdle
+      maximum-pool-size: 16           # 對應 DBCP2 的 maxTotal
+      idle-timeout: 30000             # 最大空閒時間，對應 maxIdle，單位為毫秒（這裡假設30秒）
+      connection-timeout: 20000       # 對應 DBCP2 的 maxWaitMillis
+      initialization-fail-timeout: 0  # 初始化連接池失敗超時
+      pool-name: HikariPool           # 連接池名稱
+	  
+	# ref HikariConfig
+		https://github.com/brettwooldridge/HikariCP/blob/dev/src/main/java/com/zaxxer/hikari/HikariConfig.java
+
+ref ChatGPT
+	1.每個 DataSource 應該有一個獨立的 Connection Pool，避免資源競爭。
+	2.Connection Pool 的大小 應根據應用程式的需求和資料庫承載能力調整，常見範圍：
+		主DB: 10-30
+		次DB: 5-10
+	3.監控和壓測 是調整最佳連線池大小的關鍵，確保不會造成資料庫連線過多或過少的問題。
+	4.如果你的應用程式有特別的需求（如高併發、大量讀取查詢等），可以再進一步優化 Connection Pool 的細節，例如：
+		設定 connectionTimeout
+		idleTimeout 控制閒置連線
+		maxLifetime 避免連線長時間不釋放
+	
+	5.若沒有特別設定每個 datasource 使用的 connection pool
+		spring 預設是每個 dataource 使用自己的 connection pool

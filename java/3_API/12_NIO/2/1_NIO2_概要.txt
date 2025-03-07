@@ -33,3 +33,10 @@ JDK 7（2011 年）中引入的增強版本，正式名稱為 New Input/Output 2
 			}
 			key.reset();
 		}
+
+	ref chatGPT 參考
+		WatchService 適合監控整個資料夾變更，但不能監控單一檔案內容變化。
+		ScheduledExecutorService + lastModifiedTime 適合監控單一檔案，但需要輪詢 (Polling)。
+		如果你的需求是檔案內容變更監控，可以考慮：
+			WatchService + 檔案 MD5 雜湊檢查 (MessageDigest)
+			Apache Commons IO 的 FileAlterationObserver (提供更高級的檔案監控)

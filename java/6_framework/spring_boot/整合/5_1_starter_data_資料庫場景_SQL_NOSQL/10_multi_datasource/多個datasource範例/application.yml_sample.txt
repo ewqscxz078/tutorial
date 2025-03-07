@@ -1,0 +1,118 @@
+範例1: 跟原本預設單一 datasource 自動配置錯開方式，缺點預設主 dataSource 的單元測試都要特別 @Import 對應 datasource
+multi:
+  datasource:
+    # ref https/www.baseldung.com/spring-boot-configure-multiple-datasources
+    lportal:
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_AW_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+      username: ${DB_AW_USER}
+      password: ${DB_AW_PASSWORD}
+      type: com.zaxxer.hikari.HikariDataSource
+      hikari: # ref HikariConfig
+        pool-name: HikarPool-lportal-1
+        maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+        idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+    popudata:
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_POPUDATA_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+      username: ${DB_POPUDATA_USER}
+      password: ${DB_POPUDATA_PASSWORD}
+      type: com.zaxxer.hikari.HikariDataSource
+      hikari: # ref HikariConfig
+        pool-name: HikarPool-popudata-1
+        maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+        idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+
+範例2: 跟原本預設單一 datasource 自動配置錯開方式，缺點預設主 dataSource 的單元測試都要特別 @Import 對應 datasource
+	啟動服務會正常，但單元測試會跳
+	對應 dao 之 datasource 測試時
+		java.lang.IllegalStateException: Failed to load ApplicationContext
+			Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			Caused by: org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+
+			//測試環境 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) 不會自動將 dataSource bean 載入
+			//會引發 DataSourceConfiguration 之 static class Hikari 會認為沒有 dataSource bean 而走入建構的程序引發如下錯誤
+			//java.lang.IllegalStateException: Failed to load ApplicationContext
+			//Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			//Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource' defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			//Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]: Factory method 'dataSource' threw exception; nested exception is org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			//Caused by: org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$DataSourceBeanCreationException: Failed to determine a suitable driver class
+			需額外引入 dataSource bean 避免上述問題即可正常測試
+				lportal 相關 repo/dao test
+					@Import(AwBGLportalDataSourceConfiguration.class)
+				popudata 相關 repo/dao test
+					@Import(AwBGPopudataDataSourceConfiguration.class)
+
+spring:
+  datasource:
+    # ref https/www.baseldung.com/spring-boot-configure-multiple-datasources
+    lportal:
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_AW_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+      username: ${DB_AW_USER}
+      password: ${DB_AW_PASSWORD}
+      type: com.zaxxer.hikari.HikariDataSource
+      hikari: # ref HikariConfig
+        pool-name: HikarPool-lportal-1
+        maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+        idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+    popudata:
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_POPUDATA_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+      username: ${DB_POPUDATA_USER}
+      password: ${DB_POPUDATA_PASSWORD}
+      type: com.zaxxer.hikari.HikariDataSource
+      hikari: # ref HikariConfig
+        pool-name: HikarPool-popudata-1
+        maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+        idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+
+範例3: 若是用這模式於單元測試主 dataSource 可以不用特別 @Import DataSource，但其他dataSource repoTest 要特別@Import
+multi:
+  datasource:
+    # ref https/www.baseldung.com/spring-boot-configure-multiple-datasources
+    popudata:
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_POPUDATA_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+      username: ${DB_POPUDATA_USER}
+      password: ${DB_POPUDATA_PASSWORD}
+      hikari: # ref HikariConfig
+        pool-name: HikarPool-popudata-1
+        maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+        idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+spring:
+  datasource:
+    # ref https/www.baseldung.com/spring-boot-configure-multiple-datasources
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_AW_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+    username: ${DB_AW_USER}
+    password: ${DB_AW_PASSWORD}
+    hikari: # ref HikariConfig
+      pool-name: HikarPool-lportal-1
+      maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+      idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+
+範例4: 若是用這模式於單元測試主 dataSource 可以不用特別 @Import DataSource，但其他dataSource repoTest 要特別@Import
+spring:
+  datasource:
+    # ref https/www.baseldung.com/spring-boot-configure-multiple-datasources
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_AW_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+    username: ${DB_AW_USER}
+    password: ${DB_AW_PASSWORD}
+    hikari: # ref HikariConfig
+      pool-name: HikarPool-lportal-1
+      maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+      idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+
+    popudata:
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_POPUDATA_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+      username: ${DB_POPUDATA_USER}
+      password: ${DB_POPUDATA_PASSWORD}
+      hikari: # ref HikariConfig
+        pool-name: HikarPool-popudata-1
+        maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+        idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定

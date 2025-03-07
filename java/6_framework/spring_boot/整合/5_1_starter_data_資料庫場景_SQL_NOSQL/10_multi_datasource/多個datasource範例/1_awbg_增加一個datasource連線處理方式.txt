@@ -1,0 +1,103 @@
+awbg 有多個連線資料庫 lportal_eid、popudata_eid 調整
+
+sop
+	1.application.yml 設定調整
+		aw3:
+		  data:
+			jpa:
+			  default-scan:
+				enable: false
+
+	2.spring boot 內建設定區塊補上多 datasource 設定
+		application.yml
+			spring:
+			  datasource:
+				hikari: # ref HikariConfig
+				  pool-name: HikarPool-lportal-1
+				  maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+				  idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+				popudata:
+				  driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+				  url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_POPUDATA_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+				  username: ${DB_POPUDATA_USER}
+				  password: ${DB_POPUDATA_PASSWORD}
+				  type: com.zaxxer.hikari.HikariDataSource
+				  hikari: # ref HikariConfig
+					pool-name: HikarPool-popudata-1
+					maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+					idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+
+		application-local.yml、application-test.yml 
+			spring:
+			  datasource:
+				# ref https/www.baseldung.com/spring-boot-configure-multiple-datasources
+				driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+				url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_AW_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+				username: ${DB_AW_USER}
+				password: ${DB_AW_PASSWORD}
+				type: com.zaxxer.hikari.HikariDataSource
+				hikari: # ref HikariConfig
+				  pool-name: HikarPool-lportal-1
+				  maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+				  idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+				popudata:
+				  driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+				  url: jdbc:sqlserver://${DB_AW_HOST}:1433;DatabaseName=${DB_POPUDATA_DBNAME};sendStringParametersAsUnicode=false;encrypt=false
+				  username: ${DB_POPUDATA_USER}
+				  password: ${DB_POPUDATA_PASSWORD}
+				  type: com.zaxxer.hikari.HikariDataSource
+				  hikari: # ref HikariConfig
+					pool-name: HikarPool-popudata-1
+					maximum-pool-size: 200 # 預設10 : 對應 org.apache.commons.dbcp2.BasicDataSource.maxTotal 連接池最大值
+					idle-timeout: 1800000 # 閒置超時時間，單位為毫秒，1800秒，也就是30分鐘，與 org.apache.commons.dbcp2.BasicDataSource 設計機制不同約等於 removeAbandonedOnBorrow、removeAbandonedOnMaintenance、removeAbandonedTimeout 的設定
+
+	3.設定多 datasource
+		sris3-aw-awbg-boot-exec
+			tw.gov.moi.aw3.bg.configuration
+				建立 
+					AwBGLportalDataJpaConfiguration
+					AwBGLportalDataSourceConfiguration
+				建立 
+					AwBGPopudataDataJpaConfiguration
+					AwBGPopudataDataSourceConfiguration
+
+	4.底層 AwDataJpaAutoConfiguration 調整
+		sris3-aw-spring-boot-autoconfigure
+			tw.gov.moi.autoconfigure.aw3.data.jpa
+				AwDataJpaAutoConfiguration.java
+				AwDataJpaProperties.java
+
+	5.底層 增加對應設定名稱
+		sris3-aw-spring-boot
+			tw.gov.moi.aw3.properties
+				AwPrefixConfigurationProperties
+					public static final String DATA_JPA = "aw3.data.jpa";
+	
+	6.對應 dao 之 datasource 測試時
+		//測試環境 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) 不會自動將 multiple dataSource bean 載入，僅載入預設主要的 dataSource bean
+		需額外引入 dataSource bean config 避免連線到非預期的 dataSource 即可正常測試
+			lportal 相關 repo/dao test
+				可不用額外設定
+			popudata 相關 repo/dao test
+				@Import(AwBGPopudataDataSourceConfiguration.class)
+
+	
+注意項目
+	1.預設操作到 resposity 的 @Transactional 會參考到對應的設定不用特別擔心 Transactional 參考的 bean
+		但若 同一方法參考 Arepo 、Brepo 多個 datasource 時，則要明確指定，但通常不建議放在一起寫增加複雜性
+		@Service
+		class xxxService {
+		  @Autowired
+		  private Arepo arepo;
+		  @Autowired
+		  private Brepo brepo;
+		  
+		  @Transactional("aTransactionManager")
+		  public void saveA(Aentity entity){
+			arepo.save(entity);
+		  }
+		  @Transactional("bTransactionManager")
+		  public void saveB(Bentity entity){
+			brepo.save(entity);
+		  }
+		}

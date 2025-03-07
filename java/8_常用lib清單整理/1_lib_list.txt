@@ -32,3 +32,13 @@ csv 處理
 PDF
 	itext
 	pdfbox
+
+
+test 系列
+	sftp test
+		若要在開發環境中或 JUnit 5 測試，可使用 Apache Mina SSHD 來啟動 SFTP 伺服器 (EmbeddedSftpServer)，設定稍微多一點點
+			<dependency><groupId>org.apache.sshd</groupId><artifactId>sshd-sftp</artifactId><scope>test</scope></dependency>
+		若要在 JUnit 4 測試環境中測試，可使用 fake-sftp-server-rule，簡單易用且不需額外設定
+			<dependency><groupId>com.github.stefanbirkner</groupId><artifactId>fake-sftp-server-rule</artifactId><scope>test</scope></dependency>
+	ftp test
+		<dependency><groupId>org.mockftpserver</groupId><artifactId>Mockftpserver</artifactId><scope>test</scope></dependency>

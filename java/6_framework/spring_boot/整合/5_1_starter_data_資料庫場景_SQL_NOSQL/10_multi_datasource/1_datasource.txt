@@ -1,0 +1,173 @@
+ref
+	https://www.baeldung.com/spring-boot-configure-multiple-datasources
+	https://www.tpisoftware.com/tpu/articleDetails/2637
+	https://docs.spring.io/spring-boot/how-to/data-access.html
+		官網
+
+ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
+	application.yml
+		spring:
+		  datasource:
+			todos:
+			  url: ...
+			  username: ...
+			  password: ...
+			  driverClassName: ...
+			  hikari:
+			    maximum-pool-size: ...
+				idle-timeout: ...
+			topics:
+			  url: ...
+			  username: ...
+			  password: ...
+			  driverClassName: ...
+			  hikari:
+			    maximum-pool-size: ...
+				idle-timeout: ...
+
+	java 
+		config
+			@Configuration
+			public class TodoDatasourceConfiguration {
+
+				@Primary
+				@Bean
+				@ConfigurationProperties("spring.datasource.todos")
+				public DataSourceProperties todosDataSourceProperties() {
+					return new DataSourceProperties();
+				}
+				
+				@Primary
+				@Bean
+				public DataSource todosDataSource(DataSourceProperties todosDataSourceProperties) {
+					return todosDataSourceProperties
+					  .initializeDataSourceBuilder()
+					  .build();
+				}
+			}
+
+			@Configuration
+			public class TopicDatasourceConfiguration {
+
+				@Bean
+				@ConfigurationProperties("spring.datasource.topics")
+				public DataSourceProperties topicsDataSourceProperties() {
+					return new DataSourceProperties();
+				}
+
+				@Bean
+				public DataSource topicsDataSource(DataSourceProperties topicsDataSourceProperties) {
+					return topicsDataSourceProperties
+					  .initializeDataSourceBuilder()
+					  .build();
+				}
+			}
+		
+		config : Spring Data JDBC
+			@Bean
+			public JdbcTemplate todosJdbcTemplate(@Qualifier("todosDataSource") DataSource dataSource) {
+				return new JdbcTemplate(dataSource);
+			}
+
+			@Bean
+			public JdbcTemplate topicsJdbcTemplate(@Qualifier("topicsDataSource") DataSource dataSource) {
+				return new JdbcTemplate(dataSource);
+			}
+
+			client use
+				@Autowired
+				@Qualifier("topicsJdbcTemplate")
+				JdbcTemplate jdbcTemplate;
+		
+		config : data jpa
+			@Configuration
+			@EnableTransactionManagement
+			@EnableJpaRepositories(
+			  basePackage = "repo 路徑",
+			  entityManagerFactoryRef = "todosEntityManagerFactory",
+			  transactionManagerRef = "todosTransactionManager"
+			)
+			public class TodoJpaConfiguration {
+
+				@Bean
+				public LocalContainerEntityManagerFactoryBean todosEntityManagerFactory(
+				  @Qualifier("todosDataSource") DataSource todosDataSource,
+				  EntityManagerFactoryBuilder builder) {
+					return builder
+					  .dataSource(todosDataSource)
+					  .packages("entity 路徑")
+					  .build();
+				}
+
+				@Bean
+				public PlatformTransactionManager todosTransactionManager(
+				  @Qualifier("todosEntityManagerFactory") LocalContainerEntityManagerFactoryBean todosEntityManagerFactory) {
+					return new JpaTransactionManager(Objects.requireNonNull(todosEntityManagerFactory.getObject()));
+				}
+
+			}
+		
+		config : Hikari Connection Pool
+			@Bean
+			@ConfigurationProperties("spring.datasource.todos.hikari")
+			public DataSource todosDataSource() {
+				return todosDataSourceProperties()
+				  .initializeDataSourceBuilder()
+				  .build();
+			}
+
+注意項目:
+	當設定了 @EnableJpaRepositories 並明確指定 entityManagerRef 和 transactionManagerRef：
+
+	1.@PersistenceContext 不需要手動指定 EntityManager，Spring Boot 會自動注入正確的 EntityManager。
+	2.@Transactional 不需要手動指定 TransactionManager，Spring Boot 會根據 @EnableJpaRepositories(transactionManagerRef = "...") 自動選擇正確的 TransactionManager。
+	3.如果要在同一個方法內操作多個 DataSource，則需要手動指定 @Transactional("xxxTransactionManager")。
+		@Service
+		public class CombinedService {
+			private final ARepository aRepository;
+			private final BRepository bRepository;
+
+			public CombinedService(ARepository aRepository, BRepository bRepository) {
+				this.aRepository = aRepository;
+				this.bRepository = bRepository;
+			}
+
+			@Transactional("aTransactionManager")
+			public void saveA(AEntity entity) {
+				aRepository.save(entity);
+			}
+
+			@Transactional("bTransactionManager")
+			public void saveB(BEntity entity) {
+				bRepository.save(entity);
+			}
+		}
+
+其他:
+	1.確認 datasource 使用的 connection pool 設定狀況
+		本機啟動服務
+		開啟 jconsole / Mbeans 之 connection pool class package 即可監控看到設定值
+			ex: Mbeans
+				com.zaxxer.hikari
+					HiKariDataSource
+						xxxDataSource
+						yyyDataSource
+	2.當啟動時預設 @Primay datasource of HiKariDataSource 會打印 HikariConfig log
+		第二個以上的 datasource 的 HikariConfig log 只會在 getConnection時才會打印，因為延遲初始化關係
+		若要立即初始化則多設定 initializationFailTimeout 即可
+		  hikari:
+			initializationFailTimeout: 0  # 立即初始化
+	3.當有多個 DataSource 時，Spring Boot 不會自動綁定 spring.datasource，
+		因此您需要手動註冊每個 DataSource，並明確標示主要的
+			@Primary DataSource、LocalContainerEntityManagerFactoryBean、PlatformTransactionManager
+		以利相關參考對應預期的 DataSource 綁定，讓 spring boot 知道如何預設自動綁定
+			ex: 
+				jpa repo a for 
+					datasource a
+					TransactionManager a
+					entityManagerFactory a
+				jpa repo b for 
+					datasource b
+					TransactionManager b
+					entityManagerFactory b
+				
