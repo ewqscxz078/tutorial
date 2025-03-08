@@ -269,3 +269,15 @@ ref ChatGPT
 							}
 						}
 
+最佳實踐：
+	1.若 service class 方法都要交易則宣告 @Transactional(rollbackFor = Exception.class)
+	  另一種更好的是 impl 空介面宣告 @Transactional(rollbackFor = Exception.class)
+
+	2.含 insert, update, delete 的方法依賴 class 層預設的宣告即可
+	
+	3.純查詢(get,find,load,select,query,count,is,check,...)的方法 
+		宣告 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+
+	4.另外獨立交易的方法的功能，如獨立寫 logTable
+		宣告 @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+			避免獨立交易報錯時，前面外部交易被 rollback
