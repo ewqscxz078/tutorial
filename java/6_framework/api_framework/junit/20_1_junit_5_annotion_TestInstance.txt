@@ -3,7 +3,7 @@ ref ChatGPT
 @TestInstance(TestInstance.Lifecycle.PER_METHOD) 預設
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
-1.僅能宣告在 class 上 
+1.僅能宣告在 class 上
 2.改變 JUnit 5 測試的生命週期
 	1.預設 PER_METHOD：每個 @Test 方法 都會建立一個新的測試實例。
 		如果沒有 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -28,5 +28,4 @@ ref ChatGPT
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	class SftpServerTest {
 	}
-	
-	
+

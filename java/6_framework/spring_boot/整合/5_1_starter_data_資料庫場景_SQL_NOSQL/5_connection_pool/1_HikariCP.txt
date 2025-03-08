@@ -4,7 +4,7 @@ spring:
     username: ${db.username}
     password: ${db.password}
     driver-class-name: ${db.driverClassName}
-    
+
     hikari: # HikariCP 連接池相關配置 ref HikariConfig
       minimum-idle: 4                # 對應 DBCP2 的 minIdle
       maximum-pool-size: 16           # 對應 DBCP2 的 maxTotal
@@ -12,7 +12,7 @@ spring:
       connection-timeout: 20000       # 對應 DBCP2 的 maxWaitMillis
       initialization-fail-timeout: 0  # 初始化連接池失敗超時
       pool-name: HikariPool           # 連接池名稱
-	  
+
 	# ref HikariConfig
 		https://github.com/brettwooldridge/HikariCP/blob/dev/src/main/java/com/zaxxer/hikari/HikariConfig.java
 
@@ -26,6 +26,6 @@ ref ChatGPT
 		設定 connectionTimeout
 		idleTimeout 控制閒置連線
 		maxLifetime 避免連線長時間不釋放
-	
+
 	5.若沒有特別設定每個 datasource 使用的 connection pool
 		spring 預設是每個 dataource 使用自己的 connection pool

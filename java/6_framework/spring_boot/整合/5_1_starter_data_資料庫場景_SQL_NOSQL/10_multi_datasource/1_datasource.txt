@@ -25,7 +25,7 @@ ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
 			    maximum-pool-size: ...
 				idle-timeout: ...
 
-	java 
+	java
 		config
 			@Configuration
 			public class TodoDatasourceConfiguration {
@@ -36,7 +36,7 @@ ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
 				public DataSourceProperties todosDataSourceProperties() {
 					return new DataSourceProperties();
 				}
-				
+
 				@Primary
 				@Bean
 				public DataSource todosDataSource(DataSourceProperties todosDataSourceProperties) {
@@ -62,7 +62,7 @@ ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
 					  .build();
 				}
 			}
-		
+
 		config : Spring Data JDBC
 			@Bean
 			public JdbcTemplate todosJdbcTemplate(@Qualifier("todosDataSource") DataSource dataSource) {
@@ -78,7 +78,7 @@ ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
 				@Autowired
 				@Qualifier("topicsJdbcTemplate")
 				JdbcTemplate jdbcTemplate;
-		
+
 		config : data jpa
 			@Configuration
 			@EnableTransactionManagement
@@ -106,7 +106,7 @@ ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
 				}
 
 			}
-		
+
 		config : Hikari Connection Pool
 			@Bean
 			@ConfigurationProperties("spring.datasource.todos.hikari")
@@ -161,13 +161,12 @@ ref https://www.baeldung.com/spring-boot-configure-multiple-datasources
 		因此您需要手動註冊每個 DataSource，並明確標示主要的
 			@Primary DataSource、LocalContainerEntityManagerFactoryBean、PlatformTransactionManager
 		以利相關參考對應預期的 DataSource 綁定，讓 spring boot 知道如何預設自動綁定
-			ex: 
-				jpa repo a for 
+			ex:
+				jpa repo a for
 					datasource a
 					TransactionManager a
 					entityManagerFactory a
-				jpa repo b for 
+				jpa repo b for
 					datasource b
 					TransactionManager b
 					entityManagerFactory b
-				

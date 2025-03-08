@@ -45,5 +45,4 @@ ref ChatGPT
 	會拋出 InvocationTargetException、IllegalAccessException 等受檢例外。
 	嘗試將 String 轉換為其他基本類型，例如 int、boolean 等（但不適用於自訂類型）。
 	允許進行基本類型轉換，例如 String → Integer、boolean 等。
-	
-	
+

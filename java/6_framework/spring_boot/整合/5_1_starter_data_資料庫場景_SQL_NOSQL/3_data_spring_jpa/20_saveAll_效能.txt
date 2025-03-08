@@ -1,0 +1,7 @@
+ref Line 群
+
+1. JPA saveAll 完全不加任何設定，存 10 萬筆要 10 幾分鐘
+2. JPA saveAll 加 spring.jpa.properties.hibernate.jdbc.batch_size=1000，存 10 萬筆 10 秒 內
+3. EntityManager 加 for loop batch insert(手動 flush)，速度跟上面差不多
+4. Native SQL，再快一點，但也是幾秒
+5. Bulk copy，要底層資料庫有支援，但不到 1 秒

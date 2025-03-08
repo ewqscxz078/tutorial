@@ -28,4 +28,4 @@ ref ChatGPT
 		5.支援 @Value("${property}")
 		6.支援 @ConfigurationProperties
 
-	
+
