@@ -1,0 +1,106 @@
+ref ChatGPT
+
+1.@Transactional 的 rollbackFor 參數預設值
+	預設為 default {}，代表沒有明確指定 rollback 條件，而是依照 Spring 的預設行為 來決定哪些例外會觸發交易回滾。
+		Spring 預設只有 RuntimeException（非受檢例外，Unchecked Exception）和 Error 才會導致交易回滾，但 受檢例外（Checked Exception）不會回滾。
+			例如
+				預設會回滾
+					RuntimeException (或其子類，如 NullPointerException, IllegalArgumentException)
+					Error (如 OutOfMemoryError)
+				預設不會回滾
+					Checked Exception (如 IOException, SQLException)
+						@Service
+						public class OrderService {
+
+							@Transactional
+							public void processOrder() throws IOException {
+								orderRepository.save(new Order());
+
+								if (true) {
+									throw new IOException("Checked Exception 發生"); // Spring 預設不會回滾
+								}
+							}
+						}
+2. rollbackFor 用來指定哪些例外應該觸發回滾
+	如果希望 受檢例外（Checked Exception）也能回滾，需要顯式指定 rollbackFor：
+		@Transactional(rollbackFor = IOException.class) // 指定 IOException 也要回滾
+		public void processOrder() throws IOException {
+			orderRepository.save(new Order());
+
+			if (true) {
+				throw new IOException("Checked Exception 發生"); // 這次會觸發 rollback
+			}
+		}
+		結果 : 即使 IOException 是 Checked Exception，交易仍然會回滾。
+
+3. rollbackFor 可以指定多個例外
+	@Transactional(rollbackFor = {IOException.class, SQLException.class})
+	public void processOrder() throws IOException, SQLException {
+		orderRepository.save(new Order());
+
+		if (true) {
+			throw new SQLException("SQL 執行失敗"); // 這次會觸發 rollback
+		}
+	}
+
+4. noRollbackFor 讓某些 RuntimeException 例外不回滾
+	@Transactional(noRollbackFor = IllegalArgumentException.class) // 遇到 IllegalArgumentException 不回滾
+	public void updateOrder() {
+		orderRepository.save(new Order());
+
+		if (true) {
+			throw new IllegalArgumentException("參數錯誤，不應該回滾交易"); // 交易仍然會 commit
+		}
+	}
+
+常見問題
+	Q1: 什麼情況應該讓 Checked Exception 回滾？
+	A1: 在許多企業應用中，受檢例外（Checked Exception）應該回滾交易，因為它們可能表示業務錯誤。例如：
+		業務邏輯錯誤
+			BusinessException
+			InvalidInputException
+		資源不可用
+			IOException
+			SQLException
+		支付失敗
+			PaymentProcessingException
+
+		解法：顯式使用 rollbackFor
+			@Transactional(rollbackFor = IOException.class) // 強制 IOException 也回滾
+			public void processOrder() throws IOException {
+				orderRepository.save(new Order());
+
+				if (true) {
+					throw new IOException("檔案處理失敗！"); // 現在會 rollback
+				}
+			}
+			交易仍然會 rollback，防止資料不一致。
+
+
+	Q2: 什麼情況下應該讓 Checked Exception 不回滾？
+	A2: 有時候，你可能希望某些 Checked Exception 不回滾，例如：
+		如果異常是暫時的錯誤，不應該影響整個交易
+			例如 NetworkException，可以重試而不 rollback。
+		如果業務允許部分提交
+			例如，一個批次處理程序，某些錯誤不應該影響其他資料的提交。
+		解法：使用 noRollbackFor
+			@Transactional(noRollbackFor = IOException.class) // 讓 IOException 不回滾
+			public void processOrder() throws IOException {
+				orderRepository.save(new Order());
+
+				if (true) {
+					throw new IOException("非致命錯誤，不應該 rollback");
+				}
+			}
+
+最佳實踐
+	1.如果應用程式希望所有異常（包括 Checked Exception）都回滾，建議在 @Transactional 統一加上 rollbackFor = Exception.class
+		@Transactional(rollbackFor = Exception.class)
+		public void process() throws Exception {
+			// 這樣所有異常都會回滾
+		}
+	2.如果某些 Checked Exception 真的不應該回滾，則應該明確使用 noRollbackFor
+		@Transactional(noRollbackFor = IOException.class)
+	3.避免錯誤的預設行為導致數據不一致，特別是在企業應用中，一般建議顯式使用 rollbackFor。
+
+	這樣可以確保應用程式的交易一致性，防止潛在的業務問題

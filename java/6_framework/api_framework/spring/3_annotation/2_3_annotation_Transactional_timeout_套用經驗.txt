@@ -1,0 +1,106 @@
+ref ChatGPT
+
+1.@Transactional 的 timeout 參數預設值
+	預設值是 TransactionDefinition.TIMEOUT_DEFAULT，而 TIMEOUT_DEFAULT = -1，表示 沒有設定明確的超時時間，這代表：
+		1.長交易（Long-Running Transaction）可能會一直等待，直到資料庫或底層資源超時或回應。
+		2.如果交易包含 鎖定資源（如行級鎖、表鎖），而另一個交易長時間持有鎖，那麼這個交易可能會無限等待（直到 DB 設定的死鎖超時觸發）。
+		3.應用層不會主動中斷交易，除非你手動設定 timeout，或者讓資料庫（DB 層）有超時機制來終止交易。
+
+2.timeout 參數的作用
+	單位是秒 (seconds)。
+	設定 timeout，讓交易超過指定秒數時自動回滾：
+		@Transactional(timeout = 5) // 5 秒內未完成則 rollback
+		public void processOrder() {
+			// 執行長時間 SQL 查詢或等待
+		}
+	超時後，Spring 會拋出 TransactionTimedOutException，導致回滾：
+		org.springframework.transaction.TransactionTimedOutException: Transaction timed out after 5 seconds
+		模擬範例
+			@Transactional(timeout = 10) // 10 秒內沒完成則 rollback
+			public void executeLongTask() {
+				jdbcTemplate.update("UPDATE orders SET status = 'PROCESSING'");
+				Thread.sleep(15000); // 模擬 15 秒的長交易
+			}
+3. timeout 在不同交易管理機制的影響
+	交易管理											timeout 是否有效？			說明
+	應用交易層 Spring Data JPA (@Transactional)			✅ 有效						透過 Spring Transaction Manager 處理
+	應用交易層 JDBC (@Transactional)					✅ 有效						DataSourceTransactionManager 控制超時
+	sql 層 JPA EntityManager 手動管理					❌ 無效						EntityManager 不受 @Transactional(timeout) 控制 =>
+		能用 query.setHint("javax.persistence.query.timeout", 5000); 控制 sql 超時
+	sql 層 原生 connection								❌ 有效						Connection 不受 @Transactional(timeout) 控制影響 SQL 執行超時
+		能用 connection.setQueryTimeout(); // 控制 sql 超時
+	sql 層 jdbcTemplate									❌ 有效						jdbcTemplate 不受 @Transactional(timeout) 控制影響 SQL 執行超時
+		能用 jdbcTemplate.setQueryTimeout(5); // 控制 sql 超時
+
+4.應用層交易超時 vs. sql 層級超時
+	雖然 @Transactional(timeout = X) 可以讓 Spring 控制交易超時，但這不一定會影響底層 SQL 查詢，因為：
+		1.部分資料庫（如 MySQL、PostgreSQL）允許查詢執行超過 timeout，即使 Spring rollback 交易，DB 仍可能繼續執行 SQL。
+		2.解決方案：透過 JDBC 設定 queryTimeout，確保 DB 也會終止 SQL 查詢。
+			手動設定 queryTimeout（影響單個 SQL 執行時間）
+				public void executeQuery() {
+					jdbcTemplate.setQueryTimeout(5); // 設定 5 秒查詢超時
+					jdbcTemplate.queryForObject("SELECT SLEEP(10)", Integer.class); // 超時！
+				}
+				這樣 SQL 超過 5 秒 會直接拋出錯誤。
+				@Transactional(timeout = 5) 只對 整個交易範圍內的執行時間 有效，但不一定能控制單個 SQL 的查詢時間。
+
+5.timeout 失效的情境
+	某些情境下，timeout 可能不會生效：
+		(1) 內部方法呼叫
+			如果 timeout 標註的方法 是內部呼叫 (self-invocation)，Spring AOP 可能不會攔截：
+				@Service
+				public class OrderService {
+					@Transactional(timeout = 5)
+					public void processOrder() {
+						this.doLongQuery(); // 內部呼叫，不會套用 timeout
+					}
+
+					private void doLongQuery() {
+						jdbcTemplate.queryForObject("SELECT SLEEP(10)", Integer.class);
+					}
+				}
+			解決方案：透過 自我注入呼叫或將其拆分到別的 service 呼叫調用：
+				@Service
+				public class OrderService {
+					@Autowired
+					private OrderService self;
+
+					@Transactional(timeout = 5)
+					public void processOrder() {
+						self.doLongQuery(); // 透過 Spring 代理調用，確保 timeout 生效
+					}
+
+					@Transactional(timeout = 5)
+					public void doLongQuery() {
+						jdbcTemplate.queryForObject("SELECT SLEEP(10)", Integer.class);
+					}
+				}
+		(2) timeout 在 REQUIRES_NEW 交易中的影響
+			如果方法使用 @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 5)，即使外部方法已超時，新的交易仍然獨立運行：
+				@Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 5)
+				public void independentTransaction() {
+					jdbcTemplate.queryForObject("SELECT SLEEP(10)", Integer.class); // 仍然會執行
+				}
+			解決方案: REQUIRES_NEW 交易獨立執行，應該單獨設定合理的 timeout，確保外部交易影響內部交易行為。
+
+最佳實踐
+	1.建議所有交易方法應該明確設定 timeout，避免無限等待：
+		交易層 (@Transactional(timeout = X)) 設定交易超時，防止業務邏輯運行過久
+	2.SQL 層 (Connection.setQueryTimeout(X), query.setHint("javax.persistence.query.timeout", X), jdbcTemplate.setQueryTimeout(X)) 設定 SQL 查詢超時，確保 SQL 及時終止，不影響資料庫效能。
+		查詢類方法可搭配 queryTimeout：
+			@PersistenceContext
+			private EntityManager entityManager;
+
+			public List<User> findUsers() {
+				Query query = entityManager.createQuery("SELECT u FROM User u");
+				query.setHint("javax.persistence.query.timeout", 5000); // 5 秒超時
+				return query.getResultList();
+			}
+	3.對於 @Transactional(propagation = REQUIRES_NEW) 內的 SQL 仍需獨立設定 SQL 超時，防止 SQL 無限執行，即使外部交易已 rollback。
+	4.避免內部方法調用影響 timeout，確保 透過 Spring 代理呼叫：
+		@Autowired
+		private OrderService self;
+
+		public void process() {
+			self.longRunningMethod(); // 確保 timeout 生效
+		}

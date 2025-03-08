@@ -1,0 +1,83 @@
+ref ChatGPT
+
+1.@Transactional 的 isolation 參數預設值
+	預設為 Isolation.DEFAULT，代表使用底層資料庫的預設隔離級別
+	不同的資料庫，預設的隔離級別可能不同：
+		MySQL（InnoDB）：REPEATABLE READ
+		PostgreSQL：READ COMMITTED
+		Oracle：READ COMMITTED
+		SQL Server：READ COMMITTED
+		H2 Database：READ COMMITTED
+
+2.isolation 可用設定值
+	隔離級別 (Isolation)	說明								可避免的問題												效能影響
+	DEFAULT					使用資料庫預設的隔離級別			依據資料庫													依據資料庫
+	READ_UNCOMMITTED		允許讀取未提交的資料				❌ 可能讀取到髒讀 (Dirty Read)								效能最高，數據不一致風險最大
+	READ_COMMITTED			只允許讀取已提交的資料				✅ 避免髒讀 (Dirty Read)									效能較高，最常見的預設值
+	REPEATABLE_READ			確保同一交易內多次查詢的結果一致	✅ 避免髒讀 (Dirty Read)、不可重複讀 (Non-Repeatable Read)	比 READ_COMMITTED 慢，但更安全
+	SERIALIZABLE			完全鎖定資料，確保絕對一致性		✅ 避免所有問題												效能最低，通常只用在財務系統等高一致性需求的場景
+
+3.何時應該顯式設定 isolation？
+	如果你的應用程式對資料一致性要求較高（如金融系統），或需要解決特定的並發問題，則應該明確設定 isolation。
+	(1) 需要防止「髒讀」(Dirty Read)，但因為資料庫預設值 READ_COMMITTED 或 REPEATABLE_READ 已包含該問題排除，故可不用特別設定
+		❌ 髒讀：讀取到未提交的資料
+			-- 交易 A
+			UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+
+			-- 交易 B（此時 A 尚未 COMMIT）
+			SELECT balance FROM accounts WHERE id = 1; -- 可能讀到錯誤數據
+		✅ 解決方案：使用 READ_COMMITTED
+			@Transactional(isolation = Isolation.READ_COMMITTED)
+			public void updateBalance() {
+				// 此交易內不會讀取未提交的變更
+			}
+	(2) 需要防止「不可重複讀」(Non-Repeatable Read)
+		❌ 不可重複讀：同一個交易內，多次查詢時，數據發生變更
+			-- 交易 A 讀取
+			SELECT balance FROM accounts WHERE id = 1; -- 讀到 500
+
+			-- 交易 B 修改並提交
+			UPDATE accounts SET balance = 400 WHERE id = 1;
+			COMMIT;
+
+			-- 交易 A 再次讀取
+			SELECT balance FROM accounts WHERE id = 1; -- 讀到 400，數據變了
+		✅ 解決方案：使用 REPEATABLE_READ
+			@Transactional(isolation = Isolation.REPEATABLE_READ)
+			public void checkBalance() {
+				// 此交易內的多次讀取將保持一致
+			}
+	(3) 需要防止「幻讀」(Phantom Read)
+		❌ 幻讀：一個交易內，多次查詢時，新數據插入影響結果
+			-- 交易 A 讀取
+			SELECT COUNT(*) FROM orders WHERE status = 'PENDING'; -- 得到 10 筆資料
+
+			-- 交易 B 插入新訂單
+			INSERT INTO orders (id, status) VALUES (11, 'PENDING');
+			COMMIT;
+
+			-- 交易 A 再次查詢
+			SELECT COUNT(*) FROM orders WHERE status = 'PENDING'; -- 得到 11 筆資料
+		✅ 解決方案：使用 SERIALIZABLE
+			@Transactional(isolation = Isolation.SERIALIZABLE)
+			public void countPendingOrders() {
+				// 此交易內，不允許其他交易插入影響結果
+			}
+			但 SERIALIZABLE 效能較低，通常只有在財務系統等高一致性需求下才會使用。
+
+常見問題
+	Q1: 什麼情況適合使用髒讀?
+	A1:
+		1.高效能需求，數據一致性要求不高
+			例如：即時分析系統、報表系統（只讀取數據，不修改）。
+			報表數據可以接受短時間內的數據不一致，因為即使數據回滾了，稍後的查詢還是會獲得正確的數據。
+		2.數據變更可接受短期的不一致
+			例如：社群媒體動態牆
+			用戶發送貼文後，其他人可以立即看到，即使最終貼文因違規被刪除，對業務影響也不大。
+		3.讀取速度比數據一致性更重要
+			例如：大規模日誌分析
+			只讀取日誌，不會影響核心業務邏輯，因此即使部分數據後來被刪除，影響也不大。
+
+
+最佳實踐
+	預設即可，除了已知上述特殊情境需要修改預設值

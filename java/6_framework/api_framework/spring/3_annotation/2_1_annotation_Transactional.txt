@@ -1,0 +1,55 @@
+ref ChatGPT、https://iter01.com/521558.html
+
+@Transactional
+	propagation =
+		交易傳播方式，呼叫方與被呼叫方如何算交易
+			Propagation.REQUIRED(預設) 				: 適合一般需要交易的串接共用功能 (相對常用)
+				若外部有交易則加入，否則新建一個交易
+					業務方法需要在一個事務中執行,如果方法執行時,已處在一個事務中,那麼就加入該事務,否則自己建立一個新的事務.這是spring預設的傳播行為.。
+						@tractional 預設 propagation：Propagation.REQUIRED 使用既有交易，若不存在開一個新的
+			Propagation.REQUIRES_NEW 				: 適合功能獨立的交易，例如紀錄功能操作log (相對常用)
+				總是新建交易，即使外部有交易
+					業務方法總是會為自己發起一個新的事務,如果方法已執行在一個事務中,則原有事務被掛起,新的事務被建立,直到方法結束,新事務才結束,原先的事務才會恢復執行.
+			Propagation.SUPPORTS					: 適合可有可無交易的共用功能，例如查詢 (相對常用)
+				可選交易，有交易則加入，無交易則不開啟
+					如果業務方法在某個事務範圍內被呼叫,則方法成為該事務的一部分,如果業務方法在事務範圍外被呼叫,則方法在沒有事務的環境下執行。
+						為了減少太多無謂的交易次數，把有互相呼叫的function合併成一個交易或是沒有
+						a method 有交易 ， call b method(propagation = Propagation.SUPPORTS)，則合併交易
+						a method 無交易 ， call b method(propagation = Propagation.SUPPORTS)，則無交易
+
+			Propagation.MANDATORY					: 適合僅能在交易內的共用功能
+				必須在現有交易內執行，否則拋異常
+					只能在一個已存在事務中執行,業務方法不能發起自己的事務,如果業務方法在沒有事務的環境下呼叫,就拋異常
+			Propagation.NOT_SUPPORTED
+				宣告方法需要事務,如果方法沒有關聯到一個事務,容器不會為它開啟事務.如果方法在一個事務中被呼叫,該事務會被掛起,在方法呼叫結束後,原先的事務便會恢復執行.
+				表示該方法不應該執行在事務中。如果當前存在事務，就把當前事務掛起。
+			Propagation.NEVER
+				不能在交易內執行，否則拋異常
+					宣告方法絕對不能在事務範圍內執行,如果方法在某個事務範圍內執行,容器就拋異常.只有沒關聯到事務,才正常執行.
+			Propagation.NESTED
+				開啟子交易，與父交易獨立回滾
+					如果一個活動的事務存在,則執行在一個巢狀的事務中.如果沒有活動的事務,則按REQUIRED屬性執行.它使用了一個單獨的事務, 這個事務擁有多個可以回滾的保證點.內部事務回滾不會對外部事務造成影響, 它只對DataSourceTransactionManager 事務管理器起效.
+
+			Propagation.REQUIRES_NEW、NESTED
+				兩者都是事務巢狀，不同之處在於，內外事務之間是否存在彼此之間的影響；NESTED之間會受到影響，而產生部分回滾，而REQUIRED_NEW則是獨立的。
+
+	Isolation =
+		default Isolation.DEFAULT
+
+	timeout =
+		default TransactionDefinition.TIMEOUT_DEFAULT (預設也就是 -1 無限等待)
+	timeoutString =
+		default ""
+
+	readOnly
+		default false
+			代表僅查詢的交易不適合，應該在 service 方法上宣告 readOnly = true
+
+	rollbackFor
+		default {}
+	rollbackForClassName
+		default {}
+	noRollbackFor
+		default {}
+	noRollbackForClassName
+		default {}
