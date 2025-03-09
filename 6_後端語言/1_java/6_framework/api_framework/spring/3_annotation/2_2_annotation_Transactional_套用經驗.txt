@@ -274,8 +274,8 @@ ref ChatGPT
 	  另一種更好的是 impl 空介面宣告 @Transactional(rollbackFor = Exception.class)
 
 	2.含 insert, update, delete 的方法依賴 class 層預設的宣告即可
-	
-	3.純查詢(get,find,load,select,query,count,is,check,...)的方法 
+
+	3.純查詢(get,find,load,select,query,count,is,check,...)的方法
 		宣告 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 
 	4.另外獨立交易的方法的功能，如獨立寫 logTable

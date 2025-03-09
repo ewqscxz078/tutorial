@@ -1,4 +1,4 @@
-ref Line 群
+ref java Line 群成員分享經驗
 
 1. JPA saveAll 完全不加任何設定，存 10 萬筆要 10 幾分鐘
 2. JPA saveAll 加 spring.jpa.properties.hibernate.jdbc.batch_size=1000，存 10 萬筆 10 秒 內

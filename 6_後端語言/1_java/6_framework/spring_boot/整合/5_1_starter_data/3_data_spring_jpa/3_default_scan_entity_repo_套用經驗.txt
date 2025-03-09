@@ -1,0 +1,92 @@
+ref ChatGPT、https://docs.spring.io/spring-data/jpa/reference/jpa/getting-started.html
+
+預設 spring boot jpa 會自動掃 @Repository、@Entity 讓其 spring bean ioc 納管
+	預設行為：
+		@Entity
+			自動掃描，但只限於 @SpringBootApplication 所在 package 及其子 package
+				如果 @Entity 不在這個範圍內，需要 @EntityScan
+			若 相關 @Entity 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
+				@EntityScan(basePackages = "你的 Entity package 路徑")
+		@Repository
+			自動掃描 （或繼承 JpaRepository、CrudRepository 的介面），並且會自動建立對應的 Spring Bean
+				若在預期路徑下
+					@Repository  // 這個註解可以省略，因為 JpaRepository 會自動被 Spring 管理
+					public interface UserRepository extends JpaRepository<User, Long> {
+					}
+				即使 @Repository 沒有標註，Spring 也會幫你自動建立 UserRepository 的 Spring Bean。
+				如果 @Repository 不在 @SpringBootApplication 內的 package，需要 @EnableJpaRepositories
+			若 相關 @Repository 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
+				@EnableJpaRespositories(basePackages = "你的 Repository package 路徑")
+
+	因此當有 多個 DataSource 時，一定要手動指定 @EntityScan 和 @EnableJpaRepositories，以確保 Spring Boot 正確管理你的 JPA 實體與 Repository
+
+最佳實踐
+	1.一般預設不要特別設定 @EntityScan、@EnableJpaRespositories 簡化設定
+
+	2.當有多個 datasource 就要特別設定對應的 @EntityScan、@EnableJpaRespositories
+		@Configuration
+		@EnableTransactionManagement
+		@EnableJpaRepositories(
+			basePackages = "com.example.project.primary.repository",
+			entityManagerFactoryRef = "primaryEntityManagerFactory",
+			transactionManagerRef = "primaryTransactionManager"
+		)
+		@EntityScan(basePackages = "com.example.project.primary.entity")  // 固定 Entity 掃描路徑
+		public class PrimaryDataSourceConfig { ... }
+
+		@Configuration
+		@EnableTransactionManagement
+		@EnableJpaRepositories(
+			basePackages = "com.example.project.secondary.repository",
+			entityManagerFactoryRef = "secondaryEntityManagerFactory",
+			transactionManagerRef = "secondaryTransactionManager"
+		)
+		@EntityScan(basePackages = "com.example.project.secondary.entity")  // 固定 Entity 掃描路徑
+		public class SecondaryDataSourceConfig { ... }
+
+		Spring Boot 旨在鼓勵「微服務架構」，所以當 DataSource 變得複雜時，你應該考慮這是否代表應用需要進一步拆分，而不是讓單一應用變得更加臃腫。
+			多 DataSource vs. 分散式架構
+			架構選擇							適用情境																優缺點
+			單一應用 + 多個 DataSource			需要同時存取多個 DB，但仍然屬於同一業務範疇，如：						✅ 保持應用的單體性，避免拆分過多服務增加溝通成本
+												- 主要業務資料庫 + 歷史資料庫											❌ 會造成維護成本上升，應用程式過度複雜化
+												- 讀寫分離 (Primary/Replica)											❌ Spring Boot 單應用會有較高的資料庫負載
+												- 多租戶架構 (不同客戶不同 DB)
+			微服務拆分 (一個應用對應一個 DB)	每個業務模組都能獨立運行，服務之間透過 API 或 Message Queue 溝通，如：	✅ 每個微服務只管理自己的 DataSource，避免不必要的耦合
+												- UserService 只管理 user_db											✅ 可獨立擴展，例如某個服務的流量變大時只擴展該服務
+												- OrderService 只管理 order_db											❌ 需要處理跨服務的數據一致性 (如分散式交易)
+												- InventoryService 只管理 inventory_db
+			儘量讓微服務對應單一 DataSource
+				如何判斷是否應該拆分微服務？
+					✅ 如果多個 DataSource 之間的資料強耦合，且需要頻繁跨 DB JOIN，則可以考慮維持單一應用，並確保 DataSource 管理妥善。
+					✅ 如果不同 DataSource 屬於不同的業務範圍（例如 UserService 和 OrderService），應該拆分微服務，讓每個微服務獨立運行。
+					✅ 如果應用程式過於龐大，難以維護、測試或部署，那麼拆分微服務是一個好的選擇。
+				微服務拆分後，如何處理跨 DB 資料？
+					當你拆分了 UserService 和 OrderService 這樣的微服務，但又需要查詢**「某個使用者的所有訂單」**，該怎麼辦？
+					(1)透過 API 查詢
+						OrderService 只管理 order_db，但當 UserService 需要查詢某個 user_id 的訂單時，可以透過 REST API / gRPC 呼叫 OrderService：
+							@RestTemplate
+							public List<Order> getOrdersByUserId(Long userId) {
+								return restTemplate.getForObject("http://order-service/orders/user/" + userId, List.class);
+							}
+					(2)透過 Kafka / RabbitMQ 事件驅動
+						當 UserService 新增用戶時，可以發送 Kafka Event：
+							kafkaTemplate.send("user-topic", newUser);
+						OrderService 監聽這個 topic，並在本地維護一個 user_id 的快取，這樣就不需要頻繁查詢 user_db。
+					(3)使用資料庫同步機制
+						若 UserService 和 OrderService 的數據需要定期同步，可以考慮 Debezium 來監聽 user_db，當有新的 User 記錄時，同步到 order_db。
+
+	3.若以長期專案維護來看，明確統一掃描的 jpa 路徑，提供一個預設掃描的具體配置，避免跨專案的路徑寫法不同
+		1.統一規範 package 命名，降低混亂度。
+		2.在跨專案開發時確保 JPA 設定一致，不論哪個專案都能按照這個規範來配置。
+		3.減少錯誤，避免 JPA 自動掃描出現「部分 Entity 沒被掃描到」的問題。
+			@SpringBootApplication
+			@EntityScan(basePackages = "${app.jpa.entity-scan}")  // 統一規範 Entity 位置
+			@EnableJpaRepositories(basePackages = "${app.jpa.repository-scan}")  // 統一規範 Repository 位置
+			public class Application {
+			}
+
+			將其預設設定放在一個自訂 Spring Boot Starter/resource/custom/xxx-jpa-default.yml 以利跨專案 application.yml spring.config.import 套用
+			app:
+			  jpa:
+				entity-scan: com.example.project.common.entity
+				repository-scan: com.example.project.common.repository

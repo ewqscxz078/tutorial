@@ -22,8 +22,16 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 		username:root
 		password:123456
 
+2.java jpa configuration
+	java config
+		@EnableJpaRepositories(basePackages = "com.baeldung.jpa.simple.repository")
+		public class PersistenceConfig {
+			...
+		}
+	或 xml 模式
+		<jpa:repositories base-package="com.baeldung.jpa.simple.repository" />
 
-2.編寫一個實體類(bean)和資料表對應進行映射
+3.編寫一個實體類(bean)和資料表對應進行映射
 	src/main/java/.../entity/
 
 		@Entity // 告訴JPA這是一個實體類
@@ -41,14 +49,14 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 			private String email
 		}
 
-3.編寫一個 DAO 接口來操作實體類對應的資料表(Repository)
+4.編寫一個 DAO 接口來操作實體類對應的資料表(Repository)
 	src/main/java/.../repository/
 		繼承 JpaRepository 來完成資料庫的操作
 		private interface UserRepository extends JpaRepository<User,Integer>{
 
 		}
 
-4.基本配置
+5.基本配置
 	application.yml
 		spring:
 		  jpa:
@@ -84,13 +92,6 @@ https://www.baeldung.com/the-persistence-layer-with-spring-data-jpa
 
 	http://localhost:8080/user?lastName=lisi&email=aa
 
-
-7. 預設 spring boot jpa 會自動掃 @Repository、@Entity 讓其 spring bean ioc 納管
-	若 相關 @Repository 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
-		@EnableJpaRespositories(basePackages = "你的 Repository package 路徑")
-
-	若 相關 @Entity 在非預期預設位置，想自已指定掃描變 spring bean ioc 納管
-		@EntityScan(basePackages = "你的 Entity package 路徑")
 
 8. JPA 寫 SQL 方式
 	1.JpaRepository 已存在 api

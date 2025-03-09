@@ -1,3 +1,5 @@
+20250309
+	調整 自訂 starter 配置
 20250202
 	卡到 yml 讀不到 TwseScrapingProperties prefix
 		貌似使用多層次 MonthlyRevenue 關係?
