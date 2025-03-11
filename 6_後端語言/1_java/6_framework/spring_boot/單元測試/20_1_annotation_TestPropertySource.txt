@@ -1,0 +1,22 @@
+ref ChatGPT
+
+單元測試的靜態附值到 application.yml
+	範例
+		@TestPropertySource(properties = { "aa=1", "bb=2" })
+		public class xxx
+	特性
+		1.直接在 測試類別註解 或 讀取外部屬性檔案
+		2.屬性是固定的，測試時不變動
+		3.屬性是 靜態 的，測試開始前就確定
+		4.單元測試、整合測試（適合靜態配置）
+		5.支援 @Value("${property}")
+		6.支援 @ConfigurationProperties
+	適用於：
+		1.只是要 靜態覆蓋 application.yml
+		2.需要快速設定測試環境變數 (properties = "key=value")
+		3.不想動態變更屬性 (減少複雜度)
+
+不同的測試方法 設定不同的屬性
+	方案 1：使用 TestPropertySource 搭配 @Nested
+	方案 2：使用 System.setProperty 搭配 @BeforeEach
+	方案 3：使用 @ContextConfiguration 針對特定測試重新載入 Spring Context

@@ -1,0 +1,227 @@
+ref ChatGPT
+
+不同方法測試不同的profile
+	方案
+		方案 1：使用 @Nested，讓不同 Profile 測試放在不同內部類別
+		方案 2：使用 System.setProperty 動態變更 spring.profiles.active
+		方案 3：使用 ContextCustomizerFactory (進階)
+		方案 4：使用 @DirtiesContext 強制重新載入 Context
+		方案 5：分開不同的測試類別
+
+	方案 1：使用 @Nested，讓不同 Profile 測試放在不同內部類別
+		適用場景
+			ApplicationContext 會為 每個 @Nested 測試類別重新啟動，
+				這是 Spring 官方建議的 Profile 測試方式。
+			這樣的 Profile 會影響 @Bean 註冊。
+		範例
+			@SpringBootTest
+			public class MyServiceTest {
+
+				@Nested
+				@ActiveProfiles("main")
+				class ProfileMain {
+					@Test
+					void testMain() {
+						System.out.println("測試 main profile");
+					}
+				}
+
+				@Nested
+				@ActiveProfiles({"main", "a"})
+				class ProfileA {
+					@Test
+					void testProfileA() {
+						System.out.println("測試 main + a profile");
+					}
+				}
+
+				@Nested
+				@ActiveProfiles({"main", "b"})
+				class ProfileB {
+					@Test
+					void testProfileB() {
+						System.out.println("測試 main + b profile");
+					}
+				}
+			}
+		📌 優勢
+			適用於 Profile 影響 @Bean 註冊的情況，每個 Profile 都會建立一個新的 ApplicationContext。
+			@ActiveProfiles 可以正常生效，因為它作用於 @Nested 類別。
+		📌 缺點
+			每個 @Nested 測試類別都會重新啟動 ApplicationContext，影響測試速度。
+		
+	方案 2：使用 System.setProperty 動態變更 spring.profiles.active
+		適用場景：
+			需要 不同測試方法使用不同的 Profile。
+			只想啟動一次 ApplicationContext，減少 Spring Boot 啟動時間。
+			Profile 主要影響 @Value、環境變數，不影響 @Bean 註冊。
+		範例
+			@SpringBootTest
+			@TestInstance(TestInstance.Lifecycle.PER_CLASS) // 讓所有測試共用同一個測試類實例
+			public class MyServiceTest {
+
+				@Autowired
+				private Environment environment;
+
+				@BeforeEach
+				void setup(TestInfo testInfo) {
+					if (testInfo.getTestMethod().get().getName().equals("testMain")) {
+						System.setProperty("spring.profiles.active", "main");
+					} else if (testInfo.getTestMethod().get().getName().equals("testProfileA")) {
+						System.setProperty("spring.profiles.active", "main,a");
+					} else if (testInfo.getTestMethod().get().getName().equals("testProfileB")) {
+						System.setProperty("spring.profiles.active", "main,b");
+					}
+				}
+
+				@Test
+				void testMain() {
+					assertEquals("main-value", environment.getProperty("my.property"));
+				}
+
+				@Test
+				void testProfileA() {
+					assertEquals("a-value", environment.getProperty("my.property"));
+				}
+
+				@Test
+				void testProfileB() {
+					assertEquals("b-value", environment.getProperty("my.property"));
+				}
+			}
+		📌 優勢：
+			只會 啟動一次 ApplicationContext，執行速度快。
+			適合 Profile 影響的是 環境變數 (@Value)，而不是 @Bean 註冊。
+		📌 缺點：
+			System.setProperty 影響的是 JVM，而不是 Spring Environment，可能不會即時生效。
+			如果 Profile 影響 @Bean 註冊，這種方式無效，因為 ApplicationContext 不會重新載入 Bean。
+	
+	方案 3：使用 ContextCustomizerFactory (進階)
+		適用場景：
+			不同測試方法動態變更 Profile，並讓 Spring ApplicationContext 重新載入。
+			避免 System.setProperty 不生效的問題。
+		範例
+			自訂 ContextCustomizerFactory
+				import org.junit.jupiter.api.extension.ExtensionContext;
+				import org.springframework.test.context.ContextCustomizer;
+				import org.springframework.test.context.ContextCustomizerFactory;
+				import org.springframework.test.context.MergedContextConfiguration;
+
+				import java.lang.reflect.Method;
+
+				public class DynamicProfileContextCustomizerFactory implements ContextCustomizerFactory {
+					@Override
+					public ContextCustomizer createContextCustomizer(Class<?> testClass, MergedContextConfiguration config) {
+						return (context) -> {
+							ExtensionContext.Store store = ExtensionContext.Namespace.GLOBAL.getStore();
+							Method testMethod = store.get(ExtensionContext.Namespace.GLOBAL, Method.class);
+							if (testMethod != null) {
+								String profile = testMethod.getName().contains("ProfileA") ? "main,a"
+										: testMethod.getName().contains("ProfileB") ? "main,b"
+										: "main";
+								System.setProperty("spring.profiles.active", profile);
+							}
+						};
+					}
+				}
+			測試類別上使用
+				@SpringBootTest
+				@ExtendWith(SpringExtension.class)
+				@ContextConfiguration(initializers = DynamicProfileContextCustomizerFactory.class)
+				public class MyServiceTest {
+
+					@Autowired
+					private Environment environment;
+
+					@Test
+					void testMain() {
+						assertEquals("main-value", environment.getProperty("my.property"));
+					}
+
+					@Test
+					void testProfileA() {
+						assertEquals("a-value", environment.getProperty("my.property"));
+					}
+
+					@Test
+					void testProfileB() {
+						assertEquals("b-value", environment.getProperty("my.property"));
+					}
+				}
+			📌 優勢：
+				可以動態 讓 Spring Boot 重新載入 Profile，確保 Profile 變更對 Bean 生效。
+				Profile 切換不會影響整個 JVM，避免 System.setProperty 的問題。
+			📌 缺點：
+				仍然會觸發 ApplicationContext 重新載入，測試速度較慢。
+				較為進階，不如 System.setProperty 簡單。
+	
+	方案 4：使用 @DirtiesContext 強制重新載入 Context
+		📌 適用場景：
+			需要測試方法 變更 Profile，並且影響 @Bean 設定。
+			可以接受 測試執行速度較慢。
+		範例
+			@SpringBootTest
+			public class MyServiceTest {
+
+				@Autowired
+				private Environment environment;
+
+				@Test
+				@DirtiesContext
+				@ActiveProfiles("main")
+				void testMain() {
+					assertEquals("main-value", environment.getProperty("my.property"));
+				}
+
+				@Test
+				@DirtiesContext
+				@ActiveProfiles({"main", "a"})
+				void testProfileA() {
+					assertEquals("a-value", environment.getProperty("my.property"));
+				}
+
+				@Test
+				@DirtiesContext
+				@ActiveProfiles({"main", "b"})
+				void testProfileB() {
+					assertEquals("b-value", environment.getProperty("my.property"));
+				}
+			}
+		📌 優勢：
+			Spring 會 每次測試後銷毀 ApplicationContext，確保 Profile 切換時不會發生錯誤。
+		📌 缺點：
+			測試速度變慢，因為每個測試方法 都會重新啟動 ApplicationContext。
+	
+	 方案 5：分開不同的測試類別
+		適用場景：
+			測試 Profile 影響 @Bean 註冊，無法共用 ApplicationContext。
+			需要 每個 Profile 都有獨立的測試。
+		範例
+			@SpringBootTest
+			@ActiveProfiles("main")
+			public class MyServiceMainTest {
+
+				@Test
+				void testMain() {
+					assertEquals("main-value", System.getProperty("my.property"));
+				}
+			}
+			@SpringBootTest
+			@ActiveProfiles({"main", "a"})
+			public class MyServiceATest {
+
+				@Test
+				void testProfileA() {
+					assertEquals("a-value", System.getProperty("my.property"));
+				}
+			}
+		📌 優勢：
+			Profile 獨立，測試更乾淨，不會發生 Profile 沖突。
+			Spring Boot 會根據 @ActiveProfiles 啟動不同的 ApplicationContext。
+		📌 缺點：
+			需要建立多個測試類別，測試類別數量變多。
+
+✅ 最佳選擇
+	如果 Profile 影響 @Bean 註冊，使用 @DirtiesContext 或 拆開不同類別 (方案 4 & 方案 5)。
+	如果 Profile 只影響 @Value，使用 System.setProperty (方案 2)，最快！
+	如果想兼顧速度與 Profile 變更，使用 ContextCustomizerFactory (方案 3)。

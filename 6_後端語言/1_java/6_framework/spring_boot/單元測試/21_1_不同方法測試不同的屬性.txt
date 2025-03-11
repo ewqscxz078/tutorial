@@ -1,0 +1,79 @@
+ref ChatGPT
+
+不同方法測試不同的屬性
+	方案 1：使用 TestPropertySource 搭配 @Nested
+	方案 2：使用 System.setProperty 搭配 @BeforeEach
+	方案 3：使用 @ContextConfiguration 針對特定測試重新載入 Spring Context
+
+	使用 TestPropertySource 搭配 @Nested
+		@SpringBootTest
+		public class MyServiceTest {
+
+			@Nested
+			@TestPropertySource(properties = "my.property=value1")
+			class Case1 {
+				@Test
+				void test1() {
+					assertEquals("value1", System.getProperty("my.property"));
+				}
+			}
+
+			@Nested
+			@TestPropertySource(properties = "my.property=value2")
+			class Case2 {
+				@Test
+				void test2() {
+					assertEquals("value2", System.getProperty("my.property"));
+				}
+			}
+		}
+		📌 優點：不同測試區塊使用不同的 TestPropertySource。
+		📌 缺點：測試方法不能在同一個類別內直接混用不同屬性。
+	
+	使用 System.setProperty 搭配 @BeforeEach
+		@SpringBootTest
+		public class MyServiceTest {
+
+			@Autowired
+			private Environment environment;
+
+			@BeforeEach
+			void setup(TestInfo testInfo) {
+				if (testInfo.getTestMethod().get().getName().equals("test1")) {
+					System.setProperty("my.property", "value1");
+				} else {
+					System.setProperty("my.property", "value2");
+				}
+			}
+
+			@Test
+			void test1() {
+				assertEquals("value1", environment.getProperty("my.property"));
+			}
+
+			@Test
+			void test2() {
+				assertEquals("value2", environment.getProperty("my.property"));
+			}
+		}
+		📌 優點：
+			可以針對不同測試方法設定不同的 System.setProperty。
+		📌 缺點：
+			System.setProperty 影響 全域，可能會影響到其他測試。
+			Spring 的 Environment 讀取系統屬性可能不會即時生效。
+	
+	使用 @ContextConfiguration 針對特定測試重新載入 Spring Context
+		如果你願意讓 Spring 重新載入 ApplicationContext，可以使用：
+			@ContextConfiguration(initializers = CustomInitializer.class)
+		然後在 CustomInitializer 設定不同的屬性：
+			public class CustomInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+				@Override
+				public void initialize(ConfigurableApplicationContext context) {
+					TestPropertyValues.of("my.property=value1").applyTo(context.getEnvironment());
+				}
+			}
+		📌 優點：
+			確保屬性變更能夠影響 Spring 環境。
+		📌 缺點：
+			Context 需要重新載入，可能導致測試執行變慢。

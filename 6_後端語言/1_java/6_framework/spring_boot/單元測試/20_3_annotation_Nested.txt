@@ -1,0 +1,108 @@
+ref ChatGPT
+
+@Nested 
+	允許在 測試類別內部 定義巢狀測試類別（Nested Test Class）
+		1.組織不同測試場景（Scenarios）：將不同條件下的測試組織在一個邏輯單位內。
+		2.增強可讀性：透過嵌套結構，讓測試邏輯更容易理解。
+		3.測試內部類行為：當要測試內部類時，@Nested 提供良好的測試範圍控制。
+		4.模擬不同狀態（Stateful Testing）：可以在巢狀類別內使用不同的初始化邏輯，以模擬不同狀態下的行為。
+
+	用法
+		允許我們在主測試類中定義 內部測試類，這些內部測試類可以有自己的 @BeforeEach 
+		和 @AfterEach 方法，並且可以與外部類共享測試數據。
+	範例
+		import org.junit.jupiter.api.*;
+
+		import static org.junit.jupiter.api.Assertions.*;
+
+		@DisplayName("外部測試類")
+		class NestedTestExample {
+
+			@BeforeEach
+			void setUp() {
+				System.out.println("外部 BeforeEach");
+			}
+
+			@Test
+			@DisplayName("外部測試方法")
+			void outerTest() {
+				System.out.println("執行外部測試方法");
+				assertEquals(2, 1 + 1);
+			}
+
+			@Nested
+			@DisplayName("內部測試類")
+			class InnerTest {
+
+				@BeforeEach
+				void setUp() {
+					System.out.println("內部 BeforeEach");
+				}
+
+				@Test
+				@DisplayName("內部測試方法")
+				void innerTest() {
+					System.out.println("執行內部測試方法");
+					assertEquals(4, 2 * 2);
+				}
+			}
+		}
+		輸出結果
+			外部 BeforeEach
+			執行外部測試方法
+			內部 BeforeEach
+			執行內部測試方法
+		外部類的 @BeforeEach 只會影響外部類的測試方法。
+		內部類的 @BeforeEach 只影響內部類的測試方法。
+		內部類可以訪問外部類的變數，但無法影響外部類的生命週期。
+
+
+	注意事項
+		1. @Nested 類別必須是非靜態（Non-static）
+			@Nested
+			class ValidNestedTest {  // ✅ 正確，非 static 類別
+			}
+		2. @BeforeEach 不會影響外部類
+			每個 @Nested 類別都有自己的 @BeforeEach，不會影響外部類的 @BeforeEach。
+		3. @Nested 可與 @TestInstance(Lifecycle.PER_CLASS) 結合
+			如果測試需要共用相同的 @BeforeEach 初始化物件，可以使用：
+			@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+			@Nested
+			class SharedStateTest {
+				// 所有測試共用相同實例
+			}
+			這樣 @BeforeEach 只會執行一次，而不會在每次測試執行時重新建立實例。
+	
+	總結
+		提供了一種 有層次的方式 來組織測試，讓測試可讀性更高，尤其適合：
+
+		1.模擬不同狀態變化的測試（如帳戶狀態、訂單狀態等）。
+		2.不同情境的邏輯組織（如登入成功 vs 失敗）。
+		3.內部類測試。
+		
+		注意
+			@Nested 類別 不能是 static。
+			@BeforeEach 影響範圍僅限於所屬類別內。
+			如果需要共用狀態，考慮使用 @TestInstance(Lifecycle.PER_CLASS)。
+
+常見問題
+	Q1: @Nested 在 inner class 時當其方法要測試時要注入 spring bean 
+		要放在外層class 還是 inner class?
+	A1: 如果 內部類別的方法需要注入 Spring Bean，建議 在內部類別中使用 @Autowired 注入，
+		而外部類別只負責測試環境的建立。
+	
+		最佳做法
+			外部類別:
+				1.用 @SpringBootTest 或 @ExtendWith(SpringExtension.class) 來啟動 Spring 測試環境。
+				2.可使用 @Autowired 注入共用的 Spring Bean，但不強制。
+			內部類別:
+				1.使用 @Nested 來組織測試，避免重複測試 Setup 代碼。
+				2.直接 @Autowired 內部類別需要的 Spring Bean。
+		
+		為何 @Autowired 應該放在 @Nested 內部？
+			1.測試獨立性
+				如果 @Autowired Bean 只放在外部類別，內部類別仍能存取它，但這可能導致測試之間的相依性，讓測試變得不夠獨立。
+			2.更好的組織測試
+				@Nested 內部類別可以有自己的 @Autowired 依賴，確保不同的測試場景擁有正確的 Bean。
+			3.可讀性
+				如果 @Nested 類別中的測試只依賴某些 Bean，將它們 只在該類別中 @Autowired 會讓測試更加直觀。
