@@ -1,0 +1,38 @@
+ref ChatGPT
+
+使用 Enum 表達檔案大小單位
+	建立一個 FileSizeUnit 列舉，然後提供轉換方法：
+		public enum FileSizeUnit {
+			BYTE(1),
+			KB(1024),
+			MB(1024 * 1024),
+			GB(1024L * 1024 * 1024),
+			TB(1024L * 1024 * 1024 * 1024);
+
+			private final long bytes;
+
+			FileSizeUnit(long bytes) {
+				this.bytes = bytes;
+			}
+
+			public long toBytes(long size) {
+				return size * bytes;
+			}
+			
+			public static long parse(String input) {
+				input = input.trim().toUpperCase();
+				for (FileSizeUnit unit : FileSizeUnit.values()) {
+					if (input.endsWith(unit.name())) {
+						long value = Long.parseLong(input.substring(0, input.length() - unit.name().length()).trim());
+						return unit.toBytes(value);
+					}
+				}
+				throw new IllegalArgumentException("Unknown size format: " + input);
+			}
+		}
+	用法
+		long sizeInBytes = FileSizeUnit.MB.toBytes(5); // 5MB 轉成 byte
+		System.out.println(sizeInBytes); // 5242880 (5 * 1024 * 1024)
+
+		long parsedSize = FileSizeUnit.parse("2 GB");
+		System.out.println(parsedSize); // 2147483648 (2 * 1024 * 1024 * 1024)

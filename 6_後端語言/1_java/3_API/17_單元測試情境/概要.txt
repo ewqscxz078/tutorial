@@ -14,3 +14,5 @@
 11.瀏覽器前端驗證
 12.log 驗證（比如log forging 驗證）
 13.file 加解密後sha256驗證
+14.ftp server 上下傳驗證
+15.sftp server 上下傳驗證

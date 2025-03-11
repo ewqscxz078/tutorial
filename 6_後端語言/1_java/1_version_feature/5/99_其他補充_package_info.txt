@@ -1,0 +1,109 @@
+ref ChatGPT
+
+目標是解決 package 層級的 Javadoc 描述與 Annotation 標註問題。
+	在 Java 5 之前，Java 沒有提供原生的方式來為整個 package 定義 metadata，
+	因此 package-info.java 被引入來解決這個需求
+
+1. 撰寫 Package 層級的 Javadoc
+2. 定義 Package-Level 設定 (如 Annotation、Java Module 設定)
+3. 定義 Java 9+ Module System 的 package 訊息
+	與 module-info.java 互補使用
+4. 避免 package 內沒有 Class 而被忽略
+5. 取代 package.html
+
+1. 撰寫 Package 層級的 Javadoc
+	package-info.java 的來源與機制
+		它是 Java 語言規範 (JLS, Java Language Specification) 的一部分，
+			並且與 Javadoc 機制 和 Java 內建的 Annotation 處理 (從 Java 5 開始) 相結合，
+			提供以下主要功能：
+				1.Javadoc 機制
+					在 Java 5 之前，Javadoc 只支援 class、interface、enum 等類型，
+						無法針對 package 層級提供說明。
+					package-info.java 引入後，允許直接在 package 層級撰寫 Javadoc，
+						並與 javadoc 工具整合來產生 API 文件。
+				2.Annotation 機制 (Java 5+)
+					Java 5 引入 Annotation (註解)，但 Annotation 只能標註在類別、方法或變數上，
+						無法針對整個 package 設定 Annotation。
+					package-info.java 讓我們可以在 package 層級定義 Annotation，
+						例如 @NonNullApi、@Deprecated、@Exported 等。
+				3.Java 編譯器 (javac) 的支援
+					javac 會把 package-info.java 編譯成 package-info.class，
+						這樣在執行時期 (Runtime) 依然可以透過 Reflection 取得 package 相關的 
+							Annotation。
+
+	package-info.java 編譯與運行機制
+		1.package-info.java 本質上是一個 Java 類別檔案
+			它不像一般的 .java 檔案會定義 class 或 interface，而是只定義 package metadata。
+			當 javac 編譯時，會生成一個 package-info.class 檔案，這樣 JVM 仍可透過 反射機制 (Reflection API) 讀取 package 層級的 Annotation。
+		2.編譯後的 package-info.class 檔案
+			當你在 package 內放置 package-info.java，Java 編譯器會產生對應的 .class 檔案，例如：
+				com/example/myapp/
+				├── package-info.class  (由 package-info.java 編譯產生)
+				├── MyClass.class
+				├── AnotherClass.class
+			如果你使用 javap 指令來查看 package-info.class，你會發現它不包含方法或變數，只有 package 層級的 Annotation 資訊。
+		3.如何透過 Reflection 讀取 package Annotation
+			由於 package-info.class 會保留 package 層級的 Annotation，程式可以透過 Package.getAnnotation() 來取得這些資訊：
+				Package pkg = Package.getPackage("com.example.myapp");
+				NonNullApi annotation = pkg.getAnnotation(NonNullApi.class);
+				if (annotation != null) {
+					System.out.println("Package has @NonNullApi annotation");
+				}
+			這讓框架 (如 Spring、JPA) 可以在執行時期動態解析 package 設定，並根據這些 Annotation 進行處理。
+
+
+2. 定義 Package-Level 設定 (如 Annotation、Java Module 設定)
+	你可以在 package-info.java 中為整個 package 定義 Annotations (註解)，這對於框架整合、JSON 序列化等場景很有幫助。例如：
+		@NonNullApi
+		package com.example.myapp;
+
+		import org.springframework.lang.NonNullApi;
+		這樣，com.example.myapp 這個 package 內的所有 class 預設都會套用 @NonNullApi，避免 null 值問題，減少重複標註。
+	
+3. 定義 Java 9+ Module System 的 package 訊息
+	如果你的專案使用 Java Module System (JPMS)，你可以在 package-info.java 中提供額外的資訊，例如：
+		/**
+		 * 這個 package 提供與數據處理相關的工具類。
+		 * 主要用於解析與格式化 JSON 和 XML。
+		 */
+		@Exported
+		package com.example.utils;
+
+		import org.someframework.Exported;
+		這樣可以讓特定 package 被 Module System 識別，或配合一些框架提供 metadata。
+
+4. 避免 package 內沒有 Class 而被忽略
+	當一個 package 內沒有任何 Java 類別時，編譯時可能會忽略這個 package。
+	但若該 package 只是作為一種命名空間，或未來會加入類別，package-info.java 可以確保這個 package 在專案中可見。
+
+5. 取代 package.html
+	package-info.java 取代 package.html
+		在 Java 5 之前，Javadoc 會使用 package.html 來存放 package 層級的文件，例如：
+			package.html
+				<html>
+				<head>
+				<title>My Package</title>
+				</head>
+				<body>
+				<p>這個 package 負責處理使用者管理功能。</p>
+				</body>
+				</html>
+		這種方式有幾個缺點：
+			這是一個 HTML 檔案，無法透過 Java 語言本身解析。
+			不支援 Annotation，無法標註 package 層級的 metadata。
+			容易遺失，因為它與 Java 原始碼分開存放。
+		Java 5 引入 package-info.java 後，這個方式被淘汰，
+			現在所有 package 層級的資訊都應該放在 package-info.java 內。
+
+結論
+	1.package-info.java 由 Java 5 (JDK 1.5) 引入，用於定義 package-level Javadoc 和 Annotation。
+	2.Javadoc 會解析 package-info.java 來產生 API 文件，這取代了舊的 package.html。
+	3.Java 編譯器 (javac) 會將它轉換成 package-info.class，這允許 Reflection API 在執行時取得 package 設定。
+	4.許多框架 (如 Spring, JPA, Hibernate) 都會使用 package-info.java 來讀取 package 層級的 metadata。
+	
+	這使 package-info.java 成為一個重要的 Java 語言機制，特別是在大型專案或框架開發中非常有用。
+
+範例:
+	spring-core-xxxx.jar
+		org.springframework.util.unit
+			package-info.java

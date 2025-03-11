@@ -1,0 +1,12 @@
+ref ChatGPT
+
+使用 DataSize (Spring Boot 提供)
+	如果你是用 Spring Boot，可以直接使用 DataSize 類別來處理這類需求：
+		import org.springframework.util.unit.DataSize;
+
+		DataSize size = DataSize.ofMegabytes(5);
+		System.out.println(size.toBytes()); // 5242880
+	此外，Spring Boot 也支援直接從字串轉換：
+		DataSize sizeFromString = DataSize.parse("10GB");
+		System.out.println(sizeFromString.toBytes()); // 10737418240
+	這種方式可以直接解析 "10GB"、"500MB" 等字串，非常直覺。

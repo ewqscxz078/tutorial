@@ -1,0 +1,25 @@
+ref ChatGPT
+
+使用 BigInteger (避免 long 上限)
+	如果需要支援大於 Long.MAX_VALUE (大於 8 Exabyte)，可以使用 BigInteger：
+		import java.math.BigInteger;
+
+		public class FileSizeConverter {
+			private static final BigInteger KB = BigInteger.valueOf(1024);
+			private static final BigInteger MB = KB.multiply(KB);
+			private static final BigInteger GB = MB.multiply(KB);
+
+			public static BigInteger toBytes(BigInteger size, String unit) {
+				return switch (unit.toUpperCase()) {
+					case "KB" -> size.multiply(KB);
+					case "MB" -> size.multiply(MB);
+					case "GB" -> size.multiply(GB);
+					default -> size;
+				};
+			}
+		}
+
+		// 用法
+		BigInteger sizeInBytes = FileSizeConverter.toBytes(BigInteger.valueOf(5), "GB");
+		System.out.println(sizeInBytes); // 5368709120
+	適合需要處理超大檔案的應用。

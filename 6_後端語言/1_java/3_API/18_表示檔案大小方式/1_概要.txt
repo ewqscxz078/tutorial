@@ -1,0 +1,15 @@
+ref ChatGPT
+
+若要更方便地表示和處理檔案大小，可以使用 列舉 (enum) 或工具類別 來處理單位轉換，
+	使程式碼更具可讀性，避免手動乘以 1024。
+
+1. 使用 Enum 表達檔案大小單位
+2. 使用 DataSize (Spring Boot 提供)
+3. 使用 BigInteger (避免 long 上限)
+
+總結
+	方式						優點								適用場景
+	enum (建議)					簡單直覺、可擴充					通用應用
+	Spring Boot DataSize		內建解析 10GB、512MB				Spring Boot 專案
+	BigInteger					處理超大數字 (超過 Long.MAX_VALUE)	大數據、分布式儲存
+	如果你希望 可讀性佳且容易擴充，enum 方式最推薦。

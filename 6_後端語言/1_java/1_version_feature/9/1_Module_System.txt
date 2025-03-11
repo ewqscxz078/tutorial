@@ -1,14 +1,36 @@
+ref ChatGPT
+
+JPMS (Java Platform Module System)
 
 模組系統（Project Jigsaw），讓你能夠將大型應用程式拆分成更小、更可管理的模組。這個特性有助於提高代碼的可維護性和封裝性。
+	負責定義整個模組的可見性
+		module-info.java
+			// 定義一個模組
+			module com.example.myapp {
+				requires java.sql;
+				exports com.example.myapp.services;
+			}
 
-	// 定義一個模組，在module-info.java中
-	module com.example.myapp {
-		requires java.sql;
-		exports com.example.myapp.services;
-	}
+			// 使用模組
+			module com.example.myapp {
+				requires com.example.othermodule;
+			}
+	
+	避免 module-info.java 變得太冗長
+		在 Java 9 以前，很多框架會使用 package-info.java 來定義整個 package 的行為，
+			這樣 可以避免 module-info.java 太過複雜。例如：
+				如果你在 module-info.java 內手動標記每個 package 的 Metadata，可能會變得難以維護：
+					module com.example.mymodule {
+						exports com.example.myapp;
+						requires spring.core;
+						requires javax.persistence;
+						provides com.example.service.MyService with com.example.service.impl.MyServiceImpl;
+					}
+		改為：
+			1.讓 package-info.java 提供 package 層級的 metadata
+			2.module-info.java 只處理 模組層級的依賴與 export
+			這樣可以減少 module-info.java 的雜亂度，讓 metadata 保持在 package 的範圍內。
 
-	// 使用模組
-	module com.example.myapp {
-		requires com.example.othermodule;
-	}
-
+總結
+	package-info.java 與 module-info.java 互補使用。
+		在開發大型專案時，合理利用這兩者可以讓程式碼的可維護性更高！
