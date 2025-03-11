@@ -1,0 +1,269 @@
+執行概要目標: client A 打 api header with 到 client B
+	client A
+		1.設定 auth server 在哪(application.yml)
+		2.發起請求到 從 AUTH server 取得 jwt
+		3.發起請求到 client B api with jwt
+	client B
+		1.client B 設定 讓 Spring Security 知道 Auth Server（JWT 發行者） (application.yml)
+		2.並在 client B api 參數有 @AuthenticationPrincipal Jwt jwt，則 client B 收到會自行自動驗證 jwt
+
+client A
+	1.設定 auth server 在哪(application.yml)
+		client-b:
+		  api-url: http://localhost:8082/api
+		spring:
+		  security:
+			oauth2:
+			  client:
+				registration:
+				  keycloak:
+					provider: keycloak
+					client-id: client-a
+					client-secret: my-secret
+					authorization-grant-type: client_credentials
+				provider:
+				  keycloak:
+					token-uri: http://localhost:8080/realms/myrealm/protocol/openid-connect/token
+		這樣 Spring Security 知道 Auth Server（Keycloak）在哪裡，會自動幫你取得 JWT！
+	2.發起請求到 從 AUTH server 取得 jwt
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-client</artifactId>
+		</dependency>
+		Client A 直接使用 OAuth2AuthorizedClientService 取得 JWT
+			import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+			import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+			import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+			import org.springframework.security.oauth2.client.authentication.OAuth2AuthorizationContext;
+			import org.springframework.security.oauth2.core.OAuth2AccessToken;
+			import org.springframework.stereotype.Service;
+			import org.springframework.web.client.RestTemplate;
+			import org.springframework.http.*;
+
+			@Service
+			public class ClientAService {
+
+				private final OAuth2AuthorizedClientManager authorizedClientManager;
+
+				public ClientAService(OAuth2AuthorizedClientManager authorizedClientManager) {
+					this.authorizedClientManager = authorizedClientManager;
+				}
+
+				public String getAccessToken() {
+					OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(
+							OAuth2AuthorizationContext.withClientRegistrationId("keycloak").principal("client-a").build());
+
+					if (authorizedClient == null || authorizedClient.getAccessToken() == null) {
+						throw new IllegalStateException("Unable to obtain access token.");
+					}
+
+					return authorizedClient.getAccessToken().getTokenValue();
+				}
+
+				public String callClientBApi() {
+					String jwtToken = getAccessToken(); // 讓 Spring Security 自動管理 JWT
+
+					String clientBApiUrl = "http://localhost:8082/api/orders";  // Client B API
+					RestTemplate restTemplate = new RestTemplate();
+					HttpHeaders headers = new HttpHeaders();
+					headers.set("Authorization", "Bearer " + jwtToken);
+
+					HttpEntity<String> request = new HttpEntity<>(headers);
+					ResponseEntity<String> response = restTemplate.exchange(clientBApiUrl, HttpMethod.GET, request, String.class);
+
+					return response.getBody();
+				}
+			}
+
+
+	3.發起請求到 client B api with jwt
+		使用 Spring Cloud OpenFeign（推薦，避免手寫 HTTP 請求）
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-starter-openfeign</artifactId>
+			</dependency>
+		定義 Feign Client（動態請求 Client B API）
+			import org.springframework.cloud.openfeign.FeignClient;
+			import org.springframework.web.bind.annotation.GetMapping;
+
+			@FeignClient(name = "clientB", url = "${client-b.api-url}")
+			public interface ClientBFeignClient {
+
+				@GetMapping("/api/orders")
+				String getOrders();
+			}
+		簡化變成
+			import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+			import org.springframework.security.oauth2.client.authentication.OAuth2AuthorizationContext;
+			import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+			import org.springframework.security.oauth2.core.OAuth2AccessToken;
+			import org.springframework.stereotype.Service;
+
+			@Service
+			public class ClientAService {
+
+				private final OAuth2AuthorizedClientManager authorizedClientManager;
+				private final ClientBFeignClient clientBFeignClient;
+
+				public ClientAService(OAuth2AuthorizedClientManager authorizedClientManager, ClientBFeignClient clientBFeignClient) {
+					this.authorizedClientManager = authorizedClientManager;
+					this.clientBFeignClient = clientBFeignClient;
+				}
+
+				public String getAccessToken() {
+					OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(
+							OAuth2AuthorizationContext.withClientRegistrationId("keycloak").principal("client-a").build());
+
+					if (authorizedClient == null || authorizedClient.getAccessToken() == null) {
+						throw new IllegalStateException("Unable to obtain access token.");
+					}
+
+					return authorizedClient.getAccessToken().getTokenValue();
+				}
+
+				public String callClientBApi() {
+					String jwtToken = getAccessToken();
+					return clientBFeignClient.getOrders(); // 透過 Feign 呼叫 Client B API
+				}
+			}
+			Feign 會自動幫你處理 HTTP 請求，避免手寫 RestTemplate，而且 URL 是動態的！
+
+		讓 Feign Client 帶上 JWT
+			方法 1：使用 Feign Request Interceptor（推薦）
+				透過 RequestInterceptor 自動為所有 Feign 請求加上 JWT，這樣 Feign Client 就能夠帶 JWT 請求 Client B API！
+					import feign.RequestInterceptor;
+					import feign.RequestTemplate;
+					import org.springframework.context.annotation.Bean;
+					import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+					import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+					import org.springframework.security.oauth2.client.authentication.OAuth2AuthorizationContext;
+					import org.springframework.security.oauth2.core.OAuth2AccessToken;
+					import org.springframework.stereotype.Component;
+
+					@Component
+					public class FeignClientInterceptor implements RequestInterceptor {
+
+						private final OAuth2AuthorizedClientManager authorizedClientManager;
+
+						public FeignClientInterceptor(OAuth2AuthorizedClientManager authorizedClientManager) {
+							this.authorizedClientManager = authorizedClientManager;
+						}
+
+						@Override
+						public void apply(RequestTemplate requestTemplate) {
+							String jwtToken = getAccessToken(); // 取得 JWT Token
+							requestTemplate.header("Authorization", "Bearer " + jwtToken); // 設定 Header
+						}
+
+						private String getAccessToken() {
+							OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(
+									OAuth2AuthorizationContext.withClientRegistrationId("keycloak").principal("client-a").build());
+
+							if (authorizedClient == null || authorizedClient.getAccessToken() == null) {
+								throw new IllegalStateException("Unable to obtain access token.");
+							}
+
+							return authorizedClient.getAccessToken().getTokenValue();
+						}
+					}
+			方法 2：手動傳遞 JWT
+				import org.springframework.cloud.openfeign.FeignClient;
+				import org.springframework.web.bind.annotation.GetMapping;
+				import org.springframework.web.bind.annotation.RequestHeader;
+
+				@FeignClient(name = "clientB", url = "${client-b.api-url}")
+				public interface ClientBFeignClient {
+					@GetMapping("/api/orders")
+					String getOrders(@RequestHeader("Authorization") String authorization);
+				}
+
+				public class ClientAService {
+					....
+					public String callClientBApi() {
+						String jwtToken = "Bearer " + getAccessToken();  // 取得 JWT Token
+						return clientBFeignClient.getOrders(jwtToken); // 手動傳遞 Token
+					}
+				}
+
+		如何在編譯期（Compile Time）發現 API 變更？
+			如果你的需求是 在編譯期（Compile Time）就能發現 Client B API 的 URL 變更
+				方法 1：定義 API 接口，讓 Client A & Client B 共享
+					使用 interface 來統一 API 定義，讓 Client A 和 Client B 都引用相同的 API 描述！
+						package com.example.common.api;
+
+						import org.springframework.web.bind.annotation.GetMapping;
+						import org.springframework.web.bind.annotation.RequestMapping;
+						import org.springframework.web.bind.annotation.RestController;
+
+						@RequestMapping("/api/orders")
+						public interface OrderApi {
+
+							@GetMapping
+							String getOrders();
+						}
+						這樣 API 的定義是共用的，Client A 和 Client B 都要引用這個 common-api！
+					Client B 中實作這個 API
+						@RestController
+						public class ClientBController implements OrderApi {
+
+							@Override
+							public String getOrders() {
+								return "Orders from Client B";
+							}
+						}
+					 Client A 的 Feign Client 使用 OrderApi
+						import org.springframework.cloud.openfeign.FeignClient;
+						import com.example.common.api.OrderApi;
+
+						@FeignClient(name = "clientB", url = "${client-b.api-url}")
+						public interface ClientBFeignClient extends OrderApi {
+						}
+				方法 2：使用 Eureka / Consul 服務註冊發現
+					如果 Client B API 變更，讓 Client A 自動發現新的 API 位址，而不需要手動設定 URL！
+						Client B 在 Eureka 註冊
+							spring:
+							  application:
+								name: client-b
+							  cloud:
+								discovery:
+								  enabled: true
+								eureka:
+								  client:
+									service-url:
+									  defaultZone: http://localhost:8761/eureka/
+						Client A 使用 Eureka 註冊的名稱來調用 Feign
+							@FeignClient(name = "client-b")
+							public interface ClientBFeignClient extends OrderApi {
+							}
+							這樣 Spring Cloud 會自動找到 client-b 的最新 URL，無需手動配置！
+				方法 3：使用 OpenAPI + Code Generation
+					... 略
+		最佳方式是：
+			使用 方法 1（共用 API 介面） 來確保 API 簽名一致（編譯期檢查）
+			搭配 方法 2（Eureka） 來避免 Client A 需要手動修改 URL（執行期發現）
+
+
+client B
+	1.client B 設定 讓 Spring Security 知道 Auth Server（JWT 發行者） (application.yml)
+		spring:
+		  security:
+			oauth2:
+			  resourceserver:
+				jwt:
+				  issuer-uri: http://localhost:8080/realms/myrealm
+		這樣 Spring Security 會自動驗證 JWT，確保 Token 來自合法的 Auth Server！
+	2.並在 client B api 參數有 @AuthenticationPrincipal Jwt jwt，則 client B 收到會自行自動驗證 jwt
+		@RestController
+		@RequestMapping("/api")
+		public class ClientBController {
+
+			@GetMapping("/orders")
+			public String getOrders(@AuthenticationPrincipal Jwt jwt) {
+				String username = jwt.getClaim("sub");  // 取得 JWT 內的使用者名稱
+				return "Orders for: " + username;
+			}
+		}
+
+		📌 當 Client A 發請求到 /api/orders，Spring Security 會自動驗證 JWT
+		📌 如果 JWT 無效，Spring Security 直接回傳 401 Unauthorized，不會執行 Controller
+		📌 如果 JWT 有效，@AuthenticationPrincipal Jwt jwt 會自動解析 JWT，讓 API 取得用戶資訊！
