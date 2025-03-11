@@ -15,7 +15,7 @@ JPMS (Java Platform Module System)
 			module com.example.myapp {
 				requires com.example.othermodule;
 			}
-	
+
 	避免 module-info.java 變得太冗長
 		在 Java 9 以前，很多框架會使用 package-info.java 來定義整個 package 的行為，
 			這樣 可以避免 module-info.java 太過複雜。例如：

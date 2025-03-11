@@ -29,7 +29,7 @@ ref ChatGPT
 		}
 		📌 優點：不同測試區塊使用不同的 TestPropertySource。
 		📌 缺點：測試方法不能在同一個類別內直接混用不同屬性。
-	
+
 	使用 System.setProperty 搭配 @BeforeEach
 		@SpringBootTest
 		public class MyServiceTest {
@@ -61,7 +61,7 @@ ref ChatGPT
 		📌 缺點：
 			System.setProperty 影響 全域，可能會影響到其他測試。
 			Spring 的 Environment 讀取系統屬性可能不會即時生效。
-	
+
 	使用 @ContextConfiguration 針對特定測試重新載入 Spring Context
 		如果你願意讓 Spring 重新載入 ApplicationContext，可以使用：
 			@ContextConfiguration(initializers = CustomInitializer.class)

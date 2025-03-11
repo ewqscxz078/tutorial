@@ -49,7 +49,7 @@ ref ChatGPT
 			@ActiveProfiles 可以正常生效，因為它作用於 @Nested 類別。
 		📌 缺點
 			每個 @Nested 測試類別都會重新啟動 ApplicationContext，影響測試速度。
-		
+
 	方案 2：使用 System.setProperty 動態變更 spring.profiles.active
 		適用場景：
 			需要 不同測試方法使用不同的 Profile。
@@ -95,7 +95,7 @@ ref ChatGPT
 		📌 缺點：
 			System.setProperty 影響的是 JVM，而不是 Spring Environment，可能不會即時生效。
 			如果 Profile 影響 @Bean 註冊，這種方式無效，因為 ApplicationContext 不會重新載入 Bean。
-	
+
 	方案 3：使用 ContextCustomizerFactory (進階)
 		適用場景：
 			不同測試方法動態變更 Profile，並讓 Spring ApplicationContext 重新載入。
@@ -154,7 +154,7 @@ ref ChatGPT
 			📌 缺點：
 				仍然會觸發 ApplicationContext 重新載入，測試速度較慢。
 				較為進階，不如 System.setProperty 簡單。
-	
+
 	方案 4：使用 @DirtiesContext 強制重新載入 Context
 		📌 適用場景：
 			需要測試方法 變更 Profile，並且影響 @Bean 設定。
@@ -191,7 +191,7 @@ ref ChatGPT
 			Spring 會 每次測試後銷毀 ApplicationContext，確保 Profile 切換時不會發生錯誤。
 		📌 缺點：
 			測試速度變慢，因為每個測試方法 都會重新啟動 ApplicationContext。
-	
+
 	 方案 5：分開不同的測試類別
 		適用場景：
 			測試 Profile 影響 @Bean 註冊，無法共用 ApplicationContext。

@@ -18,7 +18,7 @@ ref ChatGPT
 			public long toBytes(long size) {
 				return size * bytes;
 			}
-			
+
 			public static long parse(String input) {
 				input = input.trim().toUpperCase();
 				for (FileSizeUnit unit : FileSizeUnit.values()) {

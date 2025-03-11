@@ -28,7 +28,7 @@ ref ChatGPT
 						例如 @NonNullApi、@Deprecated、@Exported 等。
 				3.Java 編譯器 (javac) 的支援
 					javac 會把 package-info.java 編譯成 package-info.class，
-						這樣在執行時期 (Runtime) 依然可以透過 Reflection 取得 package 相關的 
+						這樣在執行時期 (Runtime) 依然可以透過 Reflection 取得 package 相關的
 							Annotation。
 
 	package-info.java 編譯與運行機制
@@ -59,7 +59,7 @@ ref ChatGPT
 
 		import org.springframework.lang.NonNullApi;
 		這樣，com.example.myapp 這個 package 內的所有 class 預設都會套用 @NonNullApi，避免 null 值問題，減少重複標註。
-	
+
 3. 定義 Java 9+ Module System 的 package 訊息
 	如果你的專案使用 Java Module System (JPMS)，你可以在 package-info.java 中提供額外的資訊，例如：
 		/**
@@ -100,7 +100,7 @@ ref ChatGPT
 	2.Javadoc 會解析 package-info.java 來產生 API 文件，這取代了舊的 package.html。
 	3.Java 編譯器 (javac) 會將它轉換成 package-info.class，這允許 Reflection API 在執行時取得 package 設定。
 	4.許多框架 (如 Spring, JPA, Hibernate) 都會使用 package-info.java 來讀取 package 層級的 metadata。
-	
+
 	這使 package-info.java 成為一個重要的 Java 語言機制，特別是在大型專案或框架開發中非常有用。
 
 範例:
