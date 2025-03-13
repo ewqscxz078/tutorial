@@ -1,0 +1,21 @@
+ref ChatGPT
+
+ShedLock 允許你使用 簡化格式 或 ISO-8601 格式
+	兩者在 ShedLock 內部都會轉換為 java.time.Duration，最終的行為是一樣的。
+
+	defaultLockAtMostFor = "10m" vs defaultLockAtMostFor = "PT30S"
+		"10m" → 這是 簡化的時間格式，代表「10 分鐘」
+
+		"PT30S" → 這是 ISO-8601 Duration 格式，代表「30 秒」，其中：
+			P = Period（時間段）
+			T = Time（時間單位開始）
+			30S = 30 秒
+
+兩種格式的差異
+	10m（"10 minutes"） 是 ShedLock 內建解析的簡化時間格式，可以直接寫 10m、5s、1h 等。
+	PT30S（"Period of Time 30 Seconds"） 是 ISO 8601 標準格式，可用於更細緻的時間控制，例如：
+	PT10M → 10 分鐘
+	PT5S → 5 秒
+	PT1H30M → 1 小時 30 分鐘
+	PT0.5S → 0.5 秒
+

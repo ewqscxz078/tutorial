@@ -1,0 +1,79 @@
+ref ChatGPT
+
+配置
+	@Configuration
+	@EnableSchedulerLock(defaultLockAtMostFor = "10m") // 預設最多鎖定10分鐘
+	public class SchedulerConfiguration {
+		@Bean
+		public LockProvider lockProvider(DataSource dataSource) {
+			// 若未特別指定 tableName，預設抓 shedlock ref JdbcTemplateLockProvider.DEFAUTL_TABLE_NAME = "shedlock"
+			return new JdbcTemplateLockProvider(dataSource);
+		}
+		// 指定 tableName 方式
+		// @Bean
+		// public LockProvider lockProvider(DataSource dataSource) {
+		// 	return new JdbcTemplateLockProvider(
+		// 		JdbcTemplateLockProvider.Configuration.builder()
+		// 		.withJdbcTemplate(new JdbcTemplate(dataSource)
+		// 		.	withTableName("assign_table_name").usingDbTime().build())
+		// 	);
+		// }
+	}
+
+	@SpringBootApplication
+	@EnableScheduling
+	public class SpringBootShedlockApplication {
+		public static void main(String[] args) {
+			SpringApplication.run(SpringBootShedlockApplication.class, args);
+		}
+	}
+
+建立任務
+	import net.javacrumbs.shedlock.core.LockConfiguration;
+	import net.javacrumbs.shedlock.core.LockProvider;
+	import net.javacrumbs.shedlock.core.SimpleLock;
+	import org.springframework.stereotype.Service;
+
+	import java.time.Duration;
+	import java.time.Instant;
+	import java.time.LocalDate;
+	import java.util.Optional;
+	import java.util.UUID;
+
+	@Service
+	public class MyScheduledJob {
+
+		private final LockProvider lockProvider;
+
+		public MyScheduledJob(LockProvider lockProvider) {
+			this.lockProvider = lockProvider;
+		}
+
+		public void myJob(UUID tenantId, LocalDate date) {
+			// 產生動態 lockName
+			String lockName = "my-job-" + tenantId + "-" + date;
+
+			// 設定 LockConfiguration
+			LockConfiguration lockConfig = new LockConfiguration(
+				Instant.now(),              // 目前時間
+				lockName,                   // 動態鎖名稱
+				Duration.ofMinutes(10),     // lockAtMostFor: 最大鎖定時間 (10 分鐘)
+				Duration.ofMinutes(1)       // lockAtLeastFor: 最短鎖定時間 (1 分鐘)
+			);
+
+			// 嘗試獲取鎖
+			Optional<SimpleLock> lock = lockProvider.lock(lockConfig);
+
+			if (lock.isPresent()) {
+				try {
+					System.out.println("Executing job with lock: " + lockName);
+					// 這裡放你的業務邏輯
+				} finally {
+					// 釋放鎖
+					lock.get().unlock();
+				}
+			} else {
+				System.out.println("Skipped job, lock already acquired: " + lockName);
+			}
+		}
+	}

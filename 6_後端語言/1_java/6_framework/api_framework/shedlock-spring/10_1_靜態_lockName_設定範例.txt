@@ -1,0 +1,42 @@
+ref baeldung
+	https://www.baeldung.com/shedlock-spring
+
+配置
+	@Configuration
+	@EnableSchedulerLock(defaultLockAtMostFor = "10m") // 預設最多鎖定10分鐘
+	public class SchedulerConfiguration {
+		@Bean
+		public LockProvider lockProvider(DataSource dataSource) {
+			// 若未特別指定 tableName，預設抓 shedlock ref JdbcTemplateLockProvider.DEFAUTL_TABLE_NAME = "shedlock"
+			return new JdbcTemplateLockProvider(dataSource);
+		}
+		// 指定 tableName 方式
+		// @Bean
+		// public LockProvider lockProvider(DataSource dataSource) {
+		// 	return new JdbcTemplateLockProvider(
+		// 		JdbcTemplateLockProvider.Configuration.builder()
+		// 		.withJdbcTemplate(new JdbcTemplate(dataSource)
+		// 		.	withTableName("assign_table_name").usingDbTime().build())
+		// 	);
+		// }
+	}
+
+	@SpringBootApplication
+	@EnableScheduling
+	public class SpringBootShedlockApplication {
+		public static void main(String[] args) {
+			SpringApplication.run(SpringBootShedlockApplication.class, args);
+		}
+	}
+
+建立任務
+	@Component
+	public class BaeldungTaskScheduler {
+
+		@Scheduled(cron = "0 0/15 * * * ?")
+		@SchedulerLock(name = "lockName",
+		  lockAtLeastFor = "1m", lockAtMostFor = "14m") // lockAtLeastFor 最短鎖多久
+		public void scheduledTask() {
+			// ...
+		}
+	}

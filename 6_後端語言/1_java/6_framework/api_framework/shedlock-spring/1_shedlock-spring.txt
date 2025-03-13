@@ -40,34 +40,3 @@ baeldung
 	  locked_by VARCHAR(255),
 	  PRIMARY KEY (name)
 	)
-
-配置
-	@Configuration
-	public class SchedulerConfiguration {
-		@Bean
-		public LockProvider lockProvider(DataSource dataSource) {
-			return new JdbcTemplateLockProvider(dataSource);
-		}
-	}
-
-	@SpringBootApplication
-	@EnableScheduling
-	@EnableSchedulerLock(defaultLockAtMostFor = "PT30S")
-	public class SpringBootShedlockApplication {
-
-		public static void main(String[] args) {
-			SpringApplication.run(SpringBootShedlockApplication.class, args);
-		}
-	}
-
-建立任務
-	@Component
-	class BaeldungTaskScheduler {
-
-		@Scheduled(cron = "0 0/15 * * * ?")
-		@SchedulerLock(name = "TaskScheduler_scheduledTask",
-		  lockAtLeastFor = "PT5M", lockAtMostFor = "PT14M")
-		public void scheduledTask() {
-			// ...
-		}
-	}

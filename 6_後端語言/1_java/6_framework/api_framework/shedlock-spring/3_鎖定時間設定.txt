@@ -1,0 +1,104 @@
+ref ChatGPT
+
+lockAtMostFor 表示至多鎖定時間
+lockAtLeastFor 表示至少鎖定時間
+
+
+假設
+	@Scheduled(cron = "0 0/15 * * * ?")
+	@SchedulerLock(name = "lockName",
+	  lockAtLeastFor = "1m", lockAtMostFor = "10m") // lockAtLeastFor 最短鎖多久
+	public void scheduledTask() {
+		// ...
+	}
+
+	若排程僅需跑 30秒，代表仍會鎖定到 1m
+
+	若排程需要跑 11m
+		1.鎖會在 10 分鐘時被強制釋放，即使工作還沒跑完。
+		2.如果你的任務執行 11 分鐘，ShedLock 會在 10 分鐘時自動解鎖，
+			這可能會導致下一個執行緒或其他節點啟動同樣的工作，造成重複執行的風險。
+
+
+ShedLock 的潛在問題
+	如果你的任務有可能執行超過 lockAtMostFor，你應該考慮：
+		1.增加 lockAtMostFor 的時間：
+			如果你的任務平均執行 11 分鐘，設定 lockAtMostFor = "15m" 可能會比較安全。
+		2.確保你的任務能夠安全重試：
+			如果 ShedLock 釋放鎖後，同樣的任務可能會被其他節點執行，
+			你需要確保你的業務邏輯可以安全地處理這種情況，
+			例如使用「冪等性 (Idempotency)」策略，確保不會重複執行相同的邏輯。
+		3.監控與調整排程執行時間：
+			如果發現 lockAtMostFor 過短，導致未完成的任務失去鎖，可以考慮動態調整。
+
+設定上下限 (lockAtLeastFor & lockAtMostFor) 的目的
+	ShedLock 允許你透過 lockAtLeastFor 和 lockAtMostFor 來控制 排程的鎖定時間範圍，
+	以確保任務不會過度頻繁執行，並防止長時間未釋放鎖的問題。
+
+	lockAtLeastFor（至少鎖定時間）
+		即使任務執行時間短，也會強制鎖定至少這麼久
+		用途
+			1.防止過快的重複執行：即使任務執行很快（例如只需 5 秒），如果 lockAtLeastFor = "1m"，則鎖仍然會保持 1 分鐘，確保這段時間內不會再次執行同一個任務。
+			適用於頻繁的排程：如果你的 @Scheduled 任務設定得很頻繁（例如 每 30 秒執行一次），但你希望同一個任務執行完後至少等待 1 分鐘才執行下一次，就可以用 lockAtLeastFor = "1m"
+	
+		行為範例
+			執行時間	lockAtLeastFor 設定		實際鎖定時間
+			5 秒		1 分鐘					1 分鐘（即使工作跑完）
+			30 秒		1 分鐘					1 分鐘
+			2 分鐘		1 分鐘					2 分鐘（因為 lockAtLeastFor 只影響最短鎖定時間，不影響執行時間）
+	
+	lockAtMostFor（最多鎖定時間）
+		即使任務執行超過這個時間，鎖也會自動釋放
+		用途
+			2.防止鎖卡住：如果任務因某些問題（如死循環、網路延遲、外部 API 超時）無法完成，ShedLock 會在 lockAtMostFor 時間到時強制釋放鎖，確保鎖不會永遠保持在 "已佔用" 狀態。
+			3.避免任務執行時間超過預期：如果你知道你的任務「通常應該」在 10 分鐘內完成，你可以設定 lockAtMostFor = "10m"，確保 10 分鐘後即使程式還在跑，鎖也會釋放，允許其他節點執行相同的任務。
+	
+		行為範例
+			執行時間	lockAtMostFor 設定		實際鎖定時間
+			5 分鐘		10 分鐘					5 分鐘（因為執行時間短於 lockAtMostFor，鎖在執行結束後釋放）
+			9 分鐘		10 分鐘					9 分鐘（同上）
+			11 分鐘		10 分鐘					10 分鐘（即使任務還沒跑完，ShedLock 會在 10 分鐘時自動釋放鎖）
+	
+	
+最佳實踐
+	如果你想防止任務過快重複執行 → 設定 lockAtLeastFor
+		適用於短時間執行，但不想太快重複的任務
+		例如 lockAtLeastFor = "1m" 確保任務不會頻繁執行
+	如果你擔心任務執行太久導致鎖不釋放 → 設定 lockAtMostFor
+		適用於可能發生執行超時的長時間任務
+		例如 lockAtMostFor = "10m" 確保任務即使失敗，10 分鐘後鎖會釋放
+	一般情況下，兩者應該一起設定：
+		確保不會過快重複執行
+		確保任務不會永久鎖定
+			例如：
+				@SchedulerLock(name = "dailyReportJob", lockAtLeastFor = "5m", lockAtMostFor = "30m")
+		這表示：任務至少會鎖定 5 分鐘，避免太快重複執行
+
+排程設定每5分鐘執行一次案例
+	若排程平均執行時間為 2分鐘左右
+	則設定
+		@SchedulerLock(name = "myJob", lockAtLeastFor = "2m", lockAtMostFor = "4m")
+
+確保業務邏輯是「冪等」的
+	即使 ShedLock 在某些情況下過早釋放，導致相同的任務在不同機器上被重複執行，業務邏輯仍然不會發生錯誤。
+		如何實作冪等性？
+
+		資料庫層面：
+			例如，使用 INSERT ... ON DUPLICATE KEY UPDATE 或 UPSERT
+		API 請求層面：
+			例如，確保 API 每個請求都有唯一 requestId，即使重複請求，也不會影響狀態
+		任務執行層面：
+			例如，當 ShedLock 排程產生一個報表時，確保如果該報表已經產生，則不會重複產生
+
+排程週期
+	lockAtLeastFor、lockAtMostFor 設定最佳原則
+		條件						最佳 lockAtLeastFor 設定	最佳 lockAtMostFor 設定
+		排程週期 > 任務執行時間		設定為執行時間的 80-100%	小於排程週期，確保不影響下一次執行
+		排程週期 ≈ 任務執行時間		設定為執行時間的 100%		略小於排程週期
+		排程週期 < 任務執行時間		設定為執行時間的 120%		接近排程週期，但不可超過
+
+一天一次性
+	條件				最佳 lockAtLeastFor 設定	最佳 lockAtMostFor 設定
+	執行時間 < 1 小時	略小於執行時間（如 90%）	1.5 倍執行時間
+	執行時間 ≈ 1 小時	接近 1 小時					設定為 2 小時
+	執行時間 > 2 小時	與執行時間相等				設定為 2.5-3 小時
