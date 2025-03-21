@@ -1,6 +1,7 @@
 單元測試情境
 
 1.邏輯驗證（一般api輸入輸出驗證）
+	ex : 大寫轉小寫
 2.spring boot web rest 驗證
 3.service 驗證
 4.config 驗證(gw 有效url，class 找的到）
