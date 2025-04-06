@@ -1,0 +1,42 @@
+ref ChatGPT
+
+提供 Spring Boot 配置屬性（Configuration Properties）的補充元數據，
+	主要是為了讓開發工具（如 Eclipse、IntelliJ IDEA）能夠正確辨識自訂屬性，並提供自動補全、錯誤提示等功能
+
+預設位置
+	src/main/resources/META-INF/additional-spring-configuration-metadata.json
+		手動提供 Spring Boot 配置屬性的元數據，讓開發工具能夠識別該屬性，即使它沒有被 @ConfigurationProperties 綁定
+
+
+JSON 格式範例
+	{
+	  "properties": [
+		{
+		  "name": "my.code",
+		  "type": "java.lang.String",
+		  "description": "This is a custom property for my application.",
+		  "defaultValue": "defaultValue"
+		}
+	  ]
+	}
+		name: 屬性名稱（例如 my.code）。
+		type: 屬性的 Java 型別（例如 String）。
+		description: 屬性的說明，開發工具可用來顯示 Tooltip。
+		defaultValue: 預設值（可選）。
+
+這樣做有什麼好處？
+	避免 IDE 的 Unknown property 警告。
+	啟用屬性自動補全，讓 Eclipse 或 IntelliJ IDEA 能夠提示這個 YML 屬性。
+	提供屬性說明，讓開發人員更容易理解這些設定的用途。
+	即使沒有 @ConfigurationProperties，也能定義額外的設定。
+
+什麼時候需要使用這個檔案？
+	當某些 YML 屬性沒有對應的 @ConfigurationProperties，但你仍希望 IDE 能夠識別這些屬性時。
+	當你開發 Spring Boot Starter，需要讓使用者能夠使用某些自訂屬性時。
+	當你不希望為每個 YML 屬性建立 Java 類別，但仍希望它能有補全與說明時
+
+結論
+	當 Eclipse 提示 Unknown property 'my.code' 並提供 "Create metadata for my.code" 選項時，
+	它是在幫助你建立一個 additional-spring-configuration-metadata.json 檔案，
+	目的是讓 IDE 能夠正確識別你的自訂 YML 屬性，提供補全與避免警告，而不影響應用程式的執行。
+	這個機制主要是用來增強開發體驗，並不影響 Spring Boot 的運行行為。

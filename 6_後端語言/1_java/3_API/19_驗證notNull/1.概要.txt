@@ -1,0 +1,8 @@
+jdk 內建 
+	Objects.requireNonNull()
+
+spring-core 
+	Assert.notNull()
+
+spring-starter-validation
+	@NotNull

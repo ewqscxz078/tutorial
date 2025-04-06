@@ -1,0 +1,80 @@
+ref ChatGPT
+
+
+選用適合情境
+	1. 內建 API
+		Java 版本			API/方法							優點						缺點
+		Java 1.6 及以前		javax.xml.bind.DatatypeConverter	內建於 JDK（直到 Java 8）	需要 jaxb-api，Java 9+ 被移除
+		Java 8+				java.util.Base64					內建於 JDK，易用，效能佳	需 Java 8 以上
+		Java 6 / 7			sun.misc.BASE64Encoder / 			內建於 JDK					不建議使用（內部 API，Java 9+ 移除）
+							sun.misc.BASE64Decoder	
+
+	2. 第三方函式庫
+		函式庫					類別/方法								優點						缺點
+		Apache Commons Codec	org.apache.commons.codec.binary.Base64	相容 Java 6+，效能佳		額外依賴
+		Guava					com.google.common.io.BaseEncoding		Guava 提供額外格式支持		額外依賴
+		Bouncy Castle			org.bouncycastle.util.encoders.Base64	適用於加密場景				過於重量級，一般應用不適用
+
+
+如何選擇
+	優先選擇 java.util.Base64（Java 8+）
+		如果你的專案已經使用 Java 8 以上，建議使用 java.util.Base64，因為：
+			1.內建於 JDK，無需額外依賴
+			2.支援標準、URL 安全、MIME 格式
+			3.效能優於舊 API
+		
+		範例
+			import java.util.Base64;
+
+			public class Base64Example {
+				public static void main(String[] args) {
+					String original = "Hello, Base64!";
+					
+					// 編碼
+					String encoded = Base64.getEncoder().encodeToString(original.getBytes());
+					System.out.println("Encoded: " + encoded);
+					
+					// 解碼
+					byte[] decodedBytes = Base64.getDecoder().decode(encoded);
+					String decoded = new String(decodedBytes);
+					System.out.println("Decoded: " + decoded);
+				}
+			}
+	若 Java 6/7，則使用 Apache Commons Codec
+		如果你的專案還在 Java 6 或 7，則建議使用 Apache Commons Codec，因為：
+			1.不依賴 JDK 內部 API（不像 sun.misc.BASE64Encoder）
+			2.維護良好，效能穩定
+		範例
+			import org.apache.commons.codec.binary.Base64;
+
+			public class Base64Example {
+				public static void main(String[] args) {
+					String original = "Hello, Base64!";
+					
+					// 編碼
+					String encoded = Base64.encodeBase64String(original.getBytes());
+					System.out.println("Encoded: " + encoded);
+					
+					// 解碼
+					byte[] decodedBytes = Base64.decodeBase64(encoded);
+					String decoded = new String(decodedBytes);
+					System.out.println("Decoded: " + decoded);
+				}
+			}
+
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.15</version>
+		</dependency>
+
+避免使用
+	sun.misc.BASE64Encoder（已被移除）
+	javax.xml.bind.DatatypeConverter（Java 9+ 被移除）
+	Guava/Bouncy Castle（除非你的專案已經依賴這些函式庫）
+
+結論
+	場景					建議用法
+	Java 8+					java.util.Base64（最佳選擇）
+	Java 6/7				Apache Commons Codec
+	需要相容多個 Java 版本	Apache Commons Codec

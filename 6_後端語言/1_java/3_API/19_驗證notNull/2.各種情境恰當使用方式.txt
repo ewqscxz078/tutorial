@@ -1,0 +1,94 @@
+
+方法								拋出異常					錯誤類型						適用場景
+Objects.requireNonNull(obj, msg)	立即執行					NullPointerException			適用於 Java 標準庫中，確保物件不為 null，適合 工具類、Service 層
+Assert.notNull(obj, msg)			立即執行					IllegalArgumentException		Spring 提供的 防呆機制，適合 Spring Service、Bean 初始化、參數檢查
+@NotNull（Java Validation）			延遲驗證（Spring 進行校驗）	ConstraintViolationException	適合 Spring Controller 層 進行 請求參數驗證、API 層的參數驗證，讓 Spring 統一處理錯誤訊息
+																，Spring 會返回 400 Bad Request	
+																
+1.Objects.requireNonNull()（標準 Java，適合工具類、業務邏輯）
+	import java.util.Objects;
+
+	public class Example {
+		private final String name;
+
+		public Example(String name) {
+			this.name = Objects.requireNonNull(name, "name 不能為 null");
+		}
+
+		public void doSomething(String param) {
+			Objects.requireNonNull(param, "param 不能為 null");
+			// 繼續執行...
+		}
+	}
+	✅ 優勢：簡單、通用，適用於 Java 內部邏輯
+	❌ 缺點：NullPointerException 語意較差，在 API 層面不適合直接使用
+
+2.Assert.notNull()（Spring 提供，適合 Bean、Service 層檢查）
+	import org.springframework.util.Assert;
+	public class Example {
+		private final String name;
+
+		public Example(String name) {
+			Assert.notNull(name, "name 不能為 null");
+			this.name = name;
+		}
+
+		public void doSomething(String param) {
+			Assert.notNull(param, "param 不能為 null");
+			// 繼續執行...
+		}
+	}
+	✅ 優勢：
+		IllegalArgumentException 這個異常 語意更清楚，表示傳入參數錯誤
+		適用於 Spring 內部業務邏輯防呆
+	❌ 缺點：
+		只能在 Spring 環境內 使用（若是純 Java 專案，還是要用 Objects.requireNonNull()）
+
+3.@NotNull（Java Validation，適合 Controller 層 API 驗證）
+	import jakarta.validation.constraints.NotNull;
+
+	public class UserRequest {
+		@NotNull(message = "name 不能為 null")
+		private String name;
+
+		// Getter / Setter
+	}
+
+	搭配 Spring Boot Controller 使用
+		import jakarta.validation.Valid;
+		import org.springframework.validation.annotation.Validated;
+		import org.springframework.web.bind.annotation.*;
+
+		@RestController
+		@RequestMapping("/users")
+		@Validated
+		public class UserController {
+
+			@PostMapping
+			public String createUser(@Valid @RequestBody UserRequest request) {
+				return "成功接收: " + request.getName();
+			}
+		}
+
+	✅ 優勢：
+		API 參數驗證，自動回傳 400 Bad Request
+		錯誤處理更友好，不會影響 Service 內部邏輯
+		支援 Group Validation，適用於 不同場景驗證
+	❌ 缺點：
+		不適合內部 Service、工具類使用
+		需要 spring-starter-validation 依賴
+
+
+最佳實踐
+	🔹 Service 層
+		如果在 業務邏輯層，你可以：
+			✅ 保護變數不為 null → Objects.requireNonNull()
+			✅ 檢查方法參數防呆 → Assert.notNull()
+	🔹Controller 層
+		API 層面則應該使用 @NotNull：
+
+總結
+	如果你要...								最佳選擇
+	確保變數不為 null（工具類、內部方法）	✅ Objects.requireNonNull()
+	確保 Spring 內部方法不允許 null 參數	✅ Assert.notNull()
+	驗證 API 層面的請求參數					✅ @NotNull + spring-starter-validation
