@@ -1,0 +1,42 @@
+1.安裝 git 後
+
+2.設定 commit 的作者與 email
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+3.瀏覽到欲將給 git 控管的目錄
+	初始 git
+		git init
+
+4.確認當前 git 每個檔案的狀態
+	git status
+
+5.加入暫存區
+	指定單一支程式加入
+		git add xxxx [xxxx代表程式]
+
+	指定 sh 有執行權限(預設上傳 sh 檔案不會有執行的權限，需要額外告知加入可執行的權限)
+		git update-index --add --chmod=+x <shell name>.sh
+		確認檔案是否有執行的權限
+			git ls-files --stage ${file}
+				一般是 100644，若有增加執行權限會顯示 100755
+
+	指定副檔名為java的都加入
+		git add *.java
+
+	全部檔案加入
+		git add .
+		git add --all
+
+	各種檔案操作情境
+		新增檔案
+		修改檔案
+		刪除檔案
+		變更檔名
+
+6.推紀錄到本機
+	git commit -m yyyy  [yyyy代表註解]
+	git commit --no-verify -m yyyy  [yyyy代表註解] [--no-verify代表不經過hook檢查]
+
+7.查看每個 commit 的 log 紀錄
+	git log

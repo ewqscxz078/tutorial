@@ -1,13 +1,76 @@
-windows add 太長路徑會
-	node_..... 太長路徑 : Filename too long
+==========================================================================================
+==================================常見操作問題============================================
+==========================================================================================
+操作常見錯誤 當push後出現
+https://dotblogs.com.tw/wasichris/2017/09/19/014354
 
-	ref https://mihirpipermitwala.com/blogs/solving-git-checkout-problems-windows-users-encounter-filename-too-long-error/s
-	ref https://stackoverflow.com/questions/22575662/filename-too-long-in-git-for-windows
-		git config --system core.longpaths true
+	Q1:當push後出現
+		error: failed to push some refs to 'https://${url}/git/myrepo.git'
+		hint: Updates were rejected because the remote contains work that you do
+		hint: not have locally. This is usually caused by another repository pushing
+		hint: to the same ref. You may want to first integrate the remote changes
+		hint: (e.g., 'git pull ...') before pushing again.
+		hint: See the 'Note about fast-forwards' in 'git push --help' for details.
 
-20240902 當時使用以下方法解決
-	Project-Specific Adjustment
-		git bash
-		開啟當前 vi .git/config
-		[core]
-			longpaths = true
+	A1:原因:代表push的時候有其他人commit遠端最新版，造成本機最新版與遠端最新版有差異
+		盡可能push前記得先pull，避免要額外處理以下動作
+		若忘記先pull，則會有以下兩種方法
+			方法一
+				1.git pull
+				2.commit merge(遠端最新與本機最新)後再
+				3.gi push
+			方法二
+				1.git pull --rebase
+				2.gi push
+
+	Q2:當push 上去發現其他額外警告訊息
+		ex:
+			== xxxx-app[issue/546]: push ==
+			....
+			remote: - xxxx-app -
+			remote: warning: The last gc run reported the following. Please correct the root cause
+			remote: and remove gc.log.
+			remote: Automatic cleanup will not be performed until the file is removed.
+			remote:
+
+			remote: warning: There are too many unreachable loose objects; run 'git prune' to remove them.
+			remote:
+			To https://${url}/git/ris/myrepo.git
+		   7e808aa64..9676653b0  issue/546 -> issue/546
+
+	A2:https://stackoverflow.com/questions/37732141/whole-team-gets-too-many-unreachable-loose-objects-messages
+	  https://confluence.atlassian.com/bitbucketserverkb/pushing-to-bitbucket-server-reports-there-are-too-many-unreachable-loose-objects-825788622.html
+	  https://stackoverflow.com/questions/41771089/trigger-git-prune-automatically-on-git-pull
+	  https://stackoverflow.com/questions/67630383/git-gc-and-git-prune-warnings-when-git-fetch-origin-is-run
+			git prune
+			git gc
+
+	Q3: git clone git pull 出現 fatal: remote error: upload-pack: not our ref
+		大概是傳輸到遠端git時中斷，遠端git 紀錄一半
+		https://stackoverflow.com/questions/4111728/how-do-i-deal-with-corrupted-git-object-files
+		於遠端git
+			find . -size 0 -type f | grep objects | xargs ls -a
+			會發現 0k 的 object/xx/yyyyyy 的檔案
+
+			https://mirrors.edge.kernel.org/pub/software/scm/git/docs/user-manual.html#recovering-from-repository-corruption
+			check 是否有異常
+				git fsck --full --no-dangling
+				發現是 jenkins merge issue DEVELOP/main ref 空的
+	A3: cd 遠端 git
+		rm -rf refs/heads/DEVELOP/main
+		git pull
+		git remote update origin --prune
+
+	Q4: windows add 太長路徑會
+		node_..... 太長路徑 : Filename too long
+
+		ref https://mihirpipermitwala.com/blogs/solving-git-checkout-problems-windows-users-encounter-filename-too-long-error/s
+		ref https://stackoverflow.com/questions/22575662/filename-too-long-in-git-for-windows
+			git config --system core.longpaths true
+
+	A4: 20240902 當時使用以下方法解決
+		Project-Specific Adjustment
+			git bash
+			開啟當前 vi .git/config
+			[core]
+				longpaths = true

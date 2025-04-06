@@ -9,17 +9,17 @@ git merge [branchName] --no-edit --no-ff
 		--no-ff // 代表不 fastforward merge， ff 代表會縮減節點，讓節點比較乾淨而已
 
 當 binary檔(doc pdf jar) merge 後有衝突
-可使用
+	可使用
 
-<<<<<<< HEAD
-chocolate
-=======
-boycott
->>>>>>> upstream
+	<<<<<<< HEAD
+	chocolate
+	=======
+	boycott
+	>>>>>>> upstream
 
-# merge 後再下以誰為準指令
-git checkout --ours word.txt    # => chocolate {<<<<<<< HEAD .... =======}
-git checkout --theirs word.txt  # => boycott {======= .... >>>>>>> upstream}
+	# merge 後再下以誰為準指令
+	git checkout --ours word.txt    # => chocolate {<<<<<<< HEAD .... =======}
+	git checkout --theirs word.txt  # => boycott {======= .... >>>>>>> upstream}
 
 merge 常例
 	both modified

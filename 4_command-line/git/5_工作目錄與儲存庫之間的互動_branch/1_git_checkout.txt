@@ -1,0 +1,38 @@
+==========================================================================================
+===================================== checkout 操作 ======================================
+==========================================================================================
+切換 local branch
+	git checkout [遠端/branchName]
+
+	git checkout [遠端/branchName] --track // 當名稱跑掉時
+
+
+建立 local branch base on 特定 branch
+	git checkout [特定branch]
+	git checkout -b DEVELOP/greenc108
+
+	追查某 commit id(sha1) 工作目錄下的檔案狀況用
+		將儲存庫內 <sha1> 版本的所有資料取出至工作目錄(HEAD)、工作目錄會移至 <sha1>
+			git checkout <commit id/sha1>
+
+		將儲存庫內 HEAD 版本的所有資料取出至工作目錄(HEAD)
+			git checkout HEAD
+
+	還原相關
+		還原某版本
+			將儲存庫內 <sha1> 版本的所有資料取出至工作目錄(HEAD)、工作目錄的 <file> 會變成 <sha1> 版本(取得特定commitId 的檔案到當前的HEAD上)
+				git checkout <commit id/sha1> <file>
+
+			將儲存庫內 <sha1> 版本的所有資料取出至工作目錄(HEAD)、工作目錄的所有檔案會變成 <sha1> 版本(取得特定commitId 的所有檔案到當前的HEAD上)
+				git checkout <commit id/sha1> .
+
+		還原尚未 add commit 的版本
+			將儲存庫內 HEAD 版本的 <file> 取出至工作目錄(HEAD)、工作目錄的 <file> 會變成 HEAD 版本(通常是用在將當前操作的異動檔案還原到當前最新 local repo 版本)
+				git checkout HEAD <file>
+				git checkout -- <file>
+
+			將儲存庫內 HEAD 版本的 <file> 取出至工作目錄(HEAD)、工作目錄的所有檔案會變成 HEAD 版本(通常是用在將當前操作的所有異動檔案還原到當前最新 local repo 版本)
+				git checkout -- .
+
+建立 local branch by tag
+	git checkout -b <branchname> <tagname>

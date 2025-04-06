@@ -1,6 +1,10 @@
 ==========================================================================================
 ================================= git config =============================================
 ==========================================================================================
+設定 commit 的作者與 email
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
 列舉設定
 	git config --list
 
@@ -26,9 +30,7 @@
 			git config --list --local
 
 
-設定 commit 的作者與 email
-    git config --global user.name "Your Name"
-    git config --global user.email you@example.com
+
 
 改變預設 branch(master)
 	git config --global ${your setting name} ${your setting value}

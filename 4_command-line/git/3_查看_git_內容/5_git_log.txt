@@ -10,7 +10,6 @@
 	git log -U1 --word-diff
 
 查看圖像化 push log
-	// teamctl reset-to-log
 	git lg	// 有怪怪的
 	git lga
 

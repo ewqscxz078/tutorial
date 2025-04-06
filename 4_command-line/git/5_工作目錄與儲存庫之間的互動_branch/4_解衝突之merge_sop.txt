@@ -39,7 +39,7 @@ windows/linux
 				GIT_NO_VERIFY=1 git commit -m 'issue/465、734 merge into issue/30 and fix CONFLICT rc11010.xhtml、rc11020.xhtml'
 				GIT_NO_VERIFY=1 git commit -m 'issue/465、734 merge into temp/greenc-tune and fix CONFLICT rc11010.xhtml、rc11020.xhtml'
 
-		2.7 teamctl exec -- git status // check no conflct
+		2.7 git status // check no conflct
 		2.8 // git diff // for 障礙排除
 		2.9 // git merge --abort // if merge 有問題可還原
 		2.10 // teamctl checkout-issue --reset-to-remote <#issue> // 若尚未push 則會還原遠端最新的節點

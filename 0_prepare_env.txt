@@ -82,8 +82,10 @@ once
 					Formatter(Editor)
 						new / 命名 : my-ccd
 							Comments
+								Maxinum width for comments : 80-> 150  #設定一行多久自換行
 								Format line comments on first column 勾選
 								Enable header comment formatting 勾選
+
 
 				Editor
 					save actions

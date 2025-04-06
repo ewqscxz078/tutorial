@@ -28,10 +28,10 @@ tracked file (已存在遠端 repository)
 	綠色字變紅字
 		git reset <commitId>
 
-	remove history log 模式
+	remove local repo history log 模式
 		git reset <commId/tag:HEAD、master> --hard // 還原到 <commId/tag:HEAD、master> 並將目前節點到還原點 期間異動的程式移除清乾淨
 
-	add history log to remove 模式
+	add local repo history log to remove 模式
 		git revert <commId/tag:HEAD、master>  // 增加節點回到環原點
 
 	移除其中一個commit

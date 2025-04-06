@@ -1,0 +1,15 @@
+==========================================================================================
+==================================== git show ============================================
+==========================================================================================
+
+顯示 commit 的修改紀錄
+	git show [commid]
+
+顯示 commit 特定檔案的修改紀錄
+	git show [commid] [file]
+
+顯示遠端 branch 的修改紀錄
+	git show [遠端branch/branch]:[file]
+		ex:
+			git show origin/issue/125:MC/sris-mc-core/src/main/java/tw/gov/moi/mc/job/MC4700Job.java
+			git show issue/125:MC/sris-mc-core/src/main/java/tw/gov/moi/mc/job/MC4700Job.java

@@ -1,0 +1,12 @@
+==========================================================================================
+=================================== 上傳 =================================================
+==========================================================================================
+
+範例
+	echo "# gson" >> README.md
+	git init
+	git add README.md
+	git commit -m "first commit"
+	git branch -M master
+	git remote add origin https://github.com/ewqscxz078/${repo_name}.git
+	git push -u origin master
