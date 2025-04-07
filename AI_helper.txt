@@ -67,3 +67,9 @@ ref https://www.youtube.com/watch?v=nod5ZL8UPmk&ab_channel=LittleBoatTan%E5%B0%8
 		https://clipchamp.com/en/
 
 
+ppt 生成
+	Gamma
+
+
+建議專屬 ai agent
+建立個人的提示索引集

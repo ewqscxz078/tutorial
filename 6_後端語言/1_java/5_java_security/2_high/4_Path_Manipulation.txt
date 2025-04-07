@@ -1,4 +1,8 @@
-https://matam-kirankumar.medium.com/fortify-issues-path-manipulation-3ac42c1d1e9a
+路徑遍歷攻擊（Path Traversal Attack）
+
+ref https://matam-kirankumar.medium.com/fortify-issues-path-manipulation-3ac42c1d1e9a
+	ChatGPT
+
 風險原因
 	若直接從參數取得路徑值，應該做白名單或是排除 ../ 路徑攻擊動作
 	public static void main(String[] args){
@@ -9,3 +13,36 @@ https://matam-kirankumar.medium.com/fortify-issues-path-manipulation-3ac42c1d1e9
 建議方式
 	Stirng normalizedpath = FilenameUtils.normalize("/foo/../bar/../baz");
     File f=new File(normalizedpath); // way
+
+
+ChatGPT
+	檢查點一：前端輸入的參數驗證（Input Validation）
+		目的：防止惡意輸入進入邏輯流程。
+		1.檢查是否為預期格式（像是檔名、路徑段）
+
+		2.可以限制字元範圍（只能包含英數、底線、dash 等）
+
+		3.阻擋特殊字元（如 ../, %2e%2e/, \ 等）
+
+		4.若是選單類型參數，更建議使用白名單比對
+		
+		範例
+			String filename = request.getParameter("filename");
+			if (!filename.matches("^[a-zA-Z0-9_-]{1,50}$")) {
+				throw new IllegalArgumentException("不合法的檔案名稱");
+			}
+	檢查點二：建構路徑時的驗證（Path Validation）
+		目的：確保最終組出來的路徑仍然位於預期的資料夾內，防止繞過 base path。
+			即使輸入通過檢查，仍需再次確認整體路徑合法。
+			
+		範例
+			Path basePath = Paths.get("/data/files").toAbsolutePath().normalize();
+			Path targetPath = basePath.resolve(filename).normalize();
+			if (!targetPath.startsWith(basePath)) {
+				throw new SecurityException("嘗試存取未授權路徑");
+			}
+
+	✍️ 兩層防線的理由：
+		防線		對抗什麼問題								為什麼必要
+		輸入驗證	防止惡意字串直接進入系統邏輯（如 ../）		第一層阻擋，處理顯而易見的惡意輸入
+		路徑驗證	防止經過合法輸入或編碼繞過後仍然繞出目錄	防守深入的繞過技巧或錯誤邏輯
