@@ -7,7 +7,7 @@ ref ChatGPT
 		Java 1.6 及以前		javax.xml.bind.DatatypeConverter	內建於 JDK（直到 Java 8）	需要 jaxb-api，Java 9+ 被移除
 		Java 8+				java.util.Base64					內建於 JDK，易用，效能佳	需 Java 8 以上
 		Java 6 / 7			sun.misc.BASE64Encoder / 			內建於 JDK					不建議使用（內部 API，Java 9+ 移除）
-							sun.misc.BASE64Decoder	
+							sun.misc.BASE64Decoder
 
 	2. 第三方函式庫
 		函式庫					類別/方法								優點						缺點
@@ -22,18 +22,18 @@ ref ChatGPT
 			1.內建於 JDK，無需額外依賴
 			2.支援標準、URL 安全、MIME 格式
 			3.效能優於舊 API
-		
+
 		範例
 			import java.util.Base64;
 
 			public class Base64Example {
 				public static void main(String[] args) {
 					String original = "Hello, Base64!";
-					
+
 					// 編碼
 					String encoded = Base64.getEncoder().encodeToString(original.getBytes());
 					System.out.println("Encoded: " + encoded);
-					
+
 					// 解碼
 					byte[] decodedBytes = Base64.getDecoder().decode(encoded);
 					String decoded = new String(decodedBytes);
@@ -50,11 +50,11 @@ ref ChatGPT
 			public class Base64Example {
 				public static void main(String[] args) {
 					String original = "Hello, Base64!";
-					
+
 					// 編碼
 					String encoded = Base64.encodeBase64String(original.getBytes());
 					System.out.println("Encoded: " + encoded);
-					
+
 					// 解碼
 					byte[] decodedBytes = Base64.decodeBase64(encoded);
 					String decoded = new String(decodedBytes);

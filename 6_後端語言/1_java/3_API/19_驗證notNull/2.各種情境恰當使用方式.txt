@@ -3,8 +3,8 @@
 Objects.requireNonNull(obj, msg)	立即執行					NullPointerException			適用於 Java 標準庫中，確保物件不為 null，適合 工具類、Service 層
 Assert.notNull(obj, msg)			立即執行					IllegalArgumentException		Spring 提供的 防呆機制，適合 Spring Service、Bean 初始化、參數檢查
 @NotNull（Java Validation）			延遲驗證（Spring 進行校驗）	ConstraintViolationException	適合 Spring Controller 層 進行 請求參數驗證、API 層的參數驗證，讓 Spring 統一處理錯誤訊息
-																，Spring 會返回 400 Bad Request	
-																
+																，Spring 會返回 400 Bad Request
+
 1.Objects.requireNonNull()（標準 Java，適合工具類、業務邏輯）
 	import java.util.Objects;
 

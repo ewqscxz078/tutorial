@@ -14,11 +14,11 @@ ref ChatGPT
 	其他方法		針對 byte arrays 進行更多操作，如 clone(), reverse(), concatenate()		針對各種 primitive 型別提供操作
 
 3. 加密安全比較
-	時間攻擊（Timing Attack） 是一種針對 equals() 操作時間的攻擊，java.util.Arrays.equals() 
+	時間攻擊（Timing Attack） 是一種針對 equals() 操作時間的攻擊，java.util.Arrays.equals()
 	在第一個不匹配的字節就會返回 false，導致不同輸入可能產生不同的執行時間。
 		boolean isEqual = org.bouncycastle.util.Arrays.constantTimeAreEqual(array1, array2);
 		這個方法在所有情況下執行時間固定，不會根據內容不同而有不同的運行時間，因此更安全。
-		
+
 		boolean isEqual = java.util.Arrays.equals(array1, array2);
 		它會根據內容不同提早結束，可能讓攻擊者推測出某些資訊。
 

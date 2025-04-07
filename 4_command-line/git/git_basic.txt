@@ -73,10 +73,7 @@ push	-- 紀錄到server
 
  git push origin HEAD:sris // commit 到遠端分支
 
-only local branch
-	git branch
-local and remote branch
-	git branch -a
+
 local update origin branch 資訊
 	git remote update origin --prune
 

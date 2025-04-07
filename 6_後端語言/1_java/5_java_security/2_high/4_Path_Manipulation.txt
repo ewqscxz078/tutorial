@@ -25,7 +25,7 @@ ChatGPT
 		3.阻擋特殊字元（如 ../, %2e%2e/, \ 等）
 
 		4.若是選單類型參數，更建議使用白名單比對
-		
+
 		範例
 			String filename = request.getParameter("filename");
 			if (!filename.matches("^[a-zA-Z0-9_-]{1,50}$")) {
@@ -34,7 +34,7 @@ ChatGPT
 	檢查點二：建構路徑時的驗證（Path Validation）
 		目的：確保最終組出來的路徑仍然位於預期的資料夾內，防止繞過 base path。
 			即使輸入通過檢查，仍需再次確認整體路徑合法。
-			
+
 		範例
 			Path basePath = Paths.get("/data/files").toAbsolutePath().normalize();
 			Path targetPath = basePath.resolve(filename).normalize();

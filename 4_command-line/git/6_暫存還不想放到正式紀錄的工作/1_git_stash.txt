@@ -2,16 +2,20 @@
 ========================================= 暫存操作 =======================================
 ==========================================================================================
 
-git status
-aOn branch issue/203
-Your branch is up to date with 'origin/issue/203'.
+常發生在臨時交辦事項，但目前工作要還沒到一段落，將其暫存到暫存分支上
 
-Changes not staged for commit:
-  (use 'git add <file>...' to update what will be committed)
-  (use 'git checkout -- <file>...' to discard changes in working directory)
-		modified:   REPORTS/SERVER/sris3-report-server-exec/src/test/java/tw/gov/moi/ae/reporting/server/cli/ReportingServerCLITest.java
+情境
+	git status
+	aOn branch issue/203
+	Your branch is up to date with 'origin/issue/203'.
 
-		顯示以上之類
+	Changes not staged for commit:
+	  (use 'git add <file>...' to update what will be committed)
+	  (use 'git checkout -- <file>...' to discard changes in working directory)
+			modified:   REPORTS/SERVER/sris3-report-server-exec/src/test/java/tw/gov/moi/ae/reporting/server/cli/ReportingServerCLITest.java
+
+			顯示以上之類
+
 放到暫存
 	git stash
 
