@@ -1,0 +1,54 @@
+==========================================================================================
+================================== bisect =================================================
+==========================================================================================
+
+1.使用二分法找出變更的起始點
+2.常用來找出 bug 發生的源頭
+	比如找出某個檔案在哪個時候被加入的
+
+開始搜尋
+	git bisect start
+
+取消搜尋
+	git bisect reset
+
+
+範例操作
+	1.切到有問題的 branch
+		git checkout <branch>
+
+		// 假設有問題的檔案為 a 在該branch 存在
+
+	2.標記當前 branch 開始搜尋
+		git bisect start
+
+	3.標記當前 branch 有問題
+		git bisect <標記的名稱>
+		例如
+			git bisect bad
+
+	4.切到仍正常的 commitId
+		git checkout <commitId>
+
+	5.標記當前 commitId 是正常
+		git bisect good
+
+		// 此時它會幫你切換到二分法後的 commitId
+			ls // 確認有問題的檔案是否存在
+
+	6.若此時切換到的 commitId 仍有問題的檔案 a
+		再標記當前 branch 有問題
+			git bisect bad
+
+		若此時它幫你切換的commitId 有問題的檔案不存在
+			git bisect good
+
+		若此時它幫你切換的commitId 有問題的檔案存在
+			git bisect bad
+
+		....
+		直到它告訴你
+			commitId is the first bad commit
+
+	7.取消搜尋
+		git bisect reset

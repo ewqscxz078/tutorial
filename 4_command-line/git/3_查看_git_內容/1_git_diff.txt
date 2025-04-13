@@ -3,15 +3,25 @@
 ==================================== git diff ============================================
 ==========================================================================================
 https://www.shellhacks.com/git-diff-staged-unstaged-files/
+
+# 顯示所有異動檔案路徑
+	git diff --name-only
+
 # 顯示所有異動 (等於 git status)
 	git diff --name-only HEAD
 
-# 僅顯示 staged files of green
-	git diff --name-only --staged
-	git diff --name-only --cached
+# 顯示工作目錄的所有檔案狀態(新增、修改、刪除)
+	git diff --name-status
 
-# 僅顯示 unstaged files of red
-	git diff --name-only
+# 針對特定的異動
+	僅顯示 unstaged files of red (工作目錄的異動)
+		git diff
+
+	僅顯示 staged files of green (暫存區的異動)
+		git diff --cached
+		git diff --staged
+
+
 
 ==========================================================================================
 ==========================================差異操作========================================

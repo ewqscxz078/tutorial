@@ -8,3 +8,7 @@ https://stackoverflow.com/questions/32997352/what-is-the-difference-between-putt
 	when using Spring Cloud Config Server, you should specify spring.application.name and spring.cloud.config.server.git.uri inside bootstrap.yml
 	some encryption/decryption information
 	Technically, bootstrap.yml is loaded by a parent Spring ApplicationContext. That parent ApplicationContext is loaded before the one that uses application.yml.
+
+
+	在 Spring Boot 3 搭配 Spring Cloud 2022.0.x（或更新版） 之後，已不再建議使用 bootstrap.yml / bootstrap.properties。
+	大多數情境下都可以整合進 application.yml 中，甚至 Spring Cloud 官方文件也推薦這樣的做法。

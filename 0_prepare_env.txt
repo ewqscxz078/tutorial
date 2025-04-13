@@ -126,6 +126,12 @@ once
 					應該會有 spring boot app 選項
 	5. 常用語法 alias
 		alias grep="grep --color=always" >> ~/.bashrc
+		alias now='date "+%Y-%m-%d %H:%M:%S.%s"' >> ~/.bashrc
+		alias npp="${你的 notepadd ++ 路徑}" >> ~/.bashrc
+		alias jq="${你的 jq 路徑}" >> ~/.bashrc
+
+		重啟置入 alias
+			重新開啟終端機或 source ~/.bashrc
 
 	6. window intall jq
 		https://stackoverflow.com/questions/53967693/how-to-run-jq-from-gitbash-in-windows
