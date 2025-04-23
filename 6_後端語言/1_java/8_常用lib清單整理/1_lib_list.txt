@@ -16,6 +16,16 @@ javax.servlet
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
 			自動包含 Tomcat 作為內嵌伺服器，並包括 javax.servlet 相關依賴
 
+前端類
+	apache
+		cxf-rt-frontend-jaxrs	實作 RESTful API（JAX-RS）
+		cxf-rt-frontend-jaxws	實作 SOAP Web Service（JAX-WS）
+		cxf-rt-transports-http	提供 HTTP 傳輸支援
+		cxf-rt-bindings-soap	SOAP 訊息處理
+		cxf-rt-databinding-jaxb	支援 JAXB 資料綁定
+
+		對應 spring boot starter
+			<dependency><groupId>org.apache.cxf</groupId><artifactId>cxf-spring-boot-starter-jaxrs</artifactId></dependency>
 
 runtime 系列
 	驅動程式
@@ -42,6 +52,9 @@ runtime 系列
 	PDF
 		itext
 		pdfbox
+
+sftp for java
+	<dependency><groupId>com.github.mwiede</groupId><artifactId>jsch</artifactId></dependency>
 
 
 test 系列

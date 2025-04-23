@@ -1,0 +1,86 @@
+
+支援 Spring Web 的 @RestController / @RequestMapping 轉換出 Swagger UI
+	
+	Swagger UI / OpenAPI UI（推薦）
+		Swagger UI 是一種呈現 OpenAPI 規格的 UI 工具。
+		OpenAPI 是一種描述 REST API 的標準格式。
+
+	🧩 適合條件：
+		你的 REST API 有使用 Swagger/OpenAPI 規格（或可產生 openapi.json）
+
+	🛠 工具選擇：
+		Swagger UI（最常見、可直接放進專案）
+
+		ReDoc（簡潔風格）
+
+		Swagger Editor + UI hosted
+
+	📦 若你用 Spring Boot，可用這套件：
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.6.14</version>
+		</dependency>
+
+	🔗 啟動後可直接訪問：
+		http://localhost:8080/swagger-ui.html
+
+	✅ 優點：
+		自動生成 UI
+
+		支援 GET/POST/Body/Token 等輸入
+
+		可直接「發送請求」測試
+
+		每次 server API 有變更，UI 自動反映
+
+
+支援 JAX-RS 的 Swagger 套件
+	swagger-core + swagger-jaxrs2（官方 Swagger 支援）
+<dependency>
+  <groupId>io.swagger.core.v3</groupId>
+  <artifactId>swagger-jaxrs2</artifactId>
+  <version>2.2.20</version>
+</dependency>
+<dependency>
+  <groupId>io.swagger.core.v3</groupId>
+  <artifactId>swagger-jaxrs2-servlet-initializer-v2</artifactId>
+  <version>2.2.20</version>
+</dependency>
+<dependency>
+  <groupId>io.swagger.core.v3</groupId>
+  <artifactId>swagger-integration</artifactId>
+  <version>2.2.20</version>
+</dependency>
+
+設定 OpenApiResource servlet route
+	@ApplicationPath("/api")
+	public class RestApp extends Application {
+		@Override
+		public Set<Class<?>> getClasses() {
+			Set<Class<?>> resources = new HashSet<>();
+			resources.add(HelloJaxRsService.class);
+			resources.add(OpenApiResource.class); // 這是 swagger 提供的自動掃描器
+			return resources;
+		}
+	}
+
+這樣會產生：
+	/openapi.json 或 /openapi.yaml
+
+
+✅ 對照整理
+	技術堆疊						Swagger 產生方式					UI 對應工具
+	Spring Web (@RestController)	springdoc-openapi-ui				自動產 Swagger UI
+	JAX-RS (@Path, @GET)			swagger-jaxrs2 + OpenApiResource	提供 OpenAPI JSON，搭配 Swagger UI
+
+本機架 Swagger UI（進階）
+	把 Swagger UI 原始碼下載下來（是純 HTML+JS），然後修改 index.html 中的 url：
+		const ui = SwaggerUIBundle({
+		  url: "http://localhost:8080/api/openapi.json",
+		  dom_id: '#swagger-ui',
+		  ...
+		});
+
+你也可以搭配 openapi.yaml：
+	mp.openapi.format=YAML

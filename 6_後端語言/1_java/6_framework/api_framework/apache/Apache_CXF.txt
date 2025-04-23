@@ -1,0 +1,10 @@
+✅ 支援版本對照：
+
+Java 版本			Spring Boot 版本	適用的 CXF Starter 版本
+Java 8				2.6.x～2.7.x		cxf-spring-boot-starter-jaxrs:3.4.x ~ 3.5.x
+Java 17+			Spring Boot 3		cxf-spring-boot-starter-jaxrs:4.x.x（JDK 11+）
+
+starter 背後仍然依賴：
+	1.cxf-rt-frontend-jaxrs（提供 JAX-RS 前端功能）
+	2.cxf-spring-boot-autoconfigure（自動化設定 CXF component）
+	3.其他必要的 CXF runtime modules
