@@ -1,0 +1,81 @@
+ref ChatGPT
+
+常見攻擊手法與風險
+	類型										說明												攻擊風險
+	1. 路徑穿越攻擊（Directory Traversal）		使用 ../../ 或 %2e%2e/ 等編碼操縱儲存或下載路徑		可讀取或覆蓋任意伺服器檔案，例如 /etc/passwd
+	2. 惡意檔案上傳（Malicious File Upload）	上傳 .jsp、.php、.exe 或內含惡意程式碼的文件		執行任意程式、Web Shell、RCE
+	3. 檔案名稱注入（Filename Injection）		使用特殊字元或 SQL Injection 誘導操作錯誤			導致儲存失敗、覆蓋重要檔案、SQL Injection
+	4. MIME Type 欺騙（Content-Type Bypass）	偽造 Content-Type 頭部繞過檢查						Bypass 前端驗證或防毒掃描
+	5. 大型檔案/資源耗盡攻擊（DoS）				上傳超大檔案，或持續耗用記憶體與 CPU				造成應用當機或資源耗盡
+	6. Symbolic Link 攻擊（Linux 下）			上傳符號連結造成檔案存取錯誤						可導向至敏感檔案或覆蓋
+
+
+防護建議與實作技巧
+	1. 檔案名稱與路徑防護
+		String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+		if (originalFilename.contains("..")) {
+			throw new IllegalArgumentException("不允許的檔名: " + originalFilename);
+		}
+
+	2. 限制副檔名
+		建議白名單：.jpg, .png, .pdf, .txt 等
+		不要只檢查副檔名，最好用內容檢查：
+			String contentType = file.getContentType();
+			List<String> allowedTypes = List.of("image/jpeg", "image/png", "application/pdf");
+			if (!allowedTypes.contains(contentType)) {
+				throw new IllegalArgumentException("不允許的檔案類型: " + contentType);
+			}
+	3. 檔案大小限制
+		application.yml
+			spring.servlet.multipart.max-file-size: 10MB
+			spring.servlet.multipart.max-request-size: 20MB
+
+	4. 儲存檔案時重新命名
+		避免用原始檔名（可能含惡意內容），可用 UUID 或 Timestamp：
+			String newFileName = UUID.randomUUID() + "-" + originalFilename;
+
+		避免
+			1.惡意路徑檔名攻擊
+				使用者上傳檔案名為：
+					../../../../etc/passwd
+				Path savePath = Paths.get("/upload/", file.getOriginalFilename());
+					/upload/../../../../etc/passwd
+					→ /etc/passwd ← 被覆蓋！
+				重新命名的話，即使檔名是惡意的，也只會變成像 uuid.jpg，無法利用路徑進行攻擊。
+			2：同名覆蓋攻擊
+				原本使用者A上傳：成績單.pdf
+				攻擊者上傳：成績單.pdf（惡意內容）
+				→ 導致資料被破壞
+				改成儲存為隨機檔名（如 UUID）就能避免這種覆蓋：
+					String newFilename = UUID.randomUUID().toString() + ".pdf";
+			3：XSS / 瀏覽器解析陷阱
+				某些檔名如果直接顯示在前端，或用在 HTTP header（如 Content-Disposition）中，可能觸發 XSS 漏洞或瀏覽器錯誤行為。
+					filename="abc.jpg" onmouseover="alert('XSS')"
+				儲存時重新命名（非使用者提供的檔名），能避免這類副作用：
+					Content-Disposition: attachment; filename="safe-uuid.jpg"
+			4.：前端 MIME Spoofing 或副檔名偽裝
+				例如攻擊者上傳：
+					檔名：report.pdf.exe
+					MIME Type：application/pdf
+				使用者下載後，若系統直接使用原始名稱，可能執行 .exe 而不是以為的 .pdf。
+					重新命名 + 僅保留允許的副檔名，例如：
+					String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+					if (!allowedExtensions.contains(extension)) {
+						throw new IllegalArgumentException("不允許的副檔名");
+					}
+					String newName = UUID.randomUUID() + "." + extension;
+
+
+	5. 下載時防止任意檔案讀取
+		不可讓用戶指定完整檔案路徑，要限制在固定資料夾下（sandbox）：
+			Path baseDir = Paths.get("/upload/");
+			Path requestedFile = baseDir.resolve(filename).normalize();
+			if (!requestedFile.startsWith(baseDir)) {
+				throw new SecurityException("非法路徑存取");
+			}
+	6. 檔案掃描（進階）
+		上傳前導入防毒掃描（例如：ClamAV、商用套件），防止木馬或漏洞檔案進入系統。
+	7. 儲存位置
+		不要儲存到可執行路徑（如 /webapp、/static）
+		可考慮儲存至資料庫 BLOB（若檔案量不大）或雲端物件儲存（如 S3）
+

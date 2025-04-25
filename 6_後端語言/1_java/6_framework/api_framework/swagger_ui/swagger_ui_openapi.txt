@@ -1,6 +1,6 @@
 
 支援 Spring Web 的 @RestController / @RequestMapping 轉換出 Swagger UI
-	
+
 	Swagger UI / OpenAPI UI（推薦）
 		Swagger UI 是一種呈現 OpenAPI 規格的 UI 工具。
 		OpenAPI 是一種描述 REST API 的標準格式。

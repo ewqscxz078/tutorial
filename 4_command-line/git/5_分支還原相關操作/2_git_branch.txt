@@ -2,17 +2,28 @@
 ===================================== branch 操作 ========================================
 ==========================================================================================
 
-建立 local branch，將工作目錄(HEAD)新增一個分支，名為 [branchName] (當前位置建立 local 分支)
-	git branch <branchName>
+本地分支
+	建立
+		建立 local branch，將工作目錄(HEAD)新增一個分支，名為 [branchName] (當前位置建立 local 分支)
+			git branch <branchName>
 
-在 <sha1> 新增一個分支名為 <branchName> (直接到指定 sha1 上建立 local 分支)
-	git branch <branchName> <sha1>
+		在 <sha1> 新增一個分支名為 <branchName> (直接到指定 sha1 上建立 local 分支)
+			git branch <branchName> <sha1>
 
-刪除遠端 branch
-	git push origin --delete [branchName]
+	刪除
+		刪除 local branch，(刪除具體的 local 分支)
+			git branch -D <branchName>
 
-刪除 local branch，(刪除具體的 local 分支)
-	git branch -D <branchName>
+遠端分支
+	建立
+		git branch --set-upstream-to=origin/<remote-branch-name> <local-branch-name>
+	刪除
+		git push origin --delete <branchName>
+		git push origin :<branchName>
+			用於當功能分支 PUSH 到遠端後，本機開發完畢功能分支刪除後，也要刪除遠端功能分支用
+
+		刪除已經沒有遠端分支的遠端追蹤分支(當遠端分支已刪除，但本機仍留存遠端追蹤分支紀錄時，若想移除用時使用)[以遠端為基礎，同步到本地一致]
+			git remote prune origin
 
 ==========================================================================================
 ==================================== 查看 branch =========================================
