@@ -1,0 +1,99 @@
+ref https://medium.com/%E4%BC%81%E9%B5%9D%E4%B9%9F%E6%87%82%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88/jwt-json-web-token-%E5%8E%9F%E7%90%86%E4%BB%8B%E7%B4%B9-74abfafad7ba
+
+jwt web test
+	JWT官網：https://jwt.io/
+
+JSON Web Token（JWT）
+	1.JWT是JSON Web Token的簡寫，是一種開放標準(RFC 7519)，也就是基於JSON object的編碼，並透過這個編碼進行傳遞資訊。
+	2.JWT會透過HMAC、RSA、ECDS等演算法進行加密
+	3.通常利用JWT來對使用者進行驗證，也就是使用者會先請求身分提供的伺服器給予該JWT，而後，只要使用者帶著這個JWT向資源伺服器請求資源，
+		如果這個JWT是有效的，那麼就能獲取資源
+
+組成
+	JWT的組合可以看成是三個JSON object，並且用.來做區隔，而這三個部分會各自進行編碼，組成一個JWT字串
+		xxxxx.yyyyy.zzzzz
+
+		Header : (對應 xxxxx 內容)
+			由兩個欄位組合：
+				1.alg
+					也就是 token 被加密的演算法，如HMAC、SHA256、RSA
+				2.typ
+					也就是token的type，基本上就是JWT
+
+			然後進行Base64進行編碼。Base64是透過64個字符來表示二進制數據的一種方法，編碼的方式是固定的而且是可以逆向解碼的，並不是那種安全的加密演算法
+
+		Payload : (對應 yyyyy 內容)
+			聲明(Claim)內容，也就是用來放傳遞訊息的地方，在定義上有三種聲明
+				1.Registered claims
+					iss(Issuer)：JWT簽發者
+					exp(Expiration Time)：JWT的過期時間，過期時間必須大於簽發JWT時間
+					sub(Subject)：JWT所面向的用戶
+					aud(Audience)：接收JWT的一方
+					nbf(Not Before)：也就是定義擬發放JWT之後，的某段時間點前該JWT仍舊是不可用的
+					iat(Issued At)：JWT簽發時間
+					jti(JWT Id)：JWT的身分標示，每個JWT的Id都應該是不重複的，避免重複發放
+
+				2.Public claims
+					傳遞的欄位必須是跟上面Registered claims欄位不能衝突，然後可以向官方申請定義公開聲明，會進行審核等步驟，實務上在開發上是不太會用這部分的
+
+				3.Private claims
+					發放JWT伺服器可以自定義的欄位的部分，例如實務上會放User Account、User Name、User Role等不敏感的數據
+						不敏感的數據就是不會放使用者的密碼等敏感數據，因為該Payload傳遞的訊息最後也是透過Base64進行編碼，所以是可以被破解的，
+							因此放使用者密碼會有安全性的問題
+					例如
+						{
+						  "sub": "1234567890",
+						  "account": "kenny@example.com",
+						  "role": "admin"
+						}
+					通常都會放iat、exp等標準欄位，因為通常會需要檢查JWT發送時間及是否過期，以及還有使用者帳號，為了方便查詢使用者的一些數據，
+						通常以前的做法是Session裡面存放使用者帳號，現在改用JWT的payload上存放，以及角色身分的定義，
+						可以用來看該使用者是否有權限取得後端API的內容
+		Signature : (對應 zzzzz 內容)
+			由三大部分組成：
+				base64UrlEncode(header)
+				base64UrlEncode(payload)
+				secret
+
+				例如
+					HMACSHA256(
+					  base64UrlEncode(header) + "." +
+					  base64UrlEncode(payload),
+					  secret)
+
+		備註
+			secret是要保存在伺服器端的，這個secret一旦外洩給客戶端，客戶端就可以自己產生JWT，並且透過該JWT存取資源，因此secret是永遠不該外流的。
+
+
+客戶端如何用JWT來訪問資源？
+	1.前端會先透過存取後端的登入API，後端驗證使用者帳密成功後，就會發放合法JWT字串
+	2.前端拿到JWT字串就會將JWT存放在Local Storage裡面
+	3.而後當前端要存取受保護的資源API時，只要在Header的填寫以下內容：
+		Authorization: Bearer <JWT token>
+	4. 後端收到後，會去檢查Authorization的JWT token是否有效，如果有效，則允許前端訪問受保護的資源。
+		在以前的Session的設計上，Session會存放在Redis等這種快取資料庫，每當使用者訪問受保護的資源時，
+		會先去存取資料庫的Session進行比對，有效則讓使用者存取，以JWT的方式可以降低查詢資料庫的需求。
+
+優缺點
+	優點：
+
+		1.採用JSON object的形式，大部分的程式語言皆支援
+		2.可存放一些使用者資訊，但並非是敏感的資訊
+		3.整個JWT，只要Payload不要放過多的資訊，其實Size是相當小的
+		4.不用在Server的資料庫存放Session，特別適合多台Server的情境下，使得擴展性容易，因為多台Server要使用Session的話，會有共享Session的問題產生，
+		5.對於現在手機上的APP的應用特別好，使用者不用每次打開APP都要重新輸入帳號與密碼
+		6.支持跨域請求，不會有傳統用Cookie進行跨域請求等問題
+	缺點：
+
+		1.JWT沒辦法主動被中止，也就是說不能像Session一樣被強制無效，但是個人覺得這有很多方式可以避免
+		2.JWT一旦洩漏會有很大的安全性的問題，但是洩漏通常會透過兩種方式：
+			1.駭客使用你的電腦，並得知JWT
+				這…你電腦都被攻陷了…那就不好說了XD
+			2. 使用中間人攻擊的方式，擷取客戶端傳送伺服器端的封包，並獲取JWT，但使用HTTPS傳輸可以大幅度降低該攻擊，只要定期更換SSL證書就可以了
+
+總結
+	JWT之所以會興起，除了因為RESTful架構出現，加上現在微服務的架構的關係，一般來說上線的系統，不太可能用單台伺服器來處理一切，
+	多台伺服器處理Session會有其麻煩性，雖然可以用統一的資料庫進行存放Session來控制，但是會有效能的問題。
+
+	不過其實這還有很多探討的空間，在這篇文章沒有去說，Session/Cookie的架構其實也是可以跟JWT並行，端看應用場景。
+	但就我兩者都使用過的經驗來看，我覺得JWT的方式的確很簡單易懂，Session的機制有時候的確很煩人。
