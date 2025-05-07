@@ -143,3 +143,296 @@ A: 但這種「InMemory 模式」有幾個明確限制：
 	無法與管理後台整合								管理者不能透過 UI 操作或資料庫直接修改授權資料
 	所有 secret 必須硬塞到 config / vault / env		secret lifecycle 全部靠 CI/CD 控制，缺乏可見性與可審查性
 	不利於橫向擴展 Auth Server 實例					多個 Auth Server 節點時，InMemory 內容無法共享
+
+
+預設行為（Spring Authorization Server 內建）
+	當你沒有自訂任何金鑰提供器時，Spring Authorization Server 會：
+		1.在啟動時自動呼叫內建的 JwkSource<SecurityContext>
+		2.使用 RSA 生成一對 2048-bit 金鑰對（KeyPair）
+		3.包裝成 JWKSet 暴露在 /oauth2/jwks endpoint
+		4.使用私鑰簽發 JWT（RS256），Resource Server 則從 JWKS 取得公鑰驗證
+
+	實際驗證
+		GET http://localhost:9000/oauth2/jwks
+			{
+			  "keys": [
+				{
+				  "kty": "RSA",
+				  "e": "AQAB",
+				  "n": "...",
+				  "alg": "RS256",
+				  "use": "sig",
+				  "kid": "123abc..."
+				}
+			  ]
+			}
+	這就是 Auth Server 公開的 公鑰（JWK），Resource Server 會從這裡抓下來驗簽。
+
+	注意：預設金鑰是每次啟動都重新生成
+		✅ 適合開發、本地測試
+		❌ 不適合正式環境（因為每次部署金鑰會變，舊 JWT 無法驗證）
+
+	方式一：自己提供 RSA KeyPair
+		@Bean
+		public JWKSource<SecurityContext> jwkSource() {
+			KeyPair keyPair = loadOrGenerateKeyPair();
+			RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
+				.privateKey((RSAPrivateKey) keyPair.getPrivate())
+				.keyID(UUID.randomUUID().toString())
+				.build();
+			return new ImmutableJWKSet<>(new JWKSet(rsaKey));
+		}
+		* KeyPair 可以從金鑰檔（PEM）、keystore、Vault 載入
+
+		* 可配合 CI/CD 或 Kubernetes secret 管理金鑰輪替
+
+	方式二：載入外部金鑰（如 JKS 或 PEM）
+		Spring Authorization Server 沒有直接支援自動載入 PEM，但你可以用 Java 方式讀入，再轉成 RSAKey
+
+Q:可以在每次佈署時，更換 auth server 的金鑰對嗎?
+	潛在風險（若每次部署都換金鑰對）
+	| 問題                       | 說明                                     |
+	| ------------------------ | -------------------------------------- |
+	| ❌ 舊 JWT 無法驗證             | Resource Server 還收到舊 token，但已無對應的公鑰可驗證 |
+	| ❌ 多 Resource Server 同步失敗 | 金鑰若未統一共用，部署多服務會造成「A 可驗證，B 驗證失敗」        |
+	| ❌ 分散式架構會發生 JWT 驗簽不一致     | 在負載平衡（多實例）架構下，token 可能無法被某些節點驗證        |
+
+	正確作法：金鑰固定 + 有計畫地輪替
+		做法一：金鑰 固定掛載（不變）
+			最簡單也最穩定的做法：
+				* 使用固定的 RSA 金鑰對（PEM、JKS、Vault 等）
+				* 每次部署都載入同一份金鑰
+				* JWT 永遠用這組金鑰簽發
+
+			📌 適用：單環境 / 內部系統 / 有 CI/CD secret 管理
+
+		 做法二：支援 Key Rotation（金鑰輪替）
+			進階實作：
+			  1.提供多把金鑰在 /oauth2/jwks 中（例如：目前金鑰 + 過渡期金鑰）
+			  2.每把 JWK 有對應的 kid（key ID），JWT 中會帶上
+			  3.Resource Server 依據 kid 選擇對應公鑰驗簽
+			  4.輪替後逐步將舊金鑰撤除
+
+				// src/main/java/com/example/auth/config/JwkRotationConfig.java
+				package com.example.auth.config;
+
+				import com.nimbusds.jose.jwk.JWK;
+				import com.nimbusds.jose.jwk.JWKSet;
+				import com.nimbusds.jose.jwk.RSAKey;
+				import org.springframework.context.annotation.Bean;
+				import org.springframework.context.annotation.Configuration;
+				import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+				import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+				import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+				import com.nimbusds.jose.jwk.source.JWKSource;
+				import com.nimbusds.jose.proc.SecurityContext;
+
+				import java.security.KeyPair;
+				import java.security.KeyPairGenerator;
+				import java.util.List;
+				import java.util.UUID;
+
+				@Configuration
+				public class JwkRotationConfig {
+
+					@Bean
+					public JWKSource<SecurityContext> jwkSource() throws Exception {
+						// 🔑 目前金鑰
+						RSAKey currentKey = generateRsaJwk("current-key-id");
+
+						// 🔑 舊金鑰（還在有效期）
+						RSAKey previousKey = generateRsaJwk("previous-key-id");
+
+						// 🧩 將多個 JWK 包裝成 JWKSet
+						JWKSet jwkSet = new JWKSet(List.of(currentKey, previousKey));
+						return new ImmutableJWKSet<>(jwkSet);
+					}
+
+					// 隨機生成範例
+					private RSAKey generateRsaJwk(String keyId) throws Exception {
+						KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+						keyPairGenerator.initialize(2048);
+						KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+						return new RSAKey.Builder((java.security.interfaces.RSAPublicKey) keyPair.getPublic())
+							.privateKey((java.security.interfaces.RSAPrivateKey) keyPair.getPrivate())
+							.keyID(keyId)
+							.build();
+					}
+
+					@Bean
+					public AuthorizationServerSettings authorizationServerSettings() {
+						return AuthorizationServerSettings.builder()
+							.issuer("http://localhost:9000")
+							.build();
+					}
+				}
+
+				// 從 外部檔案 pem 取得金鑰對
+				// src/main/java/com/example/auth/config/JwkRotationConfig.java
+				package com.example.auth.config;
+
+				import com.nimbusds.jose.jwk.JWK;
+				import com.nimbusds.jose.jwk.JWKSet;
+				import com.nimbusds.jose.jwk.RSAKey;
+				import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+				import com.nimbusds.jose.jwk.source.JWKSource;
+				import com.nimbusds.jose.proc.SecurityContext;
+				import org.springframework.context.annotation.Bean;
+				import org.springframework.context.annotation.Configuration;
+				import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+
+				import java.io.FileReader;
+				import java.io.IOException;
+				import java.nio.file.Paths;
+				import java.security.interfaces.RSAPrivateKey;
+				import java.security.interfaces.RSAPublicKey;
+				import java.security.KeyFactory;
+				import java.security.spec.PKCS8EncodedKeySpec;
+				import java.security.spec.X509EncodedKeySpec;
+				import java.security.KeyPair;
+				import java.security.spec.InvalidKeySpecException;
+				import java.util.Base64;
+				import java.util.List;
+
+				@Configuration
+				public class JwkRotationConfig {
+
+					@Bean
+					public JWKSource<SecurityContext> jwkSource() throws Exception {
+						// 🔐 從 PEM 載入兩組金鑰
+						RSAKey currentKey = loadRsaKeyFromPem("keys/current-key", "current-key-id");
+
+						File oldKeyFile = new File("src/main/resources/keys/previous-key.pem");
+						if (oldKeyFile.exists()) {
+							RSAKey previousKey = loadRsaKeyFromPem("keys/previous-key", "previous-key-id");
+							keys.add(loadRsaKeyFromPem(...));
+						}
+
+
+						JWKSet jwkSet = new JWKSet(List.of(currentKey, previousKey));
+						return new ImmutableJWKSet<>(jwkSet);
+					}
+
+					private RSAKey loadRsaKeyFromPem(String baseFileName, String keyId) throws Exception {
+						RSAPrivateKey privateKey = loadPrivateKeyFromPem(baseFileName + ".pem");
+						RSAPublicKey publicKey = loadPublicKeyFromPem(baseFileName + ".pub.pem");
+
+						return new RSAKey.Builder(publicKey)
+							.privateKey(privateKey)
+							.keyID(keyId)
+							.build();
+					}
+
+					private RSAPrivateKey loadPrivateKeyFromPem(String filepath) throws IOException, InvalidKeySpecException {
+						String pem = readPem(filepath);
+						String keyContent = pem.replace("-----BEGIN PRIVATE KEY-----", "")
+							.replace("-----END PRIVATE KEY-----", "")
+							.replaceAll("\\s", "");
+
+						byte[] keyBytes = Base64.getDecoder().decode(keyContent);
+						PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+						KeyFactory kf = KeyFactory.getInstance("RSA");
+						return (RSAPrivateKey) kf.generatePrivate(spec);
+					}
+
+					private RSAPublicKey loadPublicKeyFromPem(String filepath) throws IOException, InvalidKeySpecException {
+						String pem = readPem(filepath);
+						String keyContent = pem.replace("-----BEGIN PUBLIC KEY-----", "")
+							.replace("-----END PUBLIC KEY-----", "")
+							.replaceAll("\\s", "");
+
+						byte[] keyBytes = Base64.getDecoder().decode(keyContent);
+						X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+						KeyFactory kf = KeyFactory.getInstance("RSA");
+						return (RSAPublicKey) kf.generatePublic(spec);
+					}
+
+					private String readPem(String path) throws IOException {
+						return new String(java.nio.file.Files.readAllBytes(Paths.get("src/main/resources/" + path)));
+					}
+
+					@Bean
+					public AuthorizationServerSettings authorizationServerSettings() {
+						return AuthorizationServerSettings.builder()
+							.issuer("http://localhost:9000")
+							.build();
+					}
+				}
+				預期的金鑰檔案放置位置
+					src/main/resources/keys/
+					├── current-key.pem       ← 私鑰（PKCS#8 格式）
+					├── current-key.pub.pem   ← 公鑰（X.509 格式）
+					├── previous-key.pem
+					└── previous-key.pub.pem
+
+
+				🔁 如何進行金鑰輪替（建議流程）
+					1.加入新的金鑰，變成：[newKey, currentKey]
+					2.讓 Auth Server 用 newKey 發新的 JWT
+					3.等所有舊 JWT 過期後（例如過 1~2 小時）
+					4.移除舊金鑰，只保留 newKey
+					你可以將 JWK 管理抽成配置檔載入、從檔案/DB/Vault 取金鑰，做到自動化 key rotation
+
+	「真正的分散式系統（或高可用系統）不會所有服務一起上下線」
+		* 實務上可能只有 Auth Server 部署新版、或某個微服務做熱部署
+		* 前端或 cron job 可能還持有舊 token
+		* 如果金鑰變了但 Resource Server 還沒 reload，就會驗證失敗
+
+預設 jwt
+	| 問題                      | 回答                      |
+	| ----------------------- | ----------------------- |
+	| Spring Boot JWT 預設有效多久？ | ✅ 5 分鐘（access token）    |
+	| 可以修改嗎？                  | ✅ 可以，透過 `tokenSettings` |
+	| refresh token 預設多久？     | ✅ 60 分鐘，可自訂             |
+
+
+
+Q: 若不是使用 oauth2 架構，每個服務自己產生jwt 送到後端服務時， 則 jwt 私鑰會散落在各個服務上，不利於管理?
+	「如果不是使用 OAuth2，而是讓每個服務各自產生 JWT（自簽），那麼私鑰就會散落在各個服務之中，造成：
+		❌ 難以管理、❌ 安全風險高、❌ 輪替困難、❌ 驗證無一致性。」
+
+	如果每個服務自己簽發 JWT，會有這些問題
+		| 問題類型          | 描述                                           |
+		| ------------- | -------------------------------------------- |
+		| 🔐 私鑰散落       | 每個服務都要有自己的私鑰 → 密鑰數量多，管理成本高                   |
+		| 🧾 驗證不一致      | Resource Server 必須知道「哪個服務發的 token 要用哪把公鑰來驗證」 |
+		| 🛑 無法撤銷 token | 沒有集中發行者，不知道誰發出來的 token 可信、要不要撤掉              |
+		| 🔄 輪替極難       | 多服務都持有金鑰時，輪替時必須同步更新 N 個服務，很容易漏掉或發生中斷         |
+		| ❓ 無稽可查        | 無中心控管，audit log、scope 限制、用途區隔都不清楚            |
+
+	使用 OAuth2 + Authorization Server 的優點
+		| 優點             | 描述                                                    |
+		| -------------- | ----------------------------------------------------- |
+		| ✅ 金鑰集中         | JWT 只由 Auth Server 簽發 → 私鑰集中控管、安全性更高                  |
+		| ✅ 公鑰標準發佈（JWKS） | 所有 Resource Server 統一從 `/.well-known/jwks.json` 抓公鑰驗證 |
+		| ✅ Scope 控管     | token 內容由 Auth Server 統一定義 scope / claim，授權一致         |
+		| ✅ Token 輪替容易   | 換金鑰只要更新 Auth Server，其他 RS 會自動抓到新公鑰                    |
+		| ✅ 多 client 支援  | 各前端或 backend 只拿 token，**不需要知道簽名秘密**                   |
+
+	小結
+		| 架構方式                   | 安全性 | 可維護性  | 適用情境                 |
+		| -------------------------- | --- | ----- | -------------------- |
+		| 每個服務自己產 JWT         | ❌ 低 | ❌ 難維護 | demo、單機系統、不敏感資料場景    |
+		| 集中式 OAuth2 Auth Server  | ✅ 高 | ✅ 最佳  | 正式環境、多服務、多 client 架構 |
+
+Q:即使每個服務自己產生jwt 送到後端服務 相關的處理抽出通用的元件，仍會有相關管理上的困擾?
+	即使你將「每個服務自己產生 JWT」的處理邏輯抽成共用元件（library），在實務上還是會有管理上的結構性困擾，主要原因是：「邏輯共用 ≠ 安全治理統一」
+
+	為什麼抽共用元件還是會有問題？
+		| 問題類型                  | 原因與說明                                                     |
+		| --------------------- | --------------------------------------------------------- |
+		| 🔐 **私鑰散布**           | 即使共用 library，私鑰仍需存在於每個產 token 的服務中 → 一樣「每台機器都有密鑰」的風險。     |
+		| 🛡 **輪替困難**           | 輪替私鑰時，要同時部署 N 個服務（更新金鑰），很難做到無縫過渡與風險隔離。                    |
+		| 🔍 **無法集中稽核**         | 因為每個服務都能自己產 token，無法知道「誰發的、為什麼發、用了哪些 claim」。              |
+		| 🎯 **驗證邏輯依賴前置服務**     | 每個 Resource Server 需要知道該 token 是哪個服務發的、對應哪個 key，無法單一來源驗證。 |
+		| 🚫 **Revocation 不可行** | 若有安全事件（token 洩漏），無法集中撤銷或設 blacklist，因為你甚至不知道是誰發的。         |
+	比喻理解（共用 library ≠ 安全集中）
+		這就像你公司裡的每位工程師都用同一套密碼產生器程式（library）來設計自己的大門鑰匙，但每人都自己管理那把私鑰🔐：
+		🔐 密碼生成程式一樣（library）
+
+		❌ 但每把鑰匙都自己保管（私鑰分散）
+
+		🔍 沒有鑰匙中心，不知道誰進出哪裡
+
+		🔄 換鎖時要通知每個人同步更新所有鑰匙
