@@ -1,0 +1,87 @@
+ref ChatGPT
+
+OAuth2 架構
+	🧩 核心角色
+		Resource Owner（資源擁有者）
+		通常是使用者（User），擁有受保護的資源（如個人資料）。
+
+		Client（第三方應用）
+		想要存取資源擁有者的資源，例如一個前端 SPA 或行動 App。
+
+		Authorization Server（授權伺服器）
+		驗證 Resource Owner 身分，發出 Access Token（通常還會發 ID Token / Refresh Token）。
+
+		Resource Server（資源伺服器）
+		實際提供資源（API），驗證 Access Token 的合法性來授權存取。
+
+	🔐 常見的 Grant Type（授權類型）
+		Grant Type					用途
+		Authorization Code			Web App 登入流程（安全性高，有 refresh token）
+		Client Credentials			機器對機器，例如後端服務之間（無需登入）
+		Password（已不建議）		使用者帳密直接提供給 client（風險高）
+		Implicit（已不建議）		舊 SPA 使用（已被淘汰，風險高）
+		Refresh Token				用來延續存取權限，不用重登
+
+	🛠️ Token 類型
+		Access Token：用於資源存取，壽命較短。
+
+		Refresh Token：用於換發新的 Access Token。
+
+		ID Token（OpenID Connect 才有）：用於身份驗證，描述使用者。
+
+	Auth server
+		定位
+			✅ 1. 授權身份的中心（身份提供者）
+				核心職責：驗證用戶身份，授權 client 取得 access token。
+				對內部來說，是使用者登入與授權的主機。
+				對外部系統來說，是提供 access token 的授權中心。
+
+			✅ 2. Access Token 的簽發與驗證源頭
+				授權成功後，由它簽發 access token（通常是 JWT）。
+				Resource Server 驗證 JWT 的簽章時，需要依賴它的公開金鑰（/.well-known/jwks.json）。
+				也可能提供 introspection endpoint 供驗證 opaque token（非 JWT）。
+
+			✅ 3. OpenID Connect（OIDC）提供者（可選擇支援）
+				若支援 OIDC，還會提供 id token（含用戶資訊）、用戶資訊 endpoint。
+				可用於 SSO（單一登入）。
+
+		有哪些第三方提供其實作?
+			實作方案
+				需求/條件						推薦方案
+				完全 Spring 生態圈整合			Spring Authorization Server
+				要完整 UI、使用者管理介面		Keycloak
+				不想自架、使用 SaaS				Auth0 / Okta / Cognito
+				微服務、低耦合、高彈性 OAuth2	ORY Hydra
+
+		它與其他元件的關係定位
+			[元件]						[與 Auth Server 的關係與互動]
+			Client						向 Auth Server 請求授權 → 拿到 access token。
+			User						使用者與 Auth Server 互動進行登入與授權。
+			Resource Server				使用 Auth Server 的金鑰來驗證 access token 的有效性。
+			Identity Provider (IdP)		有些情境 Auth Server 本身就是 IdP，有些情境會串接其他 IdP（如 LDAP、AD、Google 等）。
+
+		📦 常見部署位置與模式
+			部署模式											適用情境
+			集中式 Auth Server									多個系統共享認證邏輯、單一入口、統一維護
+			雲端托管（Auth0、Okta）								快速整合、不需維運
+			自架（Spring Authorization Server / Keycloak）		完全控制、支援企業內部政策、可客製化
+
+
+	Resource Server
+		定位
+			為驗證 access token 並保護 API，一般來說大多數 Java 開發者會直接使用 Spring Security 提供的 Resource Server 支援，但也有其他實作選項
+
+		第三方提供其實作?
+			需求							建議實作
+			用 Spring Boot 建 REST API		✅ spring-boot-starter-oauth2-resource-server
+			搭配 Keycloak / Auth0 等 OIDC	✅ 使用 issuer-uri + JWT 驗證
+			微服務架構集中驗證				✅ Gateway 驗證後轉發
+			低依賴 / 自行控制驗證流程		❗ 自建 Filter 驗證
+
+
+📦 實作建議（實務應用）
+	建議使用 Spring Authorization Server 或認證服務如 Keycloak、Auth0 作為 Auth Server。
+
+	各後端服務設定為 Resource Server，驗證 JWT Token。
+
+	前端與後端用 JWT 做授權，不直接驗證身分（除非登入流程需要）。

@@ -1,0 +1,133 @@
+驗證 jwt 測試流程
+	Q:當我 client A with jwt by auth server 取得並打到 client A backend 後，client A backend 到 resource server 驗證 jwt
+		如果我還沒有佈署到 環境時，本機測試怎樣才算恰當測試?
+
+	A: 測試情境重述
+		1.client A frontend：向 Auth Server 拿 JWT（透過 client_id / client_secret 或登入流程）
+		2.client A backend：收到 JWT 後，轉送 API 請求，附帶 JWT
+		3.resource server（另一個 backend）：驗證 JWT（通常是 RS256 憑簽名）
+			🔍 問題是：在「本機測試」環境下，怎樣才算是有「正確驗證 JWT」？
+
+		恰當的本機測試作法
+			1. 在本機啟動 完整 Auth Server
+				讓你本地的前端或測試工具（如 curl、Postman）從本地 Auth Server 實際取得 JWT。
+					* 用 Spring Authorization Server
+
+					* 啟動後會有 /oauth2/token、/.well-known/jwks.json
+
+					* 發出 JWT，內含 RS256 或 HS256 簽名
+
+				測出來的 JWT 是真實的、有簽章、合法的
+
+			2. 本地 resource server 使用「與 Auth Server 對應的 JWT 驗證設定」
+				Spring Boot Resource Server 設定範例（RS256 模式）：
+					spring:
+					  security:
+						oauth2:
+						  resourceserver:
+							jwt:
+							  issuer-uri: http://localhost:9000
+				這樣 Spring Security 就會自動去 Auth Server 的
+					http://localhost:9000/.well-known/openid-configuration
+					http://localhost:9000/oauth2/jwks
+					抓取公鑰來驗證 JWT。
+
+					✅ 測試時就會真的驗簽、真的拒絕無效 token。
+
+			3. 若本機測試無法啟多個服務，怎麼辦？
+				可以 模擬 Resource Server JWT 驗證，用以下兩種方式：
+					方式一：Mock Auth Server 的 JWKS
+						* 將 Auth Server 的 jwks.json 下載下來
+						* 在 Resource Server 中手動指定 public key：
+							spring:
+							  security:
+								oauth2:
+								  resourceserver:
+									jwt:
+									  jwk-set-uri: file:./local-jwks.json
+					方式二：使用 WireMock 或 TestContainer 啟動模擬 JWKS server
+						* 建一個 fake jwks endpoint
+						* 模擬 token 驗證流程，測試整體串接邏輯而非 token 真實有效性
+
+			4. 測試 JWT 驗證失敗的狀況
+				你應該在本地做幾種負面測試：
+
+				測試項目					預期行為
+				缺少 Authorization header	回傳 401
+				JWT 過期					回傳 401 (token expired)
+				JWT 簽名錯誤				回傳 401 (invalid signature)
+				JWT 沒有必要 scope			回傳 403 (access denied)
+
+				✅ Spring Security 會根據 token 驗證結果自動處理這些情況，適合整合測試。
+
+		結論：本機測試是否算「恰當」的條件
+			測試條件									說明
+			✅ JWT 是從本地啟動的 Auth Server 拿的		表示 token 是合法產生的
+			✅ Resource Server 能驗證這個 token			表示 JWT 配置是對的（issuer-uri / jwks 可用）
+			✅ 有處理正負面驗證情境						表示你的權限控制行為是完整的
+			✅ 所有端點可串接、角色設定可用				表示實際運行會和本機情境一致，不會多走後門或忽略驗證
+
+
+僅測試 client A frontend 到 client A backend，但略過 jwt 驗證
+	✅ 前端有呼叫 Auth Server 拿 token
+	✅ 後端有驗證 JWT 是否合法（Resource Server 功能）
+	❌ 但你本機測試時不想真的去取得 JWT / 驗證 JWT，想「略過 token 的取得與驗證過程」，但又「保留程式碼流程完整性」
+
+	流程邏輯完整保留，但本機測試時不依賴 Auth Server 存活或 JWT 真實簽名驗證
+
+	繞過 JWT 驗證（Mock Token 驗證）
+		✅ 方式一：本地 profile 改成 mock JWT 驗證邏輯
+			Spring Security 容許你自訂 JwtDecoder 來控制怎麼驗證 token，你可以在 dev 環境這樣做
+				application-dev.yml
+					spring:
+					  security:
+						oauth2:
+						  resourceserver:
+							jwt:
+							  issuer-uri: mock
+				自訂假的 JwtDecoder Bean
+					@Profile("dev")
+					@Configuration
+					public class DevSecurityConfig {
+
+						@Bean
+						public JwtDecoder jwtDecoder() {
+							return token -> {
+								Map<String, Object> claims = Map.of(
+									"sub", "mock-user",
+									"scope", "read write"
+								);
+								return Jwt.withTokenValue(token)
+										.header("alg", "none")
+										.claims(c -> c.putAll(claims))
+										.issuedAt(Instant.now())
+										.expiresAt(Instant.now().plusSeconds(3600))
+										.build();
+							};
+						}
+					}
+				這樣你本機測試時：
+					* token 是假的，但程式會照樣跑
+
+					* Spring Security 視為合法的 JWT
+
+					* @PreAuthorize("hasAuthority('SCOPE_read')") 等都會照樣生效
+		✅ 方式二：Mock 掉 Auth Server，前端也直接用假的 token
+			建一個簡單的 本地 fake Auth Server endpoint，直接回一個 hardcoded JWT 給前端
+				@RestController
+				@Profile("dev")
+				public class FakeTokenController {
+
+					@PostMapping("/oauth2/token")
+					public Map<String, String> getFakeToken() {
+						return Map.of("access_token", "mock-token", "token_type", "Bearer", "expires_in", "3600");
+					}
+				}
+			client A frontend 直接用這個 token 串後端測試。
+
+		結論：你可以達到「程式碼不改，但測試時略過真實驗證」的目標
+			| 方式            | 適用               | 保留驗證流程？ | 需要 Auth Server 存活？ |
+			| --------------- | ------------------ | -------------- | ------------------ |
+			| Mock JwtDecoder | 本地測試時最推薦   | ✅             | ❌                  |
+			| Fake Auth API   | 前後端串接測試     | ✅             | ❌                  |
+			| 真實 Auth+RS    | 整合/系統測試      | ✅             | ✅                  |

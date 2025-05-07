@@ -1,4 +1,6 @@
-執行概要目標: client A 打 api header with 到 client B
+ref ChatGPT
+
+執行概要目標: client A 打 api header with jwt 到 client B
 	client A
 		1.設定 auth server 在哪(application.yml)
 		2.發起請求到 從 AUTH server 取得 jwt
@@ -6,6 +8,60 @@
 	client B
 		1.client B 設定 讓 Spring Security 知道 Auth Server（JWT 發行者） (application.yml)
 		2.並在 client B api 參數有 @AuthenticationPrincipal Jwt jwt，則 client B 收到會自行自動驗證 jwt
+
+	則 Spring Boot + Spring Security + Spring Authorization Server 預設底層已經幫我們自動處理好
+		能做到不寫任何 JWT 產生或驗證的程式碼，卻讓 OAuth2 流程完整運作
+			已自動完成
+				在 Auth Server 端（JWT 產生）
+					🔐 根據 RegisteredClient 的設定產出 JWT
+					📦 自動生成 access token（含 scope、sub、iat、exp 等 claim）
+					🔏 使用預設（或你指定的）金鑰對 JWT 進行 RS256 簽名
+					🌐 提供 /oauth2/token、/.well-known/jwks.json 等標準 endpoint
+
+				在 Resource Server 端（JWT 驗證）
+					🌐 自動根據 issuer-uri 抓 .well-known/openid-configuration
+					📥 擷取 jwks_uri 並下載 Auth Server 的 public key
+					🔎 解析 HTTP Header 中的 Bearer token
+					🔐 驗證 JWT 的簽章、有效期、issuer、audience
+					🛂 將 scope claim 映射成 SCOPE_xxx 權限給 SecurityContext
+
+			Auth Server 只需：
+				@Bean
+				public RegisteredClientRepository registeredClientRepository() {
+					// 設定 client scope、grant type 就好
+				}
+			Resource Server 只需：
+				spring:
+				  security:
+					oauth2:
+					  resourceserver:
+						jwt:
+						  issuer-uri: https://your-auth-server
+			Spring Security + Authorization Server 會把整個 JWT flow 接管，讓你能專心處理 API 授權、scope 控制、client 註冊 等應用邏輯。
+
+
+OAuth2 auth server
+	管理 clientId、client_secret 方式 for Client Credentials 授權模式
+		管理方式			優點				缺點					適用情境
+		InMemory 硬編碼		快速、簡單			無法變更、不利維護		Demo / 測試
+		JDBC + 啟動初始化	彈性高、結構清晰	初始導入需要建表		正式環境/中大型專案
+		自訂 API 註冊		動態、安全性可控制	實作成本稍高			SaaS / 多租戶
+
+	client_id / secret 發放策略選擇
+		方式					優點			缺點					適用情境
+		手動提供 + 寫入 yml		最簡單			不利更新 / 多環境		測試、小型、固定 client 數量
+		CI/CD 秘密注入			自動化、安全	部署整合較複雜			多 microservice、內部服務
+		自訂註冊 API			彈性高			安全需控管				外部合作方、SaaS 模式
+		產出檔案 / 配置匯出		可控、易整合	管理與加密需考量		傳統架構、半自動化場景
+
+	管理 clientId、client_secret 方式是使用 JDBC + 啟動初始化 方式，如何讓 CI/CD 秘密注入到對應的服務?
+		[CI/CD or Vault 管理 client credentials]
+				|
+				+--> 注入 Auth Server (註冊 RegisteredClient 存 JDBC)
+				|
+				+--> 注入到 Resource Server (或其他 client) 作為 OAuth2 認證使用
+
+		ref 3_1_auth_server
 
 client A
 	1.設定 auth server 在哪(application.yml)
@@ -269,7 +325,24 @@ client B
 		📌 如果 JWT 有效，@AuthenticationPrincipal Jwt jwt 會自動解析 JWT，讓 API 取得用戶資訊！
 
 
+OAuth2 resource server
+	Client Credentials 模式下
+		通常 每個 Backend 通常就自己是 Resource Server
+			Frontend → 拿 JWT → Backend（自己驗證 JWT）
+									  ↑
+								acts as Resource Server
 
+		因為 Client Credentials 模式 的用途本來就偏向：
+			* 機器對機器的存取
+			* 不涉及使用者登入
+			* 每個 backend 服務有不同職責（如報表、任務排程、監控）
+
+		若你把所有 API 集中到一個 Resource Server，會導致：
+			* 各業務後端高度耦合，違反微服務獨立性
+			* 資源管理與權限控管都要中央統一處理，複雜度暴增
+			* 新 backend 推出還要改 centralized RS，不利 CI/CD 自助部署
+
+		ref 3_2_Client_Credentials_resource_server
 
 JWT + Refresh Token 實務設計
 	通常 JWT 會 搭配 Refresh Token，確保安全性又能提升體驗：

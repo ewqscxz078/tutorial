@@ -1,0 +1,145 @@
+✅ 步驟一：CI/CD 決定 client_id / client_secret
+	在 CI/CD pipeline 中，為每個 client 預先產出 client_id / client_secret：
+
+		* 隨機產生
+		* 或由 Git repository/部署腳本設定
+		* 存入：Vault / AWS Secrets Manager / GitHub Actions Secret / K8s Secret / Config Server / CI CD variables
+
+✅ 步驟二：Auth Server 啟動時從 Secret 注入，註冊 RegisteredClient
+	Spring Boot 啟動時讀取來自 secrets 的資訊，初始化註冊：
+		myauth:
+		  clients:
+			- clientId: service-a
+			  clientSecret: ${CLIENT_A_SECRET}
+			  scopes: [read]
+			- clientId: service-b
+			  clientSecret: ${CLIENT_B_SECRET}
+			  scopes: [read, write]
+
+	然後轉為 RegisteredClient
+		@ConfigurationProperties(prefix = "myauth")
+		public class MyAuthProperties {
+			private List<ClientProperties> clients;
+			// getter/setter
+		}
+
+		public class ClientProperties {
+			private String clientId;
+			private String clientSecret;
+			private List<String> scopes;
+			// getter/setter
+		}
+
+		@Bean
+		public CommandLineRunner registerClients(MyAuthProperties props,
+												 RegisteredClientRepository repo,
+												 PasswordEncoder encoder) {
+			return args -> {
+				for (ClientProperties client : props.getClients()) {
+					if (repo.findByClientId(client.getClientId()) == null) {
+						RegisteredClient rc = RegisteredClient.withId(UUID.randomUUID().toString())
+							.clientId(client.getClientId())
+							.clientSecret(encoder.encode(client.getClientSecret()))
+							.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+							.scopes(s -> s.addAll(client.getScopes()))
+							.build();
+						repo.save(rc);
+					}
+				}
+			};
+		}
+
+✅ 步驟三：CI/CD 將相同 secret 注入對應 service
+	每個 resource server 被部署時，CI/CD 將該服務的 client_id / client_secret 也注入進去
+		例如 Kubernetes 的 secret mount
+			env:
+			  - name: CLIENT_ID
+				valueFrom:
+				  secretKeyRef:
+					name: service-a-oauth
+					key: client_id
+			  - name: CLIENT_SECRET
+				valueFrom:
+				  secretKeyRef:
+					name: service-a-oauth
+					key: client_secret
+
+	或 build 時寫入 application.yml
+		spring:
+		  security:
+			oauth2:
+			  client:
+				registration:
+				  myclient:
+					client-id: ${CLIENT_ID}
+					client-secret: ${CLIENT_SECRET}
+✅ 總結流程
+	CI/CD
+	  ├── 決定 client_id / secret
+	  ├── 設定給 Auth Server 啟動環境變數
+	  ├── 註冊成 RegisteredClient（Spring Boot 啟動時）
+	  └── 注入到對應服務（Vault/K8s/env/application.yml）
+
+	結果：
+	  Auth Server 有資料
+	  Client 也有 secret 可用來拿 token
+
+CI/CD pipeline ➜ 秘密管理服務（Vault 等） ➜ Spring Boot 啟動時讀入 ➜ 初始化儲存到 JDBC
+	也就是說，client_id / client_secret 最初的來源是 CI/CD（或 IaC），不是 JDBC 本身，JDBC 只是作為 RegisteredClientRepository 的儲存載體而已
+
+Q:為什麼 RegisteredClient 還是要存進 JDBC？
+	A: Authorization Server 需要知道「哪些 client 是合法的」
+		curl -u my-client:abc123 https://auth-server/oauth2/token
+			Auth Server 會去 RegisteredClientRepository（通常是 JDBC）查詢是否有這個 client：
+
+			存在 → 驗證 client_secret 是否正確
+
+			不存在 → 回 401 Unauthorized
+
+			Auth Server 是「唯一的真實依據」，CI/CD 只是幫忙準備而已
+
+	A: JDBC 是「授權名單」的資料庫，CI/CD 是「秘密注入者」
+
+		✅ JDBC 是「授權名單」的資料庫，CI/CD 是「秘密注入者」
+			職責				說明
+			CI/CD / Vault		產出 & 分發 client_id / client_secret 給 client 服務
+			JDBC (Auth Server)	儲存哪些 client 是合法註冊、允許什麼 grant type、scope、redirect uri
+			Auth Server			根據 JDBC 中的資料來驗證是否允許這個 client 拿 token
+
+	類比解釋
+		CI/CD = 鑰匙工廠，負責做出鑰匙（client_id / secret）並分發給對應 client
+		JDBC = 門鎖清單，負責列出哪些鑰匙是合法的，可以打開哪一扇門（scope / redirect URI / grant type）
+
+		你需要兩者搭配，才是一個安全而可維護的 OAuth2 架構。
+✅ 最佳實務總結
+	1.CI/CD 或 Vault：產出 + 管理 + 注入 client_id / secret
+
+	2.Spring Authorization Server 啟動時：讀取這些資訊註冊到 JDBC
+
+	3.Client App 啟動時：透過 Vault、環境變數、k8s Secret 取得自己的憑證使用
+
+	4.JDBC 資料庫：唯一的授權來源 + 支援查詢與變更控制
+
+
+Q: 我不能一直從 MyAuthProperties 註冊到 InMemory ?
+	這確實可以運作，只要在每次 Auth Server 啟動時，把 client 透過 MyAuthProperties 註冊到 InMemoryRegisteredClientRepository，例如：
+		@Bean
+		public RegisteredClientRepository registeredClientRepository(MyAuthProperties props, PasswordEncoder encoder) {
+			List<RegisteredClient> clients = props.getClients().stream()
+				.map(client -> RegisteredClient.withId(UUID.randomUUID().toString())
+					.clientId(client.getClientId())
+					.clientSecret(encoder.encode(client.getClientSecret()))
+					.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+					.scopes(scopes -> scopes.addAll(client.getScopes()))
+					.build()
+				).toList();
+
+			return new InMemoryRegisteredClientRepository(clients);
+		}
+
+A: 但這種「InMemory 模式」有幾個明確限制：
+	限制											說明
+	無法動態新增/修改/撤銷 client					若你要新增一個 client，要重新部署 Auth Server
+	無法與管理後台整合								管理者不能透過 UI 操作或資料庫直接修改授權資料
+	所有 secret 必須硬塞到 config / vault / env		secret lifecycle 全部靠 CI/CD 控制，缺乏可見性與可審查性
+	不利於橫向擴展 Auth Server 實例					多個 Auth Server 節點時，InMemory 內容無法共享
