@@ -210,7 +210,7 @@ Q:可以在每次佈署時，更換 auth server 的金鑰對嗎?
 			進階實作：
 			  1.提供多把金鑰在 /oauth2/jwks 中（例如：目前金鑰 + 過渡期金鑰）
 			  2.每把 JWK 有對應的 kid（key ID），JWT 中會帶上
-			  3.Resource Server 依據 kid 選擇對應公鑰驗簽
+			  3.Resource Server 依據 kid 選擇對應公鑰驗簽(這部分底層已自動處理)
 			  4.輪替後逐步將舊金鑰撤除
 
 				// src/main/java/com/example/auth/config/JwkRotationConfig.java
@@ -436,3 +436,28 @@ Q:即使每個服務自己產生jwt 送到後端服務 相關的處理抽出通�
 		🔍 沒有鑰匙中心，不知道誰進出哪裡
 
 		🔄 換鎖時要通知每個人同步更新所有鑰匙
+		
+
+
+auth server YML 更常見的作法是：
+	auth:
+	  clients:
+		- clientId: frontend-app
+		  scopes: [read_profile, order.read]
+		  grantTypes: [authorization_code]
+
+	
+	clientSecret 由 CI/CD 注入：
+		auth:
+		  secrets:
+			frontend-app: ${FRONTEND_APP_SECRET}
+
+	啟動註冊時做合併：
+		String clientSecret = injectedSecrets.get(client.getClientId());
+		RegisteredClient client = RegisteredClient.withId(...)
+			.clientId(client.getClientId())
+			.clientSecret(encoder.encode(clientSecret))
+			...
+	
+	若為 SaaS 服務平台則才建議 clientId 由 CICD 動態產生，不然一般給應用程式設定
+	
