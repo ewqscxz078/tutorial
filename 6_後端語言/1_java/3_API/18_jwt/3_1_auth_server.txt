@@ -460,4 +460,172 @@ auth server YML 更常見的作法是：
 			...
 	
 	若為 SaaS 服務平台則才建議 clientId 由 CICD 動態產生，不然一般給應用程式設定
+
+
+Q:client_secret 應該多久更新一次?
+	建議的 client_secret 輪替（rotation）頻率
+		最少 90 天一次，理想每 30～60 天一次，或根據你的組織的資訊安全政策
+	🔐 為什麼需要定期更新 client_secret？
+		| 原因                                     | 說明                                               |
+		| ---------------------------------------- | ------------------------------------------------ |
+		| 🔓 **避免長效機敏資訊外洩風險**          | `client_secret` 洩漏時，若不輪替，攻擊者可永久換 token           |
+		| 📜 **符合安全稽核要求**                  | 很多組織要求 secret（API Key、密碼等）需定期更新                  |
+		| 🔄 **對應金鑰/憑證輪替策略**             | 若你已採 JWT 的 key rotation，`client_secret` 也應配合更新週期 |
+		| ✅ **確保 CI/CD 或 Secret 管理流程可控** | 定期輪替可以測試、驗證流程的自動化是否穩健                            |
 	
+	🧩 客製化輪替策略建議
+		| 應用場景類型        | 建議輪替週期     | 備註                  |
+		| ------------- | ---------- | ------------------- |
+		| 單一服務、內部使用     | 每 60～90 天  | 可自動發 token，風險較低     |
+		| 多租戶 SaaS 使用   | 每 30～60 天  | 因租戶操作分散，建議安全嚴格      |
+		| 含第三方整合 / 外部合作 | 每 30 天或更頻繁 | secret 有被複製、代理、轉發風險 |
+	✅ 技術面實作建議
+		| 項目                    | 建議做法                                    |
+		| ----------------------- | --------------------------------------- |
+		| secret 管理             | 用 Vault、K8s secret、GitOps 管理，不寫死程式碼     |
+		| 輪替方式                | 支援雙 clientSecret 模式（new + old） → 漸進替換   |
+		| 更新流程自動化          | CI/CD 定時觸發重置流程（ex: GitLab schedule job） |
+		| secret 更新後的同步機制 | 讓 consumer（client）能同步收到新 secret         |
+
+	🔁 雙 client_secret 輪替模式（進階做法）
+		為了避免輪替造成中斷，可支援：
+			clientId: service-a
+			clientSecrets:
+			  - active: ${CLIENT_SECRET_V2}     # 新的
+			  - fallback: ${CLIENT_SECRET_V1}   # 舊的還保留幾天
+	✅ 小結
+		| 問題                           | 回答                             |
+		| ------------------------------ | ------------------------------ |
+		| `client_secret` 建議多久更新？ | ✅ 每 30～90 天依風險程度調整             |
+		| 是否要雙 secret 支援漸進輪替？ | ✅ 建議有，避免部署空窗                   |
+		| 如何做最好？                   | ✅ secret 外部化 + 自動輪替 + 雙 key 支援 |
+
+
+		// src/main/java/com/example/auth/security/MultiSecretClientAuthenticationProvider.java
+		package com.example.auth.security;
+
+		import org.springframework.security.authentication.BadCredentialsException;
+		import org.springframework.security.crypto.password.PasswordEncoder;
+		import org.springframework.security.oauth2.core.AuthorizationGrantType;
+		import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+		import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+		import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+		import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationProvider;
+
+		import java.util.List;
+		import java.util.Map;
+
+		public class MultiSecretClientAuthenticationProvider extends OAuth2ClientAuthenticationProvider {
+
+			private final RegisteredClientRepository registeredClientRepository;
+			private final PasswordEncoder passwordEncoder;
+			private final Map<String, List<String>> fallbackSecrets; // clientId -> list of encoded fallback secrets
+
+			public MultiSecretClientAuthenticationProvider(RegisteredClientRepository repo,
+														   PasswordEncoder encoder,
+														   Map<String, List<String>> fallbackSecrets) {
+				super(repo);
+				this.registeredClientRepository = repo;
+				this.passwordEncoder = encoder;
+				this.fallbackSecrets = fallbackSecrets;
+			}
+
+			@Override
+			protected void validateClientSecret(OAuth2ClientAuthenticationToken authentication, RegisteredClient registeredClient) {
+				String rawSecret = authentication.getClientSecret();
+				String primarySecret = registeredClient.getClientSecret();
+
+				if (passwordEncoder.matches(rawSecret, primarySecret)) {
+					return; // primary secret OK
+				}
+
+				List<String> fallbacks = fallbackSecrets.getOrDefault(registeredClient.getClientId(), List.of());
+				for (String fallback : fallbacks) {
+					if (passwordEncoder.matches(rawSecret, fallback)) {
+						return; // matched a fallback
+					}
+				}
+
+				throw new BadCredentialsException("Invalid client secret (checked all known secrets)");
+			}
+		}
+
+		@Bean
+		public AuthenticationProvider customClientAuthProvider(
+			RegisteredClientRepository repo,
+			PasswordEncoder encoder
+		) {
+			Map<String, List<String>> fallbackSecrets = Map.of(
+				"service-a", List.of(
+					encoder.encode("old-secret-456"),
+					encoder.encode("old-secret-789")
+				)
+			);
+			return new MultiSecretClientAuthenticationProvider(repo, encoder, fallbackSecrets);
+		}
+
+		@Bean
+		public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http, AuthenticationProvider customClientAuthProvider) throws Exception {
+			OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+			http.authenticationProvider(customClientAuthProvider);
+			return http.build();
+		}
+		
+		這樣你就能支援「輪替中」的多把 client_secret 並讓驗證流程平滑不中斷。
+		
+  時間線 →
+  ┌────────────┬────────────┬────────────┐
+  │  阶段一    │   阶段二   │   阶段三   │
+  │ 支援雙密碼 │ Client 切換 │ 移除舊密碼 │
+  └────────────┴────────────┴────────────┘
+	 ↑               ↑               ↑
+   Auth 更新       Client 更新     Auth 清理
+
+	這樣做的好處
+		| 優點       | 說明                        |
+		| -------- | ------------------------- |
+		| ✅ 安全     | Client secret 不會一直不換，降低風險 |
+		| ✅ 零中斷    | 雙密碼支援期間，client 無縫換密碼      |
+		| ✅ 可觀察/審核 | 可以記錄切換狀態與稽核哪些 client 尚未更新 |
+
+	🧠 小結
+		| 問題                          | 回答                             |
+		| --------------------------- | ------------------------------ |
+		| `client_secret` 替換順序應該誰先誰後？ | ✅ Auth Server 先支援雙密碼，client 再換 |
+		| 是否能做到不中斷輪替？                 | ✅ 可以，搭配 fallback secret 和雙驗證   |
+		| 換完是否要記得移除舊密碼？               | ✅ 必須，避免永久存活造成風險                |
+
+
+	如果不上下服務而是透過 spring cloud config 動態刷新更棒
+		搭配 Spring Cloud Config + 動態刷新（如 Spring Cloud Bus），那麼連服務上下都不用，client_secret 的更新就能更無縫、即時生效
+
+	✅ 具體做法與流程
+		使用 Spring Cloud Config + Spring Cloud Bus 搭配方式：
+		1.Auth Server 使用 @ConfigurationProperties 綁定 client_secret 值
+
+		2.由 Spring Cloud Config Server 提供更新後的 YAML（或 Git 後端）
+
+		3.使用 Spring Cloud Bus 發佈 /actuator/bus-refresh
+			→ 所有 Auth Server 節點即時刷新 secret 內容
+
+		4.RegisteredClient 註冊邏輯不重啟、不上下服務，直接生效 ✅
+
+	✅ 優點對比
+		模式							是否上下服務？	安全性	自動化程度		維運難度
+		傳統上下線換 secret				❌ 要上下服務	✅ 高	❌ 手動			⚠️ 容易錯誤
+		支援 fallback 雙驗證模式		✅ 不中斷		✅ 高	✅ 一半自動		🟡 稍需人工監控
+		☁️ Spring Cloud Config + Bus	✅ 無需上下服務	✅ 高	✅✅ 高			✅ 易維運
+
+	✅補充建議：安全 + 自動化整合
+		| 建議面向               | 說明                                                     |
+		| ------------------ | ------------------------------------------------------ |
+		| 🔐 密碼管理            | secret 儲存在 Git repo 前建議加密（使用 Spring Vault 或 KMS）       |
+		| 🔁 secret rotation | 可定期透過 Git PR + Jenkins/GitHub Action 發佈新 secret        |
+		| 🔄 雙 secret 模式     | 也可在 config 中同時保留 `activeSecret` / `backupSecret` 做平滑過渡 |
+		| 🔔 secret 更新通知     | 搭配 Slack/Jira webhook 提醒團隊更新對應使用者設定                    |
+	✅ 小結
+		| 問題                                         | 回答                                              |
+		| -------------------------------------------- | ------------------------------------------------- |
+		| Spring Cloud Config + Bus 能否避免上下服務？ | ✅ 絕對可以，是最佳實務之一                       |
+		| 能即時更新 `client_secret` 嗎？              | ✅ 可以，搭配 `@RefreshScope` 或 ConfigProperties |
+		| 是否建議搭配雙 secret 結構一起使用？         | ✅ 更安全、過渡期控制彈性更高                     |
