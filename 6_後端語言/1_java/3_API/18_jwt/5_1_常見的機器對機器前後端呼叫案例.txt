@@ -1,0 +1,63 @@
+ref ChatGPT
+
+✅ 總結常見 M2M(機器對機器) API 類型
+	類型		REST 方法		範例 API						JWT 驗證角色
+	資料推送	POST			/api/notify, /api/data/submit	認證來源服務
+	資料查詢	GET				/api/configs, /api/reports		確認是否有查詢權限
+	批次排程	POST			/api/jobs/run					代表 scheduler 身份
+	中繼服務	POST			/api/files/forward				保證來源系統可 trusted
+	多服務協同	GET/POST		/api/process/step2				驗證每個步驟的合法性
+
+	| 類型       | REST 方法  | 範例 API                          | JWT 驗證角色              |
+	| ---------- | ---------- | --------------------------------- | ------------------------- |
+	| 資料推送   | POST       | `/api/notify`, `/api/data/submit` | 認證來源服務              |
+	| 資料查詢   | GET        | `/api/configs`, `/api/reports`    | 確認是否有查詢權限        |
+	| 批次排程   | POST       | `/api/jobs/run`                   | 代表 scheduler 身份       |
+	| 中繼服務   | POST       | `/api/files/forward`              | 保證來源系統可 trusted    |
+	| 多服務協同 | GET/POST   | `/api/process/step2`              | 驗證每個步驟的合法性      |
+
+
+1. 📤 前端服務 A 傳資料給後端服務 B 處理
+	情境：
+		* A 處理完某筆資料，需將處理結果推送給 B。
+		* A 使用 client_credentials 取得 JWT，呼叫 B 的 /api/data/receive
+
+2. 🧾 產生報表 / 匯出資料（batch job / scheduler）
+	情境：
+		* 批次服務每日凌晨自動執行報表產出並上傳至某個後端
+		* 使用者無需登入，由 Scheduler 使用特定 client 呼叫 /api/report/generate
+
+3. 📦 系統 A 觸發事件，呼叫通知服務（Event Hook / Webhook）
+	情境：
+		* 系統 A 偵測到某事件（如異常、審核完成）
+		* 呼叫通知系統（如 LineBot、Email 發送者）告知該事件
+
+4. 🧬 微服務之間的 API 呼叫（Internal Service Communication）
+	情境：
+		* A 微服務要從 B 服務查詢資料（如使用者設定）
+		* 雙方皆使用 OAuth2 JWT 驗證彼此身份
+
+5. 🔁 多階段工作流程中的子服務協作
+	情境：
+		* 一個複雜工作流程拆分為多段，由多個服務處理
+		* 各段間傳遞狀態時使用 REST + JWT 保證身份
+			(前處理服務) → (轉檔服務) → (通知服務)
+
+6. 📦 檔案上傳 / 中繼
+	情境：
+		* 上傳服務將檔案存至檔案服務或媒體儲存服務
+		* 透過 /api/files/upload 搭配 JWT 呼叫後端
+
+7. 🔍 稽核紀錄上傳服務（Log Ingestor）
+	情境：
+		* 各子系統或 container 會定期將稽核 log / trace data 傳給中心 log server
+		* 每個 clientId 表示來源服務（ex: log-agent-app）
+
+✅ 擴展性策略：每個 clientId 可對應到下列用途
+	| JWT Claim  | 用法範例                                            |
+	| ---------- | --------------------------------------------------- |
+	| `clientId` | 認定來源身分（如 `batch-job-a`、`gateway-service`） |
+	| `scope`    | 控管允許行為（如 `log.push`, `report.generate`）    |
+	| `systemId` | 標記哪個服務（方便記錄與日誌）                      |
+	| `env`      | 標記呼叫來自 dev/stage/prod                         |
+	| `tenant`   | 如跨租戶時區分來源租戶（非人、是系統）              |

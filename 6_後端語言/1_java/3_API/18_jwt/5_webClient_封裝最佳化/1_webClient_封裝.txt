@@ -1,0 +1,71 @@
+ref ChatGPT
+
+把 WebClient「封裝得像 FeignClient 一樣」
+
+🎯 核心做法：
+	用「介面 + 實作類 + WebClient」封裝成類似 FeignClient 的風格
+	✅ 外觀像 Feign，但底層是 WebClient，保有 streaming、header 控制、錯誤攔截等彈性
+
+✅ 封裝 WebClient 像 FeignClient 的範例
+	📁 Step 1: 定義你的介面（像 Feign）
+		public interface FileApiClient {
+			UserResponse getUser(String id);
+			Resource downloadFile(String fileId);
+		}
+
+	📁 Step 2: 用 WebClient 自行實作
+		@Service
+		public class FileApiClientImpl implements FileApiClient {
+
+			private final WebClient webClient;
+
+			public FileApiClientImpl(WebClient.Builder builder) {
+				this.webClient = builder
+					.baseUrl("http://file-service:8080")
+					.build();
+			}
+
+			@Override
+			public UserResponse getUser(String id) {
+				return webClient.get()
+					.uri("/api/users/{id}", id)
+					.retrieve()
+					.bodyToMono(UserResponse.class)
+					.block();
+			}
+
+			@Override
+			public Resource downloadFile(String fileId) {
+				return webClient.get()
+					.uri("/api/files/{id}/download", fileId)
+					.retrieve()
+					.bodyToMono(Resource.class)
+					.block();
+			}
+		}
+
+	✅ 使用時就跟 FeignClient 一樣簡潔：
+		@Autowired
+		private FileApiClient fileApiClient;
+
+		public void doSomething() {
+			var user = fileApiClient.getUser("abc");
+			var file = fileApiClient.downloadFile("file123");
+		}
+
+	✅ 優勢比較
+		| 功能                                    | FeignClient | 封裝 WebClient                |
+		| --------------------------------------- | ----------- | ----------------------------- |
+		| 型別安全、介面呼叫                      | ✅ 有       | ✅ 有（你自己定義 interface） |
+		| 自動加 Bearer Token                     | ✅ 有       | ✅ 可加 filter + oauth2 支援  |
+		| 可串流下載                              | ❌ 不支援   | ✅ 完全可支援                 |
+		| 可完整控制 Header / Content-Disposition | ❌ 難       | ✅ 簡單                       |
+		| 錯誤攔截與 retry                        | ✅ 但有限   | ✅ 完整支持（Reactor Retry）  |
+		| 多 part file 上傳                       | ⚠ 複雜     | ✅ WebClient 更強             |
+
+	🧠 建議實務做法（若你偏向彈性）
+		| 項目                                    | 建議                                                             |
+		| --------------------------------------- | ---------------------------------------------------------------- |
+		| 對所有微服務都使用 WebClient            | 封裝為 `ServiceApiClient` interface + `Impl`                     |
+		| 提供 baseUrl 與 token filter 共用設定   | 用 `WebClient.Builder` + Filter 實現                             |
+		| 建立介面專案                            | 你可以把 `ApiClient` interface 放進 `common-api` 模組，支援 mock |

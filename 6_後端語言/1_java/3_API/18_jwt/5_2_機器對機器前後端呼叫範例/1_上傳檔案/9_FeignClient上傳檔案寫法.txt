@@ -1,0 +1,53 @@
+ref ChatGPT
+
+FeignClient 是支援檔案上傳的，但不直覺，也不是預設開箱支援
+
+🎯 原因解析：為何 Feign 沒把 multipart 做成開箱功能？
+	1. Feign 設計哲學是“最小抽象”
+		它只是把介面 method 轉為 HTTP 呼叫
+		並不像 WebClient 一樣提供串流控制、低階 multipart API
+
+	2. Spring Cloud 對 multipart 的支援其實是透過 Spring MVC Encoder
+		若你沒額外設定 Encoder，FeignClient 不知道怎麼把檔案轉成 multipart body
+		所以你需要引入：
+		<dependency>
+		  <groupId>io.github.openfeign.form</groupId>
+		  <artifactId>feign-form-spring</artifactId>
+		</dependency>
+
+	3. 對檔案上傳支援的行為取決於 Encoder 設定是否支援 multipart/form-data
+
+✅ 正確做法：Feign + 檔案上傳支援步驟
+	📦 1. 引入依賴：
+		<dependency>
+		  <groupId>io.github.openfeign.form</groupId>
+		  <artifactId>feign-form-spring</artifactId>
+		</dependency>
+
+	⚙️ 2. 自訂 Encoder 註冊給 FeignClient：
+		@Configuration
+		public class FeignMultipartSupportConfig {
+
+			@Bean
+			public Encoder feignFormEncoder() {
+				return new SpringFormEncoder();
+			}
+		}
+
+	🖋️ 3. FeignClient 宣告檔案上傳方法：
+		@FeignClient(name = "file-service", url = "${file.service.url}",
+					 configuration = FeignMultipartSupportConfig.class)
+		public interface FileUploadClient {
+
+			@PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+			String uploadFile(@RequestPart("file") MultipartFile file);
+		}
+
+
+⚠️ 限制與注意：
+	| 問題                                   | 說明                                                         |
+	| -------------------------------------- | ------------------------------------------------------------ |
+	| ❌ 串流無法處理                        | Feign 不支援大檔案 streaming，只能 memory 模式               |
+	| ❌ 無法用 `InputStream` 傳             | 必須是 `MultipartFile` 或 `File` 型別                        |
+	| ❌ 不支援動態 Content-Disposition 設定 | 彈性差，WebClient 更適合處理細節                             |
+	| ❌ 回傳型別要注意                      | 有些情況無法正確解 JSON error response（需額外處理 decoder） |

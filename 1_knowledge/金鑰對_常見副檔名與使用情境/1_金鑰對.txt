@@ -1,0 +1,49 @@
+ref ChatGPT
+
+
+依使用情境不同，常見的金鑰對格式主要有以下幾種形式：
+
+🔐 常見金鑰對格式總覽
+
+	| 格式        | 副檔名                 | 說明與用途                                                                       |
+	| ----------- | ---------------------- | -------------------------------------------------------------------------------- |
+	| **PEM**     | `.pem`, `.crt`, `.key` | 最常見的純文字 Base64 格式，廣泛用於 SSL/TLS、JWT 簽章、公私鑰儲存等             |
+	| **DER**     | `.der`, `.cer`         | 二進位格式，常見於 Java truststore/keystore 使用                                 |
+	| **PKCS#8**  | `.key`, `.pem`         | 私鑰的標準格式，常用於 JWT、OAuth2 等私鑰簽章應用                                |
+	| **PKCS#1**  | `.key`                 | RSA 私鑰格式，老舊但仍常見，Java 不直接支援需轉換成 PKCS#8                       |
+	| **JKS**     | `.jks`                 | Java 專用的 keystore 格式，常用於 HTTPS/SSL 憑證載入（過時，已被 PKCS#12 取代）  |
+	| **PKCS#12** | `.p12`, `.pfx`         | 二進位格式，支援私鑰與憑證一起儲存，Java keystore/truststore 的主流格式          |
+	| **OpenSSH** | `.pub`, `.key`         | 用於 SSH 登入（非 TLS），非 Java 標準，但偶爾會轉換做其他用途                    |
+
+🧰 Java 使用情境對應金鑰格式
+	| 情境                                 | 建議格式 / 說明                                                                                                      |
+	| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+	| **JWT / OAuth2 簽章（JWS）**         | 使用 `.pem`（PKCS#8 for private, X.509 for public）<br>搭配 `java.security.KeyFactory`、`java.security.spec.*` 載入  |
+	| **HTTPS 通訊（Server SSL）**         | 使用 `.p12` 或 `.jks` keystore，配合 `KeyStore` 載入                                                                 |
+	| **Spring Boot 設定 TLS 憑證**        | `.p12`（搭配 `server.ssl.key-store` 設定）                                                                           |
+	| **SSH 金鑰登入（非 Java 標準用途）** | 通常是 OpenSSH 格式，但須轉換才可與 Java 配合                                                                        |
+	| **加密/解密檔案**（如 RSA + AES）    | 建議使用 `.pem`（PEM encoded PKCS#8 / X.509）形式儲存                                                                |
+
+✅ 實務建議
+	若與其他系統交換 JWT、公私鑰簽章 → PEM 格式最佳
+	若為 Java 內部服務互通（例如 SSL）→ PKCS#12 (.p12) 或 .jks
+	若要避免 keystore 較難處理的問題，可採用 Spring Boot + PEM 檔方式 處理 JWT 簽名
+
+
+自簽憑證快速生成 .pem
+	🔧 產生 RSA 自簽憑證與 PEM 金鑰對（最常見用法）
+		# 產生 2048 位元 RSA 私鑰（PEM 格式）
+			openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+
+		# 從私鑰產生對應的公鑰（PEM 格式）
+			openssl rsa -pubout -in private_key.pem -out public_key.pem
+
+🔐 若你要產生完整的自簽憑證（for HTTPS 等）
+	# 一步產出私鑰 + 自簽憑證（valid for 365 天）
+	openssl req -x509 -newkey rsa:2048 -keyout private_key.pem -out cert.pem -days 365 -nodes
+
+		* private_key.pem: 私鑰
+
+		* cert.pem: 自簽憑證（即公鑰 + metadata）
+
+		⚠️ 加上 -nodes 可避免加密私鑰（開發環境常用）

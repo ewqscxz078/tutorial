@@ -1,0 +1,60 @@
+ref ChatGPT
+
+WebClient vs FeignClient 的差異在「易用性 vs 彈性與控制力」
+	WebClient 設定比較麻煩（需處理 bearer token、錯誤處理、重試、序列化）
+	而 FeignClient 使用起來就像調用本地 interface 一樣簡潔明瞭 ✅
+
+✅ FeignClient 的特點（Spring Cloud OpenFeign）
+	| 項目                                 | 說明                                                  |
+	| ------------------------------------ | ----------------------------------------------------- |
+	| ✅ **易用性高**                      | 定義介面就能呼叫 REST API，幾乎零樣板程式碼           |
+	| ✅ **自動序列化/反序列化**           | 入參、回傳都自動 JSON 處理                            |
+	| ✅ **內建錯誤處理、重試、超時設定**  | 可配合 application.yml 設定                           |
+	| ✅ **整合 OAuth2 Bearer Token**      | 可搭配 `OAuth2FeignClient` 自動加 token               |
+	| ❌ **較不彈性**                      | 若你要做串流上傳、低階 HTTP 攔截、動態 URI 就比較難   |
+	| ❌ **依賴 Spring Cloud OpenFeign**   | 需引入相關依賴與版本管理                              |
+
+
+✅ WebClient 的特點
+	| 項目                                           | 說明                                           |
+	| ---------------------------------------------- | ---------------------------------------------- |
+	| ✅ **功能最完整、反應式、支援 streaming**      | 包含 multipart、non-blocking、超時控制等       |
+	| ✅ **能與 OAuth2、retry、filter 彈性整合**     | 手動控制所有 header、body、token 行為          |
+	| ❌ **寫法較繁雜**                              | 需要自己建構 URI、處理例外、配置 JSON、Retry   |
+
+
+✅ 什麼時候選 FeignClient？
+	建議選用 FeignClient 的時機：
+		✅ REST API 輸入/輸出簡單（JSON）
+		✅ 調用方式穩定（不需動態切換 URL）
+		✅ 想快速完成服務間呼叫
+		✅ 使用 Spring Cloud、且已有 Spring Cloud OAuth2 / Eureka 等整合
+
+
+✅ Feign 範例
+	後端請求介面範例
+		@FeignClient(name = "clientB", url = "${client-b.api-url}")
+		public interface ClientBFeignClient {
+
+			@GetMapping("/api/orders")
+			String getOrders();
+
+			@PostMapping("/api/orders")
+			OrderResponse createOrder(@RequestBody OrderRequest request);
+		}
+
+	前端呼叫
+		@Autowired
+		private ClientBFeignClient clientB;
+
+		public void doSomething() {
+			var response = clientB.getOrders();
+		}
+
+🧠 結論建議：
+	| 場景                                           | 選擇建議                |
+	| ---------------------------------------------- | ----------------------- |
+	| 需要簡潔開發、多個後端 API 整合                | ✅ 用 FeignClient       |
+	| 複雜請求格式（multipart、streaming）、高度控制 | ✅ 用 WebClient         |
+	| 有 Spring Cloud 生態（Config、Eureka、OAuth2） | ✅ Feign 整合性最好     |
+	| 想做 reactive / 非同步串流處理                 | ✅ WebClient 為唯一選擇 |

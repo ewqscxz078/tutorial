@@ -1,6 +1,6 @@
 ref ChatGPT
 
-OAuth2 架構
+OAuth2 授權協議架構
 	🧩 核心角色
 		Resource Owner（資源擁有者）
 		通常是使用者（User），擁有受保護的資源（如個人資料）。

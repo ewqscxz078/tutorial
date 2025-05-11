@@ -1,0 +1,92 @@
+ref ChatGPT
+
+情境2:兩段式：前端落地再上傳到後端
+	[使用者] → HTTP 上傳檔案 → [前端服務（Client）]
+			   前端接到 MultipartFile 之後，再透過 WebClient + JWT →
+			   呼叫 Resource Server 傳送檔案 → [後端服務（Resource Server）]
+	1.使用者傳檔案給「前端服務」
+
+	2.前端服務將接收到的 Multipart 檔案透過 WebClient 搭配 JWT 上傳到後端（內網或受保護的 API）
+
+
+📍 1. 使用者 → 前端服務（Controller）
+	@RestController
+	public class UserUploadController {
+
+		private final FileRelayService fileRelayService;
+
+		public UserUploadController(FileRelayService fileRelayService) {
+			this.fileRelayService = fileRelayService;
+		}
+
+		@PostMapping("/upload")
+		public ResponseEntity<String> userUpload(@RequestParam("file") MultipartFile file) throws IOException {
+			String result = fileRelayService.forwardFileToBackend(file);
+			return ResponseEntity.ok("前端收到檔案，後端回應：" + result);
+		}
+	}
+
+
+📍 2. 前端服務 → 後端服務（WebClient 傳送檔案）
+	@Service
+	public class FileRelayService {
+
+		private final WebClient webClient;
+
+		public FileRelayService(WebClient webClient) {
+			this.webClient = webClient;
+		}
+
+		public String forwardFileToBackend(MultipartFile file) throws IOException {
+			return webClient.post()
+					.uri("http://localhost:8081/api/files/upload")
+					.contentType(MediaType.MULTIPART_FORM_DATA)
+					.body(BodyInserters.fromMultipartData("file",
+							new MultipartBodyBuilder()
+								.part("file", file.getResource())
+								.filename(file.getOriginalFilename())
+								.build()
+								.toSingleValueMap()))
+					.retrieve()
+					.bodyToMono(String.class)
+					.block();
+		}
+	}
+
+	該範例:沒有先在前端「明確落地到磁碟」，但會有「記憶體或臨時檔案落地」的情況（由 Spring 自動處理）
+		🔍 具體來說：
+			MultipartFile file
+				這個 file 是由 Spring MVC 在 multipart/form-data 上傳解析時建立的，具體會用 StandardMultipartHttpServletRequest 把內容轉成 CommonsMultipartFile 或其他實作。
+				Spring 的行為是：
+					小檔案會存在 記憶體中（in-memory）
+					大檔案（通常超過 spring.servlet.multipart.file-size-threshold，預設 0）會寫到 臨時目錄（如 /tmp）
+				所以即使你沒顯式 .transferTo(new File(...)) 落地，Spring 背後有可能已經先落地了臨時檔案。
+			當你呼叫：
+				file.getResource()
+					其實會回傳一個 FileSystemResource 或 ByteArrayResource，視 Spring 如何處理該檔案而定。
+		✅ 所以這段程式屬於：
+			| 層級         | 評價                                                                                   |
+			| ------------ | -------------------------------------------------------------------------------------- |
+			| 落地與否     | ✅**使用者不明確落地**，但**可能由 Spring 實作落地至 tmp**                             |
+			| 傳送方式     | ✅ 是基於 Resource 作為 multipart 傳送體，透過 `WebClient`                             |
+			| 是否真正串流 | ❌ 並非 true streaming（InputStream to InputStream）<br>✅ 是基於檔案或 ByteArray 轉發 |
+
+
+📍 3. 後端服務接收
+	@PostMapping("/api/files/upload")
+	public ResponseEntity<String> handleUpload(
+			@RequestPart("file") MultipartFile file,
+			@AuthenticationPrincipal Jwt jwt) throws IOException {
+
+		String clientId = jwt.getSubject();
+		String fileName = file.getOriginalFilename();
+		System.out.println("來自: " + clientId + ", 檔名: " + fileName);
+		// 儲存...
+		return ResponseEntity.ok("檔案 " + fileName + " 上傳成功");
+	}
+
+
+📝 小補充
+	若檔案內容很大，可考慮使用 streaming（InputStreamResource） 傳輸
+	若需掃毒、壓縮、加密，可於後端處理後回傳 metadata
+	可加上 traceId 或 fileId 方便前後服務追蹤

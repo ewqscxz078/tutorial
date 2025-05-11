@@ -1,0 +1,90 @@
+ref ChatGPT
+
+情境1: 前端（或 batch job）直接讀檔並透過 WebClient 傳給後端
+	✅ 1. Auth Server 註冊 Client（略）
+		client-id: file-uploader
+		client-secret: uploader-secret
+		grant-type: client_credentials
+		scope: file.upload
+
+	✅ 2. Client 端程式（前端某batchjob 上傳檔案）
+		🔧 application.yml
+			spring:
+			  security:
+				oauth2:
+				  client:
+					registration:
+					  file-uploader:
+						client-id: file-uploader
+						client-secret: uploader-secret
+						authorization-grant-type: client_credentials
+						scope: file.upload
+						provider: auth-server
+					provider:
+					  auth-server:
+						token-uri: http://localhost:9000/oauth2/token
+		☕ Java 程式碼（使用 WebClient 傳 multipart 檔案）
+			@Autowired
+			private WebClient webClient;
+
+			public void uploadFile(Path filePath) throws IOException {
+				Resource resource = new FileSystemResource(filePath);
+
+				webClient.post()
+					.uri("http://localhost:8081/api/files/upload")
+					.contentType(MediaType.MULTIPART_FORM_DATA)
+					.body(BodyInserters.fromMultipartData("file", resource))
+					.retrieve()
+					.bodyToMono(String.class)
+					.doOnNext(resp -> System.out.println("✅ 上傳完成: " + resp))
+					.block();
+			}
+
+	✅ 3. Resource Server 端程式（接收檔案）
+		🔧 application.yml
+			spring:
+			  security:
+				oauth2:
+				  resourceserver:
+					jwt:
+					  jwk-set-uri: http://localhost:9000/oauth2/jwks
+		☕ Java REST Controller
+			@RestController
+			@RequestMapping("/api/files")
+			public class FileUploadController {
+
+				@PostMapping("/upload")
+				public ResponseEntity<String> handleUpload(
+						@RequestPart("file") MultipartFile file,
+						@AuthenticationPrincipal Jwt jwt) throws IOException {
+
+					String clientId = jwt.getSubject(); // ex: file-uploader
+					String fileName = file.getOriginalFilename();
+					System.out.println("🔐 上傳者: " + clientId + ", 檔案: " + fileName);
+
+					// 儲存檔案
+					Path dest = Path.of("/tmp/uploads/", fileName);
+					file.transferTo(dest);
+
+					return ResponseEntity.ok("Uploaded: " + fileName);
+				}
+			}
+
+		✅ Security 設定（Resource Server 放行 /api/files/upload 並驗證 JWT）
+			@Bean
+			public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+				http
+					.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/api/files/upload").hasAuthority("SCOPE_file.upload")
+						.anyRequest().authenticated()
+					)
+					.oauth2ResourceServer(oauth2 -> oauth2.jwt());
+
+				return http.build();
+			}
+
+🔍 小技巧
+	可依 clientId（即 JWT 的 sub）建立專屬檔案目錄
+	上傳者可帶附加參數（如檔案用途、備註、上傳時間等）
+	可搭配 checksum、scan 或後續非同步處理流程
+

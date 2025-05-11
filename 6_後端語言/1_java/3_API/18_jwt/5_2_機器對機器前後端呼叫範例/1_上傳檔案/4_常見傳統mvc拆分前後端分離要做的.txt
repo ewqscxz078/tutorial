@@ -1,0 +1,82 @@
+ref ChatGPT
+
+傳統 MVC 單體架構 → 前後端分離（RESTful + 前端框架）
+
+
+✅ 前後端分離改動項目對照表（含責任方）
+
+	| 項目              | 原本行為（MVC）                                     | 前後端分離後                                         | 調整責任                        | 補充說明                                    |
+	| ----------------- | --------------------------------------------------- | ---------------------------------------------------  | ------------------------------- | ------------------------------------------- |
+	| ✅ UI 畫面        | 後端回傳 JSP / Thymeleaf                            | 前端框架渲染畫面（Vue/React）                        | **前端修改**                    | 後端只提供 API，不再產生 HTML               |
+	| ✅ Controller     | 回傳 `ModelAndView` / View 名稱                     | 改為 `@RestController` 回 JSON                       | **後端修改**                    | 所有資料以 JSON 回傳給前端                  |
+	| ✅ 路由跳轉       | 後端做 `redirect:` 或 `.jsp` 導頁                   | 前端用 `router.push()` 或前端路由                    | **前端修改**                    | 後端僅提供 API，不參與頁面跳轉              |
+	| ✅ 登入認證       | Spring Security form login + Session                | 前端送帳密打 API，取得 JWT                           | **前後端都需改**                | 後端改成 `/login` API 回 JWT，前端存 token  |
+	| ✅ Authorization  | `HttpSession` 判斷登入                              | 攜帶 `Authorization: Bearer xxx` header              | **後端修改**                    | 後端改用 JWT 驗證 `Authentication`          |
+	| ✅ 靜態資源       | 後端 `/resources/static/**` 提供 js/css/html        | 前端 build 完部署到獨立位置（CDN/Nginx）             | **前端改部署方式**              | Spring Boot 不再提供靜態檔案服務            |
+	| ✅ 錯誤處理       | 回 403.jsp / 404.jsp                                | 後端回 JSON 錯誤碼 + 錯誤訊息，前端顯示畫面          | **後端負責格式、前端負責顯示**  | 使用 `@ControllerAdvice` 統一錯誤格式       |
+	| ✅ API 呼叫方式   | Thymeleaf/JSP 中嵌入 Controller 回傳資料            | 改為 `fetch` / `axios` / `WebClient` 調用 REST API   | **前端重寫資料存取方式**        | 所有資料改從 `/api/...` 撈                  |
+	| ✅ 登入成功導頁   | `SecurityConfig.successUrl()` 或 return `home.jsp`  | 登入成功後前端自行轉跳頁面                           | **前端控制轉跳**                | 後端僅給 login 成功訊息/token               |
+
+
+🧠 判斷原則簡單一句話：
+	後端只做 API，前端全部自己畫畫面、轉跳、儲存狀態與處理錯誤。
+
+📌 實務開發建議：
+	| 工作類型                | 誰負責                         |
+	| ----------------------- | ------------------------------ |
+	| 畫面 UI（Vue/React）    | 前端                           |
+	| 呼叫 API 串資料         | 前端                           |
+	| 提供 JSON 資料          | 後端                           |
+	| 驗證身份、產生 JWT      | 後端                           |
+	| 前端登入成功後要跳去哪  | 前端自己控制                   |
+	| 錯誤頁面畫面怎麼顯示    | 前端決定，後端只給錯誤碼與訊息 |
+
+
+1.前端傳送參數 A →
+2.後端處理 → 回傳資料 B →
+3.為了前後端一致、避免重工/誤解，把 A/B 的結構抽出共用 →
+4.放到一個 interface 專案（common DTO 模組） 中讓前後端共用！
+
+🔁 傳送結構（Request DTO）：
+	POST /api/user/update
+	{
+	  "id": "123",
+	  "nickname": "David"
+	}
+
+🧾 回應結構（Response DTO）：
+	{
+	  "status": "OK",
+	  "updatedTime": "2025-05-10T10:30:00Z"
+	}
+
+✅ 共用 DTO 專案範例：interface-dto
+	// interface-dto/src/main/java/com/example/dto/UserUpdateRequest.java
+	@Data
+	public class UserUpdateRequest {
+		private String id;
+		private String nickname;
+	}
+
+	// interface-dto/src/main/java/com/example/dto/UserUpdateResponse.java
+	@Data
+	public class UserUpdateResponse {
+		private String status;
+		private LocalDateTime updatedTime;
+	}
+
+
+✅ 這樣前後端都可使用相同定義
+	| 優點                                   | 說明                                                          |
+	| -------------------------------------- | ------------------------------------------------------------- |
+	| 📦 型別一致                            | 前後端不會因欄位名/型別出錯（尤其日期、enum）                 |
+	| 🚫 減少 copy-paste 或 JSON schema 重工 | 不用再手抄後端文件或 swagger                                  |
+	| 🧪 減少測試成本                        | 只要 DTO 一致就不怕不對齊                                     |
+	| 🧠 IntelliSense + 編譯型檢查           | TS/Java 都能對共用物件自動補全與檢查                          |
+	| 🧩 未來支援版本控管                    | 共用 interface project 可依版本發佈不同版本給前端或其他系統用 |
+
+	| 模組              | 內容                                | 負責       |
+	| ----------------- | ----------------------------------- | ---------- |
+	| `interface-dto`   | 共用 DTO / enum / error code        | 前後端共用 |
+	| `backend-api`     | 實作 REST API，引用 `interface-dto` | 後端       |
+	| `frontend-app`    | 呼叫 API，引用轉出來的型別（或轉換）| 前端       |

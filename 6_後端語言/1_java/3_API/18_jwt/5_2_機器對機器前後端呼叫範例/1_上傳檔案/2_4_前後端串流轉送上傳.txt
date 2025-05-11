@@ -1,0 +1,128 @@
+ref ChatGPT
+
+情境4:前後端串流轉送上傳（streaming proxy）範例
+	[使用者 → 前端服務] → Streaming Proxy（不落地）→ Resource Server 接收並儲存
+
+📍 1. 前端服務 Controller（完全串流轉送）
+	@RestController
+	public class StreamingProxyController {
+
+		private final WebClient webClient;
+
+		public StreamingProxyController(WebClient webClient) {
+			this.webClient = webClient;
+		}
+
+		@PostMapping("/upload")
+		public ResponseEntity<String> proxyUpload(HttpServletRequest request) {
+			String contentType = request.getContentType();
+
+			return webClient.post()
+				.uri("http://localhost:8081/api/files/upload")
+				.header(HttpHeaders.CONTENT_TYPE, contentType)
+				.body(BodyInserters.fromDataBuffers(DataBufferUtils.readInputStream(
+					() -> request.getInputStream(),
+					new DefaultDataBufferFactory(),
+					8192)))
+				.retrieve()
+				.bodyToMono(String.class)
+				.map(body -> ResponseEntity.ok("後端回應：" + body))
+				.block();
+		}
+	}
+	🔸 readInputStream() 會將 ServletInputStream 直接串流轉成 WebClient 可讀的內容
+	🔸 保留原本的 multipart/form-data 結構與邊界（boundary）
+
+📍 2. Resource Server 接收檔案（標準 Multipart 接收）
+	@PostMapping("/api/files/upload")
+	public ResponseEntity<String> backendUpload(@RequestPart("file") MultipartFile file,
+												@AuthenticationPrincipal Jwt jwt) throws IOException {
+		String fileName = file.getOriginalFilename();
+		System.out.println("✅ 收到檔案: " + fileName + "，來自 client: " + jwt.getSubject());
+
+		Path dest = Paths.get("/tmp/uploads/", fileName);
+		file.transferTo(dest);
+
+		return ResponseEntity.ok("檔案已儲存：" + fileName);
+	}
+
+
+✅ 特點與注意事項
+	| 優點         | 說明                                     |
+	| ------------ | ---------------------------------------- |
+	| ⚡ 高效      | 不佔記憶體、不寫臨時檔，低延遲           |
+	| ♻️ 無暫存    | 無需 GC 清理、無暫存夾爆滿風險           |
+	| 🔐 安全      | 可插入 JWT 驗證，強化傳輸過程可信性      |
+	| 🔍 透明轉發  | 前端不需要知道檔案內容，只做 passthrough |
+
+
+⚠️ 注意事項
+	| 項目           | 建議                                                                    |
+	| -------------- | ----------------------------------------------------------------------- |
+	| Content-Type   | 一定要轉送原始的 multipart/form-data + boundary                         |
+	| HTTP Header    | `Content-Length` 可省略，WebClient 會處理                               |
+	| 錯誤處理       | 請加 `.onStatus(...)` 與 `.doOnError(...)` 做處理（避免 swallow error） |
+	| 暴露 API       | 此 Proxy API **只開放可信來源（如內部前端）呼叫**，不應直接給一般使用者 |
+
+
+-------------------------------------------------------------------------
+錯誤處理改良
+-------------------------------------------------------------------------
+
+在你用 WebClient 做串流 proxy（或任何 HTTP 呼叫）時，如果不處理錯誤狀況，WebClient 會把錯誤「吃掉（swallow）」，表面上程式跑完了，但：
+	❌ 真正的 HTTP 錯誤沒被你捕捉（如 401、500、404）
+	❌ 使用者只看到空回應或泛用錯誤訊息
+	❌ 無法 log 詳細失敗資訊，debug 困難
+
+✅ .onStatus(...) 是用來處理「後端回傳的 HTTP 狀態碼異常」
+	webClient.post()
+		.uri("http://localhost:8081/api/files/upload")
+		.header(HttpHeaders.CONTENT_TYPE, contentType)
+		.body(BodyInserters.fromDataBuffers(
+			DataBufferUtils.readInputStream(() -> request.getInputStream(), new DefaultDataBufferFactory(), 8192)))
+		.retrieve()
+		.onStatus(HttpStatusCode::isError, clientResponse -> {
+			// 後端回 4xx/5xx 時處理
+			return clientResponse.bodyToMono(String.class)
+				.flatMap(errorBody -> {
+					System.err.println("❗ 上傳失敗：" + errorBody);
+					return Mono.error(new RuntimeException("後端回錯誤: " + errorBody));
+				});
+		})
+		.bodyToMono(String.class)
+		.doOnError(ex -> {
+			// 包含 onStatus 中的錯誤也會進來
+			System.err.println("💥 發生例外：" + ex.getMessage());
+		})
+		.map(body -> ResponseEntity.ok("後端回應：" + body))
+		.block();
+
+	1. .onStatus(...)
+		用來攔截 HTTP 4xx、5xx 的 response（即便伺服器回應了，但狀態碼不成功）
+		你可以讀取錯誤 body 並包裝成 exception 拋出（讓上層 doOnError 接手）
+
+	2. .doOnError(...)
+		捕捉整體 WebClient pipeline 中發生的所有錯誤（含連線錯誤、timeout、onStatus 的錯誤）
+		可記 log、通知、或補充錯誤資訊
+
+	🧪 小補充：常見錯誤來源
+		| 錯誤情境                              | 會觸發 `.onStatus` 嗎            | 會進 `.doOnError` 嗎 |
+		| ------------------------------------- | -------------------------------- | -------------------- |
+		| Resource Server 回 401 / 403 / 500    | ✅ 是                            | ✅ 是                |
+		| URI 錯誤 / 連不上主機                 | ❌ 否（因為 request 根本沒發出） | ✅ 是                |
+		| 傳檔過程 IOException                  | ❌ 否                            | ✅ 是                |
+
+不加 .onStatus 和 .doOnError：
+	WebClient 可能會讓你「以為」請求成功，其實已經是 HTTP 500
+	例外不明確，除錯與使用者回饋都會困難
+
+✅ 建議實務範例：統一處理所有錯誤
+	String result = webClient.post()
+		...
+		.retrieve()
+		.onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
+			.flatMap(body -> Mono.error(new IllegalStateException("後端錯誤：" + body))))
+		.bodyToMono(String.class)
+		.doOnError(e -> log.error("WebClient 呼叫失敗: {}", e.getMessage(), e))
+		.onErrorReturn("後端無回應或錯誤")
+		.block();

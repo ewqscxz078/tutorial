@@ -1,0 +1,75 @@
+ref ChatGPT
+
+共用設定的 WebClient Builder / Bean
+
+🛠 方式一：建立全域 @Bean WebClient（建議）
+
+	@Configuration
+	public class WebClientConfig {
+
+		@Bean
+		public WebClient webClient(ClientRegistrationRepository clients,
+								   OAuth2AuthorizedClientRepository authClients) {
+
+			ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
+				new ServletOAuth2AuthorizedClientExchangeFilterFunction(clients, authClients);
+			oauth2.setDefaultClientRegistrationId("file-proxy-client");
+
+			return WebClient.builder()
+				.apply(oauth2.oauth2Configuration())  // 自動加 Bearer Token
+				.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+				.filter((request, next) -> {
+					// 例外攔截器（全域）
+					return next.exchange(request)
+						.flatMap(response -> {
+							if (response.statusCode().isError()) {
+								return response.bodyToMono(String.class)
+									.flatMap(body -> Mono.error(new RuntimeException("後端錯誤：" + body)));
+							}
+							return Mono.just(response);
+						});
+				})
+				.clientConnector(new ReactorClientHttpConnector(
+					HttpClient.create().responseTimeout(Duration.ofSeconds(10))  // 全域 timeout
+				))
+				.build();
+		}
+	}
+
+	呼叫端
+		@Autowired
+		private WebClient webClient;
+
+		webClient.post()
+			.uri("http://localhost:8081/api/files/upload")
+			.body(...)
+			.retrieve()
+			.bodyToMono(String.class)
+			...
+
+🛠 方式二：封裝 WebClient 工具類（也可以）
+	如果你有很多種不同行為的 WebClient，也可以建一個 WebClientFactory 或 WebClientHelper：
+		@Component
+		public class WebClientHelper {
+
+			private final WebClient.Builder builder;
+
+			public WebClientHelper(WebClient.Builder builder) {
+				this.builder = builder;
+			}
+
+			public WebClient create(String registrationId) {
+				return builder
+					.filter(...)
+					.build();
+			}
+		}
+
+
+✅ 實務上建議怎麼做？
+	| 項目                                    | 建議做法                                                  |
+	| --------------------------------------- | --------------------------------------------------------- |
+	| 多處需要相同設定                        | ✅ 使用 `@Bean WebClient`（共用配置）                     |
+	| 需要依 clientId 切換                    | ✅ 使用 `OAuth2AuthorizedClientManager` 動態設定          |
+	| 多個 WebClient profile（含不同 baseUrl）| ✅ 建立多個命名 `@Bean WebClient` 或用 `WebClientFactory` |
+	| 需要每次自訂 header                     | 可在 `.filter(...)` 中動態加上 `request.headers(...)`     |

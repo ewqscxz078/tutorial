@@ -1,0 +1,73 @@
+ref ChatGPT
+
+webClient 可以整合 spring cloud 的服務發現
+	整合 Spring Cloud 的服務發現機制（如 Eureka、Consul），讓你直接用 service name 當 URI 的 host，而不必寫死 IP 或 port
+
+
+🔧 使用條件：
+	要達成 WebClient 整合服務發現，必須搭配 spring-cloud-starter-loadbalancer 或 Spring Cloud Gateway。
+
+
+✅ 使用方式一：Spring Cloud LoadBalancer 模式（推薦）
+	📦 1. 引入必要依賴
+		<dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>org.springframework.cloud</groupId>
+		  <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>org.springframework.cloud</groupId>
+		  <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
+	🛠️ 2. 建立支援 loadbalancer 的 WebClient.Builder
+		@Configuration
+		public class WebClientConfig {
+
+			@Bean
+			@LoadBalanced  // 關鍵！
+			public WebClient.Builder loadBalancedWebClientBuilder() {
+				return WebClient.builder();
+			}
+		}
+
+	✅ 3. 使用時直接用服務名稱當主機：
+		@Service
+		public class OrderServiceClient {
+
+			private final WebClient webClient;
+
+			public OrderServiceClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
+				this.webClient = builder.build();
+			}
+
+			public Mono<String> getOrder() {
+				return webClient.get()
+						.uri("http://order-service/api/orders")  // 使用 Eureka 註冊的 serviceId
+						.retrieve()
+						.bodyToMono(String.class);
+			}
+		}
+
+	✅ WebClient + Spring Cloud Eureka 的 DNS 解析邏輯：
+		| URI host                              | 解釋                                                           |
+		| ------------------------------------- | -------------------------------------------------------------- |
+		| `http://order-service`                | → 由 `@LoadBalanced` + `LoadBalancerClient` 找出對應 IP\:port  |
+		| `http://localhost:8081`               | → 不會走 Eureka                                                |
+		| `lb://order-service`（在某些 lib 中） | 明確宣告走 load balancer（但不是 WebClient 的標準用法）        |
+
+	🚫 注意事項
+		| 問題                                               | 解法                                        |
+		| -------------------------------------------------- | ------------------------------------------- |
+		| WebClient 沒加 `@LoadBalanced`                     | ❌ 會報 `UnknownHostException`              |
+		| 不能直接用 `WebClient.create(...)`                 | ❌ 不會走 load balancer，除非自己處理       |
+		| 若有 Ribbon（老版）或 Gateway，請用新 LoadBalancer | Spring Cloud 2021+ 推薦新 loadbalancer 機制 |
+
+	✅ 總結
+		| 是否可整合服務發現？     | ✅ 可以                                   |
+		| 實現方式                 | 加 @LoadBalanced 的 WebClient.Builder     |
+		| 支援負載平衡             | ✅ 會從多個實例中選一個（round robin 等） |
+		| URI 使用方式             | http://<serviceId>/path                   |
