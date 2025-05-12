@@ -33,7 +33,7 @@ Java 8
 
 					// 格式化時間
 					String formattedTime = time.format(timeFormatter);
-			
+
 			指定日期時間
 				String input = "2025-04-23 15:30:45";
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
