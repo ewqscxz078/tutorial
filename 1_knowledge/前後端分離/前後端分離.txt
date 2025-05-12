@@ -367,11 +367,40 @@ ref ChatGPT
 		| **APISIX**                 | 高效能、支援 OpenResty/Lua，配置靈活      | ✅ 適合分散式        |
 		| **NGINX Gateway + Lua**    | 輕量級方案，需自訂邏輯                    | ⚠️ 不易擴充          |
 
-✅ 建議搭配的完整防護策略：
-	| 層級             | 功能                         | 建議工具                                      |
-	| ----------------- | --------------------------- | --------------------------------------------- |
-	| 🌐 網路層         | 限制 IP / 防火牆            | AWS SG / GCP FW / NGINX allow/deny            |
-	| 🚪 API 入口層     | 路由、Token 驗證、速率限制  | API Gateway（如 Spring Cloud Gateway / Kong） |
-	| 🔐 驗證授權層     | 驗證 JWT Token + Scope      | Spring Security + OAuth2 Resource Server      |
-	| 📊 監控與告警     | 異常流量偵測、審計          | ELK / Grafana / Prometheus / Sentry           |
-	| 🧪 測試與壓力模擬 | 壓測安全弱點                | Postman, k6, OWASP ZAP                        |
+Q:可是我用 JWT OAUTH2 後端 驗證 JWT 不就可以防範有效來源?
+A:是的，JWT 驗證可以防範「未授權請求存取 API 資料」。
+	但 不代表可以防範「亂打你服務的行為本身」。
+		* JWT 可以擋「沒帶合法 token 的人」拿到敏感資料
+		* ❌ 但擋不了「任何人嘗試打你服務」，例如不斷打 /token、爆打 /api/xxx
+		
+		🔍 舉個例子：
+			你部署了一個 Resource Server：
+				https://api.example.com/api/report
+			它會驗證 Bearer JWT Token，所以你覺得安全了 ✅
+				但：
+					# 攻擊者照樣可以這樣玩
+						for i in {1..1000}; do curl https://api.example.com/api/report; done
+					* 他會拿到 401 Unauthorized，但服務仍要負責解析 JWT、回應錯誤、寫日誌，仍有 CPU+IO 成本
+					* 若你 /token 端點開放，他還可以亂打登入請求爆破
+					* 還可能：
+						* 掃描你有哪些 endpoint
+						* 嘗試 header injection / query param injection
+						* 透過未授權的請求累積壓力造成 Denial-of-Service
+
+	✅ JWT 是授權工具，不是防火牆
+		| 能做的                          | 無法做的                                    |
+		| ------------------------------- | ------------------------------------------- |
+		| ✅ 驗證使用者身份是否合法       | ❌ 防止任意人「嘗試」呼叫 API               |
+		| ✅ 控制某些人不能存取某資源     | ❌ 限制某些 IP 不能打你的服務               |
+		| ✅ 控制資料存取範圍（Scope）    | ❌ 防止 DDoS、大量異常請求、bot 機器人掃描  |
+		| ✅ 搭配 Spring Security 做 RBAC | ❌ 控制請求頻率、IP 來源限制、API 路由管控  |
+
+
+	✅ 建議搭配的完整防護策略：
+		| 層級             | 功能                         | 建議工具                                      |
+		| ----------------- | --------------------------- | --------------------------------------------- |
+		| 🌐 網路層         | 限制 IP / 防火牆            | AWS SG / GCP FW / NGINX allow/deny            |
+		| 🚪 API 入口層     | 路由、Token 驗證、速率限制  | API Gateway（如 Spring Cloud Gateway / Kong） |
+		| 🔐 驗證授權層     | 驗證 JWT Token + Scope      | Spring Security + OAuth2 Resource Server      |
+		| 📊 監控與告警     | 異常流量偵測、審計          | ELK / Grafana / Prometheus / Sentry           |
+		| 🧪 測試與壓力模擬 | 壓測安全弱點                | Postman, k6, OWASP ZAP                        |
