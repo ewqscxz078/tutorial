@@ -21,6 +21,9 @@ temp file : 臨時文件建立與刪除
 ================================= Path =================================================================================
 ========================================================================================================================
 路徑處理有關
+	取得檔名
+		String filename = path.getFileName().toString();  // 傳回 最後一層的路徑元件(包含副檔名)
+		
 	get Path by string
 		Path path = Paths.get(...)
 
@@ -155,5 +158,124 @@ temp file : 臨時文件建立與刪除
 		try (BufferedReader reader = Files.newBufferedReader(path)) {
 
 ========================================================================================================================
+================================= nio2 Path to File ===========================================================================
+========================================================================================================================
+1.寫到 Path 路徑下的字串結果內容
+	import java.nio.file.Files;
+	import java.nio.file.Path;
+	import java.nio.file.Paths;
+	import java.nio.charset.StandardCharsets;
+	import java.io.IOException;
+
+	public class WriteToFileExample {
+		public static void main(String[] args) {
+			Path path = Paths.get("/your/target/path/output.txt");
+			String content = "這是要寫入的內容";
+
+			try {
+				// 若檔案不存在會自動建立，預設為覆寫模式
+				Files.write(path, content.getBytes(StandardCharsets.UTF_8));
+				// 若要附加寫入（不覆蓋舊資料）
+				// Files.write(path, content.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+				System.out.println("寫入成功！");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	常見注意事項：
+		* StandardCharsets.UTF_8 是建議的編碼方式，避免亂碼。
+		* 檔案路徑若不存在的話，目錄需先存在，否則會拋出 NoSuchFileException。
+		* 若要確保目錄存在，可加上：
+			Files.createDirectories(path.getParent());
+				* 若目錄已存在：會忽略，不拋出例外。
+				* 若目錄不存在：會自動遞迴建立所有必要的目錄。
+				* 若路徑中任何一層是檔案（非目錄）：會拋出 FileAlreadyExistsException。
+
+2.讀取路徑下內容回傳 byte[]
+	byte[] content = Files.readAllBytes(path);
+		這是最直接且效能不錯的方式，適用於小至中型檔案。 建議不要超過幾百 MB
+
+3.從一個檔案的 Path 複製到另一個 Path
+	Files.copy(sourcePath, targetPath);
+	📌 常用選項 StandardCopyOption：
+		| 選項                       | 說明                                         |
+		| -------------------------- | -------------------------------------------- |
+		| `REPLACE_EXISTING`         | 若目標已存在，則覆蓋                         |
+		| `COPY_ATTRIBUTES`          | 連同原檔案的 metadata 一起複製（例如時間戳） |
+		| `ATOMIC_MOVE`（用於 move） | 原子移動（用於 `Files.move()`）              |
+
+4.從 inputStream 寫入到 targetPath
+	Path targetPath = Paths.get("/opt/tmp/output.txt");
+
+	// 假設這是你要寫入的 InputStream（可替換為任何來源，例如 MultipartFile.getInputStream()）
+	try (InputStream inputStream = Files.newInputStream(Paths.get("/opt/tmp/source.txt"))) {
+		Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+	}
+
+5.Path 讀取出 inputStream 形式
+	InputStream in = Files.newInputStream(path);
+
+6.srcPath 壓縮到 zipPath
+	import java.io.*;
+	import java.nio.file.*;
+	import java.util.zip.*;
+
+	public class ZipFolder {
+		public static void zipDirectory(Path sourceDir, Path zipPath) throws IOException {
+			try (
+				OutputStream fos = Files.newOutputStream(zipPath);
+				BufferedOutputStream bos = new BufferedOutputStream(fos);
+				ZipOutputStream zos = new ZipOutputStream(bos)
+			) {
+				Path basePath = sourceDir;
+
+				Files.walk(sourceDir)
+					.filter(Files::isRegularFile)
+					.forEach(path -> {
+						try {
+							// 取得 zip 內的相對路徑，例如 meta/meta.xml
+							Path relativePath = basePath.relativize(path);
+							ZipEntry zipEntry = new ZipEntry(relativePath.toString().replace("\\", "/"));
+							zos.putNextEntry(zipEntry);
+
+							// 寫入檔案內容
+							Files.copy(path, zos);
+							zos.closeEntry();
+						} catch (IOException e) {
+							throw new UncheckedIOException("壓縮檔案失敗: " + path, e);
+						}
+					});
+			}
+		}
+
+		// 範例使用
+		public static void main(String[] args) throws IOException {
+			String uuid = "12345678";
+			Path sourceDir = Paths.get("/opt/tmp/" + uuid);
+			Path zipPath = Paths.get("/opt/tmp/" + uuid + ".zip");
+
+			zipDirectory(sourceDir, zipPath);
+			System.out.println("壓縮完成！");
+		}
+	}
+
+7.取得 Path 路徑下所有檔案的檔名
+	Path dirPath = Paths.get("/opt/tmp/uuid"); // 替換為你要的目錄路徑
+
+	List<String> fileNames = new ArrayList<>();
+	try (Stream<Path> paths = Files.walk(dirPath)) {
+		fileNames = paths
+			.filter(Files::isRegularFile)
+			.map(path -> path.getFileName().toString())
+			.collect(Collectors.toList());
+	} catch (IOException e) {
+		e.printStackTrace(); // 或記錄錯誤日誌
+	}
+
+========================================================================================================================
 zip a file
 	https://mkyong.com/java/how-to-compress-files-in-zip-format/
+
+
