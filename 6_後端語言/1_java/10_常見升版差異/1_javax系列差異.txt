@@ -1,0 +1,59 @@
+ref ChatGPT
+
+
+✅ JDK 8 ~ JDK 10 時代（Java EE / javax 時代）
+	JDK 內建包含部分 Java EE API，如：
+		javax.annotation.PostConstruct
+		javax.xml.bind.*（JAXB）
+		javax.activation.*（JAF）
+
+	➡️ 所以在 JDK 8 專案中，即使沒加任何依賴，也能使用 @PostConstruct，因為它是 JDK 自帶的一部分（從 JSR-250 延伸而來）。
+
+❌ JDK 11 起（Java 模組化時代）
+	這些 Java EE 模組（包括 javax.annotation）已從 JDK 拿掉，變成「外部模組」，需要你自己加入依賴。
+	使用 Spring Boot 2 + JDK 11 時，Spring Starter 通常會自動幫你引入這些依賴，所以你不一定會注意到變化。
+
+🔄 JDK 17 / 21 搭配 Spring Boot 3（Jakarta EE 時代）
+	Spring Boot 3 改為全面採用 Jakarta EE 9+ 命名空間（jakarta.*）
+	所有舊的 javax.annotation.* 都改為 jakarta.annotation.*
+	Java SE（JDK）不會再內建 jakarta.annotation，所以你必須 自行在 pom.xml 加上依賴
+
+
+✅ 正確用法總結（以 Spring Boot 3 + JDK 21 為例）：
+	1.Maven 依賴（必要）
+		<dependency>
+			<groupId>jakarta.annotation</groupId>
+			<artifactId>jakarta.annotation-api</artifactId>
+			<version>2.1.1</version> <!-- 建議使用最新版 -->
+		</dependency>
+	
+	2.正確 import：
+		import jakarta.annotation.PostConstruct;
+
+📝 總結對照表：
+
+	| Java 版本 | Spring Boot 版本 | 註解路徑               | 是否需要額外依賴           |
+	| --------- | ---------------- | ---------------------- | -------------------------- |
+	| JDK 8     | Boot 2.x         | `javax.annotation.*`   | ❌（JDK 內建）             |
+	| JDK 11+   | Boot 2.x         | `javax.annotation.*`   | ✅（Spring Boot 幫你帶）   |
+	| JDK 17+   | Boot 3.x         | `jakarta.annotation.*` | ✅（需自行引入）           |
+
+
+
+✅ 不需改為 jakarta.* 的情況
+	| 類別名稱                   | 說明                           |
+	| -------------------------- | ------------------------------ |
+	| `javax.net.ssl.SSLContext` | Java SE（JDK）提供             |
+	| `javax.crypto.*`           | Java SE 提供的加密函式庫       |
+	| `javax.xml.parsers.*`      | Java SE XML API（非 Java EE）  |
+	| ✅ 保留在 JDK 中           | 不會改為 `jakarta.*`           |
+
+❌ 需要改為 jakarta.* 的情況（因為 Jakarta EE）
+	| 舊命名空間（Spring Boot 2）| 新命名空間（Spring Boot 3）    | 範例                 |
+	| -------------------------- | ------------------------------ | -------------------- |
+	| `javax.annotation.*`       | `jakarta.annotation.*`         | `@PostConstruct`     |
+	| `javax.servlet.*`          | `jakarta.servlet.*`            | `HttpServletRequest` |
+	| `javax.persistence.*`      | `jakarta.persistence.*`        | JPA / Hibernate      |
+	| `javax.validation.*`       | `jakarta.validation.*`         | Bean Validation      |
+	| `javax.ws.rs.*`            | `jakarta.ws.rs.*`              | JAX-RS（RESTful API）|
+

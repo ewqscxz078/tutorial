@@ -1,0 +1,219 @@
+ref ChatGPT
+
+標準鏈路追蹤格式 
+	W3C Trace Context
+		Spring Boot 3 + Micrometer Tracing 預設會依照 W3C Trace Context 標準，
+		在 HTTP Header 上自動加上以下標頭來傳遞 traceId 和 spanId：
+
+在 Spring Boot 3 中，使用 Micrometer Tracing 來實現分散式追蹤（Distributed Tracing）是一個標準做法，
+	Micrometer Tracing 整合了如 OpenTelemetry、Brave（Zipkin）、Wavefront 等後端，並統一提供觀察性支持。
+
+🔧 基本架構與元件
+	| 功能           | 常用實作                            |
+	| -------------- | ----------------------------------- |
+	| Tracer 實作    | Brave（Zipkin）或 OpenTelemetry     |
+	| Span 傳遞協定  | W3C Trace Context (預設)，也支援 B3 |
+	| 傳送資料後端   | Zipkin、Jaeger、OTel Collector 等   |
+
+
+依賴
+	<dependency>
+	  <groupId>org.springframework.boot</groupId>
+	  <artifactId>spring-boot-starter-actuator</artifactId>
+	</dependency>
+
+	<dependency>
+	  <groupId>io.micrometer</groupId>
+	  <artifactId>micrometer-tracing-bridge-brave</artifactId>
+	</dependency>
+
+自動整合：
+	Micrometer Tracing API
+	Brave 作為 backend 實作（預設）
+	自動插入 HTTP traceId / spanId 到 MDC（logback/log4j2）
+	自動處理 Web / WebClient / RestTemplate 的 tracing propagation
+
+如果你想傳送 trace 資料（如到 Zipkin、OTLP）多依賴
+	傳送到 Zipkin
+		<dependency>
+		  <groupId>io.zipkin.reporter2</groupId>
+		  <artifactId>zipkin-reporter-brave</artifactId>
+		</dependency>
+
+		application.yml 設定範例
+			management:
+			  tracing:
+				sampling:
+				  probability: 1.0  # 全部收集，建議正式環境設為 0.1 左右
+			  zipkin:
+				tracing:
+				  endpoint: http://localhost:9411/api/v2/spans  # Zipkin 伺服器
+
+
+	傳送到 OTLP (OpenTelemetry):
+		<dependency>
+		  <groupId>io.micrometer</groupId>
+		  <artifactId>micrometer-tracing-bridge-otel</artifactId>
+		</dependency>
+	
+		application.yml 設定範例
+			management:
+			  tracing:
+				sampling:
+				  probability: 1.0
+			otel:
+			  exporter:
+				otlp:
+				  endpoint: http://localhost:4317
+
+	搭配 exporter
+		<dependency>
+		  <groupId>io.opentelemetry</groupId>
+		  <artifactId>opentelemetry-exporter-otlp</artifactId>
+		</dependency>
+
+小補充：為何沒有所謂的 spring-boot-starter-micrometer-tracing？
+	Spring Boot 團隊尚未提供一個通用的 micrometer-tracing starter，
+	因為 tracing backend 多樣（如 Brave、OTel、Wavefront、Datadog），
+	需要開發者選擇一個實作橋接依賴（bridge），所以通常是透過 actuator + bridge 的方式組合，
+	而不是一個統一 starter。
+	
+
+
+
+✅ Micrometer Tracing 的自動追蹤機制
+	| 元件                        | 是否自動建立 span？                 | 說明                                    |
+	| --------------------------- | ----------------------------------- | --------------------------------------- |
+	| Spring MVC Controller       | ✅                                  | 自動建立 `http.server.requests` span    |
+	| WebClient                   | ✅                                  | 自動建立 `http.client.requests` span    |
+	| RestTemplate（若註冊）      | ✅                                  | 自動建立 client span                    |
+	| RabbitMQ / Kafka / DB 連線  | 🔄（需 micrometer instrumentation） | 可選用額外依賴套件                      |
+	| 方法呼叫（Service 層）      | ❌                                  | 預設不追蹤，要用 `@Observed` 或自訂 AOP |
+
+
+🔍 小結建議
+	| 情境                          | 建議作法                           |
+	| ----------------------------- | ---------------------------------- |
+	| REST API 或 WebClient 呼叫    | Micrometer 自動處理，不用寫        |
+	| 特定 Service 方法要建立 span  | `@Observed`                        |
+	| 自訂 traceId 格式或上下文整合 | 可加 AOP 或自定 ObservationHandler |
+
+
+🧠 如果你不建構後端(Zipkin、OpenTelemetry )會怎樣？
+	Micrometer Tracing 在 Spring Boot 3 中的核心功能是「建立與傳遞 Trace/Span」，
+	即使你不設定 Zipkin / OTLP 等後端，它仍然會：
+	
+	✅ 在應用內部正常工作
+		1.自動建立 HTTP request span（例如 controller 呼叫）
+
+		2.自動建立 WebClient span（呼叫其他服務）
+
+		3.將 traceId / spanId 傳遞到下游服務（透過 HTTP header）
+
+		4.將 traceId / spanId 放進 MDC，可印在 log 中
+	
+	❌ 但不會將 trace 資料送出去或集中展示
+		這表示你無法：
+			1.在 Zipkin / Jaeger UI 中看到 span timeline
+
+			2.查看服務間的鏈狀視覺化追蹤
+
+Micrometer Tracing 只會自動幫你放 traceId 和 spanId 到 MDC（Mapped Diagnostic Context），
+	如果你有其他自訂欄位（例如 userId、requestId、tenantId 等），你必須自行補上與清除。
+	
+	✅ Micrometer Tracing 預設只放這些進 MDC：
+		| Key       | 值來源           |
+		| --------- | ---------------- |
+		| `traceId` | 當前 Trace 的 ID |
+		| `spanId`  | 當前 Span 的 ID  |
+
+
+	🧠 若你有額外的 MDC 欄位，要怎麼補？
+		方法一：使用 HandlerInterceptor 或 OncePerRequestFilter (但比較建議 OncePerRequestFilter)
+			@Component
+			public class CustomMdcInterceptor extends HandlerInterceptorAdapter {
+
+				@Override
+				public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+					// 從 Header 或 SecurityContext 抓你要的欄位
+					String userId = request.getHeader("X-User-Id");
+					if (userId != null) {
+						MDC.put("userId", userId);
+					}
+					return true;
+				}
+
+				@Override
+				public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+					MDC.remove("userId");
+				}
+			}
+
+	📌 建議策略
+		| 目的                                      | 方法                                     |
+		| ----------------------------------------- | ---------------------------------------- |
+		| 要統一補上自定欄位如 `userId`、`reqId`    | 用 `HandlerInterceptor` 或 `Filter`      |
+		| 要搭配 Micrometer 的觀察事件進行 MDC 管理 | 自定 `ObservationHandler`                |
+		| 要自定 span name 並控制內容               | 用 `Tracer.nextSpan()` + MDC 處理        |
+		| 要讓下游服務也看到這些欄位                | 手動寫入 HTTP header（非 trace context） |
+
+
+🎯 Micrometer Tracing 給你的核心價值是：
+	✅ 幫你自動處理 traceId / spanId 的生成、傳遞與上下游串接
+	✅ 自動加到 MDC（你可以直接印 log）
+	✅ 自動建立 span（例如 HTTP 呼叫 / WebClient）
+	✅ 支援自訂觀察 / 手動建立 span（進階控制）
+	
+	🧠 但 Micrometer Tracing「不會幫你處理」：
+		| 功能                                            | 是否 Micrometer Tracing 處理？ | 處理方式                                          |
+		| ----------------------------------------------- | ------------------------------ | ------------------------------------------------- |
+		| 自定 `userId`, `tenantId`, `requestId` 等欄位   | ❌ 不會                        | 你需要用 Filter / Interceptor / 自定 Handler 補上 |
+		| 特定業務流程自定 span（例如查資料庫、匯出報表） | ❌ 預設不會                    | 可用 `@Observed` 或 `Tracer.nextSpan()` 處理      |
+		| 將 traceId 傳給非 HTTP 的元件（如 MQ, 日誌分析）| ❌ 需你自行處理                | 自行從 `MDC.get("traceId")` 拿來傳遞              |
+
+✅ Micrometer Tracing 的角色定位總結如下：
+	| 類型                        | 傳統做法（自己寫）    | Micrometer Tracing     |
+	| --------------------------- | --------------------- | ---------------------- |
+	| traceId / spanId 產生與繼承 | 自己寫 AOP or UUID    | 自動處理（遵守標準）   |
+	| HTTP Header 傳遞            | 自己手動加            | 自動處理               |
+	| WebClient 下游串接 Trace    | 自己加 Filter         | 自動處理               |
+	| Log MDC（放 traceId）       | 自己塞 `MDC.put()`    | 自動塞好               |
+	| 自定欄位 MDC（如 userId）   | 自己加                | 還是要自己加           |
+	| Trace 可視化平台整合        | 自己串 Zipkin         | 可選配合 exporter      |
+
+
+🌐 預設使用的 HTTP Header 名稱（W3C）
+	| Header 名稱     | 內容                                                                        |
+	| --------------- | --------------------------------------------------------------------------- |
+	| `traceparent`   | 包含 traceId、spanId、sampled 等資訊                                        |
+	| `tracestate`    | 可選，攜帶額外供分析平台使用的 vendor-specific 資訊（如 datadog、azure 等） |
+
+	🧪 traceparent 範例內容：
+		traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+					 version-traceId-spanId-sampled
+			格式拆解：
+				00        -> version
+				4bf9...36 -> traceId
+				00f0...b7 -> spanId
+				01        -> sampled (1 表示會送到 backend)
+	
+	❓如果你想改用 Zipkin 的 B3 header 格式？
+		application.yml：
+			management:
+			  tracing:
+				propagation:
+				  type: b3  # 或 b3_multi
+		B3 單一 header（b3）範例：
+			b3: 4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-1
+		B3 多 header（b3_multi）範例：
+			X-B3-TraceId: 4bf92f3577b34da6a3ce929d0e0e4736
+			X-B3-SpanId: 00f067aa0ba902b7
+			X-B3-Sampled: 1
+
+
+logback mdc 處理注意項目
+	| logback key             | 對應內容                                           |
+	| ----------------------- | -------------------------------------------------- |
+	| `%X{traceId}`           | MDC 中的 `traceId`，由 Micrometer Tracing 自動放入 |
+	| `%X{spanId}`            | MDC 中的 `spanId`，同上                            |
+	| `%X{userId}` 等自定欄位 | 你要自己放（用 Filter、Interceptor）               |

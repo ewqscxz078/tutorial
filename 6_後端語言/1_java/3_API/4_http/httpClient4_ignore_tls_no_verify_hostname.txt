@@ -1,0 +1,19 @@
+HttpClients 4 tls ignore and 不驗證主機名稱 寫法
+
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+
+public class HttpsClient {
+
+    public CloseableHttpClient getHttpsClient() throws Exception {
+        CloseableHttpClient client = null;
+        final SSLContext sslcontext = SSLContexts.custom().build();
+        sslcontext.init(null, new X509TrustManager[] { new HttpsTrustManager() }, new SecureRandom());
+        final SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
+        client = HttpClients.custom().setSSLSocketFactory(factory).build();
+        return client;
+    }
+}

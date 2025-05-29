@@ -1,0 +1,74 @@
+RestTemplate myRestTemplate(final RequestProperties requestProperties) {
+
+	// 建立一個信任所有憑證的 TrustStrategy
+	final TrustStrategy acceptingTrustStrategy = (final X509Certificate[] chain, final String authType) -> true;
+
+	// 建立 SSLContext，並載入信任策略
+	final SSLContext sslContext;
+	try {
+		sslContext = SSLContextBuilder.create().loadTrustMaterial(acceptingTrustStrategy).build();
+	} catch (final Exception e) {
+		throw new RuntimeException("Unable create SSLContext: " + e.getMessage(), e);
+	}
+
+	// 建立 TlsStrategy，設定為使用 NoopHostnameVerifier（不驗證主機名稱）
+	final DefaultClientTlsStrategy tlsStrategy = new DefaultClientTlsStrategy( //
+			sslContext, //
+			null, // supportedProtocols     : 控制那些 port 被視為 secure，預設443，傳null 可用預設
+			null, // supportedCipherSuites  : 提供自訂 TLS 握手細節(如協定、版本)，高階需求才用，通常null
+			null, // sslBufferManagement    : 進一步驗證 session(如證書屬性)，通常null
+			NoopHostnameVerifier.INSTANCE // 主機名稱驗證方式
+	);
+
+	// 連線層級 : timeout 設定
+	final ConnectionConfig connectionConfig = ConnectionConfig.custom() //
+			.setConnectTimeout(Timeout.of(requestProperties.getConnectTimeout())) // TCP 連線建立的超時時間
+			.build();
+
+	// 建立連線池管理器，並設定 TlsStrategy
+	//   httpClient5 新版加上 setTlsSocketStrategy 代表支援 https、http 則預設就支援
+	final PoolingHttpClientConnectionManager poolingConnectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+			.setDefaultConnectionConfig(connectionConfig) //
+			.setTlsSocketStrategy(tlsStrategy) //
+			.build();
+
+	// 連線池管理器 : 連線池設定
+	poolingConnectionManager.setDefaultMaxPerRoute(requestProperties.getDefaultMaxPerRoute()); // maximum number of concurrent connections per route, default is 2
+	poolingConnectionManager.setMaxTotal(requestProperties.getMaxTotal()); // maximum number of total open connections.
+
+	// 請求層級 : timeout 設定
+	final RequestConfig requestConfig = RequestConfig.custom() //
+			.setConnectionRequestTimeout(Timeout.of(requestProperties.getConnectionRequestTimeout())) // 向 connection pool 取得連線的等待時間
+			.setResponseTimeout(Timeout.of(requestProperties.getResponseTimeout())) // 資料傳輸過程中等待資料的最大時間(讀timeout)，對應原本 RequestConfig.custom().setSocketTimeout
+			.build();
+
+	final CloseableHttpClient httpClient = HttpClients.custom() //
+			//.setSSLSocketFactory(tlsStrategy) // 改到 poolingConnectionManager 裡設定
+			.setConnectionManager(poolingConnectionManager) //
+			.setDefaultRequestConfig(requestConfig) //
+			.build();
+
+	final HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
+			httpClient);
+
+	return new RestTemplate(clientHttpRequestFactory);
+}
+	
+
+@ConfigurationProperties(prefix = "你的yml前墜")
+public class RequestProperties {
+
+    private Duration connectTimeout = Duration.ofMinutes(1); // 預設值 1 分鐘，連線 fido 的 tcp connect timeout
+
+    private Duration connectionRequestTimeout = Duration.ofMinutes(1); // 預設值 1 分鐘，向 connection pool 取得連線的等待時間
+
+    private Duration responseTimeout = Duration.ofMinutes(1); // 預設值 1 分鐘，資料傳輸過程中等待資料的最大時間(讀timeout)
+	
+
+application.yml
+request:
+  #connect-timeout: 1m # 預設1分鐘，連線層級: TCP 連線建立的超時時間，可用 ms, s, m, h 格式宣告
+  #default-max-per-route: 100 # 預設 100，連線池設定: aximum number of concurrent connections per route
+  #max-total: 500 # 預設 500，連線池設定: maximum number of total open connections 
+  #connection-request-timeout: 1m # 預設1分鐘，請求層級: 向 connection pool 取得連線的等待時間，可用 ms, s, m, h 格式宣告
+  #response-timeout: 1m # 預設1分鐘，請求層級: 資料傳輸過程中等待資料的最大時間(讀timeout)，可用 ms, s, m, h 格式宣告

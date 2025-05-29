@@ -1,0 +1,24 @@
+進階
+	在程式中使用 Tracer 手動建立 Span
+		import io.micrometer.tracing.Tracer;
+		import io.micrometer.tracing.Span;
+		import org.springframework.stereotype.Service;
+
+		@Service
+		public class MyService {
+
+			private final Tracer tracer;
+
+			public MyService(Tracer tracer) {
+				this.tracer = tracer;
+			}
+
+			public void doSomething() {
+				Span span = tracer.nextSpan().name("my-custom-span").start();
+				try (Tracer.SpanInScope ws = tracer.withSpan(span)) {
+					// 做一些工作
+				} finally {
+					span.end();
+				}
+			}
+		}

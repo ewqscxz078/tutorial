@@ -8,3 +8,17 @@ https://stackoverflow.com/questions/53967693/how-to-run-jq-from-gitbash-in-windo
 	手動複製到 C:\Program Files\Git\usr\bin 下，因為有權限問題
 
 jq --version
+
+
+將壓縮的 JSON 美化顯示（Pretty Print）的方法：
+	echo '{"name":"david","skills":["bash","jq","java"]}' | jq .
+	jq . compressed.json
+	cat compressed.json | jq .
+	jq . <<< '{"name":"david","skills":["bash","jq","java"]}'
+
+將好看的 json 縮在一起
+	cat pretty.json | jq -c .
+		-c 是 --compact-output 的縮寫，會輸出壓縮過的一行 JSON，而不是預設的格式化好看的版本。
+		. 表示整個 JSON 文件的根元素。
+		
+		

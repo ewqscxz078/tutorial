@@ -1,0 +1,97 @@
+Micrometer Tracing 預設只會在 處理請求（HTTP Server 或 WebClient 等） 的時候，
+	自動建立和管理 traceId / spanId，也會把它們放到 MDC（Mapped Diagnostic Context）中，
+	讓你在 logback pattern 中使用 %X{traceId} %X{spanId} 取得
+
+
+預設「不會」幫你在 Spring Boot 應用啟動階段產生 traceId / spanId。
+	因為那個階段不屬於一個被觀察的請求或任務上下文（如 HTTP Request 或 Scheduled Task）
+
+✅ 「啟動服務時也想初始 traceId spanId 放到 log」
+	✅ 解法：手動建立一個 span context 放入 MDC
+		你可以在 ApplicationRunner 或 CommandLineRunner 裡手動建立一個 span，例如：
+		
+			import io.micrometer.tracing.Span;
+			import io.micrometer.tracing.Tracer;
+		
+			@Component
+			public class StartupTracer implements ApplicationRunner {
+
+				private final Tracer tracer;
+
+				public StartupTracer(Tracer tracer) {
+					this.tracer = tracer;
+				}
+
+				@Override
+				public void run(ApplicationArguments args) {
+					Span span = this.tracer.nextSpan().name("app-startup").start();
+					try (Tracer.SpanInScope ws = this.tracer.withSpan(span)) {
+						// 將 traceId / spanId 加到 MDC 的是 Micrometer 自動幫你做的
+						log.info("Application started with tracing span.");
+					} finally {
+						span.end();
+					}
+				}
+			}
+	✅ 客製額外 mdc
+		@Component
+		public class MyStartupLogger implements ApplicationRunner {
+
+			private final ObservationRegistry observationRegistry;
+
+			public MyStartupLogger(ObservationRegistry observationRegistry) {
+				this.observationRegistry = observationRegistry;
+			}
+
+			@Override
+			public void run(ApplicationArguments args) {
+				Observation observation = Observation
+					.start("app-startup", observationRegistry)
+					.lowCardinalityKeyValue("taskCode", "BOOT001")
+					.lowCardinalityKeyValue("env", "prod");
+
+				try (Observation.Scope scope = observation.openScope()) {
+					log.info("啟動服務中，使用 Observation 自動加入 MDC");
+				} finally {
+					observation.stop(); // 自動移除 MDC
+				}
+			}
+		}
+
+
+🔁 延伸：如果你有其他非 HTTP 的工作也希望自動有 traceId，比如：
+	@Scheduled
+	Kafka Listener
+	CommandLineRunner
+	
+	你都要在這些工作開始時手動建立 Span，或使用 Micrometer 提供的 ObservationRegistry 自動觀察範圍。
+
+
+✅ 建議結論：
+	若只是純 trace 控制： 使用 Tracer + withSpan() 也 OK。
+
+	若你想做到：log（MDC）、tracing、metrics、context 整合、延伸可觀測性平台（如 Tempo/Prometheus）：
+		👉 強烈建議統一改用 ObservationRegistry！
+		
+
+✅ 使用 ObservationRegistry 簡要結論
+	| 方法                                               | 回傳的是？                              | 使用時機                             |
+	| -------------------------------------------------- | --------------------------------------- | ------------------------------------ |
+	| `observationRegistry.getCurrentObservation()`      | 目前作用中的 `Observation` 本體         | 要修改、觀察或延伸現有 Observation   |
+	| `observationRegistry.getCurrentObservationScope()` | 包含 `Observation` 的 `Scope` 包裝物件  | 進階用途，例如跨執行緒保存或關 scope |
+
+	註冊 ObservationRegistry
+
+	一般使用
+		Observation observation = observationRegistry.getCurrentObservation();
+		if (observation != null) {
+			observation.lowCardinalityKeyValue("userId", "u123");
+		}
+
+	跨執行緒使用
+		Observation.Scope originalScope = observationRegistry.getCurrentObservationScope();
+		Runnable task = () -> {
+			try (Observation.Scope scope = originalScope) {
+				log.info("我可以跨執行緒存取 context");
+			}
+		};
