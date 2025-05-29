@@ -404,3 +404,54 @@ A:是的，JWT 驗證可以防範「未授權請求存取 API 資料」。
 		| 🔐 驗證授權層     | 驗證 JWT Token + Scope      | Spring Security + OAuth2 Resource Server      |
 		| 📊 監控與告警     | 異常流量偵測、審計          | ELK / Grafana / Prometheus / Sentry           |
 		| 🧪 測試與壓力模擬 | 壓測安全弱點                | Postman, k6, OWASP ZAP                        |
+		
+
+拆分後的「前後端分離 + API Gateway」架構：
+	Browser → https://example.com (Apache 443)
+				 ↓
+			 [Apache/Nginx] (reverse proxy)
+				 ↓                           ↓
+	  /static/** (前端 SPA 打包檔)      /api/** (API 路徑轉到 API Gateway，例如 1234 port)
+									 ↓
+							[API Gateway:1234]
+							   ↓
+				路由分發至各個後端服務（Spring Boot A, B, C）
+
+✅ 所以轉換後的部署邏輯如下：
+	| 模組                                            | 功能                                               | 對外連接                          |
+	| ----------------------------------------------- | -------------------------------------------------- | --------------------------------- |
+	| **Apache (443)**                                | 統一入口，反向代理                                 | 對外唯一開放的 443 port           |
+	| **前端 SPA（React/Vue）**                       | 使用 Webpack/Vite 打包後，Apache 提供 `/static/**` | 同一個 443 下的子路徑             |
+	| **API Gateway (Spring Cloud Gateway / Kong)**   | 提供 `/api/**` 的所有 API 代理與安全控制           | 可內部使用 port 1234，Apache 轉發 |
+	| **後端服務（Spring Boot A, B, C）**             | 提供實際資料邏輯                                   | 由 Gateway 轉發，通常不開放對外   |
+
+	📌 Apache 設定範例（假設前端靜態檔與 API Gateway 分開）：
+		<VirtualHost *:443>
+			ServerName example.com
+
+			# 1. 前端打包好的靜態 SPA
+			DocumentRoot /var/www/html/frontend-dist
+
+			# 2. 所有 /api/** 請求導到 API Gateway (port 1234)
+			ProxyPass        /api/ http://localhost:1234/api/
+			ProxyPassReverse /api/ http://localhost:1234/api/
+
+			# 可選：前端路由 fallback 給 index.html
+			RewriteEngine On
+			RewriteCond %{REQUEST_FILENAME} !-f
+			RewriteCond %{REQUEST_URI} !^/api/
+			RewriteRule ^ /index.html [L]
+		</VirtualHost>
+
+	✅ 這樣做的好處：
+		| 好處        | 說明                                                                           |
+		| ----------- | ------------------------------------------------------------------------------ |
+		| ✅ 分離責任 | Apache 處理靜態資源與 HTTPS，API Gateway 處理流控、驗證、路由                  |
+		| ✅ 更安全   | 後端服務（A、B、C）只對 Gateway 開放，不暴露在 Internet 上                     |
+		| ✅ 易於擴展 | API Gateway 可以根據不同 path 或 header 分發請求到不同微服務                   |
+		| ✅ 易部署   | 前端仍透過 `https://example.com` 打 API，不需考慮跨域問題（因為共用同一 host） |
+
+	🔐 額外建議：
+		* Apache 443 對外 → 只代理到前端與 API Gateway
+		* API Gateway（如 Spring Cloud Gateway）僅開放內部通訊（例如 127.0.0.1:1234）
+		* 後端服務僅允許 API Gateway 存取（IP 白名單、內網隔離）

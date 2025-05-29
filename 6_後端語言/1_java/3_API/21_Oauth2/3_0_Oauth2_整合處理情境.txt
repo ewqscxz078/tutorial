@@ -67,7 +67,7 @@ client A
 	1.設定 auth server 在哪(application.yml)
 		client-b:
 		  api-url: http://localhost:8082/api
-		spring:
+		spring: # by keycloak
 		  security:
 			oauth2:
 			  client:
@@ -81,6 +81,24 @@ client A
 				  keycloak:
 					token-uri: http://localhost:8080/realms/myrealm/protocol/openid-connect/token
 		這樣 Spring Security 知道 Auth Server（Keycloak）在哪裡，會自動幫你取得 JWT！
+
+		spring: # by 自訂 auth server
+		  security:
+			oauth2:
+			  client:
+				registration:
+				  '[你的自訂 registration name]':
+					client-id: ${CLIENT_ID:hello-client}
+					client-secret: ${CLIENT_SECRET:secret123}
+					authorization-grant-type: client_credentials
+					scope:
+					 - read
+					provider: jwt-provider         # ← 必須對應 provider 區塊的 key
+				provider:
+				  jwt-provider:
+					token-uri: http://localhost:9000/auth-server/oauth2/token # 去 auth server 取的 jwt 自動埋入
+		這樣 Spring Security 知道自訂 Auth Server 在哪裡，會自動幫你取得 JWT！
+
 	2.發起請求到 從 AUTH server 取得 jwt
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
