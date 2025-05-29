@@ -9,10 +9,10 @@ Micrometer Tracing 預設只會在 處理請求（HTTP Server 或 WebClient 等�
 ✅ 「啟動服務時也想初始 traceId spanId 放到 log」
 	✅ 解法：手動建立一個 span context 放入 MDC
 		你可以在 ApplicationRunner 或 CommandLineRunner 裡手動建立一個 span，例如：
-		
+
 			import io.micrometer.tracing.Span;
 			import io.micrometer.tracing.Tracer;
-		
+
 			@Component
 			public class StartupTracer implements ApplicationRunner {
 
@@ -63,7 +63,7 @@ Micrometer Tracing 預設只會在 處理請求（HTTP Server 或 WebClient 等�
 	@Scheduled
 	Kafka Listener
 	CommandLineRunner
-	
+
 	你都要在這些工作開始時手動建立 Span，或使用 Micrometer 提供的 ObservationRegistry 自動觀察範圍。
 
 
@@ -72,7 +72,7 @@ Micrometer Tracing 預設只會在 處理請求（HTTP Server 或 WebClient 等�
 
 	若你想做到：log（MDC）、tracing、metrics、context 整合、延伸可觀測性平台（如 Tempo/Prometheus）：
 		👉 強烈建議統一改用 ObservationRegistry！
-		
+
 
 ✅ 使用 ObservationRegistry 簡要結論
 	| 方法                                               | 回傳的是？                              | 使用時機                             |

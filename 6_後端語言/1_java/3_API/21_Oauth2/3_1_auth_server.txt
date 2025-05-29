@@ -359,14 +359,14 @@ Q:可以在每次佈署時，更換 auth server 的金鑰對嗎?
 							.build();
 					}
 				}
-				
+
 				AuthorizationServerSettings.builder().issuer
 					🔍 它的作用是什麼？
 						👉 設定 Authorization Server 的發行者識別（issuer），這個值會影響：
 							1.JWT token 中的 iss 欄位
 							2.Resource Server 驗證 JWT 時會對應的發行者網址
 							3..well-known/openid-configuration 的對外暴露內容
-					
+
 					🧩 為什麼這很重要？
 						1.JWT 驗證相符性依賴 issuer
 							當 Resource Server 驗證 JWT 時，會根據設定的 issuer-uri 去比對 JWT 的 iss 欄位：
@@ -695,7 +695,7 @@ spring boot Oauth2 提供
 					.tokenIntrospectionEndpoint("/oauth2/introspect")
 					.build();
 			}
-		
+
 		說明各設定項：
 			| 設定項目                     | 說明                                                                                                               |
 			| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -724,7 +724,7 @@ spring boot Oauth2 提供
 				  ...
 				}
 			這些資訊會給前端或外部整合系統當 discovery 使用。
-			
+
 			如你有多個環境（dev, sit, prod），可以讓 issuer 隨 Spring Profile 或環境變數設定，例如：
 				# application-prod.yml
 				auth-server:

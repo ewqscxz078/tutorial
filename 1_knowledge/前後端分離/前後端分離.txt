@@ -203,7 +203,7 @@ ref ChatGPT
 
 當你進入真正的前後端分離架構後：
 	Spring Boot 的後端就幾乎不再使用 JSP、tiles、JSF、Thymeleaf、Freemarker 等模板引擎技術來渲染畫面。
-	
+
 ✅ 原因：前後端職責已經分離
 	| 類型                       | 說明                                                                              |
 	| -------------------------- | --------------------------------------------------------------------------------- |
@@ -235,8 +235,8 @@ ref ChatGPT
 
 		3.內部管理工具/後台系統不需 SPA
 			→ 若非高頻互動或 UX 要求不高，也可暫用模板引擎快速開發
-			
-			
+
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ✅ OAuth2 Client Credentials 授權模式：對照表
@@ -269,7 +269,7 @@ ref ChatGPT
 	Spring Boot A (負責畫面與 API 呼叫)
 	  ↓  ➜ 從 Auth Server 拿 token（Client Credentials）
 	Spring Boot B (資源伺服器 + 驗證 JWT token)
-	
+
 		1. 保護 Spring Boot A 的入口（不讓人隨便打）
 			| 做法                               | 說明                                                        |
 			| ---------------------------------- | ----------------------------------------------------------- |
@@ -277,7 +277,7 @@ ref ChatGPT
 			| ✅ **加入 API Gateway 或 WAF 層**  | 限制只有特定來源（例如你的網站頁面）才能呼叫 Spring Boot A  |
 			| ✅ **避免暴露 API 給 public**      | 若 Spring Boot A 提供的是畫面組裝，不應讓 API public 可打   |
 			| ✅ **驗證 Referer / CORS**         | 可作為額外的驗證來源來限制來源頁面                          |
-		
+
 		🧱 2. Spring Boot A 要設計成不提供「泛用代打 Proxy 功能」
 			| 錯誤做法 ❌                          | 正確做法 ✅                                                  |
 			| ------------------------------------ | ------------------------------------------------------------ |
@@ -298,11 +298,11 @@ ref ChatGPT
 				String result = backendApiService.getSummary(); // 帶入 client credentials token
 				return ResponseEntity.ok(result);
 			}
-		
+
 		🔐 加上 API Key / JWT 驗證（保護 Spring Boot A 的 endpoint）
 			* 前端請求 Spring Boot A 時，加上自家前端平台簽發的 token 或 session
 			* 後端驗證來源合法性（非公開呼叫）
-		
+
 		🔐 補充：你可以做的防範清單
 			| 防護項目                          | 建議                                               |
 			| --------------------------------- | -------------------------------------------------- |
@@ -319,10 +319,10 @@ ref ChatGPT
 			| ✅ 要不要限制 Spring Boot A 誰能打？ | 要，Spring Boot A 必須驗證請求是否合法，不能成為任意 proxy |
 			| ✅ 前端要不要直接拿 token？          | ❌ 不建議，client\_credentials token 僅限可信後端使用      |
 			| 🔐 重點原則                          | 「信任 A，不代表信任所有打 A 的人」                        |
-		
-		
+
+
 建議所有後端前面導入 API Gateway（如 Spring Cloud Gateway、Kong、APISIX）Gateway 層的安全策略
-		
+
 	🔐 API Gateway 的作用，簡單一句話：
 		在你所有後端服務**「面前擋一層」**，幫你進行 安全、防護、流控、路由、日誌等集中管理，
 		不讓「任何人」都可以直接打你內部的後端服務。
@@ -350,7 +350,7 @@ ref ChatGPT
 			* Gateway 自動轉發 /api/frontend/** → Spring Boot A，其他請求拒絕
 			* Gateway 加上每 IP 速率限制：每秒最多 5 次
 			* Gateway 實作 access log 與 fail log（方便追查）
-		
+
 	✅ 適合導入 API Gateway 的時機
 		| 時機                                               | 原因                                   |
 		| -------------------------------------------------- | -------------------------------------- |
@@ -372,7 +372,7 @@ A:是的，JWT 驗證可以防範「未授權請求存取 API 資料」。
 	但 不代表可以防範「亂打你服務的行為本身」。
 		* JWT 可以擋「沒帶合法 token 的人」拿到敏感資料
 		* ❌ 但擋不了「任何人嘗試打你服務」，例如不斷打 /token、爆打 /api/xxx
-		
+
 		🔍 舉個例子：
 			你部署了一個 Resource Server：
 				https://api.example.com/api/report
@@ -404,7 +404,7 @@ A:是的，JWT 驗證可以防範「未授權請求存取 API 資料」。
 		| 🔐 驗證授權層     | 驗證 JWT Token + Scope      | Spring Security + OAuth2 Resource Server      |
 		| 📊 監控與告警     | 異常流量偵測、審計          | ELK / Grafana / Prometheus / Sentry           |
 		| 🧪 測試與壓力模擬 | 壓測安全弱點                | Postman, k6, OWASP ZAP                        |
-		
+
 
 拆分後的「前後端分離 + API Gateway」架構：
 	Browser → https://example.com (Apache 443)

@@ -1,6 +1,6 @@
 ref ChatGPT
 
-標準鏈路追蹤格式 
+標準鏈路追蹤格式
 	W3C Trace Context
 		Spring Boot 3 + Micrometer Tracing 預設會依照 W3C Trace Context 標準，
 		在 HTTP Header 上自動加上以下標頭來傳遞 traceId 和 spanId：
@@ -55,7 +55,7 @@ ref ChatGPT
 		  <groupId>io.micrometer</groupId>
 		  <artifactId>micrometer-tracing-bridge-otel</artifactId>
 		</dependency>
-	
+
 		application.yml 設定範例
 			management:
 			  tracing:
@@ -77,7 +77,7 @@ ref ChatGPT
 	因為 tracing backend 多樣（如 Brave、OTel、Wavefront、Datadog），
 	需要開發者選擇一個實作橋接依賴（bridge），所以通常是透過 actuator + bridge 的方式組合，
 	而不是一個統一 starter。
-	
+
 
 
 
@@ -102,7 +102,7 @@ ref ChatGPT
 🧠 如果你不建構後端(Zipkin、OpenTelemetry )會怎樣？
 	Micrometer Tracing 在 Spring Boot 3 中的核心功能是「建立與傳遞 Trace/Span」，
 	即使你不設定 Zipkin / OTLP 等後端，它仍然會：
-	
+
 	✅ 在應用內部正常工作
 		1.自動建立 HTTP request span（例如 controller 呼叫）
 
@@ -111,7 +111,7 @@ ref ChatGPT
 		3.將 traceId / spanId 傳遞到下游服務（透過 HTTP header）
 
 		4.將 traceId / spanId 放進 MDC，可印在 log 中
-	
+
 	❌ 但不會將 trace 資料送出去或集中展示
 		這表示你無法：
 			1.在 Zipkin / Jaeger UI 中看到 span timeline
@@ -120,7 +120,7 @@ ref ChatGPT
 
 Micrometer Tracing 只會自動幫你放 traceId 和 spanId 到 MDC（Mapped Diagnostic Context），
 	如果你有其他自訂欄位（例如 userId、requestId、tenantId 等），你必須自行補上與清除。
-	
+
 	✅ Micrometer Tracing 預設只放這些進 MDC：
 		| Key       | 值來源           |
 		| --------- | ---------------- |
@@ -163,7 +163,7 @@ Micrometer Tracing 只會自動幫你放 traceId 和 spanId 到 MDC（Mapped Dia
 	✅ 自動加到 MDC（你可以直接印 log）
 	✅ 自動建立 span（例如 HTTP 呼叫 / WebClient）
 	✅ 支援自訂觀察 / 手動建立 span（進階控制）
-	
+
 	🧠 但 Micrometer Tracing「不會幫你處理」：
 		| 功能                                            | 是否 Micrometer Tracing 處理？ | 處理方式                                          |
 		| ----------------------------------------------- | ------------------------------ | ------------------------------------------------- |
@@ -196,7 +196,7 @@ Micrometer Tracing 只會自動幫你放 traceId 和 spanId 到 MDC（Mapped Dia
 				4bf9...36 -> traceId
 				00f0...b7 -> spanId
 				01        -> sampled (1 表示會送到 backend)
-	
+
 	❓如果你想改用 Zipkin 的 B3 header 格式？
 		application.yml：
 			management:

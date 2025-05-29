@@ -23,7 +23,7 @@ temp file : 臨時文件建立與刪除
 路徑處理有關
 	取得檔名
 		String filename = path.getFileName().toString();  // 傳回 最後一層的路徑元件(包含副檔名)
-		
+
 	get Path by string
 		Path path = Paths.get(...)
 

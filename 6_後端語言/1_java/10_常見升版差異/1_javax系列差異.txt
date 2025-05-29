@@ -26,7 +26,7 @@ ref ChatGPT
 			<artifactId>jakarta.annotation-api</artifactId>
 			<version>2.1.1</version> <!-- 建議使用最新版 -->
 		</dependency>
-	
+
 	2.正確 import：
 		import jakarta.annotation.PostConstruct;
 

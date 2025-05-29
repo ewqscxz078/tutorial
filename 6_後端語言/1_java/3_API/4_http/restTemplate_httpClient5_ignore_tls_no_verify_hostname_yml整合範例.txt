@@ -53,7 +53,7 @@ RestTemplate myRestTemplate(final RequestProperties requestProperties) {
 
 	return new RestTemplate(clientHttpRequestFactory);
 }
-	
+
 
 @ConfigurationProperties(prefix = "你的yml前墜")
 public class RequestProperties {
@@ -63,12 +63,12 @@ public class RequestProperties {
     private Duration connectionRequestTimeout = Duration.ofMinutes(1); // 預設值 1 分鐘，向 connection pool 取得連線的等待時間
 
     private Duration responseTimeout = Duration.ofMinutes(1); // 預設值 1 分鐘，資料傳輸過程中等待資料的最大時間(讀timeout)
-	
+
 
 application.yml
 request:
   #connect-timeout: 1m # 預設1分鐘，連線層級: TCP 連線建立的超時時間，可用 ms, s, m, h 格式宣告
   #default-max-per-route: 100 # 預設 100，連線池設定: aximum number of concurrent connections per route
-  #max-total: 500 # 預設 500，連線池設定: maximum number of total open connections 
+  #max-total: 500 # 預設 500，連線池設定: maximum number of total open connections
   #connection-request-timeout: 1m # 預設1分鐘，請求層級: 向 connection pool 取得連線的等待時間，可用 ms, s, m, h 格式宣告
   #response-timeout: 1m # 預設1分鐘，請求層級: 資料傳輸過程中等待資料的最大時間(讀timeout)，可用 ms, s, m, h 格式宣告
