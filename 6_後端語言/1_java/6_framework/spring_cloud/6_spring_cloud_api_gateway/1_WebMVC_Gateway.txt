@@ -1,0 +1,90 @@
+ref ChatGPT
+	https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webmvc.html
+
+WebMVC Gateway(支援 spring mvc 的 gateway)
+
+1.maven 依賴
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-starter-gateway-server-webmvc</artifactId>
+	</dependency>
+
+2.application.yml
+	server:
+	  port: 8080
+
+	spring:
+	  application:
+		name: api-gateway
+
+	  cloud:
+		gateway:
+		  default-filters:
+			- TokenRelay
+		  routes:
+			- id: backend-service
+			  uri: lb://backend-service   # 使用服務發現
+			  predicates:
+				- Path=/api/backend/**
+			  filters:
+				- StripPrefix=1
+
+	  security:
+		oauth2:
+		  resourceserver:
+			jwt:
+			  issuer-uri: https://your-auth-server.com  # 根據你的 Auth Server 設定
+
+	eureka:
+	  client:
+		service-url:
+		  defaultZone: http://localhost:8761/eureka/
+
+
+3.java
+	configuration
+
+		@Configuration
+		@EnableWebSecurity
+		public class SecurityConfig {
+
+			@Bean
+			SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+				http.authorizeHttpRequests(authz -> authz //
+						.anyRequest().authenticated() // 只驗 JWT 有效性，不驗 scope
+				);
+				http.oauth2ResourceServer(oauth2 -> oauth2 //
+						.jwt() // 使用 Resource Server 內建 JWT 驗證
+				);
+				return http.build();
+			}
+		}
+
+🔚 Gateway 處理小結
+	| 功能           | 是否需要自寫                                 |
+	| -------------- | -------------------------------------------- |
+	| JWT 驗簽       | ❌ 不用，自動處理                            |
+	| 不驗 scope     | ✅ 預設就不驗，除非你寫 `.hasAuthority(...)` |
+	| 擴充 JWT claim | ✅ 可用 `SecurityContextHolder` 取得         |
+
+
+唯一你可能「要寫 Java」的情況：
+	| 目的                                  | 是否要寫 Java                     |
+	| ------------------------------------- | --------------------------------- |
+	| 客製驗證規則（例如限制 IP）           | ✅ 要自己加 Filter/Interceptor    |
+	| 轉發時保留 Header（如 Authorization） | ✅ 若非自動傳遞，要手動加         |
+	| MDC 或 Logging 強化                   | ✅ 建議加                         |
+	| 微調 SecurityFilterChain              | ✅ 建議加（可選）                 |
+
+
+錯誤處理
+	| 錯誤類型               | 是否可攔截統一處理 | 備註                                       |
+	| ---------------------- | ------------------ | ------------------------------------------ |
+	| JWT 無效 / 遺失        | ✅                 | 被 Spring Security 攔下，走 `/error`       |
+	| 後端服務回傳 5xx       | ✅                 | 可統一格式包裝                             |
+	| 後端服務掛掉 / 無實例  | ✅                 | Eureka 找不到服務也會走 Exception          |
+	| DNS 問題 / 連線失敗    | ❌（特殊情況）     | 若太早失敗，可能走不到 DispatcherServlet   |

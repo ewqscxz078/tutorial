@@ -22,7 +22,7 @@ https://spring.io/projects/spring-cloud
 		因此會有1個 Spring Cloud Config server 服務 + n個 Spring Cloud Config client 服務的設定
 
 
-2.Spring Cloud Sleuth
+2.Spring Cloud Sleuth =>
 	實現分散式追蹤
 		https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
 		https://www.tpisoftware.com/tpu/articleDetails/2682
@@ -43,6 +43,8 @@ https://spring.io/projects/spring-cloud
 5.Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
 	https://www.tpisoftware.com/tpu/articleDetails/1390
 		訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
+
+6.Spring Cloud api gateway
 
 99.optional(與 k8s 部分元件交集)
 	Spring Cloud Eureka 服務發現

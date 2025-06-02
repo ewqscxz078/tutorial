@@ -1,0 +1,104 @@
+ref ChatGPT
+
+用途
+	1. 單一入口（Single Entry Point）
+		作為整個系統的統一進入點，所有來自前端（Web、App）的請求都先進入 API Gateway，再由 Gateway 轉發到後端微服務。
+
+	2. 路由轉發（Routing）
+		根據 URL path 或其他條件，將請求轉發到正確的後端服務。
+			/user/**    → User Service  
+			/order/**   → Order Service
+
+	3. 鑑權與驗證（Authentication & Authorization）
+		在 Gateway 層處理 token 的驗證，例如 JWT Token 或 OAuth2 Token，確保只有授權用戶可以進入後端服務。
+
+	4. 負載平衡（Load Balancing）
+		通常結合 Spring Cloud LoadBalancer 或服務註冊中心（如 Eureka），做到動態地將請求分配給多台後端服務實例。
+
+	5. 安全性保護
+		限流（Rate Limiting）
+		IP 白名單/黑名單
+		防止 DDoS 攻擊
+		CORS 處理
+
+	6. 請求與回應的轉換（Filters）
+		可以攔截請求與回應，自定義 header、body、參數轉換、加解密等處理。
+	
+	7. 日誌與監控
+		集中記錄所有進入請求、響應時間、錯誤訊息，有助於除錯與效能分析。
+
+	8. 熔斷與降級（Circuit Breaker / Fallback）
+		當某個後端服務掛掉時，Gateway 可以自動回應預設內容或提示，避免整個系統失效。
+
+	9. 動態路由與配置（透過 Spring Cloud Config 或 Discovery Client）
+		當服務數量變動時，可自動從註冊中心獲取最新路由，不需手動配置。
+
+	典型架構圖
+		[ Client (Web/App) ]
+				↓
+		[ Spring Cloud Gateway ]
+				↓
+		[ Auth Service ] ← Gateway 驗證用
+				↓
+		[ User Service | Order Service | ... ]
+
+
+✅ 使用 API Gateway 的優點
+	| 分類                                 | 說明                                                                                            |
+	| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+	| **集中認證授權**                     | 可以統一處理 OAuth2 JWT 驗證、Token 交換（Federation）、API Key 驗證等。                        |
+	| **統一入口（Single Entry Point）**   | 客戶端只需要認識 Gateway，不需知道後端服務的實際位置與數量。                                    |
+	| **服務發現與路由**                   | 搭配 Spring Cloud Gateway + Eureka 等可以自動發現服務並做路由。                                 |
+	| **負載平衡與容錯**                   | Gateway 可內建 LoadBalancer（如 Spring Cloud LoadBalancer 或 Ribbon）與重試、Fallback 等機制。  |
+	| **協定轉換**                         | 可做 HTTP ↔ WebSocket、HTTP ↔ gRPC、REST ↔ SOAP 等轉換。                                        |
+	| **日誌與監控統一**                   | 可集中記錄所有進出 API 的行為、計數、異常、耗時等。                                             |
+	| **限制與安全控管**                   | 支援限流（Rate Limiting）、IP 黑名單、Header 檢查等。                                           |
+	| **API 版本控管**                     | 可透過路由規則處理不同版本的 API（例如 `/v1/**` vs `/v2/**`）。                                 |
+	| **跨來源處理（CORS）**               | 統一處理前端跨域設定。                                                                          |
+	| **快速測試 / Mock 支援**             | 可以在 Gateway 層做 Mock Response，利於開發測試。                                               |
+
+❌ 使用 API Gateway 的缺點
+	| 分類                       | 說明                                                     |
+	| -------------------------- | -------------------------------------------------------- |
+	| **架構複雜度提升**         | 引入新元件，要管理部署、監控、設定。                     |
+	| **延遲增加**               | 增加一層轉發與處理流程，會稍微增加延遲。                 |
+	| **單點風險（若未做 HA）**  | 若 Gateway 掛掉會影響整體服務，需設計高可用部署。        |
+	| **維運成本**               | 需要調整與維護 Routing、CORS、Security、Metrics 等設定。 |
+	| **調試困難**               | 錯誤可能在 Gateway 層攔截，需要額外日誌工具協助排查。    |
+
+
+✅ 不使用 API Gateway 的情境（何時可不使用）
+	| 情境           | 原因                                                          |
+	| -------------- | ------------------------------------------------------------- |
+	| 系統非常簡單   | 單體或微服務數量非常少（如僅 2\~3 個服務），直接呼叫即可。    |
+	| 系統僅用於內部 | 不暴露給外部使用者，風險低、需求單純。                        |
+	| 有別種網關設備 | 已有硬體/商用型 API Gateway（如 Kong、NGINX、Apigee）。       |
+	| 不需要集中控制 | 驗證、限流、路由都可以各服務自己處理，也能接受分散成本。      |
+
+
+spring cloud Gateway 提供兩種
+	🚨 關鍵差異：WebFlux Gateway vs WebMVC Gateway
+		| 項目                   | WebFlux Gateway (starter-gateway)                      | WebMVC Gateway (starter-gateway-server-webmvc)    |
+		| ---------------------- | ------------------------------------------------------ | ------------------------------------------------- |
+		| 路由設定位置           | `spring.cloud.gateway.routes`                          | Java Config 或 `spring.cloud.gateway.mvc.routes`  |
+		| Filter 支援            | 支援內建 filters (`default-filters`, `StripPrefix`...) | 支援較少，需 Java DSL 處理                        |
+		| 基於反應式架構         | ✅ 是                                                  | ❌ 否，為傳統 Servlet 架構                        |
+		| 適合與 MVC 與 JSP 整合 | ❌ 不適合                                              | ✅ 適合搭配你的前端（JSP + Tiles）                |
+
+
+
+		✅ TokenRelay 方式
+			| 功能              | WebFlux Gateway             | WebMVC Gateway               |
+			| ----------------- | --------------------------- | ---------------------------- |
+			| `TokenRelay` 支援 | ✅ 內建支援                 | ❌ 不支援                    |
+			| Token 傳遞方式    | 自動透過 Filter + WebClient | 需手動處理 Header + 自訂邏輯 |
+			
+			Oauth2 jwt
+				WebFlux → TokenRelay 自動幫你轉
+				WebMVC → 你要自己驗完再手動轉
+			
+			
+		🚫 WebFlux 與 WebMVC 衝突的技術根源
+			* DispatcherServlet（WebMVC） vs WebHandler（WebFlux）
+			* Tomcat/Jetty（Servlet 容器） vs Reactor Netty（非阻塞 Server）
+			* 若你同時引入兩個 starter，Spring Boot 會無法啟動或報錯，因為找不到合適的 WebServerFactory。
