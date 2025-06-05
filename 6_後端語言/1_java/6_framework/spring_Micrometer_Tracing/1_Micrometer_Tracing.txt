@@ -1,0 +1,499 @@
+ref ChatGPT
+	https://www.baeldung.com/spring-boot-3-observability
+	https://spring.io/blog/2022/10/12/observability-with-spring-boot-3
+
+標準鏈路追蹤格式
+	W3C Trace Context
+		Spring Boot 3 + Micrometer Tracing 預設會依照 W3C Trace Context 標準，
+		在 HTTP Header 上自動加上以下標頭來傳遞 traceId 和 spanId：
+
+在 Spring Boot 3 中，使用 Micrometer Tracing 來實現分散式追蹤（Distributed Tracing）是一個標準做法，
+	Micrometer Tracing 整合了如 OpenTelemetry、Brave（Zipkin）、Wavefront 等後端，並統一提供觀察性支持。
+
+🔧 基本架構與元件
+	| 功能           | 常用實作                            |
+	| -------------- | ----------------------------------- |
+	| Tracer 實作    | Brave（Zipkin）或 OpenTelemetry     |
+	| Span 傳遞協定  | W3C Trace Context (預設)，也支援 B3 |
+	| 傳送資料後端   | Zipkin、Jaeger、OTel Collector 等   |
+
+
+依賴
+	<dependency>
+	  <groupId>org.springframework.boot</groupId>
+	  <artifactId>spring-boot-starter-actuator</artifactId>
+	</dependency>
+
+	<dependency>
+	  <groupId>io.micrometer</groupId>
+	  <artifactId>micrometer-tracing-bridge-brave</artifactId>
+	</dependency>
+
+	1.使用方式
+		Observation and ObservationRegistry
+			ObservationRegistry observationRegistry = ObservationRegistry.create();
+			Observation observation = Observation.createNotStarted("sample", observationRegistry);
+			observation.start();
+			try (Observation.Scope scope = observation.openScope()) {
+				// ... the observed action
+			} catch (Exception e) {
+				observation.error(e);
+				// further exception handling
+			} finally {
+				observation.stop();
+			}
+
+			Or simply:
+				observation.observe(() -> {
+					// ... the observed action
+				});
+
+	2.設定 MDC Handler（若想把 traceId 放入 MDC）
+		@Bean
+		ObservationHandler<Context> mdcHandler() {
+			return new MdcObservationHandler();  // 1.4.6 後要改成自己自訂
+		}
+
+		1.4.6 後
+			ObservationHandler 後要改成自己自訂
+				public class SimpleLoggingHandler implements ObservationHandler<Observation.Context> {
+
+					private static final Logger log = LoggerFactory.getLogger(SimpleLoggingHandler.class);
+
+					@Override
+					public boolean supportsContext(Observation.Context context) {
+						return true;
+					}
+
+					@Override
+					public void onStart(Observation.Context context) {
+						log.info("Starting");
+					}
+
+					@Override
+					public void onScopeOpened(Observation.Context context) {
+						log.info("Scope opened");
+					}
+
+					@Override
+					public void onScopeClosed(Observation.Context context) {
+						log.info("Scope closed");
+					}
+
+					@Override
+					public void onStop(Observation.Context context) {
+						log.info("Stopping");
+					}
+
+					@Override
+					public void onError(Observation.Context context) {
+						log.info("Error");
+					}
+				}
+			將 ObservationHandler 註冊到 observationRegistry
+				若是 spring boot 則建議使用自動整合註冊到 observationRegistry 即可
+					@Bean
+					public ObservationHandler<Observation.Context> mdcHandler() {
+						return new SimpleLoggingHandler();
+					}
+				反之手工方式
+					observationRegistry
+					  .observationConfig()
+					  .observationHandler(new SimpleLoggingHandler());
+
+					For simple logging, an implementation already exists. For instance, to simply log events to the console, we can use
+						observationRegistry
+						  .observationConfig()
+						  .observationHandler(new ObservationTextPublisher(System.out::println));
+
+					To use timer samples and counters, we can configure this:
+						MeterRegistry meterRegistry = new SimpleMeterRegistry();
+						observationRegistry
+						  .observationConfig()
+						  .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+
+						// ... observe using Observation with name "sample"
+
+						// fetch maximum duration of the named observation
+						Optional<Double> maximumDuration = meterRegistry.getMeters().stream()
+						  .filter(m -> "sample".equals(m.getId().getName()))
+						  .flatMap(m -> StreamSupport.stream(m.measure().spliterator(), false))
+						  .filter(ms -> ms.getStatistic() == Statistic.MAX)
+						  .findFirst()
+						  .map(Measurement::getValue);
+
+
+
+	3.Spring Integration
+		3.1. Actuator
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-actuator</artifactId>
+			</dependency>
+
+			It contains an ObservationAutoConfiguration that provides an injectable instance of ObservationRegistry (if it doesn’t already exist), and configures ObservationHandlers for collecting metrics and traces.
+			For example, we can use the registry to create a custom observation within a service:
+				@Service
+				public class GreetingService {
+
+					private ObservationRegistry observationRegistry;
+
+					// constructor
+
+					public String sayHello() {
+						return Observation
+						  .createNotStarted("greetingService", observationRegistry)
+						  .observe(this::sayHelloNoObserver);
+					}
+
+					private String sayHelloNoObserver() {
+						return "Hello World!";
+					}
+				}
+				@Configuration
+				public class ObservationTextPublisherConfiguration {
+
+					private static final Logger log = LoggerFactory.getLogger(ObservationTextPublisherConfiguration.class);
+
+					@Bean
+					public ObservationHandler<Observation.Context> observationTextPublisher() {
+						return new ObservationTextPublisher(log::info);
+					}
+				}
+		3.2. Web
+			For MVC there is a filter (org.springframework.web.filter.ServerHttpObservationFilter) that we can use for HTTP server observations. When Actuator is part of our application, this filter is already registered and active. If not, we need to configure it:
+			@Configuration
+			public class ObservationFilterConfiguration {
+
+				// if an ObservationRegistry is configured
+				@ConditionalOnBean(ObservationRegistry.class)
+				// if we do not use Actuator
+				@ConditionalOnMissingBean(ServerHttpObservationFilter.class)
+				@Bean
+				public ServerHttpObservationFilter observationFilter(ObservationRegistry registry) {
+					return new ServerHttpObservationFilter(registry);
+				}
+			}
+			For WebFlux, there is such a filter too (org.springframework.web.filter.reactive.ServerHttpObservationFilter), but this has been deprecated since Spring Framework version 6.1 (Spring Boot 3.2). Instead, a WebHttpHandlerBuilder is created. With Actuator, this is auto-configured too.
+		3.3. AOP
+			The Micrometer Observation API also declares an @Observed annotation with an aspect implementation based on AspectJ. To get this to work, we need to add the AOP dependency to our project:
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-aop</artifactId>
+			</dependency>
+			@Configuration
+			public class ObservedAspectConfiguration {
+
+				@Bean
+				public ObservedAspect observedAspect(ObservationRegistry observationRegistry) {
+					return new ObservedAspect(observationRegistry);
+				}
+			}
+			@Observed(name = "greetingService")
+			@Service
+			public class GreetingService {
+
+				public String sayHello() {
+					return "Hello World!";
+				}
+			}
+			In combination with Actuator, we can read out the pre-configured metrics (after we’ve invoked the service at least once) using http://localhost:8080/actuator/metrics/greetingService and we’ll get a result like this:
+				{
+					"name": "greetingService",
+					"baseUnit": "seconds",
+					"measurements": [
+						{
+							"statistic": "COUNT",
+							"value": 15
+						},
+						{
+							"statistic": "TOTAL_TIME",
+							"value": 0.0237577
+						},
+						{
+							"statistic": "MAX",
+							"value": 0.0035475
+						}
+					],
+					...
+				}
+	4.設定 Logback pattern 加入 traceId / spanId
+		# application.yml
+			logging.pattern.level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-}]"
+
+
+	5.Micrometer Observation 有使用才會產生 traceId/spanId
+		如果你使用的流程或控制器沒有包在 Observation.createNotStarted(...).observe(...) 或沒有使用 Web filter 自動起 observation scope，MDC 也不會有 traceId/spanId。
+		🔄 解法：
+		Spring Boot Web 有自動配置 Micrometer 的觀察範圍，例如：
+			1.Controller 請求：自動建立 Observation
+			2.WebClient：若有設定 Tracing ExchangeFilterFunction，也會有 Observation
+
+		但像你如果在：
+			1.自訂 thread
+			2.非 Web 請求流程
+			3.Scheduler / Batch
+
+			就需要手動建立 observation：
+			observationRegistry
+				.observation("my.operation")
+				.observe(() -> {
+					// 這段期間內 MDC 才會有 traceId / spanId
+					log.info("doing something");
+				});
+
+		MDC 與非同步邏輯（特別是 WebClient）
+			若使用非同步流程（例如 Mono, CompletableFuture），記得：
+			MDC 只在 同一 Thread 的同步區塊內有效
+			在 WebClient 中 MDC 不會自動延續，要用 Tracing Filter
+			建議使用：
+				WebClient.builder()
+				  .filter(TracingExchangeFilterFunction.create(tracer)) // Brave 或 OTel
+				  .build();
+				即使 WebClient block 模式，仍要設定
+
+		多個 ObservationHandler 的執行順序
+			如果你還有其他 ObservationHandler，Spring 預設會依照 supportsContext(...) 評估並呼叫，所以：
+			建議 MdcObservationHandler 放在最後（它通常支援所有 context）
+		✅ 總結 Checklist
+			| 項目                                             | 是否需要                          |
+			| ------------------------------------------------ | --------------------------------- |
+			| `micrometer-tracing-bridge-brave` 或 `-otel`     | ✅ 必要                           |
+			| `micrometer-tracing`（含 MdcObservationHandler） | ✅ 建議                           |
+			| 註冊 MdcObservationHandler                       | ✅ 必要（Spring Boot 不會自動加） |
+			| Logback pattern 含 `%X{traceId}`                 | ✅ 必要                           |
+			| 使用 Micrometer Observation API 或 Web 請求      | ✅ traceId 才會出現               |
+			| 非同步程式注意 MDC 傳遞                          | ✅ 需特別處理                     |
+
+
+自動整合：
+	Micrometer Tracing API
+	Brave 作為 backend 實作（預設）
+	自動插入 HTTP traceId / spanId 到 MDC（logback/log4j2）
+	自動處理 Web / WebClient / RestTemplate 的 tracing propagation
+
+如果你想傳送 trace 資料（如到 Zipkin、OTLP）多依賴
+	傳送到 Zipkin
+		<dependency>
+		  <groupId>io.zipkin.reporter2</groupId>
+		  <artifactId>zipkin-reporter-brave</artifactId>
+		</dependency>
+
+		application.yml 設定範例
+			management:
+			  tracing:
+				sampling:
+				  probability: 1.0  # 全部收集，建議正式環境設為 0.1 左右
+			  zipkin:
+				tracing:
+				  endpoint: http://localhost:9411/api/v2/spans  # Zipkin 伺服器
+
+
+	傳送到 OTLP (OpenTelemetry):
+		<dependency>
+		  <groupId>io.micrometer</groupId>
+		  <artifactId>micrometer-tracing-bridge-otel</artifactId>
+		</dependency>
+
+		application.yml 設定範例
+			management:
+			  tracing:
+				sampling:
+				  probability: 1.0
+			otel:
+			  exporter:
+				otlp:
+				  endpoint: http://localhost:4317
+
+	搭配 exporter
+		<dependency>
+		  <groupId>io.opentelemetry</groupId>
+		  <artifactId>opentelemetry-exporter-otlp</artifactId>
+		</dependency>
+
+小補充：為何沒有所謂的 spring-boot-starter-micrometer-tracing？
+	Spring Boot 團隊尚未提供一個通用的 micrometer-tracing starter，
+	因為 tracing backend 多樣（如 Brave、OTel、Wavefront、Datadog），
+	需要開發者選擇一個實作橋接依賴（bridge），所以通常是透過 actuator + bridge 的方式組合，
+	而不是一個統一 starter。
+
+
+
+
+✅ Micrometer Tracing 的自動追蹤機制
+	| 元件                        | 是否自動建立 span？                 | 說明                                    |
+	| --------------------------- | ----------------------------------- | --------------------------------------- |
+	| Spring MVC Controller       | ✅                                  | 自動建立 `http.server.requests` span    |
+	| WebClient                   | ✅                                  | 自動建立 `http.client.requests` span    |
+	| RestTemplate（若註冊）      | ✅                                  | 自動建立 client span                    |
+	| RabbitMQ / Kafka / DB 連線  | 🔄（需 micrometer instrumentation） | 可選用額外依賴套件                      |
+	| 方法呼叫（Service 層）      | ❌                                  | 預設不追蹤，要用 `@Observed` 或自訂 AOP |
+
+
+🔍 小結建議
+	| 情境                          | 建議作法                           |
+	| ----------------------------- | ---------------------------------- |
+	| REST API 或 WebClient 呼叫    | Micrometer 自動處理，不用寫        |
+	| 特定 Service 方法要建立 span  | `@Observed`                        |
+	| 自訂 traceId 格式或上下文整合 | 可加 AOP 或自定 ObservationHandler |
+
+
+🧠 如果你不建構後端(Zipkin、OpenTelemetry )會怎樣？
+	Micrometer Tracing 在 Spring Boot 3 中的核心功能是「建立與傳遞 Trace/Span」，
+	即使你不設定 Zipkin / OTLP 等後端，它仍然會：
+
+	✅ 在應用內部正常工作
+		1.自動建立 HTTP request span（例如 controller 呼叫）
+
+		2.自動建立 WebClient span（呼叫其他服務）
+
+		3.將 traceId / spanId 傳遞到下游服務（透過 HTTP header）
+
+		4.將 traceId / spanId 放進 MDC，可印在 log 中
+
+	❌ 但不會將 trace 資料送出去或集中展示
+		這表示你無法：
+			1.在 Zipkin / Jaeger UI 中看到 span timeline
+
+			2.查看服務間的鏈狀視覺化追蹤
+
+Micrometer Tracing 只會自動幫你放 traceId 和 spanId 到 MDC（Mapped Diagnostic Context），
+	如果你有其他自訂欄位（例如 userId、requestId、tenantId 等），你必須自行補上與清除。
+
+	✅ Micrometer Tracing 預設只放這些進 MDC：
+		| Key       | 值來源           |
+		| --------- | ---------------- |
+		| `traceId` | 當前 Trace 的 ID |
+		| `spanId`  | 當前 Span 的 ID  |
+
+
+	🧠 若你有額外的 MDC 欄位，要怎麼補？
+		方法一：使用 HandlerInterceptor 或 OncePerRequestFilter (但比較建議 OncePerRequestFilter)
+			@Component
+			public class CustomMdcInterceptor extends HandlerInterceptorAdapter {
+
+				@Override
+				public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+					// 從 Header 或 SecurityContext 抓你要的欄位
+					String userId = request.getHeader("X-User-Id");
+					if (userId != null) {
+						MDC.put("userId", userId);
+					}
+					return true;
+				}
+
+				@Override
+				public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+					MDC.remove("userId");
+				}
+			}
+
+	📌 建議策略
+		| 目的                                      | 方法                                     |
+		| ----------------------------------------- | ---------------------------------------- |
+		| 要統一補上自定欄位如 `userId`、`reqId`    | 用 `HandlerInterceptor` 或 `Filter`      |
+		| 要搭配 Micrometer 的觀察事件進行 MDC 管理 | 自定 `ObservationHandler`                |
+		| 要自定 span name 並控制內容               | 用 `Tracer.nextSpan()` + MDC 處理        |
+		| 要讓下游服務也看到這些欄位                | 手動寫入 HTTP header（非 trace context） |
+
+
+🎯 Micrometer Tracing 給你的核心價值是：
+	✅ 幫你自動處理 traceId / spanId 的生成、傳遞與上下游串接
+	✅ 自動加到 MDC（你可以直接印 log）
+	✅ 自動建立 span（例如 HTTP 呼叫 / WebClient）
+	✅ 支援自訂觀察 / 手動建立 span（進階控制）
+
+	🧠 但 Micrometer Tracing「不會幫你處理」：
+		| 功能                                            | 是否 Micrometer Tracing 處理？ | 處理方式                                          |
+		| ----------------------------------------------- | ------------------------------ | ------------------------------------------------- |
+		| 自定 `userId`, `tenantId`, `requestId` 等欄位   | ❌ 不會                        | 你需要用 Filter / Interceptor / 自定 Handler 補上 |
+		| 特定業務流程自定 span（例如查資料庫、匯出報表） | ❌ 預設不會                    | 可用 `@Observed` 或 `Tracer.nextSpan()` 處理      |
+		| 將 traceId 傳給非 HTTP 的元件（如 MQ, 日誌分析）| ❌ 需你自行處理                | 自行從 `MDC.get("traceId")` 拿來傳遞              |
+
+✅ Micrometer Tracing 的角色定位總結如下：
+	| 類型                        | 傳統做法（自己寫）    | Micrometer Tracing     |
+	| --------------------------- | --------------------- | ---------------------- |
+	| traceId / spanId 產生與繼承 | 自己寫 AOP or UUID    | 自動處理（遵守標準）   |
+	| HTTP Header 傳遞            | 自己手動加            | 自動處理               |
+	| WebClient 下游串接 Trace    | 自己加 Filter         | 自動處理               |
+	| Log MDC（放 traceId）       | 自己塞 `MDC.put()`    | 自動塞好               |
+	| 自定欄位 MDC（如 userId）   | 自己加                | 還是要自己加           |
+	| Trace 可視化平台整合        | 自己串 Zipkin         | 可選配合 exporter      |
+
+
+🌐 預設使用的 HTTP Header 名稱（W3C）
+	| Header 名稱     | 內容                                                                        |
+	| --------------- | --------------------------------------------------------------------------- |
+	| `traceparent`   | 包含 traceId、spanId、sampled 等資訊                                        |
+	| `tracestate`    | 可選，攜帶額外供分析平台使用的 vendor-specific 資訊（如 datadog、azure 等） |
+
+	🧪 traceparent 範例內容：
+		traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+					 version-traceId-spanId-sampled
+			格式拆解：
+				00        -> version
+				4bf9...36 -> traceId
+				00f0...b7 -> spanId
+				01        -> sampled (1 表示會送到 backend)
+
+	❓如果你想改用 Zipkin 的 B3 header 格式？
+		application.yml：
+			management:
+			  tracing:
+				propagation:
+				  type: b3  # 或 b3_multi
+		B3 單一 header（b3）範例：
+			b3: 4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-1
+		B3 多 header（b3_multi）範例：
+			X-B3-TraceId: 4bf92f3577b34da6a3ce929d0e0e4736
+			X-B3-SpanId: 00f067aa0ba902b7
+			X-B3-Sampled: 1
+
+
+logback mdc 處理注意項目
+	| logback key             | 對應內容                                           |
+	| ----------------------- | -------------------------------------------------- |
+	| `%X{traceId}`           | MDC 中的 `traceId`，由 Micrometer Tracing 自動放入 |
+	| `%X{spanId}`            | MDC 中的 `spanId`，同上                            |
+	| `%X{userId}` 等自定欄位 | 你要自己放（用 Filter、Interceptor）               |
+
+
+
+Q:如果你在「**服務啟動階段（Application 啟動時）」就希望產生 traceId / spanId 並寫入 log 的話，那段程式碼必須：
+	📌 手動建立 Observation
+	因為 Spring Boot 的 Micrometer Tracing 只有在 Web 請求、Scheduled 任務等特定情境下才會自動建立觀察範圍，
+	對於 @PostConstruct 或 CommandLineRunner 等啟動程式區段，不會自動產生 trace context。
+
+	如何手動建立 Observation（含 traceId 注入 MDC）
+		import io.micrometer.observation.Observation;
+		import io.micrometer.observation.ObservationRegistry;
+
+		@Slf4j
+		@Component
+		public class MyStartupRunner implements CommandLineRunner {
+
+			private final ObservationRegistry observationRegistry;
+
+			public MyStartupRunner(ObservationRegistry observationRegistry) {
+				this.observationRegistry = observationRegistry;
+			}
+
+			@Override
+			public void run(String... args) {
+				Observation.createNotStarted("app.startup.init", observationRegistry)
+					.observe(() -> {
+						// MDC 中此時才會有 traceId / spanId
+						log.info("初始化邏輯開始...");
+					});
+			}
+		}
+
+Q:如何確認 自訂 ObservationHandler 生效 ?
+	@Autowired
+	ObservationRegistry registry;
+
+	@PostConstruct
+	public void printHandlers() {
+		registry.observationConfig().getObservationHandlers()
+			.forEach(handler -> System.out.println("Registered: " + handler.getClass()));
+	}

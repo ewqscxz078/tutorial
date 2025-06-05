@@ -1,0 +1,18 @@
+ref ChatGPT
+
+Spring Cloud Sleuth
+	在 Spring Boot 2.x + Spring Cloud 2021.x 時期，分布式追蹤通常使用：
+	Spring Cloud Sleuth：包裝了 Brave（預設）、Zipkin、OpenTelemetry 等實作
+	自動產生 traceId / spanId，並整合到 MDC、logback、HTTP header（如 X-B3-*）
+
+Spring Boot 3 的變化
+	從 Spring Boot 3 / Spring Cloud 2022+ 開始：
+	Spring Cloud Sleuth 已經 EOL（End of Life）
+	被 Micrometer Tracing 完全取代
+	| 項目              | Sleuth（舊）             | Micrometer Tracing（新）                      |
+	| ----------------- | ------------------------ | --------------------------------------------- |
+	| 追蹤元件          | Sleuth + Brave           | Micrometer Tracing + Brave/OpenTelemetry      |
+	| 整合              | Sleuth 封裝多層          | Micrometer 為觀察性（Observability）統一平台  |
+	| MDC 整合          | 自動加入 traceId、spanId | 透過 `MdcObservationHandler` 加入（需設定）   |
+	| 日誌追蹤          | 支援                     | 支援（需搭配 log pattern）                    |
+	| Spring Cloud 相依 | 需要                     | 不一定需要，Micrometer Tracing 可獨立運作     |

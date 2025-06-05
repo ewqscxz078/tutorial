@@ -6,7 +6,7 @@ ref ChatGPT
 
 	2. 路由轉發（Routing）
 		根據 URL path 或其他條件，將請求轉發到正確的後端服務。
-			/user/**    → User Service  
+			/user/**    → User Service
 			/order/**   → Order Service
 
 	3. 鑑權與驗證（Authentication & Authorization）
@@ -23,7 +23,7 @@ ref ChatGPT
 
 	6. 請求與回應的轉換（Filters）
 		可以攔截請求與回應，自定義 header、body、參數轉換、加解密等處理。
-	
+
 	7. 日誌與監控
 		集中記錄所有進入請求、響應時間、錯誤訊息，有助於除錯與效能分析。
 
@@ -92,12 +92,12 @@ spring cloud Gateway 提供兩種
 			| ----------------- | --------------------------- | ---------------------------- |
 			| `TokenRelay` 支援 | ✅ 內建支援                 | ❌ 不支援                    |
 			| Token 傳遞方式    | 自動透過 Filter + WebClient | 需手動處理 Header + 自訂邏輯 |
-			
+
 			Oauth2 jwt
 				WebFlux → TokenRelay 自動幫你轉
 				WebMVC → 你要自己驗完再手動轉
-			
-			
+
+
 		🚫 WebFlux 與 WebMVC 衝突的技術根源
 			* DispatcherServlet（WebMVC） vs WebHandler（WebFlux）
 			* Tomcat/Jetty（Servlet 容器） vs Reactor Netty（非阻塞 Server）
