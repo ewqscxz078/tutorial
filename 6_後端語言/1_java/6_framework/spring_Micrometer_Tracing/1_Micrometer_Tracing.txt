@@ -24,6 +24,7 @@ ref ChatGPT
 	  <artifactId>spring-boot-starter-actuator</artifactId>
 	</dependency>
 
+    <dependency><groupId>io.micrometer</groupId><artifactId>micrometer-tracing</artifactId></dependency>
 	<dependency>
 	  <groupId>io.micrometer</groupId>
 	  <artifactId>micrometer-tracing-bridge-brave</artifactId>
@@ -497,3 +498,19 @@ Q:如何確認 自訂 ObservationHandler 生效 ?
 		registry.observationConfig().getObservationHandlers()
 			.forEach(handler -> System.out.println("Registered: " + handler.getClass()));
 	}
+	
+Q:預設生成的 traceId 是 32 位元?
+	1. ✅ B3 Propagation 支援 64-bit 與 128-bit traceId
+		B3（由 Twitter 發起的分散式追蹤格式）明確定義：
+		| 類型        | 說明                        |
+		| ----------- | --------------------------- |
+		| 64-bit      | 16 字元 hex（舊版相容模式） |
+		| **128-bit** | **32 字元 hex（預設建議）** |
+		Brave 是 B3 的主要實作，支援兩種 traceId 格式，而 預設從 Brave v5 開始改為 128-bit。
+
+	2. 📈 128-bit 提供更高碰撞安全性與唯一性
+		| 位元數  | 支援的追蹤數量      | 抽樣碰撞機率        |
+		| ------- | ------------------- | ------------------- |
+		| 64-bit  | 約 1.8 × 10¹⁹       | 中大型系統仍可能碰撞 |
+		| 128-bit | 約 3.4 × 10³⁸       | 幾乎不可能碰撞       |
+		當你有大量微服務、並行 trace 產生量很高時（例如大型電商、金融系統），64-bit traceId 碰撞風險逐漸成為實際問題。

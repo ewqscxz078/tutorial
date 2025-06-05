@@ -7,7 +7,7 @@ Micrometer Tracing 預設只會在 處理請求（HTTP Server 或 WebClient 等�
 	因為那個階段不屬於一個被觀察的請求或任務上下文（如 HTTP Request 或 Scheduled Task）
 
 ✅ 「啟動服務時也想初始 traceId spanId 放到 log」
-	✅ 解法：手動建立一個 span context 放入 MDC
+	✅ 解法1 ：手動建立一個 span context 放入 MDC，使用較底層的 Tracer
 		你可以在 ApplicationRunner 或 CommandLineRunner 裡手動建立一個 span，例如：
 
 			import io.micrometer.tracing.Span;
@@ -33,7 +33,7 @@ Micrometer Tracing 預設只會在 處理請求（HTTP Server 或 WebClient 等�
 					}
 				}
 			}
-	✅ 客製額外 mdc
+	✅ 解法2 ： 使用推薦的 ObservationRegistry.Observation
 		@Component
 		public class MyStartupLogger implements ApplicationRunner {
 
