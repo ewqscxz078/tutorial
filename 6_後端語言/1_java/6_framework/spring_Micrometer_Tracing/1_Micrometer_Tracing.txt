@@ -498,7 +498,7 @@ Q:如何確認 自訂 ObservationHandler 生效 ?
 		registry.observationConfig().getObservationHandlers()
 			.forEach(handler -> System.out.println("Registered: " + handler.getClass()));
 	}
-	
+
 Q:預設生成的 traceId 是 32 位元?
 	1. ✅ B3 Propagation 支援 64-bit 與 128-bit traceId
 		B3（由 Twitter 發起的分散式追蹤格式）明確定義：
