@@ -23,15 +23,15 @@ func_2unix(){
 }
 
 func_replaceTailTab(){
-	egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/[[:blank:]]*$//"
+	egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js,md} | xargs sed -i "s/[[:blank:]]*$//"
 }
 
 
 func_reqlaceTailSpace(){
-  egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} 
+  egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js,md} 
   #if not match will $?=1 or 計算個數大於>=1 || do 取代
   if [ $? -eq 0 ]; then
-    egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js} | xargs sed -i "s/\t\+$//g"
+    egrep -lR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js,md} | xargs sed -i "s/\t\+$//g"
   fi
   ##if not match will $?=1，sed: no input files
   
@@ -44,10 +44,10 @@ main(){
 }
 
 check_tailTab(){
-  egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js}
+  egrep -lR "[ 　\t]+$" --include=*.{java,xml,properties,txt,jsp,html,js,md}
 }
 check_tailSpace(){
-  egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js}
+  egrep -InR $'\t'+$ --include=*.{java,xml,properties,txt,jsp,html,js,md}
 }
 
 main
