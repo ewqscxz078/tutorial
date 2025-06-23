@@ -21,9 +21,22 @@ WebMVC Gateway(支援 spring mvc 的 gateway)
 	  application:
 		name: api-gateway
 
+
+      cloud:
+        gateway:
+          server:
+            webmvc:
+              routes:
+              - id: backend-service
+                uri: lb://backend-service   # 使用服務發現
+                predicates:
+                  - Path=/api/backend/**    #Gateway 就會將請求 /api/backend/** 轉發到 lb://backend-service
+                filters:
+                  - StripPrefix=1
+
 	  cloud:
 		gateway:
-		  default-filters:
+		  default-filters:                #使用spring-cloud-starter-gateway依賴 才有這設定 ，且前端使用 webClient 互動式模式才支援
 			- TokenRelay
 		  routes:
 			- id: backend-service
@@ -42,7 +55,7 @@ WebMVC Gateway(支援 spring mvc 的 gateway)
 	eureka:
 	  client:
 		service-url:
-		  defaultZone: http://localhost:8761/eureka/
+		  defaultZone: http://localhost:8761/eureka/    # 服務發現如果有的化
 
 
 3.java

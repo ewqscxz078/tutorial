@@ -1,0 +1,70 @@
+ref ChatGPT
+
+在 Spring Authorization Server 中註冊一個 RegisteredClient 是設定 OAuth2 客戶端授權流程的核心。以下是實務上註冊 RegisteredClient 時常見的幾個主要要素，並附上說明：
+
+🔑 基本屬性
+
+	| 欄位            | 說明                                               |
+	| -------------- | ------------------------------------------------- |
+	| `id`           | 唯一 ID，可用 `UUID.randomUUID()`                   |
+	| `clientId`     | 客戶端 ID，授權時用來辨識 client（例如 `my-client-id`） |
+	| `clientSecret` | 客戶端密碼，搭配 `clientId` 使用（可經過加密儲存）        |
+	| `clientName`   | （選填）人類可讀的 client 名稱                         |
+
+
+🔐 認證方式（Authentication Methods）
+	| 方法                                              | 說明                                             |
+	| ------------------------------------------------ | ----------------------------------------------- |
+	| `ClientAuthenticationMethod.CLIENT_SECRET_BASIC` | 預設，使用 HTTP Basic 傳送 clientId + clientSecret |
+	| `CLIENT_SECRET_POST`                             | 將 clientId 與 clientSecret 放入 request body     |
+	| `NONE`                                           | 公開 client（無 client secret），例如 public SPA    |
+
+	.clientAuthenticationMethods(auth -> auth.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC))
+
+
+🔁 授權類型（Authorization Grant Types）
+	| 類型                  | 說明                                              |
+	| -------------------- | ------------------------------------------------ |
+	| `AUTHORIZATION_CODE` | 適用於有前端介面的應用程式（含使用者登入）                |
+	| `CLIENT_CREDENTIALS` | 適用於 server-to-server 無使用者登入場景              |
+	| `REFRESH_TOKEN`      | 允許 client 使用 refresh token 續期 access token    |
+	| `PASSWORD`           | 已棄用，不推薦使用                                   |
+
+	.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+	.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+
+
+🌍 重新導向 URI（Redirect URIs）
+	* 僅 AUTHORIZATION_CODE 授權類型需要
+	* 必須與 client request 完全一致（包括 query string）
+
+	.redirectUri("https://example.com/login/oauth2/code/my-client")
+
+
+🧾 範圍（Scopes）
+	| 範圍類型    | 說明                                           |
+	| --------- | ---------------------------------------------- |
+	| 標準 scope | 如 `openid`, `profile`, `email`（OIDC）         |
+	| 自訂 scope | 如 `read`, `write`, `report:generate` 等權限識別 |
+
+	.scopes(scopes -> {
+		scopes.add("read");
+		scopes.add("write");
+	})
+
+🗓️ Token 設定（可選）
+	你可以額外設定 token 有效期限、reusability 等：
+
+	.tokenSettings(TokenSettings.builder()
+		.accessTokenTimeToLive(Duration.ofMinutes(30))
+		.refreshTokenTimeToLive(Duration.ofDays(1))
+		.reuseRefreshTokens(true)
+		.build())
+
+
+🔒 客戶端設定（可選）
+	例如是否要求使用者確認授權：
+
+	.clientSettings(ClientSettings.builder()
+		.requireAuthorizationConsent(true) // 需使用者同意畫面
+		.build())

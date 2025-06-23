@@ -1,0 +1,47 @@
+ref ChatGPT
+	https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux.html
+
+WebFlux Reactor Netty Gateway(支援 Reactor 的 gateway)
+
+1.maven 依賴
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-starter-gateway</artifactId>
+	</dependency>
+
+
+2.application.yml
+	server:
+	  port: 8080
+
+	spring:
+	  application:
+		name: api-gateway
+
+	  cloud:
+		gateway:
+		  default-filters:                #使用spring-cloud-starter-gateway依賴 才有這設定 ，且前端使用 webClient 互動式模式才支援
+			- TokenRelay
+		  routes:
+			- id: backend-service
+			  uri: lb://backend-service   # 使用服務發現
+			  predicates:
+				- Path=/api/backend/**
+			  filters:
+				- StripPrefix=1
+
+	  cloud:
+		gateway:
+		  default-filters:                #使用spring-cloud-starter-gateway依賴 才有這設定 ，且前端使用 webClient 互動式模式才支援
+			- TokenRelay
+		  routes:
+			- id: backend-service
+			  uri: lb://backend-service   # 使用服務發現
+			  predicates:
+				- Path=/api/backend/**
+			  filters:
+				- StripPrefix=1
