@@ -95,9 +95,9 @@ WebMVC Gateway(支援 spring mvc 的 gateway)
 
 
 錯誤處理
-	| 錯誤類型               | 是否可攔截統一處理 | 備註                                       |
+	| 錯誤類型                 | 是否可攔截統一處理    | 備註                                        |
 	| ---------------------- | ------------------ | ------------------------------------------ |
-	| JWT 無效 / 遺失        | ✅                 | 被 Spring Security 攔下，走 `/error`       |
-	| 後端服務回傳 5xx       | ✅                 | 可統一格式包裝                             |
-	| 後端服務掛掉 / 無實例  | ✅                 | Eureka 找不到服務也會走 Exception          |
-	| DNS 問題 / 連線失敗    | ❌（特殊情況）     | 若太早失敗，可能走不到 DispatcherServlet   |
+	| JWT 無效 / 遺失          | ✅                 | 被 Spring Security 攔下，走 `/error`         |
+	| 後端服務回傳 5xx          | ✅                 | 可統一格式包裝                               |
+	| 後端服務掛掉 / 無實例      | ✅                 | Eureka 找不到服務也會走 Exception             |
+	| DNS 問題 / 連線失敗       | ❌（特殊情況）       | 若太早失敗，可能走不到 DispatcherServlet       |

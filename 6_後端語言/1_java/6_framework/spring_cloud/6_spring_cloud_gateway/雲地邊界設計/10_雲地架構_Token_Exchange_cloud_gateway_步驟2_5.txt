@@ -1,0 +1,90 @@
+雲端 WebMVC Gateway Filter
+
+	✅ 功能說明：
+		0.只對特定路徑（或條件）執行 token exchange
+			以下是常見做法的選項：
+				| 條件類型           | 範例                                                |
+				| ---------------- | -------------------------------------------------- |
+				| ✅ 路徑白名單      | `/onprem/**` 必須 exchange，其他不交換                |
+				| ✅ clientId 限制  | 只有特定 JWT 裡 `client_id` 為 `trusted-client` 才交換 |
+				| ✅ Scope 限制     | JWT 裡的 scope 包含 `exchange:onprem` 才交換          |
+
+
+		1.擷取 Authorization Header 中的原始 JWT（subject_token）
+
+		2.使用 WebClient（blocking）呼叫雲端 Auth Server 的 /oauth2/token endpoint，執行 RFC 8693 的 token exchange
+
+		3.用包裝的 HttpServletRequestWrapper 替換 header 中的 Authorization，將換得的新 token 傳給後方（地端 Gateway）
+
+	📍請確保以下事項：
+		1.你有註冊這個 Filter（Spring Boot @Component 自動生效）
+
+		2.client-a:secret 是 cloud-auth-server 上的已註冊 client
+
+		3.http://localhost:9000/oauth2/token 是雲端 auth server token 發行端點
+
+		4.audience 設定為地端服務可接受的值（如 onprem-api）
+
+	// 雲端 WebMVC Gateway Filter：擷取原 token -> 換 token -> 改寫 header 並轉送到地端
+
+	@Component
+	public class TokenExchangeGatewayFilter extends OncePerRequestFilter {
+
+		private final WebClient webClient = WebClient.create();
+
+		@Override
+		protected void doFilterInternal(HttpServletRequest request,
+										HttpServletResponse response,
+										FilterChain filterChain) throws ServletException, IOException {
+
+			String requestURI = request.getRequestURI();
+			boolean requiresTokenExchange = requestURI.startsWith("/onprem/"); // 只針對此 prefix 的路徑交換 token
+
+			String authHeader = request.getHeader("Authorization");
+
+			if (requiresTokenExchange && authHeader != null && authHeader.startsWith("Bearer ")) {
+				String subjectToken = authHeader.substring(7);
+
+				// 1. 呼叫雲端 Auth Server 的 token exchange endpoint
+				MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+				formData.add("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange");
+				formData.add("subject_token", subjectToken);
+				formData.add("subject_token_type", "urn:ietf:params:oauth:token-type:access_token");
+				formData.add("audience", "onprem-api");
+
+				String exchangedToken;
+				try {
+					Map<String, Object> tokenResponse = webClient.post()
+						.uri("http://localhost:9000/oauth2/token") // 雲端 auth server 位址
+						.headers(headers -> headers.setBasicAuth("client-a", "secret"))
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+						.body(BodyInserters.fromFormData(formData))
+						.retrieve()
+						.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+						.block(Duration.ofSeconds(5));
+
+					exchangedToken = (String) tokenResponse.get("access_token");
+				} catch (Exception ex) {
+					response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token Exchange Failed");
+					return;
+				}
+
+				// 2. 包裝 request，加上新的 Authorization header
+				HttpServletRequest wrapper = new HttpServletRequestWrapper(request) {
+					@Override
+					public String getHeader(String name) {
+						if ("Authorization".equalsIgnoreCase(name)) {
+							return "Bearer " + exchangedToken;
+						}
+						return super.getHeader(name);
+					}
+				};
+
+				filterChain.doFilter(wrapper, response);
+				return;
+			}
+
+			// 沒有 Authorization header 就照常處理 => 就等於同邊界打使用原始 token 即可
+			filterChain.doFilter(request, response);
+		}
+	}

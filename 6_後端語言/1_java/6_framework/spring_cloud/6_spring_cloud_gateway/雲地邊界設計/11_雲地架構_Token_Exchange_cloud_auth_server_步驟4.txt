@@ -1,0 +1,371 @@
+// Cloud Auth Server: 自定義 Token Exchange Grant (RFC 8693 實作)
+	✅ 組件簡介
+
+		1.TokenExchangeAuthenticationToken
+			* 封裝 client 提供的 subject_token 和 audience
+
+			* 是你自定義的「Token Exchange 請求物件」
+
+		2.TokenExchangeAuthenticationConverter
+			* 解析 /token 請求中的 grant_type=urn:ietf:params:oauth:grant-type:token-exchange 與參數
+
+			* 組成 TokenExchangeAuthenticationToken 作為 Authentication
+
+		3️.TokenExchangeAuthenticationProvider
+			* 處理換 token 的實際邏輯
+
+			* 可驗證原始 subject_token（這邊為簡化，直接假設成功）
+
+			* 簽發新 access token（用 OAuth2AccessTokenAuthenticationToken）
+
+		📍注意事項：
+			JwtDecoders.fromIssuerLocation("http://localhost:9000") 假設你有啟用 JWK 發佈（/.well-known/openid-configuration + /oauth2/jwks）
+
+			如果 issuer URI 改變，記得同步調整
+
+	// 1. TokenExchangeAuthenticationToken：封裝 subject_token 與 audience
+		public class TokenExchangeAuthenticationToken extends AbstractAuthenticationToken {
+			private final String subjectToken;
+			private final String audience;
+
+			public TokenExchangeAuthenticationToken(String subjectToken, String audience) {
+				super(null);
+				this.subjectToken = subjectToken;
+				this.audience = audience;
+				setAuthenticated(false);
+			}
+
+			@Override
+			public Object getCredentials() {
+				return subjectToken;
+			}
+
+			@Override
+			public Object getPrincipal() {
+				return audience;
+			}
+
+			public String getSubjectToken() {
+				return subjectToken;
+			}
+
+			public String getAudience() {
+				return audience;
+			}
+		}
+
+	// 2. TokenExchangeAuthenticationConverter：從 HTTP 請求解析成 TokenExchangeAuthenticationToken
+		public class TokenExchangeAuthenticationConverter implements AuthenticationConverter {
+			@Override
+			public Authentication convert(HttpServletRequest request) {
+				String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
+				if (!"urn:ietf:params:oauth:grant-type:token-exchange".equals(grantType)) {
+					return null;
+				}
+
+				String subjectToken = request.getParameter("subject_token");
+				String audience = request.getParameter("audience");
+
+				if (StringUtils.hasText(subjectToken) && StringUtils.hasText(audience)) {
+					return new TokenExchangeAuthenticationToken(subjectToken, audience);
+				}
+
+				return null;
+			}
+		}
+
+	// 3. TokenExchangeAuthenticationProvider：處理換 token 的邏輯 (限縮權限)
+		public class TokenExchangeAuthenticationProvider implements AuthenticationProvider {
+
+			private final JwtDecoder jwtDecoder;
+
+			public TokenExchangeAuthenticationProvider() {
+				this.jwtDecoder = JwtDecoders.fromIssuerLocation("http://localhost:9000");
+			}
+
+			@Override
+			public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+				TokenExchangeAuthenticationToken request = (TokenExchangeAuthenticationToken) authentication;
+
+				String subject;
+				try {
+					Jwt jwt = jwtDecoder.decode(request.getSubjectToken());
+					subject = jwt.getSubject(); // 取得 sub 欄位
+				} catch (JwtException e) {
+					throw new OAuth2AuthenticationException(new OAuth2Error("invalid_token", "JWT 驗簽失敗", null));
+				}
+
+				OAuth2AccessToken accessToken = new OAuth2AccessToken(
+					OAuth2AccessToken.TokenType.BEARER,
+					UUID.randomUUID().toString(),
+					Instant.now(),
+					Instant.now().plus(600, ChronoUnit.SECONDS)
+				);
+
+				Map<String, Object> claims = Map.of(
+					"sub", subject,
+					"aud", request.getAudience(),
+					"scope", "read onprem"
+				);
+
+				return new OAuth2AccessTokenAuthenticationToken(
+					new OAuth2ClientAuthenticationToken("client-a", null, null),
+					accessToken,
+					new OAuth2TokenClaimsSet(claims)
+				);
+			}
+
+			@Override
+			public boolean supports(Class<?> authentication) {
+				return TokenExchangeAuthenticationToken.class.isAssignableFrom(authentication);
+			}
+		}
+
+	// 4. 在 Authorization Server 中註冊 converter 與 provider
+		@Configuration
+		public class AuthorizationServerConfig {
+
+			@Bean
+			public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
+				OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+				http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+					.tokenEndpoint(tokenEndpoint -> tokenEndpoint
+						.accessTokenRequestConverter(new TokenExchangeAuthenticationConverter())
+						.authenticationProvider(new TokenExchangeAuthenticationProvider()));
+
+				return http.build();
+			}
+		}
+
+
+
+備註說明
+	當你使用 JwtDecoder.decode(...) 時，它會自動做以下事情：
+		| 驗證內容                          | 說明                                                                        |
+		| -------------------------------- | -------------------------------------------------------------------------  |
+		| ✅ **簽章驗證**                   | 根據 `JwtDecoder` 初始化時所設定的 JWK 或 public key 對 JWT 簽名做驗證。可防止偽造。 |
+		| ✅ **過期時間驗證**                | 若 JWT 有 `exp` 欄位，會自動檢查是否過期。                                       |
+		| ✅ **not-before (`nbf`) 驗證**   | 若有 `nbf` 欄位，會檢查是否尚未生效。                                             |
+		| ✅ **issued-at (`iat`) 合法性**   | 可選驗證簽發時間是否合法（非必要）。                                              |
+		| ❌ **audience / scope 等欄位邏輯** | 預設不會驗這些，你要自行加邏輯檢查。                                              |
+
+
+	Q:為什麼我們還要把雲端 token「轉乘」一個 exchanged token？和直接拿雲端 token 去打地端 API 有什麼差別？
+		這其實是 OAuth 2.1 Token Exchange（RFC 8693）的核心價值所在。
+		🎯 簡單比喻：為什麼不是直接用雲端 token？
+			想像你有一張門禁卡可以進入「雲端大樓」，現在你要從雲端跨 VPN 進入「地端大樓」，你能不能直接拿同一張卡進去？
+				❌ 通常不行，因為地端有自己的規則、信任邊界與授權模型
+		✅ 為什麼要 exchange token？目的如下：
+			1️.邊界控制（Security Boundary）
+				* 雲端 token 由雲端 Auth Server 簽發，地端服務不一定願意信任。
+
+				* 即使簽章信得過，地端也可能只接受「有限 scope」的 token。
+
+				→ 透過交換，在 Gateway-to-Gateway 邊界重簽，才能控制權限。
+
+			2.最小權限（Least Privilege）
+				* 原本的雲端 token 可能有很廣的權限（read/write/scope:all）。
+
+				* 經由 Token Exchange，可換成一個只授權存取地端資源、只有 read 權限的 token。
+
+				→ 這樣即使 leaked，傷害範圍也小。
+
+			3.Token 再封裝（audience / client 改變）
+				* 原 token 是發給雲端 API 用的（audience 為 cloud-service）
+
+				* 地端 API 需要 audience 為 onprem-api
+
+				→ Token Exchange 可把 token audience 改成地端接受的格式。
+
+			4.Delegation / Impersonation 能力
+				* 你可指定：「用使用者 Alice 的名義」請求地端資源。
+
+				* Exchange token 可加上 act_as 或 on_behalf_of 資訊（RFC 支援）
+
+			🚫 如果你不 exchange，會有什麼問題？
+				| 問題                    | 說明                                                        |
+				| ---------------------- | ---------------------------------------------------------- |
+				| ❌ 無法控管地端 scope    | 雲端發的 token 可能權限太廣，地端難以授權。                        |
+				| ❌ 地端難以驗證          | 若不信任 issuer、無法同步 JWK、或無法理解 JWT 格式，地端就沒辦法處理。 |
+				| ❌ audit trail 不清楚   | 誰用誰的身分？缺乏 act-as / delegation 資訊。                   |
+				| ❌ 安全模型被打破         | token 跑出原本授權邊界，容易造成信任鏈失控。                       |
+
+
+			✅ 小結一句話：
+				「Token Exchange 是一種 權限縮減 + 邊界轉換 的機制，確保 token 在跨系統、跨網域、跨信任區時仍然符合 最小權限、安全隔離 原則。」
+
+==================================================================================================================================================
+==================================================================================================================================================
+==================================================================================================================================================
+✅ 支援功能（雙向通用）
+	| 功能                        | 說明                                                     |
+	| -------------------------- | -------------------------------------------------------  |
+	| 🔐 `subject_token` 驗證     | 驗證 JWT 是否有效、是否合法                                  |
+	| 🎯 `audience` 處理          | 可根據交換目標動態設定 audience                              |
+	| 🧾 `scope` 限縮             | 被交換後的 token 可減少權限                                 |
+	| 🧑‍💼 `act` impersonation     | 新 token 可附加代表使用者的資訊（如 `act.sub`）                |
+	| 🔁 雲轉地 / 地轉雲 共用       | 可在雲 / 地端各自部署，交換對方 token 再重新簽發成自己信任的 token |
+
+🔐 應用案例
+	| 案例            | 流程                                                                                |
+	| -------------- | ---------------------------------------------------------------------------------- |
+	| 雲端要叫地端服務  | 雲端 Gateway 發 token exchange 請求給地端 Auth Server，用 cloud token 換成地端 token     |
+	| 地端要叫雲端 API | 地端 Gateway 發 token exchange 請求給雲端 Auth Server，用 onprem token 換成 cloud token |
+
+	兩邊都可以用這份 Grant 實作，不須分版本。
+
+
+標準版寫法
+	// ✅ TokenExchangeAuthenticationToken.java - 表示 token exchange 請求
+	public class TokenExchangeAuthenticationToken extends AbstractAuthenticationToken {
+
+		private final String grantType;
+		private final String subjectToken;
+		private final String subjectTokenType;
+		private final String audience;
+		private final String requestedTokenType;
+		private final Set<String> scopes;
+
+		public TokenExchangeAuthenticationToken(String subjectToken, String subjectTokenType,
+												String audience, String requestedTokenType,
+												Set<String> scopes) {
+			super(null);
+			this.grantType = "urn:ietf:params:oauth:grant-type:token-exchange";
+			this.subjectToken = subjectToken;
+			this.subjectTokenType = subjectTokenType;
+			this.audience = audience;
+			this.requestedTokenType = requestedTokenType;
+			this.scopes = scopes;
+			setAuthenticated(false);
+		}
+
+		public String getSubjectToken() { return subjectToken; }
+		public String getSubjectTokenType() { return subjectTokenType; }
+		public String getAudience() { return audience; }
+		public String getRequestedTokenType() { return requestedTokenType; }
+		public Set<String> getScopes() { return scopes; }
+
+		@Override
+		public Object getCredentials() { return subjectToken; }
+		@Override
+		public Object getPrincipal() { return null; }
+	}
+
+
+	// ✅ TokenExchangeAuthenticationConverter.java - 將 HTTP request 轉成認證請求物件
+	public class TokenExchangeAuthenticationConverter implements AuthenticationConverter {
+		@Override
+		public Authentication convert(HttpServletRequest request) {
+			String grantType = request.getParameter("grant_type");
+			if (!"urn:ietf:params:oauth:grant-type:token-exchange".equals(grantType)) {
+				return null;
+			}
+
+			String subjectToken = request.getParameter("subject_token");
+			String subjectTokenType = request.getParameter("subject_token_type");
+			String audience = request.getParameter("audience");
+			String requestedTokenType = request.getParameter("requested_token_type");
+			String scopeParam = request.getParameter("scope");
+			Set<String> scopes = (scopeParam != null) ? new HashSet<>(Arrays.asList(scopeParam.split(" "))) : Collections.emptySet();
+
+			return new TokenExchangeAuthenticationToken(subjectToken, subjectTokenType, audience, requestedTokenType, scopes);
+		}
+	}
+
+
+	// ✅ TokenExchangeAuthenticationProvider.java - 驗證 subject token 並產出新 token
+	public class TokenExchangeAuthenticationProvider implements AuthenticationProvider {
+
+		private final JwtDecoder jwtDecoder;
+		private final JwtEncoder jwtEncoder;
+
+		public TokenExchangeAuthenticationProvider(JwtDecoder jwtDecoder, JwtEncoder jwtEncoder) {
+			this.jwtDecoder = jwtDecoder;
+			this.jwtEncoder = jwtEncoder;
+		}
+
+		@Override
+		public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+			TokenExchangeAuthenticationToken token = (TokenExchangeAuthenticationToken) authentication;
+
+			Jwt jwt;
+			try {
+				jwt = jwtDecoder.decode(token.getSubjectToken());
+			} catch (JwtException e) {
+				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT, "Invalid subject_token", e);
+			}
+
+			String subject = jwt.getSubject();
+			String audience = token.getAudience();
+
+			Map<String, Object> claims = new HashMap<>();
+			claims.put("sub", subject);
+			claims.put("aud", List.of(audience));
+			claims.put("scope", String.join(" ", token.getScopes()));
+			claims.put("act", Map.of("sub", subject)); // impersonation trace
+
+			JwtClaimsSet claimsSet = JwtClaimsSet.builder()
+					.subject(subject)
+					.issuedAt(Instant.now())
+					.expiresAt(Instant.now().plus(Duration.ofMinutes(5)))
+					.claims(c -> c.putAll(claims))
+					.build();
+
+			JwsHeader header = JwsHeader.with(() -> "RS256").build();
+			Jwt encoded = jwtEncoder.encode(JwtEncoderParameters.from(header, claimsSet));
+
+			OAuth2AccessToken tokenValue = new OAuth2AccessToken(
+					OAuth2AccessToken.TokenType.BEARER,
+					encoded.getTokenValue(),
+					encoded.getIssuedAt(),
+					encoded.getExpiresAt(),
+					token.getScopes());
+
+			return new OAuth2AccessTokenAuthenticationToken(null, tokenValue, encoded.getClaims());
+		}
+
+		@Override
+		public boolean supports(Class<?> authentication) {
+			return TokenExchangeAuthenticationToken.class.isAssignableFrom(authentication);
+		}
+	}
+
+
+	// ✅ 在 AuthorizationServerConfig.java 註冊這個自訂 Grant
+	@Bean
+	public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder, JwtEncoder jwtEncoder) throws Exception {
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer<>();
+
+		authorizationServerConfigurer
+			.tokenEndpoint(tokenEndpoint -> tokenEndpoint
+				.accessTokenRequestConverter(new DelegatingAuthenticationConverter(
+					List.of(
+						new TokenExchangeAuthenticationConverter(),
+						new OAuth2AuthorizationCodeAuthenticationConverter(),
+						new OAuth2RefreshTokenAuthenticationConverter()
+					))
+				.authenticationProvider(new TokenExchangeAuthenticationProvider(jwtDecoder, jwtEncoder)));
+
+		http
+			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+			.csrf(AbstractHttpConfigurer::disable)
+			.apply(authorizationServerConfigurer);
+
+		return http.build();
+	}
+
+
+
+=============================
+
+✅ 那實務上這些參數怎麼來？
+	通常你會這樣設計發起方（以 Spring Gateway 為例）：
+		| 資訊                  | 來源                                       | 範例                                         |
+		| -------------------- | ----------------------------------------- | ------------------------------------------- |
+		| `subject_token`      | 從原始 request 的 Authorization Header 取出  | `"Bearer eyJ..."`                           |
+		| `audience`           | 根據目標 API 對應設定                         | `"onprem-api"`                              |
+		| `scope`              | 根據目標資源需求，固定或自動決定                 | `"read"`                                    |
+		| `token_exchange_url` | 設定於 yml 或 env 參數中                     | `"https://onprem-auth-server/oauth2/token"` |
