@@ -32,7 +32,11 @@ WebMVC Gateway(支援 spring mvc 的 gateway)
                 predicates:
                   - Path=/api/backend/**    #Gateway 就會將請求 /api/backend/** 轉發到 lb://backend-service
                 filters:
-                  - StripPrefix=1
+                  - StripPrefix=1 # 從進來的請求路徑中移除前面指定數量的 path segment（斜線 / 分隔的部分），表示：從請求路徑中移除前面 1 個 segment。
+					// ➤ 客戶端請求： GET http://localhost:8080/backend/hello/world
+					// Gateway 匹配 /backend/hello/**，接著會套用 StripPrefix=1。
+					// 這表示 Gateway 會移除 /backend 這個 segment，轉發給後端的請求路徑變成：
+					// GET http://localhost:8081/hello/world
 
 	  cloud:
 		gateway:

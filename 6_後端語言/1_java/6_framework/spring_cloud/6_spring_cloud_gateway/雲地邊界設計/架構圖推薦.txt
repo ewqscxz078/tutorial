@@ -1,0 +1,133 @@
+
+     ┌──────────────────────────────┐
+     │         Client Browser       │
+     └──────────────────────────────┘
+                     │
+                 (HTTPS)
+                     │
+                ┌────────────────┐
+                │ FONTEND-NGINX  │  ← 提供 JSP 與靜態資源
+                └────────────────┘
+                     │
+                ┌────────────────┐
+                │  JSP WebApp    │  ← 透過 client_credentials 向 Auth Server 拿 JWT
+                └────────────────┘
+                   │         │                                       --------------------│
+         POST /token     API Call with Bearer										特定 API Call with Bearer
+              │                ▼														▼
+   ┌─────────────────┐     ┌─────────────────┐									┌──────────────────┐
+   │  Auth Server    │     │ AP API Gateway  │ ← 驗證 JWT，轉發 API               │ VPN API Gateway  │ ← 驗證 JWT，轉發 API
+   └─────────────────┘     └─────────────────┘                                  └──────────────────┘
+                                │														│
+						 ┌──────────────────────┐								┌───────────────────────┐
+						 │ AP BACKEND NGINX LB  │  ← 反向代理多個後端服務			│ VPN BACKEND NGINX LB  │  ← 反向代理多個後端服務
+						 └──────────────────────┘								└───────────────────────┘
+							   │														│
+						 ┌─────────────────────────┐							-------------------------
+						 │ AP Backend Microservice │  ← 不需處理 JWT				-------------------------
+						 └─────────────────────────┘      						-------------------------
+																						│
+																				┌───────────────────────────┐
+																				│ 地端 VPN BACKEND NGINX LB  │  ← 反向代理多個後端服務
+																				└───────────────────────────┘
+																						│
+																				┌──────────────────────────────┐
+																				│ 地端 VPN Backend Microservice │  ← 不需處理 JWT
+																				└──────────────────────────────┘
+
+
+	| 元件                            | 建議位置                   | 是否經過 Gateway        |
+	| ------------------------------ | ------------------------ | ---------------------- |
+	| JSP WebApp（Spring Boot + JSP） | 經 NGINX 提供             | ❌ 不要走 Gateway       |
+	| Auth Server（OAuth2）           | 獨立對外暴露（或 NGINX 路由） | ❌ 不應經過 Gateway     |
+	| API Gateway                    | 對外暴露 API，驗證 JWT      | ✅ 是 Resource Server  |
+	| Backend Services               | 內部服務                   | ✅ 被 Gateway 路由      |
+
+後端服務應該直接呼叫 Auth Server，不繞 Gateway
+
+ngnix 允許存取 auth server 的保護措施
+	| 目標                          | 建議做法                                        |
+	| ---------------------------- | ---------------------------------------------- |
+	| 保護 `/oauth2/token` endpoint | ✅ 限制 IP、✅ mTLS、✅ 強密碼、✅ rate limit    |
+	| 不讓一般人隨意打                | ✅ 防止從 public internet 存取                   |
+	| 確保內部服務才可用               | ✅ 用 private DNS 或 Nginx IP allowlist        |
+
+
+	| 元件                      | 職責                                                      | 是否驗證 JWT                        | 安全關鍵                                   |
+	| ------------------------ | -------------------------------------------------------- | ---------------------------------- | ---------------------------------------- |
+	| **NGINX（前端）**          | 提供 JSP 頁面與靜態資源                                      | ❌ 不驗證 JWT                      | 可加防火牆 / 來源限制                        |
+	| **JSP WebApp**           | 使用 client\_credentials 向 Auth Server 拿 token，呼叫 API  | ❌ 不驗證                           | client\_id / secret 要保護好               |
+	| **Auth Server**          | 發 token、處理 client 驗證                                  | ✅ 驗 client 認證與 scope           | 禁止暴露敏感 metadata                       |
+	| **API Gateway**          | Resource Server，驗證 JWT，轉發合法請求                       | ✅ 驗證 JWT、issuer、aud、exp、scope | 不可讓 JWT 通過未驗證                       |
+	| **NGINX LB（內部）**       | 負責負載平衡後端服務                                         | ❌ 不驗證 JWT                       | 僅允許 API Gateway 存取                    |
+	| **Backend Microservice** | 專注處理 API 業務邏輯，不管 JWT                               | ❌ 不驗證 JWT（信任 gateway）         | 不信任外部 header（如 `X-User-*`）除非封裝好  |
+
+
+
+雲端一般業務流程
+	Cloud Front NGINX
+		 ↓
+	雲端一般 JSP 前端服務
+		 ↓
+	雲端 ap-api-gateway (驗 JWT)
+		 ↓
+	雲端 ap-BACKEND NGINX LB
+		 ↓
+	雲端 ap-Backend Microservice
+
+	✔️ 可行而且是典型的微服務架構
+		* 建議所有 API 都先經過 ap-api-gateway 做 JWT 驗證與路由
+
+		* ap-BACKEND NGINX 只接受來自 ap-api-gateway
+
+		* 後端無需驗證 JWT，只信任 header
+
+雲端「特定」JSP 前端 → 雲端 VPN 服務流程
+	Cloud Front NGINX
+		 ↓
+	雲端「特定」JSP 前端
+		 ↓
+	雲端 vpn-api-gateway (驗 JWT)
+		 ↓
+	雲端 vpn-BACKEND NGINX LB
+		 ↓
+	雲端 vpn-Backend Microservice
+
+	✔️ 完全可行，這代表某些服務邏輯被劃分到 VPN 專區（如 HR, 財務）
+		* vpn-api-gateway 負責驗證 JWT
+
+		* vpn-BACKEND NGINX 僅允許 gateway IP
+
+		* 特定 JSP App 可以有自己的專用 client_id 與 scope
+
+
+特定 JSP 前端 → 雲端 vpn-api-gateway → 轉導到地端服務（跨 VPN）
+	Cloud Front NGINX
+		 ↓
+	雲端特定 JSP 前端
+		 ↓
+	雲端 vpn-api-gateway
+		 ↓
+	[轉導到] 地端 vpn-api-gateway
+		 ↓
+	地端 vpn-BACKEND NGINX LB
+		 ↓
+	地端後端服務
+
+	✅ 地端轉導架構的關鍵設計建議
+		| 面向                             | 建議 / 說明                                                                                         |
+		| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+		| ✅ 雲端 vpn-api-gateway 如何轉導？ | 可使用 Spring Cloud Gateway route 將特定路徑轉到地端，例如 `http://onprem-vpn-api.company.local`         |
+		| ✅ JWT 驗證要做哪裡？              | 建議雲端 vpn-api-gateway 先驗證，地端只接收信任 header<br>（若資安要求高，也可在地端再驗一次）                  |
+		| ✅ 安全通道建議？                  | 建議走專線 / site-to-site VPN，並配合 mTLS 或 IP 白名單限制                                              |
+		| ✅ 網路效能考量？                  | 跨 VPN latency 增高，要調整 gateway timeout / retry 策略                                               |
+		| ✅ 如何辨識哪些 API 要轉導？        | 可用 path predicate `/api/onprem/**` 或 client scope 來判斷                                           |
+		| ✅ Header 傳遞與防偽？            | 雲端 gateway 應將 JWT claims 轉為安全 header（如 `X-Auth-User`），地端不可信任外部傳來的 header 除非來源可信   |
+
+
+✅ 小結：三種情境可行性與建議
+	| 路由情境                                      | 可行性             | 建議                                     |
+	| ------------------------------------------- | ----------------- | --------------------------------------- |
+	| 一般 JSP → ap-api-gateway → 雲端 backend      | ✅ 穩定基本模式     | 無須特別修改                               |
+	| 特定 JSP → vpn-api-gateway → 雲端 vpn backend | ✅ 分區管控明確     | 建議加 IP 控制與 scope 驗證                 |
+	| 特定 JSP → vpn-api-gateway → 地端 vpn gateway | ✅ 高階架構（混合雲）| 必須控制 timeout、安全性、來源 IP、跨 VPN 認證 |
