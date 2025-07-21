@@ -12,9 +12,9 @@
                 ┌────────────────┐
                 │  JSP WebApp    │  ← 透過 client_credentials 向 Auth Server 拿 JWT
                 └────────────────┘
-                   │         │                                       --------------------│
+                              │                                       --------------------│
               API Call with Bearer										特定 API Call with Bearer
-                              ▼														▼
+                              ▼														     ▼
                            ┌──────────────────────┐								┌──────────────────────┐
            │-------------- │ AP BACKEND NGINX LB  │ ← 反向代理多個後端服務      │ VPN BACKEND NGINX LB │ ← 反向代理多個後端服務
        POST /token         └──────────────────────┘                             └──────────────────────┘

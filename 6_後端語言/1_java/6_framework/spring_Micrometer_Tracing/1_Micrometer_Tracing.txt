@@ -459,6 +459,7 @@ logback mdc 處理注意項目
 	| `%X{userId}` 等自定欄位 | 你要自己放（用 Filter、Interceptor）               |
 
 
+================================================================================================================
 
 Q:如果你在「**服務啟動階段（Application 啟動時）」就希望產生 traceId / spanId 並寫入 log 的話，那段程式碼必須：
 	📌 手動建立 Observation
@@ -490,6 +491,7 @@ Q:如果你在「**服務啟動階段（Application 啟動時）」就希望產�
 		}
 
 Q:如何確認 自訂 ObservationHandler 生效 ?
+A:
 	@Autowired
 	ObservationRegistry registry;
 
@@ -498,8 +500,9 @@ Q:如何確認 自訂 ObservationHandler 生效 ?
 		registry.observationConfig().getObservationHandlers()
 			.forEach(handler -> System.out.println("Registered: " + handler.getClass()));
 	}
-
+	
 Q:預設生成的 traceId 是 32 位元?
+A:
 	1. ✅ B3 Propagation 支援 64-bit 與 128-bit traceId
 		B3（由 Twitter 發起的分散式追蹤格式）明確定義：
 		| 類型        | 說明                        |
@@ -514,3 +517,56 @@ Q:預設生成的 traceId 是 32 位元?
 		| 64-bit  | 約 1.8 × 10¹⁹       | 中大型系統仍可能碰撞 |
 		| 128-bit | 約 3.4 × 10³⁸       | 幾乎不可能碰撞       |
 		當你有大量微服務、並行 trace 產生量很高時（例如大型電商、金融系統），64-bit traceId 碰撞風險逐漸成為實際問題。
+
+
+Q:整合依賴 observationRegistry 依賴方式
+A:
+	✅ 專案用途，也就是專案直接宣告方法依賴即可，直接注入就好。
+		任意 spring ioc bean 注入
+			@Bean
+			MyXXXX myXXXX(ObservationRegistry observationRegistry){
+				return new MyXXXX(observationRegistry);
+			}
+		
+	✅ 若你寫的是底層 Starter/AutoConfiguration，才需要 ObjectProvider<ObservationRegistry> 來延遲建構 AOP Advisor。
+		不然會遇到
+			Bean 'xxTaskDefaultPointcutAdvisor' of type [org.springframework.aop.support.DefaultPointcutAdvisor] 																							is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [healthEndpointGroupsBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE.(org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437)
+			問題
+			
+Q:自訂元件啟動與 observationRegistry 整合，observation.stop() 會 Context does not have an entry for key
+	@Component
+	public class StartupMdcInitializer {
+
+		private final ObservationRegistry observationRegistry;
+
+		public StartupMdcInitializer(ObservationRegistry observationRegistry) {
+			this.observationRegistry = observationRegistry;
+		}
+
+		@EventListener(ApplicationReadyEvent.class)
+		public void onApplicationReady() {
+			Observation observation = Observation.createNotStarted("app-startup", this.observationRegistry)
+				.lowCardinalityKeyValue("taskCode", "BOOT001")
+				.start();
+
+			try (Observation.Scope scope = observation.openScope()) {
+				log.info("啟動完成，已初始化 MDC");
+			} finally {
+				observation.stop();
+			}
+		}
+	}
+
+	在 observation.stop(); 會跳出錯誤
+
+	java.lang.IllegalArgumentException: Context does not have an entry for key [class io.micrometer.core.instrument.Timer$Sample]
+		at io.micrometer.observation.Observation$Context.getRequired(Observation.java:1062)
+		at io.micrometer.core.instrument.observation.DefaultMeterObservationHandler.onStop(DefaultMeterObservationHandler.java:89)
+		at io.micrometer.tracing.handler.TracingAwareMeterObservationHandler.onStop(TracingAwareMeterObservationHandler.java:88)
+		at io.micrometer.observation.ObservationHandler$FirstMatchingCompositeObservationHandler.onStop(ObservationHandler.java:197)
+		at io.micrometer.observation.SimpleObservation.lambda$notifyOnObservationStopped$0(SimpleObservation.java:268)
+		at java.base/java.util.ArrayDeque$DescendingIterator.forEachRemaining(ArrayDeque.java:771)
+		at io.micrometer.observation.SimpleObservation.notifyOnObservationStopped(SimpleObservation.java:268)
+		at io.micrometer.observation.SimpleObservation.stop(SimpleObservation.java:188)
+A: 改成 Observation.start
+	若使用 Observation.createNotStarted 就要自己補上 Timer
