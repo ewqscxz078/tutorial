@@ -6,7 +6,7 @@ logback
 	<dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId></dependency>
 
 javax.servlet
-	底層專案 use javax.servlet
+	底層專案 use javax.servlet，JDK 17以後
 		<dependency><groupId>jakarta.servlet</groupId><artifactId>jakarta.servlet-api</artifactId><scope>provided</scope></dependency>
 
 	一般具體專案 with 嵌入式 tomcat

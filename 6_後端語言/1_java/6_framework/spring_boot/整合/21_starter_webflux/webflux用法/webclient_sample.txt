@@ -1,0 +1,112 @@
+回傳型別回自訂型別並內含泛型
+	Mono<CustomResponse<String>> responseMono = webClient
+			.get()
+			.uri("/some-api")
+			.retrieve()
+			.bodyToMono(new ParameterizedTypeReference<CustomResponse<String>>() {});
+	
+	responseMono.block();
+			
+回傳型別 void
+	Mono<Void> response = webClient
+			.post()
+			.uri("/your-api")
+			.retrieve()
+			.bodyToMono(Void.class);
+			
+	response.block();
+	
+	
+沒有 request body，
+		Mono<Void> response = webClient
+				.post()
+				.uri("/your-api")
+				.retrieve()
+				.bodyToMono(Void.class);
+				
+		response.block();
+
+
+
+webClient test
+	block
+		post
+
+			@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+			@AutoConfigureWebTestClient
+			class FormControllerTest {
+
+				@Autowired
+				private WebTestClient webTestClient;
+
+				@Test
+				void testPostForm() {
+					webTestClient.post()
+						.uri("/form")
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+						.body(BodyInserters
+							.fromFormData("username", "testuser")
+							.with("password", "testpass"))
+						.exchange()
+						.expectStatus().isOk()
+						.expectBody(String.class)
+						.isEqualTo("Received: testuser / testpass");
+				}
+			}
+
+
+
+debug webclient request、response
+
+
+
+
+常見問題
+Q1:若出現 Caused by: org.springframework.web.reactive.function.UnsupportedMediaTypeException: Content type 'application/json;charset=UTF-8' not supported for bodyType=tw.gov.moi.aw4.data.jpa.commons.configure.dto.ServiceConfigureDTO
+	at org.springframework.web.reactive.function.BodyExtractors.readWithMessageReaders(BodyExtractors.java:205)
+	Suppressed: reactor.core.publisher.FluxOnAssembly$OnAssemblyException: 
+	
+A1: 通常是指 json 的 bean 對於預設的 webClient 使用的jackson，無法轉換
+	比如 bean 沒有提供預設的建構子或是有一個特別宣告 @JsonCreator + @JsonProperty
+	日期格式 無法轉換
+	
+Q2: 當前後端傳接屬性名稱不一致怎麼辦
+A2: 用 @JsonProperty 做映射：
+		public class MyRequest {
+			@JsonProperty("full_name")
+			private String name;
+		}
+
+
+Q3: webclient 如何抉擇使用 bodyValue 還是 body 方式?
+A3: 選擇原則
+	| 情境                                         | 建議用法                                                        |
+	| -------------------------------------------- | ----------------------------------------------------------- |
+	| API 接收 `application/json`                  | `bodyValue(bean)` 或 `.body(Mono.just(bean), MyClass.class)` |
+	| API 接收 `application/x-www-form-urlencoded` | `BodyInserters.fromFormData(...)`                           |
+	| API 接收 `multipart/form-data`（含檔案上傳） | `BodyInserters.fromMultipartData(...)`                      |
+	| 你不確定格式                                 | 先確認對方 API 的 Content-Type 要求，這是決定關鍵                          |
+
+
+Q4: restController 為何不能省略 @RequestBody？
+A4	如果你寫：
+	public String hello(String name)
+
+	Spring 會預設從：
+
+		1.query string（?name=...）
+
+		2.form-data
+
+		3.或 multipart
+
+		去找參數，而不會從 JSON body 裡找。
+
+	要讓 Spring 把 JSON body 解開並注入到參數裡，就必須用 @RequestBody。
+	
+	
+	JSON 接收最佳實務建議
+		1.永遠標註 @RequestBody，只要你要從 JSON body 取值
+		2.搭配 @Valid 做驗證：
+			public String hello(@Valid @RequestBody User user) { ... }
+		3.加上 @Validated 或全域 exception handler 來處理錯誤
