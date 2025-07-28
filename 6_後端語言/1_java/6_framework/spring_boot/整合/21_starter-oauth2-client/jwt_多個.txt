@@ -1,0 +1,24 @@
+一個服務使用註冊多個jwt，webclient 如何控制對應的token?
+
+	呼叫端 webclient 傳入 clientRegistrationId
+		webclient
+		.attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))
+
+		傳入 yml 裡的 spring.security.oauth2.client.registration.${key}
+			不是 spring.security.oauth2.client.registration.${key}.client-id
+
+	public enum OAuthClientRegistration {
+		GOOGLE("google"),
+		GITHUB("github"),
+		INTERNAL_SERVICE("internal-service");
+
+		private final String clientRegistrationId;
+
+		OAuthClient(String clientRegistrationId) {
+			this.clientRegistrationId = clientRegistrationId;
+		}
+
+		public String getClientRegistrationId() {
+			return clientRegistrationId;
+		}
+	}
