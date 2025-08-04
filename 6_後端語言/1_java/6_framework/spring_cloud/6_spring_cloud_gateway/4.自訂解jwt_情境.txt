@@ -1,0 +1,59 @@
+需要自訂 JwtDecoder 的情境
+	1. JWK / Issuer 無法自動推斷
+		* 你的 IdP（Auth Server）沒有提供標準的 .well-known/openid-configuration
+
+		* 或者 JWK Set URI 路徑不一樣
+
+		* 此時需要自己指定：
+			@Bean
+			JwtDecoder jwtDecoder() {
+				return NimbusJwtDecoder
+					.withJwkSetUri("http://auth-server/custom/jwks.json")
+					.build();
+			}
+
+	2. 要用本地金鑰驗簽 (對稱/非對稱)
+		例如服務之間只共用 shared secret (HMAC)，沒有 JWK endpoint：
+			@Bean
+			JwtDecoder jwtDecoder() {
+				SecretKey secretKey = new SecretKeySpec("my-shared-secret".getBytes(), "HmacSHA256");
+				return NimbusJwtDecoder.withSecretKey(secretKey).build();
+			}
+		或用 RSA 公鑰：
+			@Bean
+			JwtDecoder jwtDecoder() throws Exception {
+				RSAPublicKey publicKey = // 從檔案或環境載入
+				return NimbusJwtDecoder.withPublicKey(publicKey).build();
+			}
+
+	3. 需要額外的驗證邏輯
+		Spring 內建只會檢查：
+			1.簽章
+			2.exp 過期
+			3.nbf、iat
+				但是如果你還要驗證 audience、custom claim，就得自己加 OAuth2TokenValidator：
+					@Bean
+					JwtDecoder jwtDecoder() {
+						NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri("http://auth-server/jwks").build();
+
+						OAuth2TokenValidator<Jwt> audienceValidator =
+								new AudienceValidator("my-api-audience"); // 自訂驗證 audience
+						OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer("http://auth-server");
+						OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
+
+						decoder.setJwtValidator(validator);
+						return decoder;
+					}
+
+	4. 需要支援多個信任來源 (multi-tenant)
+		* 例如一個後端服務要同時接受 多個 IdP 的 JWT（不同 jwk-set-uri），
+			那就需要自訂 JwtDecoder 來動態切換。
+
+
+總結
+	* 99% 情況 → 只要在 yml 設定 issuer-uri 或 jwk-set-uri 就夠了。
+	* 要自訂 JwtDecoder → 通常是因為：
+		1.Auth Server 沒有標準 JWK endpoint
+		2.要用本地金鑰驗簽（HMAC / RSA 公鑰）
+		3.要加強驗證（audience、tenant、claims）
+		4.要支援多個 IdP

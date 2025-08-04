@@ -1,0 +1,303 @@
+「User 模式 vs M2M 模式」Gateway 傳遞對照表
+	🌐 Gateway Header 傳遞對照表
+		| 模式                                                            | JWT 內容 (Claims)                                      | Gateway 驗證後傳遞 Header                                                 | 後端 Filter 轉換成 Authentication                                                                     | 後端 Security 授權寫法                                                                                                                      |
+		| -------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+		| **User 模式 (OAuth2 Authorization Code / Implicit / Password)** | `sub` (userId), `roles` 或 `authorities`, 可能有 `scope` | `X-User-Id: alice`<br>`X-Roles: ROLE_USER,ROLE_ADMIN`                  | `principal = userId ("alice")`<br>`authorities = [ROLE_USER, ROLE_ADMIN]`                             | `.requestMatchers("/admin/**").hasRole("ADMIN")`<br>`.requestMatchers("/user/**").hasAnyRole("USER","ADMIN")`                         |
+		| **M2M 模式 (OAuth2 Client Credentials)**                        | `client_id`, `scope` (通常沒有 userId)                   | `X-Client-Id: reporting-service`<br>`X-Scopes: read:orders,write:logs` | `principal = clientId ("reporting-service")`<br>`authorities = [SCOPE_read:orders, SCOPE_write:logs]` | `.requestMatchers("/orders/**").hasAuthority("SCOPE_read:orders")`<br>`.requestMatchers("/logs/**").hasAuthority("SCOPE_write:logs")` |
+
+	🔹設計重點
+		1.Gateway：統一負責 JWT 驗簽，只把「可信的最小身份資訊」傳給後端。
+
+			* User 模式 → X-User-Id, X-Roles
+
+			* M2M 模式 → X-Client-Id, X-Scopes
+
+		2.後端：只關心授權 (authZ)，不做 JWT 驗簽。
+
+			* 自訂 OncePerRequestFilter，把 header 轉成 Authentication 放進 SecurityContext。
+
+			* SecurityConfig 就能用 hasRole() / hasAuthority() 直接寫規則。
+
+		3.共用 Filter 設計
+
+			* 可以寫一個 Filter 同時支援 User 模式 & M2M 模式：
+
+				* 如果有 X-User-Id → 當作 user
+
+				* 如果有 X-Client-Id → 當作 client
+
+				* 自動建立對應的 Authentication
+
+✅ 總結：
+	服務可能同時有兩種身份
+		1.Resource Server 身份
+			別的服務（或前端網頁、手機 App）會帶 JWT 來打你的 API。
+			你要能驗證這個 JWT → 就需要：
+				保護自己 API → SecurityFilterChain + http.oauth2ResourceServer(jwt())
+		2.OAuth2 Client 身份
+			你這個服務還需要去呼叫 其他受保護的 API（例如後端 service 或第三方 API）。
+			這時候你要自己去 拿 access token（用 client_credentials flow），然後帶著去呼叫。
+			這就是用：
+				呼叫外部 API → OAuth2AuthorizedClientManager + WebClient
+		3.兩者兼有（大多數「前端服務 / Gateway」情境） → 兩者都要設定。
+
+前端(java)
+	Spring Security
+		user 模式(使用者瀏覽器登入模式)
+			@Bean
+			SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+				http.csrf(csrf -> csrf.disable());
+				http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // 無狀態
+				//http.authorizeHttpRequests( //
+				//		authorize -> authorize.requestMatchers("/call-hello").permitAll() // 放行 call-hello
+				//				.anyRequest().authenticated() //
+				//);
+				// 啟用 OAuth2 client 機制 ，僅適合有使用者互動（用戶登入 + http.oauth2Client()正確新寫法）
+				// 給 user login flow 用的
+				http.oauth2Client(withDefaults());
+
+				return http.build();
+			}
+
+		m2m 模式(機器對機器)
+			1.Spring Security configuration
+				@Bean
+				SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+					http.csrf(csrf -> csrf.disable());
+					http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // 無狀態
+					http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+					return http.build();
+				}
+
+			2.註冊 OAuth2AuthorizedClientManager Bean
+				@Bean
+				public OAuth2AuthorizedClientManager authorizedClientManager(
+						ClientRegistrationRepository clientRegistrationRepository,
+						OAuth2AuthorizedClientRepository authorizedClientRepository) {
+
+					OAuth2AuthorizedClientProvider authorizedClientProvider =
+							OAuth2AuthorizedClientProviderBuilder.builder()
+									.clientCredentials() // ✅ machine-to-machine flow
+									.build();
+
+					DefaultOAuth2AuthorizedClientManager manager =
+							new DefaultOAuth2AuthorizedClientManager(
+									clientRegistrationRepository,
+									authorizedClientRepository
+							);
+					manager.setAuthorizedClientProvider(authorizedClientProvider);
+
+					return manager;
+				}
+
+			3.整合 WebClient (常見做法)
+				@Bean
+				WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+					ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
+							new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+
+					return WebClient.builder()
+							.apply(oauth2.oauth2Configuration())
+							.build();
+				}
+			4.呼叫時指定 clientRegistrationId
+				範例
+					@Service
+					public class MyApiClient {
+						private final WebClient webClient;
+
+						public MyApiClient(WebClient webClient) {
+							this.webClient = webClient;
+						}
+
+						public String callApi() {
+							return webClient.get()
+									.uri("http://localhost:8081/resource")
+									.attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction
+											.clientRegistrationId("my-client")) // 指定 yml 裡的 client id
+									.retrieve()
+									.bodyToMono(String.class)
+									.block();
+						}
+					}
+
+gateway
+	要把 JWT 的內容（userId / roles / clientId / scopes）傳給 後端服務，你必須：
+
+		* 在 Gateway 寫 自訂的 Filter（例如 OncePerRequestFilter 或 Gateway 的 GlobalFilter / WebFilter）
+		* 從 SecurityContext 取出 JwtAuthenticationToken
+		* 把需要的 claims（如 sub, client_id, roles, scope）塞進 HTTP Header，再 forward 給下游服務
+
+	從 JwtAuthenticationToken 取得 claims（如 sub, client_id, roles, scope）塞進 HTTP Header，再 forward 給下游服務 範例
+		@Component
+		public class JwtToHeaderFilter extends OncePerRequestFilter {
+			@Override
+			protected void doFilterInternal(HttpServletRequest request,
+											HttpServletResponse response,
+											FilterChain filterChain)
+					throws ServletException, IOException {
+
+				Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+				if (auth instanceof JwtAuthenticationToken jwtAuth) {
+					var jwt = jwtAuth.getToken();
+
+					// user 模式 (有 sub, roles)
+					String sub = jwt.getClaimAsString("sub");
+					if (sub != null) {
+						request.setAttribute("X-User-Id", sub);
+						Collection<String> roles = jwt.getClaimAsStringList("roles");
+						if (roles != null) {
+							request.setAttribute("X-Roles", String.join(",", roles));
+						}
+					}
+
+					// M2M 模式 (有 client_id, scope)
+					String clientId = jwt.getClaimAsString("client_id");
+					if (clientId != null) {
+						request.setAttribute("X-Client-Id", clientId);
+					}
+					Collection<String> scopes = jwt.getClaimAsStringList("scope");
+					if (scopes != null) {
+						request.setAttribute("X-Scopes", String.join(",", scopes));
+					}
+				}
+
+				filterChain.doFilter(request, response);
+			}
+		}
+
+
+
+後端
+
+
+	從 request 取得 授權資訊轉成 Authentication，SecurityConfig 對應授權資訊設定到對應 uri
+		🔹共用 Filter 範例 (把 Gateway 傳進來的 Header 轉成 Authentication)
+			import jakarta.servlet.FilterChain;
+			import jakarta.servlet.ServletException;
+			import jakarta.servlet.http.HttpServletRequest;
+			import jakarta.servlet.http.HttpServletResponse;
+			import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+			import org.springframework.security.core.Authentication;
+			import org.springframework.security.core.GrantedAuthority;
+			import org.springframework.security.core.authority.SimpleGrantedAuthority;
+			import org.springframework.security.core.context.SecurityContextHolder;
+			import org.springframework.web.filter.OncePerRequestFilter;
+
+			import java.io.IOException;
+			import java.util.*;
+			import java.util.stream.Collectors;
+
+			public class GatewayAuthHeaderFilter extends OncePerRequestFilter {
+
+				@Override
+				protected void doFilterInternal(HttpServletRequest request,
+												HttpServletResponse response,
+												FilterChain filterChain) throws IOException, ServletException {
+
+					Authentication authentication = null;
+
+					// 1.User 模式 (有 User-Id)
+					String userId = request.getHeader("X-User-Id");
+					String rolesHeader = request.getHeader("X-Roles");
+
+					if (userId != null) {
+						List<GrantedAuthority> authorities = Optional.ofNullable(rolesHeader)
+								.map(r -> Arrays.stream(r.split(","))
+										.map(String::trim)
+										.map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+										.map(SimpleGrantedAuthority::new)
+										.collect(Collectors.toList()))
+								.orElse(List.of());
+
+						authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+					}
+
+					// 2.M2M 模式 (有 Client-Id)
+					String clientId = request.getHeader("X-Client-Id");
+					String scopesHeader = request.getHeader("X-Scopes");
+
+					if (authentication == null && clientId != null) {
+						List<GrantedAuthority> authorities = Optional.ofNullable(scopesHeader)
+								.map(s -> Arrays.stream(s.split(","))
+										.map(String::trim)
+										.map(scope -> scope.startsWith("SCOPE_") ? scope : "SCOPE_" + scope)
+										.map(SimpleGrantedAuthority::new)
+										.collect(Collectors.toList()))
+								.orElse(List.of());
+
+						authentication = new UsernamePasswordAuthenticationToken(clientId, null, authorities);
+					}
+
+					// 設定到 SecurityContext
+					if (authentication != null) {
+						SecurityContextHolder.getContext().setAuthentication(authentication);
+					}
+
+					filterChain.doFilter(request, response);
+				}
+			}
+
+
+	🔹SecurityConfig 使用方式
+		import org.springframework.context.annotation.Bean;
+		import org.springframework.context.annotation.Configuration;
+		import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+		import org.springframework.security.web.SecurityFilterChain;
+		import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+		@Configuration
+		public class SecurityConfig {
+
+			@Bean
+			SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+				http.csrf(csrf -> csrf.disable());
+
+				// 加入我們的共用 Filter
+				http.addFilterBefore(new GatewayAuthHeaderFilter(), UsernamePasswordAuthenticationFilter.class);
+
+				// 授權規則
+				http.authorizeHttpRequests(auth -> auth
+					// User 模式
+					.requestMatchers("/admin/**").hasRole("ADMIN")
+					.requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+
+					// M2M 模式
+					.requestMatchers("/orders/**").hasAuthority("SCOPE_read:orders")
+					.requestMatchers("/logs/**").hasAuthority("SCOPE_write:logs")
+
+					.anyRequest().denyAll()
+				);
+
+				return http.build();
+			}
+		}
+
+常見問題
+	Q1:要確保後端服務僅能 gateway 進來，不然後端可能會因為被假造的 header auth 授權 攻擊?
+	A1:🔒 常見保護做法
+		1. 網路層隔離
+			* 讓後端服務只開在內網 (private subnet)，對外不可直接存取
+			* 只有 Gateway / API LB 可以打到後端
+
+		2. 可信來源檢查
+			* 後端服務加一個 內部憑證 header（例如 X-Internal-Secret）
+			* Gateway 在 forward 時自動附上，後端檢查這個 header 是否正確
+			* 攻擊者若直接打後端，因為不知道這個 secret，就被拒絕
+				X-Internal-Secret: abc123-shared-secret
+
+		3. mTLS (雙向 TLS)
+			* Gateway 和後端之間使用 雙向 TLS，彼此檢查憑證
+			* 確保只有持有正確 client cert 的 Gateway 能打後端
+
+		4. Service Mesh / Sidecar 保護
+			* 如果你有用 Istio / Linkerd / Consul Connect
+			* 可以強制 所有東西都必須經由 Gateway Sidecar 才能進入後端
+
+		📌 總結
+			* 你的理解正確：後端不驗 JWT → 必須信任 Gateway → 必須阻擋直接訪問後端
+			* 最小化做法：網路隔離 + 內部憑證 header
+			* 高規格做法：mTLS / Service Mesh
+
+
