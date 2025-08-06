@@ -131,3 +131,38 @@ ngnix 允許存取 auth server 的保護措施
 	| 一般 JSP → ap-api-gateway → 雲端 backend      | ✅ 穩定基本模式     | 無須特別修改                               |
 	| 特定 JSP → vpn-api-gateway → 雲端 vpn backend | ✅ 分區管控明確     | 建議加 IP 控制與 scope 驗證                 |
 	| 特定 JSP → vpn-api-gateway → 地端 vpn gateway | ✅ 高階架構（混合雲）| 必須控制 timeout、安全性、來源 IP、跨 VPN 認證 |
+
+
+
+🌐 雲打地流程（含 Token Exchange）
+	1.Browser → Cloud Frontend
+
+		使用者登入或攜帶 JWT，打到雲端前端服務。
+
+	2.Cloud Frontend → Cloud Auth Server
+
+		前端服務用自己的 clientId/secret，從 Cloud Auth Server 拿一張 cloud access token (cloud-jwt)。
+
+		這張 token 的 audience = cloud-vpn-gateway。
+
+	3.Cloud Frontend → Cloud VPN Gateway
+
+		前端服務帶著 cloud-jwt，打到 Cloud VPN Gateway。
+
+		Cloud VPN Gateway 驗證 cloud-jwt（由 Cloud Auth Server 簽發）。
+
+	4.Cloud VPN Gateway → Token Exchange (Cloud AS ↔ On-prem AS)
+
+		Cloud VPN Gateway 用 cloud-jwt 去 Cloud Auth Server /token/exchange。
+
+		Cloud Auth Server 和 On-prem Auth Server 建立 federation，交換得到一張 onprem-jwt（audience = onprem-gateway / onprem-service）。
+
+	5.Cloud VPN Gateway → On-prem Gateway (via VPN tunnel)
+
+		Cloud VPN Gateway 帶著 onprem-jwt，透過 VPN tunnel 打 On-prem Gateway。
+
+	6.On-prem Gateway → On-prem Backend Service
+
+		On-prem Gateway 驗 onprem-jwt（由 On-prem Auth Server 簽發）。
+
+		驗證通過後，轉發請求到地端後端服務。
