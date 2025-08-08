@@ -33,15 +33,3 @@ WebFlux Reactor Netty Gateway(支援 Reactor 的 gateway)
 				- Path=/api/backend/**
 			  filters:
 				- StripPrefix=1
-
-	  cloud:
-		gateway:
-		  default-filters:                #使用spring-cloud-starter-gateway依賴 才有這設定 ，且前端使用 webClient 互動式模式才支援
-			- TokenRelay
-		  routes:
-			- id: backend-service
-			  uri: lb://backend-service   # 使用服務發現
-			  predicates:
-				- Path=/api/backend/**
-			  filters:
-				- StripPrefix=1
