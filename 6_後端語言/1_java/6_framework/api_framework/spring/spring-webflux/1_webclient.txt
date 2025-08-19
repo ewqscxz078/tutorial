@@ -1,0 +1,90 @@
+ref ChatGPT
+
+Java 21 + Spring Boot 3.x 的最佳實務上
+	Spring 官方立場
+		* Spring 5 就已經將 RestTemplate 標註為 不再積極開發（雖然還會維護 Bug）。
+		* 官方文件明確建議新專案使用 WebClient。
+		* RestTemplate 是同步（blocking）HTTP client，不支援 reactive/non-blocking 模式。
+
+WebClient 的優勢
+	| 特性                       | RestTemplate  | WebClient                                     |
+	| ------------------------- | ------------- | --------------------------------------------- |
+	| **阻塞/非阻塞**              | 只能阻塞（block）| 支援阻塞與非阻塞                                   |
+	| **非同步能力**               | 無            | 可回傳 `Mono` / `Flux`                          |
+	| **反應式整合**               | 無            | 可整合 Reactor、R2DBC、Spring WebFlux             |
+	| **串流支援**                | 有限           | 支援 SSE、Chunked、Streaming                     |
+	| **連線管理**                | 簡單           | 支援更細緻的連線池與 Timeout 設定（基於 Reactor Netty） |
+	| **擴展性**                  | 較弱           | Filter 機制容易攔截 request/response 做統一處理      |
+	| **Java 21 協程虛擬執行緒整合** | 需要額外調整     | 阻塞/非阻塞都能配合 Project Loom                    |
+
+建構 webClient
+	生命週期
+		WebClient.Builder 是「工廠」
+			1.這是用來建構 WebClient 實例的工廠。
+				你可以直接呼叫：
+					@Bean
+					WebClient myClient(WebClient.Builder builder) {
+						return builder
+							.baseUrl("https://api.example.com")
+							.build();
+					}
+			2.Spring Boot 會提供一個預先配置好的 WebClient.Builder（已套用 Boot 的自動設定：編碼器、ObservationRegistry、metrics、trace、propagation 等）。
+			3.如果你自己 WebClient.builder() new 出來，就跳過了 Boot 的自動化設定（這是很多人踩的坑）。
+		
+		WebClientCustomizer 是「攔截器（Builder 配置器）」
+			1.它是一個 Spring Boot 特有的 SPI（介面）：
+				@FunctionalInterface
+				public interface WebClientCustomizer {
+					void customize(WebClient.Builder webClientBuilder);
+				}
+			2.Boot 啟動時會去找所有的 WebClientCustomizer，在建立全域共享的 Builder 時自動呼叫它們，把共用設定掛上去。
+			3.等到你在程式裡注入 WebClient.Builder 時，就已經有這些共用設定了（例如編碼器、過濾器、traceId/spanId 傳遞）。
+	
+	用途
+		用 WebClient.Builder
+			* 適合針對特定 WebClient Bean 建構個別設定。
+
+			* 常用在 @Bean 方法裡，例如 jsonWebClient() 或 multipartWebClient()。
+
+			* 缺點：如果你 WebClient.builder() 自己 new，就失去 Boot 幫忙掛的全域設定（觀測、propagation、metrics）。
+		
+		用 WebClientCustomizer
+			* 適合全域共用設定，例如：
+
+				1.統一的 request/response logging filter
+
+				2.統一的超時值（除非 per-client override）
+
+				3.統一的編碼器、maxInMemorySize
+
+				4.全域攔截 header（例如 version、trace 標籤）
+
+			* 好處：所有透過 Spring Boot Builder 建出來的 WebClient（無論哪裡 new 出來）都會自動帶上這些設定。
+	
+	實際組合方式（建議）
+		* WebClientCustomizer：掛共用的 filter（MyWebClientRequestHandler）、觀測設定（ObservationRegistry）、全域 buffer 大小
+
+		* WebClient.Builder（注入 Boot 預設的）：針對 JSON / multipart 客戶端，clone 出不同的 ConnectionProvider、HttpClient、baseUrl、timeout
+	
+		範例：
+			@Bean
+			WebClientCustomizer commonCustomizer(ObservationRegistry registry, MyWebClientProperties props) {
+				return builder -> builder
+					.filter(MyWebClientRequestHandler.requestProcessor())
+					.observationRegistry(registry)
+					.codecs(cfg -> cfg.defaultCodecs()
+						.maxInMemorySize((int) props.getCodec().getMaxInMemorySize().toBytes()));
+			}
+
+			@Bean(name = "jsonClient")
+			WebClient jsonWebClient(WebClient.Builder builder, MyWebClientProperties props) {
+				return builder.clone()
+					.baseUrl(props.getcGatewayUri())
+					.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+					.clientConnector(jsonConnector())
+					.build();
+			}
+
+			* 保證 traceId / spanId 繼續傳遞（因為走 Boot Builder）
+			* 有全域共用設定（WebClientCustomizer）
+			* JSON / multipart 可以各自用不同連線池與 timeout

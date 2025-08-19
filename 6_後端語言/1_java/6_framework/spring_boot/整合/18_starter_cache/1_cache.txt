@@ -11,7 +11,8 @@ ref
 
 	https://www.cnblogs.com/mumage/p/12497025.html
 		不錯的說明
-
+	chatGPT
+	
 緩存使用場景
 	1. 數據重複訪問：需要多次訪問同一數據時。
 	2. 數據更新較少：當需要訪問的數據較少更新時。
@@ -229,3 +230,108 @@ Caffeine
 				這樣你就可以在業務邏輯中使用特定的型別，而不需要關心底層快取的泛型定義。
 
 		因此 LoadingCache 的手動建構越來越少使用，在需要cache的method 宣告 @Cacheable 即可
+
+
+#Java 21、spring boot 3 後差異
+	@Cacheable(value = "address_cache", key = "#customerId")
+	public AddressDTO getAddress(long customerId, String other) {
+
+		Q1:預設參數名稱反射支援沒啟用
+			會噴例外錯誤
+				EL1008E: Property or field 'customerId' cannot be found
+				或
+				Caused by: org.springframework.expression.spel.SpelEvaluationException: EL1008E
+				或
+				java.lang.IllegalArgumentException: Null key returned for cache operation [Builder[public tw.gov.moi.aw4.data.jpa.commons.configure.dto.ServiceConfigureDTO tw.gov.moi.aw4.data.jpa.commons.configure.impl.ServiceConfigureServiceImpl.getServiceConfigure(java.lang.String)] caches=[jpaServiceConfigure] | key='#serviceName' | keyGenerator='' | cacheManager='jpaServiceConfigureCacheManager' | cacheResolver='' | condition='' | unless='' | sync='false']. If you are using named parameters, ensure that the compiler uses the '-parameters' flag.
+					at org.springframework.cache.interceptor.CacheAspectSupport.generateKey(CacheAspectSupport.java:764)
+					at org.springframework.cache.interceptor.CacheAspectSupport.findCachedValue(CacheAspectSupport.java:522)
+					at org.springframework.cache.interceptor.CacheAspectSupport.execute(CacheAspectSupport.java:446)
+					at org.springframework.cache.interceptor.CacheAspectSupport.execute(CacheAspectSupport.java:410)
+					at org.springframework.cache.interceptor.CacheInterceptor.invoke(CacheInterceptor.java:65)
+					at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+					at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728)
+					at tw.gov.moi.aw4.data.jpa.commons.configure.impl.ServiceConfigureServiceImpl$$SpringCGLIB$$0.getServiceConfigure(<generated>)
+					at tw.gov.moi.aw4.data.jpa.commons.configure.impl.ServiceConfigureServiceImplTest.testGetServiceConfigure(ServiceConfigureServiceImplTest.java:81)
+					at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+					at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+					at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+				
+		A1:
+			1.在 Maven / Gradle 加上 -parameters 編譯參數
+				Maven
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<configuration>
+							<parameters>true</parameters>
+						</configuration>
+					</plugin>
+				Gradle
+					tasks.withType(JavaCompile) {
+						options.compilerArgs += "-parameters"
+					}
+			2.改用 #p0 / #a0 這種基於參數索引的方式
+				不依賴參數名稱反射：
+					@Cacheable(cacheNames = "xxx", key="#p0")
+					public String loadCacheTemplate(String templateName)
+						* #p0、#p1 依序對應第一個、第二個參數
+						* 這種方式不需要 -parameters
+
+			為什麼以前可以、現在不行
+				1.Java 的預設行為
+					* Java 編譯後的 .class 檔不會保留方法參數名稱（只會保留型別與順序）。
+					* 要保留參數名稱必須用 -parameters。
+					* 沒有 -parameters 時，反射 API 取到的就是 arg0, arg1。
+
+				2.以前「看似」可以用的原因
+					* 舊版本的 Spring 在某些情況下會 fallback 去讀取 debug symbol（.class 裡的局部變數表，通常加 -g 會有）。
+					* 如果你的編譯器/IDE 預設加了 -g（debug info），Spring 可能讀到「局部變數名」並當成參數名，導致你覺得 #參數名稱 可以直接用。
+					* 但這種方式很脆弱：不同 JDK、不同 build 設定就會失效。
+
+				3.Spring Boot 3 / Spring Framework 6 的變化
+					* Spring 現在對方法參數名稱的來源更嚴格，不再嘗試從 debug symbol 推斷（因為它本來就不保證準確，而且會受編譯器最佳化影響）。
+					* 所以如果沒有 -parameters，直接用 #templateName 這種 SpEL 會找不到名稱而報錯。
+
+			總結
+				以前能用是因為編譯器 debug info 剛好讓 Spring 推測到參數名（偶然）。
+				Spring Boot 3 / Spring 6 不再依賴這種不保證的推測，所以必須顯式加 -parameters。
+				不想加的話，就改用 #p0 / #a0 來避免依賴參數名稱反射。
+
+			簡要對照表（Spring Cache 的 SpEL）：
+				* #templateName：用「參數名稱」取值 → 需要 -parameters。
+				* #p0 / #a0：用「參數索引」取值 → 不需要 -parameters。
+				* #root.args[0]：同樣用「參數索引」取值 → 不需要 -parameters。
+					另外，#root（或縮寫變數）在 Cache SpEL 裡還有這些可用：
+
+				* #root.method / #method：反射的 Method
+				* #root.methodName / #methodName：方法名字字串
+				* #root.target / #target：目標物件
+				* #root.targetClass / #targetClass：目標類別
+				* #root.args / #args：參數陣列
+				* #result：只有在 unless/condition 等於「執行後可見」的表達式裡可用（例如 unless = "#result == null"）
+
+				實用範例：
+					@Cacheable(cacheNames = "xxx", key = "#root.args[0]")
+					public String loadCacheTemplate(String templateName) { ... }
+
+					@Cacheable(cacheNames = "xxx", key = "#p0 + ':' + #p1")
+					public String find(String userId, String locale) { ... }
+
+					@Cacheable(cacheNames = "xxx", key = "T(java.util.Objects).hash(#args)")
+					public String complexKey(Object... params) { ... }
+
+					@Cacheable(cacheNames = "xxx", key = "#p0?.id") // 安全導覽
+					public Data get(DataQuery q) { ... }
+
+				小結：
+					* 想避免環境差異：用 #p0 / #root.args[0] 最穩。
+					* 想可讀性高：用 #參數名稱，但請務必在編譯開 -parameters。
+					* 團隊規範建議二選一，一致使用，避免升級踩雷。
+
+			差異對照
+				| 寫法             | 含義                           | 是否需要 `-parameters` | 可讀性 | 可用性 |
+				| --------------- | ----------------------------- | -------------------- | --- | --- |
+				| `#p0`           | 第一個參數（parameter 0）         | ❌ 不需要              | 高   | 高   |
+				| `#a0`           | 第一個參數（argument 0）          | ❌ 不需要              | 高   | 高   |
+				| `#root.args[0]` | `root` 物件的 `args` 陣列的第 0 項 | ❌ 不需要             | 中   | 最高  |
+				| `#templateName` | 名為 `templateName` 的參數       | ✅ 需要               | 最高  | 高   |
