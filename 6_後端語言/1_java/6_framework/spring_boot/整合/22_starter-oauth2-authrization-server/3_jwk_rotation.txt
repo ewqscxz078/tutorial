@@ -1,0 +1,273 @@
+ref ChatGPT
+
+JWK 旋轉（rotation）的核心是「新舊金鑰並存一段時間」：
+	Auth Server 用新金鑰簽，但 JWKS 發佈同時包含新舊金鑰的公鑰，等所有用舊金鑰簽出的 JWT 都自然過期後，再下架舊金鑰。
+
+要設定哪些東西
+	1.能持久化的金鑰來源（必須）
+		* 不要用啟動時隨機產生；把金鑰放在 JKS / PEM / DB / Vault / KMS，可被多機共享。
+		* 需要能同時保存多把金鑰（至少 active + previous）。
+
+	2.提供多把 JWK 的 JWKSource（必須）
+		* 你的 JWKSource<SecurityContext> 應能回傳一個 JWKSet（含多把 JWK）。
+		* JWKS 端點會用這個 JWKSource 公開所有「仍有效」的公鑰。
+		* 簽章端（JwtEncoder）只用「當前 active 的私鑰」簽發，並在 header 帶 kid。
+
+	3.選主動簽章金鑰的策略（必須）
+		* 你可以以資料表/設定檔記錄「當前使用的 kid」。
+		* 自訂 JWKSource：收到 JWKSelector 後，若是簽章用途，優先回傳 active kid；
+		* JWKS 端點查詢時則回傳「所有有效公鑰」。
+
+	4.排程或手動切換（建議）
+		提供一個 rotation 任務：
+		a) 產生新金鑰（新 kid）→
+		b) 更新「active kid」指向新金鑰（新 token 開始用新 kid）→
+		c) 保留舊金鑰在 JWKS（只保留公鑰）直到舊 token 過期 →
+		d) 下架舊金鑰。
+
+注意事項（實務重點）
+	* 重疊期（grace period）：至少 ≥ 你最長的 Access Token TTL + clock skew（常見 15–60 分鐘）。
+		例：AT=30m、容錯=5m → 舊金鑰要保留 ≥35m。
+	* kid 一定要穩定且唯一：新金鑰必須新 kid，不要覆蓋舊 kid。
+	* 演算法不變更（例如都用 RS256），避免下游不兼容。
+	* 多實例一致性：active kid 與金鑰集合請用共享存儲（DB/Vault/KMS）。
+	* JWKS 快取：下游（Resource Server）會快取 JWKS；因此重疊期要覆蓋其快取時間與 token TTL。
+	* 滾動升級：先發佈含「新舊公鑰」的 JWKS，再切換簽章金鑰。
+	* 審計與撤銷：記錄金鑰產生/啟用/下架的時間與操作者。
+	* 備援：保留私鑰離線備份（受保護），防止誤刪/遺失。
+
+參考實作（精簡版）
+	1) Key 資料模型（一定要有）
+		把金鑰存成可追蹤狀態的資料：
+			ACTIVE（目前簽章用）
+			PASSIVE（已發佈但尚未簽章，等待切換）
+			RETIRED（不再發佈，等清除）
+			COMPROMISED（撤銷）。	
+	
+		資料表（或改用 Vault/KMS）
+		CREATE TABLE oauth_jwk (
+		  kid         VARCHAR(64) PRIMARY KEY,
+		  jwk_json    TEXT NOT NULL,         -- 存 JWK (含私鑰部分)；若用 Vault/KMS，這裡可只存引用
+		  status      VARCHAR(16) NOT NULL,  -- 'ACTIVE' | 'STAGED' | 'RETIRED'
+		  created_at  TIMESTAMP NOT NULL,
+		  not_before  TIMESTAMP NULL,
+		  not_after   TIMESTAMP NULL
+		);
+
+		CREATE TABLE oauth_jwk_meta (
+		  id INT PRIMARY KEY,
+		  active_kid VARCHAR(64) NOT NULL
+		);
+		INSERT INTO oauth_jwk_meta (id, active_kid) VALUES (1, 'initial-kid');
+
+		status = ACTIVE|PASSIVE|RETIRED|COMPROMISED
+		* ACTIVE		：當前簽章用
+		* PASSIVE		：已發佈但尚未簽章，等待切換）
+		* STAGED		：已佈署但尚未切換
+		* RETIRED		：僅供驗證（公鑰保留），過期後下架
+		* COMPROMISED	：（撤銷）。
+		
+		叢集部署時，這份資料必須共用（DB/KMS），不要放在各節點記憶體或單機檔案。
+		
+	2) JWKSource（回傳多把鍵；簽章只選 active）
+		對外要能回 /.well-known/jwks.json，因此 JWKSource 必須
+			回傳「可以發佈的公鑰集合」（通常是 ACTIVE + PASSIVE；不要回 RETIRED/COMPROMISED）
+
+		@Bean
+		public JWKSource<SecurityContext> jwkSource(JwkRepository repo) {
+			return (JWKSelector selector, SecurityContext ctx) -> {
+				// 1) 若是簽章（Nimbus 會用 selector 挑可用私鑰），優先 active
+				Optional<JWK> active = repo.findActiveJwk(); // 含私鑰
+				List<JWK> candidates = new ArrayList<>();
+				active.ifPresent(candidates::add);
+
+				// 2) 加上仍在重疊期內的舊鑰（只需公鑰即可）
+				candidates.addAll(repo.findRetiredWithinOverlapAsPublicJwk());
+
+				// 3) 讓 selector 過濾（alg/kid 等）
+				return selector.select(new JWKSet(candidates));
+			};
+		}
+		重點：JwtEncoder 會從 JWKSource 拿可簽章的 JWK（含私鑰）；
+		JWKS 端點會同樣透過 JWKSource 取 公鑰集合 對外發佈。
+
+	3) 旋轉流程（rotation strategy）
+
+		建議策略：Publish-before-use（先發佈再啟用），避免「簽出新 kid 但下游還沒抓到公鑰」的空窗。
+
+			1.生成新金鑰 → 設成 PASSIVE（已有 kid），加入對外 JWK 集（JWKSource 會回 PASSIVE）。
+
+			2.等待傳播緩衝（例如 5～15 分鐘，依下游 cache/抓取頻率）
+
+			3.切換 ACTIVE → 將 PASSIVE → ACTIVE、原 ACTIVE → RETIRED（仍保留於儲存層，不再對外發佈）。
+
+			4.保留 RETIRED 到所有舊 token 都過期（至少 = access token 最大壽命 + clock skew + 下游 JWKS cache）。
+
+			5.清除 RETIRED（或轉封存）。
+
+			6.若 key 洩漏 → 立刻標記 COMPROMISED，從對外 JWK 集移除並視情況觸發下游快取失效（見注意事項）。
+
+		排程服務（範例）
+			@Service
+			public class KeyRotationService {
+				private final KeyRepository repo;
+
+				public KeyRotationService(KeyRepository repo) { this.repo = repo; }
+
+				// 生成新金鑰（PASSIVE）
+				@Transactional
+				public void publishNewPassiveKey(SignatureAlgorithm alg) {
+					KeyRecord k = KeyRecord.generate(alg); // 產 RSA/EC，填 kid/use=sig
+					k.setStatus(Status.PASSIVE);
+					repo.save(k);
+					// 發佈：JWKSource 會立即把 PASSIVE 包含在 jwks.json 裡
+				}
+
+				// 切換 ACTIVE
+				@Transactional
+				public void promotePassiveToActive() {
+					KeyRecord current = repo.findActive();
+					KeyRecord passive = repo.findLatestPassive()
+						.orElseThrow(() -> new IllegalStateException("no passive"));
+					passive.setStatus(Status.ACTIVE);
+					passive.setActivatedAt(Instant.now());
+					repo.save(passive);
+
+					if (current != null) {
+						current.setStatus(Status.RETIRED);
+						// 可設定 retire_after = now + 保留期
+						repo.save(current);
+					}
+				}
+
+				// 清理退休金鑰
+				@Transactional
+				@Scheduled(cron = "0 0 3 * * *") // 每日 03:00
+				public void purgeRetired() {
+					repo.findRetiredReadyToPurge().forEach(repo::delete);
+				}
+			}
+
+
+	3) 旋轉服務（簡化流程）
+		@Service
+		public class JwkRotationService {
+			private final JwkRepository repo;
+			private final Duration overlap; // 舊鑰保留時間(>= AT TTL + skew)
+
+			public void rotate() {
+				// a) 產生新鑰（新 kid）
+				RSAKey newKey = RsaKeyGenerator.generate(2048); // 你可用自訂生成或 KMS 產生
+				String newKid = newKey.getKeyID();
+
+				// b) 將現有 ACTIVE -> RETIRED 並設定 not_after = now()+overlap
+				repo.retireActiveKey(overlap);
+
+				// c) 新鑰入庫，狀態 ACTIVE，並更新 meta.active_kid = newKid
+				repo.saveAsActive(newKey);
+
+				// d) 之後由排程清理過期 RETIRED
+			}
+		}
+		
+		@Bean
+		JWKSource<SecurityContext> jwkSource(KeyRepository repo) {
+			// 只回可公開的公鑰：ACTIVE + PASSIVE
+			List<JWK> publicKeys = repo.findPublishable() // ACTIVE + PASSIVE
+				.stream().map(KeyRecord::toPublicJwk).toList();
+			return new ImmutableJWKSet<>(new JWKSet(publicKeys));
+		}
+
+		@Bean
+		JwtEncoder jwtEncoder(KeyRepository repo) {
+			// 只提供 ACTIVE 私鑰給 Encoder 簽章
+			JWK active = repo.findActive().toPrivateJwk(); // 內含 private key & kid
+			return new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(active)));
+		}
+
+		@Bean
+		JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+			return NimbusJwtDecoder.withJwkSource(jwkSource).build();
+		}
+
+		重點：ACTIVE 那把 JWK 必須有 kid，SAS 會自動把 kid 放進 JWT header，
+			資源伺服器才能用 kid 去你 jwks.json 找到對應公鑰。
+
+	4) 清理排程（過了重疊期再移除舊鑰）
+		@Scheduled(cron = "0 */5 * * * *") // 每5分鐘
+		public void cleanupRetired() {
+			repo.deleteWhereNowAfterNotAfter();
+		}
+
+	4) 旋轉時序（建議時間軸）
+		* 旋轉頻率：每 30～90 天常見；或有安規（如內控）就照規範。
+		* Overlap/等待時間：5～15 分鐘（取決於你的 Cache-Control 與下游抓取頻率/快取）。
+		* RETIRED 保留時間：≥ Access Token 最長存活（若你核發 15 分鐘 + 可更新 cache 5 分鐘，就至少保留 20～30 分鐘；若你核發較長壽命 token，保留期等比拉長）。
+
+	5) 對外 JWK Set 的 HTTP 快取
+		* /.well-known/jwks.json 請加上合適的 Cache-Control: max-age=300（例如 5 分鐘）或更短；
+		* 旋轉切換後，等 max-age 大致過了再正式把 PASSIVE 升為 ACTIVE（publish-before-use 的「等待傳播」）；
+		* 若有緊急撤換（COMPROMISED），考慮：
+			* 縮短 max-age，
+			* 在 API Gateway/邊界對 JWKS 設 短快取，
+			* 必要時對合作方通知刷新（有些資源伺服器會緩存到內存很久）。
+	
+		// Spring Authorization Server 的 JWK endpoint 你可以自行加 WebFilter 或 ControllerAdvice 設定快取 header。
+
+
+	6) 金鑰產生規格（演算法與長度）
+		* RSA：RS256（2048/3072），相容性最好。
+		* EC：ES256（P-256）更輕量、FIPS 場景常用。
+		* 一致的 alg 與 use="sig"；每把 key 都要有 kid。
+		* 若有法規或內部規範（FIPS、國密等），在產生器那層抽換即可。
+
+	7) Spring Authorization Server 接線重點
+		* 不需要自己寫 /jwks 控制器：只要提供 JWKSource<SecurityContext>，SAS 會自動掛 /.well-known/jwks.json。
+		* JwtEncoder 使用你 ACTIVE 的 JWK；kid 由 JWK 帶出。
+		* JwtDecoder 用同一個 JWKSource，資源伺服器也會用這個 endpoint。
+		* OAuth2 tokens（Access/ID） 預設就會用 JwtEncoder 簽。你也可以針對不同 token type/alg 做客製化（通常保持一致最單純）。
+
+下游（Resource Server / Gateway）要注意
+	* 使用 spring.security.oauth2.resourceserver.jwt.jwk-set-uri 指向 Auth Server 的 /oauth2/jwks。
+	* 讓它自行根據 kid 抓對應公鑰；保持 JWKS 快取（Spring/Nimbus 會快取）。
+	* 你若將快取（或 proxy）設太久，重疊期必須覆蓋該快取時間
+
+推薦的輪替步驟（操作手冊）
+	1.預備：在金鑰庫中加入新鑰（狀態 STAGED），先讓 JWKS 同時能列出新舊公鑰（或至少能在切換前即刻提供）。
+	2.切換：把 active_kid 指向新鑰（狀態 ACTIVE），開始用新鑰簽發；舊鑰標記為 RETIRED，設定 not_after = now()+overlap。
+	3.觀察：確保新簽發的 token header 內 kid 換成新值，下游仍能驗證。
+	4.清理：重疊期過後，從 JWKS 移除舊鑰（刪庫或改狀態），完成一次輪替。
+
+如果你想走 Vault/KMS “遠端簽章”（Auth Server 不持有私鑰，只委派簽名），流程也一樣：
+	* JWKS 仍需要你把新舊公鑰都發佈；
+	* 你的簽章實作改為呼叫 KMS/Vault 的 sign API；
+	* 旋轉時在 KMS 產生新 key version 並更新 active_kid。
+
+
+你可以直接抄用的「最小設定清單」
+	1.建立 KeyRepository（DB/KMS 皆可）與 KeyRecord 模型（含 kid/status/PEM）。
+	2.啟動時檢查：若沒有 ACTIVE → 自動生成一把 ACTIVE。
+	3.提供三個 Bean：
+		* JWKSource：回 ACTIVE + PASSIVE 公鑰
+		* JwtEncoder：只用 ACTIVE 私鑰
+		* JwtDecoder：用 JWKSource
+	4.排程器：
+		* publishNewPassiveKey()（例如每 60 天）
+		* 等 10 分鐘 → promotePassiveToActive()
+		* purgeRetired()（每日）
+
+	5.HTTP 快取：/.well-known/jwks.json 加 Cache-Control: max-age=300（或你的策略）。
+	6.Token 時效：設定 access token TTL；RETIRED 保留期 ≥ TTL + 快取緩衝。
+	7.叢集：金鑰儲存層共用；切換動作只執行一次（可用分散式鎖）。
+	8.監控告警：
+		* 沒有 ACTIVE、沒有 PASSIVE、距離 rotation 期限不足、jwks.json 取用錯誤、kid 找不到。
+	9.緊急應變：標記 COMPROMISED → 立刻從 JWKSource 排除 → 縮短快取 → 通知下游刷新。
+
+
+常見地雷 & 注意事項
+	* 先用新 key 簽、後發佈公鑰 → 下游解不開：務必先發佈（PASSIVE），再切換 ACTIVE。
+	* JWKS 快取過長 → 旋轉後下游還抓舊集：調整 max-age，並安排足夠 overlap。
+	* 多節點各自生成 → kid 撞名或狀態不同步：集中儲存與鎖。
+	* 把 RETIRED 也對外發佈 → 增加攻擊面：對外僅發佈 ACTIVE + PASSIVE。
+	* 忘了 kid → 解析端無法挑對公鑰：每把 key 必須有固定 kid。
+	* 演算法混搭 → 部分客戶端不支援：維持一種主算法最穩（RS256 或 ES256）。

@@ -1,0 +1,27 @@
+ref ChatGPT
+
+OAuth2 / OpenID Connect 的世界裡，jwk 指的是 JSON Web Key
+
+🔑 全名：
+	JWK = JSON Web Key
+		它是一種用 JSON 格式 表示加密金鑰（Public / Private Key）的標準，定義於 RFC 7517
+
+📌 為什麼 OAuth2 Authorization Server 要用 JWK？
+	1.公開金鑰發佈
+		* Authorization Server（授權伺服器）會對外公開它的簽章金鑰（通常是公開金鑰），
+			讓 Client 或 Resource Server 驗證 JWT（例如 Access Token、ID Token）的合法性。
+
+		* 這些金鑰會以 JWK Set (JWKS) 的形式發佈在一個 URL，例如：
+	
+	2.JSON 格式方便機器讀取
+		* JWK 用 JSON，而不是 PEM、DER 這種傳統格式，方便程式直接解析。
+
+	3.標準化金鑰輪換 (Key Rotation)
+		* Authorization Server 可以透過 JWKS 讓 Resource Server 知道有哪些金鑰在使用，過期的金鑰會被移除。
+
+📌 名詞對照
+	JWK → JSON Web Key（單一金鑰）
+	JWKS → JSON Web Key Set（多個金鑰集合）
+	JWS → JSON Web Signature（簽章格式）
+	JWE → JSON Web Encryption（加密格式）
+	JWT → JSON Web Token（最常見的 Token 格式）

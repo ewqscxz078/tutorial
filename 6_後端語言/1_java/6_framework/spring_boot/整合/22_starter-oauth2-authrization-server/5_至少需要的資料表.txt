@@ -1,0 +1,15 @@
+ref ChatGPT
+
+1.jwk oauth2_authorization 紀錄的使用狀況
+2.建議持久化 oauth2_registered_client 的資料 
+
+最少需要的資料表
+	1.oauth2_registered_client（必要）
+		* 放 client 的靜態設定：client_id、client_secret（或其它認證方式）、授權模式（client_credentials）、scope、token/ID Token 的設定（存活時間、是否使用自含式 JWT、簽章演算法等）。
+
+	2.oauth2_authorization（強烈建議）
+		* 放「已核發的存取權杖」及其狀態與附加資訊：access_token（含到期時間、claims）、refresh_token（若有）、attributes/metadata 等。
+		* 即使是 M2M，多數系統還是會保留這張表以便稽核、撤銷、疑難排除。
+
+	3.oauth2_authorization_consent（M2M 通常不需要）
+		* 以使用者同意為核心的情境才會用到；client_credentials 不會用。

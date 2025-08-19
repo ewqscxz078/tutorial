@@ -1,0 +1,35 @@
+ref ChatGPT
+
+pom.xml
+	<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-client</artifactId></dependency>
+
+resource
+	yml 註冊該專案要使用那些 jwt
+		spring:
+		  security:
+			oauth2:
+			  client:
+				registration:
+				  my-client:
+					client-id: my-client-id
+					client-secret: my-client-secret
+					authorization-grant-type: client_credentials
+				provider:
+				  my-client:
+					token-uri: http://auth-server:8080/oauth2/token
+
+java
+	webclient 要有註冊 oauth2Configuration，才會自動 header 幫你埋入 jwt
+		比如
+			@Bean
+			WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+				ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
+						new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+
+				return WebClient.builder()
+						.apply(oauth2.oauth2Configuration())
+						.build();
+			}
+			
+	呼叫時指定 clientRegistrationId
+		webclient.attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))

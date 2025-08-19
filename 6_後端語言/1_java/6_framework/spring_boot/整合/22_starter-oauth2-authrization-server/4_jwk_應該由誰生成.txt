@@ -1,0 +1,49 @@
+ref ChatGPT
+
+最佳實務是：在金鑰管理平面生成與持有私鑰，授權伺服器只「使用」而非「保存」私鑰。
+
+正式環境（強烈建議）
+	1) HSM / Cloud KMS / Vault（transit）內生成 → 私鑰不可匯出
+		* Auth Server 透過「遠端簽章 API」完成 JWS 簽名。
+		* 公鑰由 KMS/Vault 取出後轉成 JWK 供 /.well-known/jwks.json。
+		* ✅ 安全、可稽核、輪替簡單、無 PEM 外流。
+
+若暫時沒有 KMS/HSM：
+	2) 在「佈署/管控平面」生成（CI/CD 的預配工具或離線管理工具），不要在應用程式內生成
+		* 生成後用「信封式加密」封存 PEM（KEK 在 KMS/Vault），把密文與中繼資料存 DB/Vault。
+		* Auth Server 啟動時解密載入或改由 KMS 代簽。
+		* ✅ 操作可控；⚠️ 要顧好解密流程與金鑰輪替。
+
+本機/開發環境：
+	3) 應用啟動時臨時生成（ephemeral）
+		* 只用於 local/dev；不要沿用到測試/正式。
+		* 方便、無需保管。
+
+	結論：Prod/Staging 一律在 KMS/HSM/Vault 生成；Dev 才在程式內臨時生成。
+
+
+推薦的兩條落地路徑
+	路徑 A：KMS/HSM/Vault 生成（不產生/保存 PEM）
+		* 建 key：如 AWS KMS Asymmetric (RSA 2048 / ECC P-256)、GCP KMS、Azure Key Vault，或 Vault transit（type=rsa-2048 / ecdsa-p256）。
+		* 取 公鑰 → 轉成 JWK（kid 可用 RFC 7638 thumbprint 或固定 UUID）。
+		* Auth Server 的 JwtEncoder 用「遠端簽章 signer」：把待簽 JWS 傳給 KMS/Vault 簽名。
+		* 輪替：在 KMS 建新版本 → 先把公鑰放入 JWKS（PASSIVE）→ 緩衝後升 ACTIVE。
+
+		好處：完全不需要 PEM 檔，私鑰永不出界。
+	
+	路徑 B：PEM 由「外部工具」生成，封存後供 Auth Server 使用
+		* 生成（例：在 CI runner 或離線機）
+			* RSA 2048：
+				openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out rsa-2048-private.pem
+				openssl pkey -in rsa-2048-private.pem -pubout -out rsa-2048-public.pem
+			* EC P-256：
+				openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out ec256-private.pem
+				openssl pkey -in ec256-private.pem -pubout -out ec256-public.pem
+		* 立刻用 KMS/Vault 的 KEK 做 AES-GCM 封裝 → 存 DB private_pem_ciphertext + IV + kek_key_id。
+		* DB 同筆紀錄保存 public_jwk_json、kid、狀態（ACTIVE|PASSIVE…）。
+		* Auth Server 啟動/旋轉時解密載入（或盡快升級到「KMS 代簽」模式）。
+
+為什麼 不建議在 Auth Server（執行中）生成 PEM（在正式環境）？
+	* 會把金鑰生命週期與業務服務耦合，難以稽核、難控管權限。
+	* 多節點/叢集容易出現版本不一致與備份問題。
+	* 金鑰一旦外流（log、dump、備份），風險極大。
