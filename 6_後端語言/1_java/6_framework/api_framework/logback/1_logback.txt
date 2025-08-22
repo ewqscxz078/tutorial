@@ -144,19 +144,48 @@ RollingFileAppender
 		</encoder>
 	</appender>
 
-SocketAppender
-SSLSocketAppender
-SMTPAppender
-DBAppender
-SyslogAppender
-SiftingAppender
-AsyncAppender
+Appender 過濾器 <filter> 用於過濾日誌等級
+	ThresholdFilter
+		* 用途：指定一個「最低等級閾值」，只有 大於等於該等級 的 log event 會被接受。
+		* 語法範例：
+			<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			  <level>WARN</level>
+			</filter>
+			→ 這樣代表 WARN、ERROR 都會進來，INFO、DEBUG 會被丟掉。
+		* 特點：
+			* 只需要設定 <level>（沒有 onMatch / onMismatch）。
+			* 簡單好用，適合「只要收某個等級以上的所有 log」。
+	LevelFilter
+		* 用途：只針對「等於某一個等級」的 log event 判斷。
+		* 語法範例：
+			<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			  <level>ERROR</level>
+			  <onMatch>ACCEPT</onMatch>
+			  <onMismatch>DENY</onMismatch>
+			</filter>
+			→ 這樣代表只有 ERROR 等級的 log 會進來，其他全部丟掉。
+		* 特點：
+			* 需要設定 <onMatch> 與 <onMismatch>。
+			* 適合「只要某一個精確等級」的需求，例如 error.log 只收 ERROR，不收 WARN。
+	🔹 實務建議
+		一般主檔案（應用 log） → 用 ThresholdFilter（例如 INFO 以上都收）。
+		分流檔案（error.log / warn.log） → 用 LevelFilter（只收特定級別）。
 
 
-TimeBasedRollingPolicy
-SizeBasedTriggeringPolicy
-SizeAndTimeBasedRollingPolicy
-FixedWindowRollingPolicy
+其他常見可用 Appender
+	SocketAppender
+	SSLSocketAppender
+	SMTPAppender
+	DBAppender
+	SyslogAppender
+	SiftingAppender
+	AsyncAppender
+
+其他常見可用 Policy
+	TimeBasedRollingPolicy
+	SizeBasedTriggeringPolicy
+	SizeAndTimeBasedRollingPolicy
+	FixedWindowRollingPolicy
 
 ========================================================================================================================
 ================================= Layouts =============================================================================

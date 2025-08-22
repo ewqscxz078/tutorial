@@ -33,3 +33,16 @@ java
 			
 	呼叫時指定 clientRegistrationId
 		webclient.attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))
+
+
+什麼時候用哪個 Repository/Manager？
+	client_credentials：沒有使用者會話，
+		不需要 OAuth2AuthorizedClientRepository，
+			用 ClientRegistrationRepository 、OAuth2AuthorizedClientService 去建構 AuthorizedClientServiceOAuth2AuthorizedClientManager
+			再用 AuthorizedClientServiceOAuth2AuthorizedClientManager 去建構 ServletOAuth2AuthorizedClientExchangeFilterFunction
+	authorization_code（有登入使用者）：
+		用 ClientRegistrationRepository、OAuth2AuthorizedClientRepository（Session 內保存授權），
+			去建構 ServletOAuth2AuthorizedClientExchangeFilterFunction
+		同樣由 OAuth2ClientAutoConfiguration 幫你準備好。
+		
+		
