@@ -42,8 +42,8 @@ JWK 旋轉（rotation）的核心是「新舊金鑰並存一段時間」：
 			ACTIVE（目前簽章用）
 			PASSIVE（已發佈但尚未簽章，等待切換）
 			RETIRED（不再發佈，等清除）
-			COMPROMISED（撤銷）。	
-	
+			COMPROMISED（撤銷）。
+
 		資料表（或改用 Vault/KMS）
 		CREATE TABLE oauth_jwk (
 		  kid         VARCHAR(64) PRIMARY KEY,
@@ -66,9 +66,9 @@ JWK 旋轉（rotation）的核心是「新舊金鑰並存一段時間」：
 		* STAGED		：已佈署但尚未切換
 		* RETIRED		：僅供驗證（公鑰保留），過期後下架
 		* COMPROMISED	：（撤銷）。
-		
+
 		叢集部署時，這份資料必須共用（DB/KMS），不要放在各節點記憶體或單機檔案。
-		
+
 	2) JWKSource（回傳多把鍵；簽章只選 active）
 		對外要能回 /.well-known/jwks.json，因此 JWKSource 必須
 			回傳「可以發佈的公鑰集合」（通常是 ACTIVE + PASSIVE；不要回 RETIRED/COMPROMISED）
@@ -169,7 +169,7 @@ JWK 旋轉（rotation）的核心是「新舊金鑰並存一段時間」：
 				// d) 之後由排程清理過期 RETIRED
 			}
 		}
-		
+
 		@Bean
 		JWKSource<SecurityContext> jwkSource(KeyRepository repo) {
 			// 只回可公開的公鑰：ACTIVE + PASSIVE
@@ -211,7 +211,7 @@ JWK 旋轉（rotation）的核心是「新舊金鑰並存一段時間」：
 			* 縮短 max-age，
 			* 在 API Gateway/邊界對 JWKS 設 短快取，
 			* 必要時對合作方通知刷新（有些資源伺服器會緩存到內存很久）。
-	
+
 		// Spring Authorization Server 的 JWK endpoint 你可以自行加 WebFilter 或 ControllerAdvice 設定快取 header。
 
 

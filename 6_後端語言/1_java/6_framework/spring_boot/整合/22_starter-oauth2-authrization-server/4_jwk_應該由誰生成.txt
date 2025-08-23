@@ -30,7 +30,7 @@ ref ChatGPT
 		* 輪替：在 KMS 建新版本 → 先把公鑰放入 JWKS（PASSIVE）→ 緩衝後升 ACTIVE。
 
 		好處：完全不需要 PEM 檔，私鑰永不出界。
-	
+
 	路徑 B：PEM 由「外部工具」生成，封存後供 Auth Server 使用
 		* 生成（例：在 CI runner 或離線機）
 			* RSA 2048：

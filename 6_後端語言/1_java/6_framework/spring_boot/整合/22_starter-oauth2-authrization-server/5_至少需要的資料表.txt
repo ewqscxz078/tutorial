@@ -1,7 +1,7 @@
 ref ChatGPT
 
 1.jwk oauth2_authorization 紀錄的使用狀況
-2.建議持久化 oauth2_registered_client 的資料 
+2.建議持久化 oauth2_registered_client 的資料
 
 最少需要的資料表
 	1.oauth2_registered_client（必要）

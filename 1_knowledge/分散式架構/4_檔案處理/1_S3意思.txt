@@ -1,0 +1,49 @@
+ref ChatGPT
+
+S3，本身有 三層意涵，容易混淆：
+
+	1. S3 是 AWS 的一個產品名稱
+
+		* 全名：Amazon Simple Storage Service (Amazon S3)。
+
+		* 2006 年 AWS 推出的第一批雲服務之一。
+
+		* 定位：雲端物件儲存（Object Storage），用來存放檔案/物件（不限格式）。
+
+		👉 所以最早「S3」就是 AWS 的一個服務。
+
+	2. S3 是一套「API 介面/協定」
+
+		* 因為 Amazon S3 很早就出來，生態巨大，大家都寫程式呼叫它的 API。
+
+		* API 型態：HTTP/HTTPS + RESTful + XML/JSON 回應。
+
+			例如：
+
+				* PUT /bucket-name/object-key
+
+				* GET /bucket-name/object-key
+
+				* DELETE /bucket-name/object-key
+
+		* 後來這個 「S3 API 介面」 變成事實上的 de facto standard（事實標準）。
+
+		👉 所以現在講「S3 介面」，其實意思是「相容 Amazon S3 API 的物件儲存協定」。
+
+	3. S3 不是正式的標準（不像 POSIX/HTTP RFC）
+
+		* 沒有國際組織（IETF/ISO）制定。
+
+		* 是 AWS 定義的，但因為市佔率太大，幾乎所有第三方物件儲存（MinIO、Ceph RADOSGW、阿里雲 OSS、GCP Storage）都會「支援 S3 API」。
+
+		* 這就是所謂 S3 Compatible Storage。
+
+		👉 所以你看到 MinIO 說自己是「S3 compatible」，意思是「我們不是 AWS，但我們的 API 跟 AWS S3 長得一樣，你可以用同一組 SDK / 工具去操作」。
+
+📌 總結
+
+	S3 是 AWS 的產品（Amazon Simple Storage Service）。
+
+	S3 也是一組 API 介面（HTTP 協定上的操作規範）。
+
+	S3 API 已成為業界事實標準，所以很多非 AWS 的物件儲存系統（像 MinIO）也支援「S3 相容 API」。

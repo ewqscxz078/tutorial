@@ -18,7 +18,7 @@ Spring Cloud Gateway (WebFlux 版) 裡，Gateway 本身不是傳統 MVC 應用�
 					  uri: http://localhost:8080   # 你的後端首頁服務
 					  predicates:
 						- Path=/
-	
+
 	2.自訂 Fallback Handler
 		寫個 @RestController 或 HandlerFunction<ServerResponse>，處理沒有匹配 route 的請求。
 			@RestController
@@ -29,7 +29,7 @@ Spring Cloud Gateway (WebFlux 版) 裡，Gateway 本身不是傳統 MVC 應用�
 				}
 			}
 		這樣 / 就有個訊息回應，而其他路徑還是交給 Gateway route。
-	
+
 	3.讓 / 自動跳轉
 		如果你只是希望 / 自動跳到某個 gateway 路徑，可以寫一個 RedirectFilter 或簡單在 HomeController 裡：
 			@GetMapping("/")

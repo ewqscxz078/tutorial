@@ -12,7 +12,7 @@ OAuth2 / OpenID Connect 的世界裡，jwk 指的是 JSON Web Key
 			讓 Client 或 Resource Server 驗證 JWT（例如 Access Token、ID Token）的合法性。
 
 		* 這些金鑰會以 JWK Set (JWKS) 的形式發佈在一個 URL，例如：
-	
+
 	2.JSON 格式方便機器讀取
 		* JWK 用 JSON，而不是 PEM、DER 這種傳統格式，方便程式直接解析。
 

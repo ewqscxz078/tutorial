@@ -1,0 +1,192 @@
+ref chatGPT
+
+大檔案／多部分上傳（multipart）通常不建議走 API Gateway 的「資料面」
+	穩當的做法是：
+		1.由應用端先向你的後端（或 gateway 上的小型授權端點）拿到一次性上傳授權（例如 pre‑signed URL 或上傳憑證），
+		2.然後直接把檔案傳到物件儲存（S3／GCS／MinIO 等）或專門的「上傳服務」。
+
+Q1:為什麼不要把大檔案直接丟給 Gateway?
+	1.資源壓力與延遲
+		Gateway 主要做鑑權、路由、少量轉換。大檔會造成：
+
+			* 連線時間很長（幾十秒到數分鐘），佔住連線與記憶體 buffer（尤其是多併發）。
+			* 反壓/back‑pressure、HOL（head‑of‑line blocking），把其他小請求也拖慢。
+
+	2.可靠性差與難以重試
+
+		* Gateway/上游任一段斷線，整個上傳要重來。
+
+		* 多數 Gateway 不會幫你做斷點續傳／分段合併；而且請求體只能讀一次，中途套用過濾器就容易出事。
+
+	3.安全與風險集中
+
+		* Gateway 變成大流量資料面，DoS 放大面更大。
+
+		* 想做防毒掃描、型態驗證、Content‑MD5 校驗等，放在 Gateway 會讓所有過濾器走巨量資料，成本高且不彈性。
+
+	4.成本與頻寬
+
+		* 雲端對 egress/bandwidth 常計費，Gateway 兜一圈再回寫，下游存儲與 Gateway 都吃流量與 CPU。
+
+	5.實作限制（尤其是 WebFlux/Netty）
+
+		* 預設 in‑memory buffer 有上限（如 spring.codec.max-in-memory-size），大檔易 OOM 或被拒。
+
+		* multipart 需要解析邊界與分段，任何過濾器誤讀 body 都會壞整條鏈。
+
+
+推薦的三種上傳架構
+	1.Direct‑to‑Object Storage（最常見）
+
+		* 流程：Client →（經 Gateway 認證）→ 你的後端頒發 pre‑signed URL/表單 → Client 直接 PUT/POST 到 S3/GCS/MinIO → 後端收到回調/Client 傳回檔案 metadata 以完成業務邏輯。
+
+		* 優點：上傳走儲存的資料面，省 Gateway 資源、可用雲儲存的多段上傳、續傳。
+
+		* 風控：pre‑signed 設短效期、限制Content‑Type/大小、要求校驗碼（如 SHA‑256）、檔名/路徑策略。
+
+	2.專門「上傳服務」（可自管或第三方）
+
+		* 讓 Gateway 只做認證與發券；真正的檔案流向專門服務（支援 tus 斷點續傳、分段合併、防毒/轉碼工作流）。
+
+		* 適合需要進階處理（防毒/影像轉檔/版控）與可視化進度的場景。
+
+	3.小檔走 Gateway、巨檔直傳（混合）
+
+		* 例如 ≤10MB 的圖檔經 Gateway（便於審計、簡單縮圖），>10MB 改走 pre‑signed。
+
+		* 以Content‑Length 或前置 metadata 決策，兼顧開發簡便與穩定性。
+
+安全與流程細節（關鍵做法）
+	* 一次性上傳權杖：Gateway/後端只簽發短效、單用途的上傳授權（URL 或 policy），避免憑證外流長期可用。
+
+	* 大小、型別、檢查碼限制：在簽發時就附帶限制；上傳後由後端校驗 ETag/MD5/SHA‑256 與實際 Content‑Type。
+
+	* 完成通知：
+
+		* 物件儲存的事件（如 S3 EventBridge）→ 觸發你後端做「驗證/落庫/掃描」。
+
+		* 或由 Client 把成功結果（key/etag/size/checksum）回報後端再落庫。
+
+	* 惡意流量與速率：對「拿憑證」這個 API 在 Gateway 層做強身份、節流、WAF，資料面留給儲存服務承擔。
+
+
+什麼時候可以讓 Gateway 直接收檔？
+	* 檔案小、上傳很快（幾 MB）、併發可控，且你確定不需要續傳與分段。
+
+	* 你真的需要在 Gateway 做統一審計或輕量過濾（例如只驗副檔名/mime、打水印前置標記）且已調好記憶體/連線上限。
+
+	* 即便如此，仍建議：
+
+		* 設好 最大請求大小、超時、併發上限與清楚的錯誤回報。
+
+		* 避免在 Gateway 讀取或改寫整個 body（尤其是 multipart）；盡量純轉發或零拷貝。
+
+與你現在堆疊的對應（Spring Cloud Gateway）
+	* WebFlux/Netty 路徑若硬要收大檔，務必評估：
+
+		* spring.codec.max-in-memory-size（避免把整段擠進記憶體）
+
+		* 上游/下游讀寫超時與連線池限制
+
+		* Filter 不要消費 body；請用純轉發，不做 body 變形
+
+	* 更建議改為「Gateway 發券、客戶端直傳儲存」的模式，上傳完成後再走 API 回報 metadata。
+
+
+建議調整清單（Gateway 做檔案轉送時）
+	1) WebFlux/Codec（避免把大檔塞進記憶體）
+		spring:
+		  webflux:
+			multipart:
+			  max-in-memory-size: 0         # 0 表示盡量避免 in‑memory（改走磁碟/串流）
+			  max-parts: 1024
+			  max-disk-usage-per-part: 1GB  # 視需求
+		  codec:
+			max-in-memory-size: 0           # 關鍵：避免整包緩衝
+	2) Gateway 的 Reactor Netty Client（下游連線）
+		spring:
+		  cloud:
+			gateway:
+			  httpclient:
+				connect-timeout: 10000
+				response-timeout: 300000        # 大檔需要長一點
+				pool:
+				  type: fixed
+				  max-connections: 200          # 視流量
+				  acquire-timeout: 45000
+				  max-idle-time: 30s
+				max-initial-line-length: 8192
+				max-header-size: 16384          # multipart header 多時避免 431
+				max-chunk-size: 1048576         # 1MB chunk
+
+	3) Gateway 的 Reactor Netty Server（上游連線）
+		spring:
+		  cloud:
+			gateway:
+			  httpserver:
+				max-initial-line-length: 8192
+				max-header-size: 16384
+				max-chunk-size: 1048576
+
+	4) WebClient（Gateway 內部若需要主動上傳／代理）
+		* 用 串流（不要把整個檔案讀進記憶體）
+
+		* 設定自訂的 ReactorClientHttpConnector 與 ExchangeStrategies
+			HttpClient httpClient = HttpClient.create()
+				.responseTimeout(Duration.ofMinutes(5))
+				.compress(true);
+
+			WebClient client = WebClient.builder()
+				.clientConnector(new ReactorClientHttpConnector(httpClient))
+				.exchangeStrategies(ExchangeStrategies.builder()
+					.codecs(c -> {
+						c.defaultCodecs().maxInMemorySize(0); // 關鍵
+						// 若要調 multipart reader 也可在這邊客製
+					})
+					.build())
+				.build();
+
+
+		串流檔案（非 multipart）
+			Path path = Paths.get("/data/bigfile.bin");
+			Mono<Void> result = client.put()
+				.uri(uploadUrl)
+				.contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.body(BodyInserters.fromResource(new FileSystemResource(path))) // 檔案串流
+				.retrieve()
+				.bodyToMono(Void.class);
+
+		串流 multipart（避免把 part 讀進記憶體）
+			MultipartBodyBuilder mb = new MultipartBodyBuilder();
+			mb.part("file", new FileSystemResource("/data/big.mp4"))
+			  .filename("big.mp4")
+			  .contentType(MediaType.APPLICATION_OCTET_STREAM);
+
+			mb.part("meta", "{\"title\":\"x\"}")
+			  .contentType(MediaType.APPLICATION_JSON);
+
+			client.post()
+				.uri(uploadUrl)
+				.contentType(MediaType.MULTIPART_FORM_DATA)
+				.body(BodyInserters.fromMultipartData(mb.build()))  // 會以 reactive 流式寫出
+				.retrieve()
+				.bodyToMono(String.class);
+
+	5) Filter 寫法原則（超重要）
+		* 不要在 Gateway 的 GlobalFilter/自訂 Filter「讀取或轉寫整個 body」，尤其是 multipart。
+			一旦你把 body 吃掉（例如為了計算雜湊），就會觸發緩衝/複製，失去串流優勢。
+
+		* 需要驗證或標記時，盡量只動 header 或 URL，放過 body。
+
+		* 若一定要掃描內容，考慮：把掃描下放到後端上傳服務或完成後的非同步工作流（事件觸發）。
+
+	6) 超時與重試策略
+		* 上傳請求不建議做自動重試（容易上傳兩次或破壞分段），如要重試請使用分段上傳協定（tus、S3 multipart）來支援續傳。
+
+		* 控制上游/下游雙向的 read/write timeout，避免「上游停傳、下游還在等」的半開連線。
+
+
+	7) 觀測與保護
+		* 對「取得上傳授權」的 API 做節流與驗證；對資料面（真正上傳）的端點設頻寬/連線數限制。
+
+		* 開啟 wiretap 只在除錯環境；生產環境用指標：連線數、pending acquire、event‑loop block 檢測、IO wait、GC。

@@ -12,7 +12,7 @@ ref
 	https://www.cnblogs.com/mumage/p/12497025.html
 		不錯的說明
 	chatGPT
-	
+
 緩存使用場景
 	1. 數據重複訪問：需要多次訪問同一數據時。
 	2. 數據更新較少：當需要訪問的數據較少更新時。
@@ -255,7 +255,7 @@ Caffeine
 					at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 					at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
 					at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-				
+
 		A1:
 			1.在 Maven / Gradle 加上 -parameters 編譯參數
 				Maven
