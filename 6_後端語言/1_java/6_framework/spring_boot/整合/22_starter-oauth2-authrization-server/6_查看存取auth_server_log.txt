@@ -1,0 +1,35 @@
+ref ChatGPT
+
+1.Client / Gateway 向 Auth Server 取 JWT (Token Endpoint 請求)
+
+	* 這會經過 Spring Authorization Server (spring-authorization-server) 提供的端點，通常是 /oauth2/token。
+
+	* 預設只會有簡單的 INFO log（例如請求 URI、處理結果），並不會把 JWT 或 client id 打出來。
+
+	* 如果你想看詳細的請求處理（例如授權驗證、JWT 生成），可以開這些 package 的 DEBUG/TRACE：
+		logging:
+		  level:
+			org.springframework.security.oauth2.server.authorization: DEBUG
+			org.springframework.security.oauth2.jwt: DEBUG
+			org.springframework.security.oauth2.server.authorization.authentication: DEBUG
+
+				* …authorization → Authorization Server 的核心流程（驗證 client、頒發 token）。
+				* …jwt → JWT 編碼 / 簽章的部分。
+
+	* 頒發 JWT 時實際會用到 JwtEncoder，你可以透過自己包一層 自訂的 DelegatingJwtEncoder 或加一個 AOP/Filter 在 OAuth2TokenEndpointFilter 上，打印 JwtClaimsSet 與產生後的 token。
+
+2.後端 / Resource Server 向 Auth Server 取 Public JWK (JWK Set Endpoint 請求)
+	* Resource Server 驗證 token 會去 call /oauth2/jwks 或 /oauth2/jwks.json。
+
+	* 這部分預設 Spring 只會記一個 HTTP access log（如果 Tomcat/Undertow 有開 access log 才看得到）。
+
+	* Spring Security 本身並不會在 DEBUG 打出「誰來取 JWK」。
+	
+	* 如果要觀察 JWK 解析過程，可以開：
+		logging:
+		  level:
+			org.springframework.security.oauth2.jose.jws: DEBUG
+			org.springframework.security.oauth2.jose.jwk: DEBUG
+
+	* 要看到真正的「誰來取公鑰」，通常要在你的 auth server 上加一個 log filter（例如 Spring MVC 的 OncePerRequestFilter）專門
+		攔 /oauth2/jwks 這個 endpoint，把 remoteAddr / User-Agent 打出來。

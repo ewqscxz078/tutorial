@@ -1,0 +1,55 @@
+ref ChatGPT
+
+Spring Security（不論你是 Resource Server 還是 Gateway 當 Resource Server 使用）在解析 JWT 時，
+	內部是透過 NimbusJwtDecoder 搭配 RemoteJWKSet 去處理。
+
+為什麼只會第一次去 Auth Server 拿 JWKs？
+
+	* RemoteJWKSet 內部有 快取機制（通常是基於 nimbus-jose-jwt
+	 library）。
+
+	* 第一次需要驗簽的時候，它會呼叫 /.well-known/jwks.json 把所有 JWK 拿回來。
+
+	* 後續驗簽時會直接用快取的金鑰來驗證，不會每次都打 Auth Server。
+
+這樣做的原因是：
+
+	* 減少 Auth Server 負載。
+
+	* 避免每次驗證 JWT 都有網路延遲。
+
+	* JWKs 通常是一組金鑰清單（含多把，含 kid），只要金鑰沒換，就能一直驗。
+
+那什麼情況下會再去 Auth Server 取？
+
+	* 當快取裡找不到對應的 kid（JWT header 內指定的 key id）。
+
+	* 或快取的 JWKSet 過期（有一個 refresh time window，預設 nimbus client 大約 5 分鐘會檢查一次，有些版本可設定）。
+
+	* 所以如果 Auth Server 旋轉金鑰（JWK rotation），Gateway 在驗不到對應 kid 時，就會自動再去 Auth Server 抓一次最新的 jwks.json。
+
+如果你想控制這個行為
+	你可以自己建立 NimbusJwtDecoder 時傳入 自訂的 JWKSource，設定快取行為。例如：
+		@Bean
+		JwtDecoder jwtDecoder() {
+			JWKSource<SecurityContext> jwkSource =
+				new RemoteJWKSet<>(
+					new URL("https://auth-server.example.com/oauth2/jwks"),
+					new DefaultResourceRetriever(2000, 2000), // connect/read timeout
+					new DefaultJWKSetCache(5, 15, TimeUnit.MINUTES) // 最小/最大快取時間
+				);
+
+			return NimbusJwtDecoder.withJwkSource(jwkSource).build();
+		}
+	這裡 DefaultJWKSetCache 就可以設定：
+		minTimeToLive：快取最少多久不能刷新。
+
+		maxTimeToLive：快取最多多久一定要刷新。
+
+🔑 總結：
+
+	* 你看到 Gateway 只在第一次去 Auth Server 抓 JWKs → 是 正常設計。
+
+	* 後續驗證都用快取，直到 新 kid 出現 或 快取 TTL 到期。
+
+	* 需要調整行為的話，可以自訂 NimbusJwtDecoder 的 JWKSetCache。

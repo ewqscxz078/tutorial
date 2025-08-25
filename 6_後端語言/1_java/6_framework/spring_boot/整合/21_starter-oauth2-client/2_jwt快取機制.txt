@@ -1,0 +1,207 @@
+ref ChatGPT
+
+1. Spring Security / OAuth2 Client 預設行為
+	當你在 機器對機器 (client_credentials) 模式下使用 OAuth2AuthorizedClientManager 或 ServletOAuth2AuthorizedClientExchangeFilterFunction 搭配 WebClient：
+
+		* Spring 會透過 OAuth2AuthorizedClientService 或 OAuth2AuthorizedClientRepository 來保存 access token (JWT)。
+
+		* 這就是一種 cache：
+
+			Key = ClientRegistrationId + PrincipalName
+
+			Value = OAuth2AuthorizedClient (裡面含 access token / refresh token)
+
+	所以，只要 token 還沒過期，Spring 就會直接重用，不會每次都去 auth server 換 token。
+
+2. 如何確認你現在有沒有 cache
+	可以從幾個角度檢查：
+		(A) 開啟 debug log
+			在 application.yml：
+				logging:
+				  level:
+					org.springframework.security.oauth2.client: DEBUG
+					org.springframework.security.oauth2.core: DEBUG
+			跑一次 WebClient 呼叫，你會看到 log 類似：
+				Authorized client found in AuthorizedClientService
+				Using existing access token
+			表示是重用 cache；
+			如果沒有 cache，則會看到：
+				No authorized client found, requesting new access token
+
+		(B) 檢查 OAuth2AuthorizedClientService
+			你可以自己注入 OAuth2AuthorizedClientService (預設是 InMemoryOAuth2AuthorizedClientService)，觀察裡面有沒有保存：
+				@Autowired
+				private OAuth2AuthorizedClientService clientService;
+
+				public void check(String clientRegistrationId, Authentication principal) {
+					OAuth2AuthorizedClient client = clientService.loadAuthorizedClient(clientRegistrationId, principal.getName());
+					if (client != null) {
+						System.out.println("Cached token = " + client.getAccessToken().getTokenValue());
+						System.out.println("Expires at = " + client.getAccessToken().getExpiresAt());
+					} else {
+						System.out.println("No token cached");
+					}
+				}
+
+		(C) 自訂 Bean 確認
+			預設 Spring Boot 3.x：
+				* 如果是 client_credentials 流程，會用 InMemoryOAuth2AuthorizedClientService 保存 access token。
+
+				* 如果是 authorization_code 流程，則會用 HttpSessionOAuth2AuthorizedClientRepository 把 token 放在 session 裡。
+
+3. 補充
+
+	* Token 預設會保存到 OAuth2AuthorizedClientService，直到 過期 為止，過期後會自動刷新或重新請求。
+
+	* 如果你需要跨 instance / 重開機還能共用，可以自己實作 OAuth2AuthorizedClientService (例如放到 Redis/DB)。
+
+
+備註
+	機器對機器只有設定 ClientRegistrationId 沒有設定 principal
+		快取不會踩中
+	
+	正確 jwt 快取到的方式
+		方案 A：每次呼叫時帶入 principal（最直觀）
+			import static org.springframework.security.oauth2.client.web.reactive.function.client
+					.ServletOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId;
+			import static org.springframework.security.oauth2.client.web.reactive.function.client
+					.ServletOAuth2AuthorizedClientExchangeFilterFunction.authentication;
+
+			Authentication machine = new UsernamePasswordAuthenticationToken("system", "N/A", List.of());
+
+			String regId = decideWhichClient(); // 你動態決定要用哪個 ClientRegistrationId
+
+			String body = webClient.get()
+				.uri("https://api.example.com/data")
+				.attributes(clientRegistrationId(regId))   // 指定要用的 client
+				.attributes(authentication(machine))       // 指定快取用的 principal（關鍵）
+				.retrieve()
+				.bodyToMono(String.class)
+				.block();
+
+			* clientRegistrationId(regId)：指定當次請求要用哪個註冊的 client。
+
+			* authentication(machine)：把固定的 Authentication（例如 username = "system"）掛進此次請求 → 快取鍵就會是 regId + "system"，後續同樣 principal 會命中快取。
+		
+		方案 B：預先把固定 principal 放進 SecurityContextHolder
+			如果你不想每次 .attributes(authentication(...))，可以在呼叫前（如 filter、切面、或執行緒初始化處）先放一個固定的 Authentication：
+				SecurityContextHolder.getContext().setAuthentication(
+					new UsernamePasswordAuthenticationToken("system", "N/A", List.of())
+				);
+
+				String regId = decideWhichClient();
+				String body = webClient.get()
+					.uri("https://api.example.com/data")
+					.attributes(clientRegistrationId(regId))   // 只要指定 client，就會用當前 SecurityContext 的 principal
+					.retrieve()
+					.bodyToMono(String.class)
+					.block();
+
+				* ServletOAuth2AuthorizedClientExchangeFilterFunction 會從 request attributes 或 SecurityContextHolder 解析 principal。
+
+		方案 C：已拿到 OAuth2AuthorizedClient 就直接帶（進階）
+			若你別處已經用 OAuth2AuthorizedClientManager 拿到（或快取了）OAuth2AuthorizedClient，可直接塞入：
+				import static org.springframework.security.oauth2.client.web.reactive.function.client
+						.ServletOAuth2AuthorizedClientExchangeFilterFunction.oauth2AuthorizedClient;
+
+				OAuth2AuthorizedClient client = authorizedClientManager.authorize(
+					OAuth2AuthorizeRequest.withClientRegistrationId(regId).principal(machine).build()
+				);
+
+				String body = webClient.get()
+					.uri("https://api.example.com/data")
+					.attributes(oauth2AuthorizedClient(client))
+					.retrieve()
+					.bodyToMono(String.class)
+					.block();
+
+為什麼一定要 principal？
+	* Spring 的 OAuth2 Client 在 Servlet 環境下，OAuth2AuthorizedClient 的快取鍵是 clientRegistrationId + principalName。
+	* 沒有固定 principal（或每次不同），就會像沒快取一樣每次都去拿新 token。文件也示範了如何把 Authentication 放進 request attributes：authentication(…)
+	
+	
+	作法 A：在 WebClient 上加一個全域 Filter，幫每個請求塞 principal attribute
+
+	這招等同於每次呼叫都做 .attributes(authentication(machine))，只是你用一個全域 filter 自動幫你加。
+		
+		import java.util.List;
+
+		import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
+		import org.springframework.context.annotation.Bean;
+		import org.springframework.context.annotation.Configuration;
+		import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+		import org.springframework.security.core.Authentication;
+		import org.springframework.web.reactive.function.client.ClientRequest;		
+		
+		@Configuration
+		public class WebClientM2MConfig {
+
+			@Bean
+			WebClientCustomizer m2mPrincipalCustomizer() {
+				// 你的固定機器身份（快取鍵會用到這個 name）
+				Authentication machine =
+					new UsernamePasswordAuthenticationToken("system", "N/A", List.of());
+
+				// 產生一次，所有 WebClient 都會裝到這個 filter
+				return builder -> builder
+					.filter((request, next) -> {
+						// 已經有 principal 就尊重它（避免覆蓋其它情境）
+						if (request.attributes().containsKey(
+								org.springframework.security.oauth2.client.web.reactive.function.client
+								  .ServletOAuth2AuthorizedClientExchangeFilterFunction.AUTHENTICATION_ATTRIBUTE)) {
+							return next.exchange(request);
+						}
+						var mutated = ClientRequest.from(request)
+							.attribute(
+								org.springframework.security.oauth2.client.web.reactive.function.client
+								  .ServletOAuth2AuthorizedClientExchangeFilterFunction.AUTHENTICATION_ATTRIBUTE,
+								machine)
+							.build();
+						return next.exchange(mutated);
+					});
+			}
+		}
+
+		你仍可搭配：
+			// 全域預設某個 clientRegistrationId（可選）
+			@Bean
+			ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2Filter(
+					OAuth2AuthorizedClientManager manager) {
+				var f = new ServletOAuth2AuthorizedClientExchangeFilterFunction(manager);
+				f.setDefaultClientRegistrationId("my-client"); // 也可在每次 request 用 attributes 覆寫
+				return f;
+			}
+
+		優點：不碰 SecurityContextHolder；純 WebClient 層生效。
+		風險：若你也有使用者流（authorization_code），這個 filter 會把每個請求都套上機器 principal。上面的程式已先判斷「如果呼叫端已經手動放了 principal 就不覆蓋」，減少干擾。
+
+	作法 B：在應用啟動時設定一個固定的 SecurityContext（僅限後端服務、無使用者流）
+		如果你的服務只有機器對機器、沒有任何使用者登錄頁面/會話，可以在啟動/工作執行緒入口放一個固定 Authentication 到 SecurityContextHolder，讓 ServletOAuth2AuthorizedClientExchangeFilterFunction 直接用它：
+			@PostConstruct
+			void initMachinePrincipal() {
+				SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+				var auth = new UsernamePasswordAuthenticationToken("system", "N/A", List.of());
+				SecurityContextHolder.getContext().setAuthentication(auth);
+			}
+
+		注意：
+
+			這是 ThreadLocal；對於你用的執行緒池或排程任務，請用 DelegatingSecurityContextRunnable/Callable 包起來，或設定 MODE_INHERITABLETHREADLOCAL（如上），確保子執行緒也看得到。
+
+			不適合同時跑「使用者請求」的 Web 應用，否則會污染使用者流程。
+
+小提醒與最佳實務
+	* 快取鍵是 clientRegistrationId + principalName；你全域 principal 的 name（上例是 "system"）要固定一致，才能命中快取。
+
+	* 若你需要依據情境動態切換 clientRegistrationId，仍可在每次呼叫用
+		.attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(regId)) 覆寫，和上面的全域 principal 相容。
+
+	* 若要跨 JVM/跨實例共享 token，請實作自訂的 OAuth2AuthorizedClientService（如 Redis/DB），不然預設 InMemory... 只在單機有效。
+
+	* 想完全避開 principal 問題，也可以改走「先用 OAuth2AuthorizedClientManager 拿到 OAuth2AuthorizedClient，再用 .attributes(oauth2AuthorizedClient(client)) 帶進 WebClient」的模式，這樣不依賴 principal 解析
+
+快取放在哪
+	機器對機器（client_credentials）建議用 AuthorizedClientServiceOAuth2AuthorizedClientManager，它會把 OAuth2AuthorizedClient 存到 OAuth2AuthorizedClientService；預設是 in-memory。
+
+	若你的應用是互動式網頁（有使用者 session）且採用 DefaultOAuth2AuthorizedClientManager + OAuth2AuthorizedClientRepository，則可能存放在 HttpSession（類別：HttpSessionOAuth2AuthorizedClientRepository）。但這通常是使用者登入流程（authorization_code）才會用到。
+	
