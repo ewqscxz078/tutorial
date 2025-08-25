@@ -28,6 +28,9 @@ ref ChatGPT
 			如果沒有 cache，則會看到：
 				No authorized client found, requesting new access token
 
+			實際測試第一次取得 jwt 是用 restTemplate 取得後放到 InMemoryOauth2AuthorizedClientService， log 打開也沒看到上述的關鍵字
+			之後就沒有再打 auth server 取 jwt log
+
 		(B) 檢查 OAuth2AuthorizedClientService
 			你可以自己注入 OAuth2AuthorizedClientService (預設是 InMemoryOAuth2AuthorizedClientService)，觀察裡面有沒有保存：
 				@Autowired
@@ -201,7 +204,7 @@ ref ChatGPT
 	* 想完全避開 principal 問題，也可以改走「先用 OAuth2AuthorizedClientManager 拿到 OAuth2AuthorizedClient，再用 .attributes(oauth2AuthorizedClient(client)) 帶進 WebClient」的模式，這樣不依賴 principal 解析
 
 快取放在哪
-	機器對機器（client_credentials）建議用 AuthorizedClientServiceOAuth2AuthorizedClientManager，它會把 OAuth2AuthorizedClient 存到 OAuth2AuthorizedClientService；預設是 in-memory。
+	機器對機器（client_credentials）建議用 AuthorizedClientServiceOAuth2AuthorizedClientManager，它會把 OAuth2AuthorizedClient 存到 OAuth2AuthorizedClientService；預設是 in-memory(InMemoryOauth2AuthorizedClientService)。
 
 	若你的應用是互動式網頁（有使用者 session）且採用 DefaultOAuth2AuthorizedClientManager + OAuth2AuthorizedClientRepository，則可能存放在 HttpSession（類別：HttpSessionOAuth2AuthorizedClientRepository）。但這通常是使用者登入流程（authorization_code）才會用到。
 	
