@@ -332,3 +332,17 @@ curl actuator pretty-printing 好看格式
 
 	curl -i http://localhost:8080/${contextPath}/actuator
 		=> 顯示出較人性化方便查看格式
+
+
+spring boot 3 之後
+	management:
+	  endpoints:
+		jackson:
+		  isolated-object-mapper: false # 預設為 true，actuator jackson 格式化與 頁面 jackson 格式化是否隔離分開
+	  endpoint: 
+		env:
+		  show-values: when-authorized # 要設定才能看到具體值，否則預設是顯示 * 格式
+		  roles: actuator #依據配置的 spring security for actuator 配置角色
+		configprops:
+		  show-values: when-authorized # 要設定才能看到具體值，否則預設是顯示 * 格式
+		  roles: actuator #依據配置的 spring security for actuator 配置角色

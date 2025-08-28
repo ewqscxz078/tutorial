@@ -1,0 +1,321 @@
+ref ChatGPT
+
+解決 Auth Server 端如何大量註冊/管理 JWT（其實是 Registered Clients 與 Token 設定）”與“前端/客戶端如何選用哪一種 JWT”的問題
+用語以 Spring Authorization Server（SAS）/ Spring Security 6.x、Spring Boot 3.x 為基準。
+
+	1) 整體思路（量很多時的核心觀念）
+		* 用宣告式註冊＋資料庫持久化：所有 client 都進 DB（SAS 內建 registered_client 表），來源則以 YAML/JSON 種子檔為主，透過 CI/CD 匯入，避免手動點選。
+
+		* 用**Token Profile（令牌樣板）**抽象化：把「授權型別、存活時間、audience、必帶 claims、scope 白名單」等抽成 Profile；每個 client 指向一個 Profile。大量 client 就只是「指派 Profile＋少量差異」。
+
+		* 用Scope 與 Audience 治理：scope 命名規範＋audience（資源伺服器/API）對照表，讓前端/後端只要挑選對應 clientRegistrationId 就拿到正確的 JWT。
+
+		* 註冊 ID 穩定：不同環境用相同的 registrationId，client-id/secret、redirect-uri、issuer 可隨環境變（在屬性檔/DB 中分環境），但名稱不要變，避免前端改程式。
+	
+	2) Auth Server 端：資料模型與表
+		最少需要（SAS 內建＋建議擴充）：
+		內建表
+			* registered_client：client-id、grant types、redirect-uris、scopes、token 設定等。
+
+			* oauth2_authorization、oauth2_authorization_consent：核發與同意紀錄（有互動式流程才會用到）。
+
+		建議擴充（自建表）
+
+			* token_profile：id、name、grants、access_token_ttl、refresh_token_ttl、id_token_claims_template、allowed_scopes、audiences…
+
+			* client_extra：client_id 外鍵＋標籤（team/owner/system）、環境(env)、用途（m2m/webapp/native）、是否啟用、旋轉策略等。
+
+			* jwk_key：KID、演算法、PEM/JWK、狀態（ACTIVE/INACTIVE）、建立/啟用/停用時間（方便 key 旋轉與稽核）。
+
+			實務上：registered_client 加上一個自訂欄位（或 side table client_profile_map）指向 token_profile，你就能把大量 client 的共通令牌策略集中管理。\
+		
+	3) 註冊流程（宣告式與自動化）
+		* 種子檔（YAML/JSON）→ Importer：在 CI/CD 建置階段跑一次 importer，把差異套用到 DB（新增/更新/停用）。
+
+		* 管理 API（選配）：提供少數需要動態註冊/旋轉的團隊使用。
+
+		* 一致性檢查：CI 內做 diff（種子檔 vs DB）與 linter（命名規範、scope 是否存在、redirect URI 是否符合）。
+
+		簡化範例（YAML）：
+			tokenProfiles:
+			  - name: webapp-default
+				grants: [authorization_code, refresh_token]
+				accessTokenTtl: 900s
+				refreshTokenTtl: 7d
+				audiences: [api.user, api.billing]
+				allowedScopes: [openid, profile, email, user.read, billing.read]
+
+			  - name: m2m-default
+				grants: [client_credentials]
+				accessTokenTtl: 600s
+				audiences: [api.billing]
+				allowedScopes: [billing.read, billing.write]
+
+			clients:
+			  - registrationId: acme-web-portal        # 全環境固定
+				clientId: ${WEB_PORTAL_CLIENT_ID}      # 由環境注入
+				clientSecret: ${WEB_PORTAL_SECRET}
+				profile: webapp-default
+				redirectUris:
+				  - https://portal.example.com/login/oauth2/code/acme
+				  - https://staging.portal.example.com/login/oauth2/code/acme
+				postLogoutRedirectUris:
+				  - https://portal.example.com/logout/success
+
+			  - registrationId: billing-job-writer
+				clientId: ${BILLING_JOB_WRITER_ID}
+				clientSecret: ${BILLING_JOB_WRITER_SECRET}
+				profile: m2m-default
+	
+	4) JWK 與簽章（含旋轉）
+		* 使用 RS256 或 ES256（建議 RS/EC 皆可，但 RS256最普遍），每把 key 有 KID，JWKS endpoint 提供多 key；active 旗標控制當前簽章用哪把。
+
+		* 旋轉策略：定期產新→標記新為 ACTIVE、保留舊為 INACTIVE 一段時間→等資源端都已抓到新 JWKS 再下架舊 key。
+
+		* 資源伺服器 JWK 快取：設定合理 TTL 與失敗回退（一般 frameworks 會自帶，確保 KID 切換不會打斷）。
+	
+		SAS JWKSource（範例骨架）：
+			@Bean
+			JWKSource<SecurityContext> jwkSource(JwkRepository repo) {
+				// repo 從 DB 載入所有有效 key，組成 JWKSet
+				JWKSet jwkSet = new JWKSet(repo.loadAllActiveOrPublishedKeys());
+				return (jwkSelector, ctx) -> jwkSelector.select(jwkSet);
+			}
+
+	5) Token 內容與自訂 Claims
+		* 最基本：iss（你的 issuer）、aud（目標資源）、sub、exp、nbf、iat、client_id、scope（或 scp）。
+
+		* 常見進階：azp（Authorized party）、tenant、roles、permissions、業務 IDs 等。
+
+		* 建議用 OAuth2TokenCustomizer<JwtEncodingContext> 集中處理，依 profile / client / scope 決定注入哪些 claims。
+	
+		範例：
+			@Bean
+			OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer(TokenProfileService profiles) {
+			  return context -> {
+				var clientId = context.getRegisteredClient().getClientId();
+				var profile = profiles.resolveForClient(clientId);
+
+				// audience
+				if (context.getTokenType().equals(OAuth2TokenType.ACCESS_TOKEN)) {
+				  context.getClaims().claim("aud", profile.audiences());
+				}
+
+				// roles/permissions（視情況從使用者或 client 綁定）
+				var roles = profiles.resolveRoles(context);
+				if (!roles.isEmpty()) {
+				  context.getClaims().claim("roles", roles);
+				}
+
+				// 其他標準/自訂
+				context.getClaims().issuer(profile.issuer());
+			  };
+			}
+
+	6) 前端/客戶端：怎麼“選用哪一種 JWT”
+		A. Browser 前端（Authorization Code + PKCE）
+
+			* 在前端（或你的 JSP/Spring MVC 應用）配置 固定的 registrationId（例如 acme-web-portal）。
+
+			* 各環境透過屬性檔注入 client-id/secret（或僅 public client + PKCE）、issuer-uri、redirect-uri。
+
+			* 只要使用該 registrationId，就會依據 Auth Server 的 token_profile 產生對應的 JWT（aud、scope、TTL 一致）
+		
+			application-*.yml（客戶端）：
+				spring:
+				  security:
+					oauth2:
+					  client:
+						provider:
+						  acme:
+							issuer-uri: https://idp.example.com
+						registration:
+						  acme-web-portal:
+							provider: acme
+							client-id: ${WEB_PORTAL_CLIENT_ID}
+							client-secret: ${WEB_PORTAL_SECRET}
+							authorization-grant-type: authorization_code
+							redirect-uri: "{baseUrl}/login/oauth2/code/acme"
+							scope: openid, profile, email, user.read
+		B. 機器對機器（Client Credentials）
+
+			一個目標資源/權限集合 = 一個 registrationId。想要 billing 可寫入，就使用 billing-job-writer；想看報表，就用 billing-report-reader。
+
+			WebClient 使用對應 registrationId，後面透過 OAuth2AuthorizedClientManager 自動拿取/重用 Access Token。
+			
+			application-*.yml（客戶端）：
+				spring:
+				  security:
+					oauth2:
+					  client:
+						provider:
+						  acme:
+							issuer-uri: https://idp.example.com
+						registration:
+						  billing-job-writer:
+							provider: acme
+							client-id: ${BILLING_JOB_WRITER_ID}
+							client-secret: ${BILLING_JOB_WRITER_SECRET}
+							authorization-grant-type: client_credentials
+							scope: billing.write
+
+			WebClient 取用（示意）：
+				@Bean
+				WebClient billingWriterWebClient(WebClient.Builder builder,
+												 OAuth2AuthorizedClientManager mgr) {
+				  var oauth = new ServletOAuth2AuthorizedClientExchangeFilterFunction(mgr);
+				  oauth.setDefaultClientRegistrationId("billing-job-writer");
+				  return builder
+					  .baseUrl("https://api.example.com/billing")
+					  .apply(oauth.oauth2Configuration())
+					  .build();
+				}
+				
+				重點：前端/後端只需要挑對的 registrationId，其餘（audience、scope、TTL、claims）由 Auth Server 的 Token Profile 決定。這是大量管理時最穩的分工。
+	
+	7) 命名規範與對照矩陣（大量客戶端的管理關鍵）
+		* registrationId：<team>-<app>-<purpose>（例如 fin-billing-job-writer、ui-portal-web）
+
+		* scope：<domain>.<permission>（billing.read、billing.write、user.read）
+
+		* audience：對應資源系統標識（api.user、api.billing）
+
+		* 建立“對照表”（CSV/Sheet/DB）：
+
+		* 權責單位 / 系統 / registrationId / client-id / profile / scopes / audiences / 環境 / 旋轉日期 / 負責人
+	
+	8) 多環境策略（dev/sit/uat/prod）
+		* 固定 registrationId，其餘（client-id、client-secret、redirect-uri、issuer-uri）因環境不同而異。
+
+		* 由於你“量很多”，建議：
+
+			1.共用一份宣告檔（只寫邏輯 ID）；
+
+			2.每環境注入變數（client-id/secret、URI）；
+
+			3.CI 匯入時填值，或部署時由 Vault/變數注入。
+
+		* 若 client-id/secret 相同，但 redirect-uri / scope / grants 不同，會導致授權/驗證錯誤（授權伺服器會依 DB 端配置為準，客戶端提供不符就被拒）。建議保持一致，差異集中在環境 URL 與秘密。
+	
+	9) 監控、輪替與稽核
+		* client-secret 旋轉：設排程提醒與自動替換流程（CI 注入新 secret，切換/回退機制）。
+
+		* JWK 旋轉：如上所述，雙 key 緩衝一段時間。
+
+		* 審計：記錄誰建立/變更 client，token 發放與失敗統計，scope 使用頻率（幫助刪減不必要 scope）。
+
+	10) 常見坑位
+		* redirect-uri 不完全相符（尾斜線、大小寫、子網域）→ 授權碼流程直接被拒。
+
+		* audience 與資源伺服器預期不一致 → RS 驗 token 失敗（aud 不含自身 ID）。
+
+		* scope 客戶端宣告與伺服器 allowedScopes 不一致 → 發 token 被拒或拿不到期望權限。
+
+		* 時鐘偏移（NTP）→ nbf/exp 驗證出錯。
+
+		* 前端切環境忘了換 issuer-uri/client-id → 換環境時全線報錯。
+
+小結（你可以直接套用的落地清單）
+	1.在 Auth Server 建立 Token Profile 表＋Client-Profile 映射；所有 client 宣告化（YAML/JSON）並走 CI 匯入。
+
+	2.同一支前端/後端在不同環境保留相同的 registrationId，透過屬性/密鑰庫注入變數；程式碼不改。
+
+	3.用 OAuth2TokenCustomizer 統一灌入 audience/custom claims；資源伺服器據此驗證。
+
+	4.JWK 用 KID + 多把 key 管理，定期旋轉；資源端設好 JWKS 快取與回補。
+
+	5.維護一份對照矩陣（registrationId ↔ scopes/audiences/profile/owner/env），支援批量治理。
+	
+
+
+DDL MSSQL 參考
+	
+	oauth2_registered_client
+		CREATE TABLE dbo.oauth2_registered_client (
+			id                             nvarchar(100)  NOT NULL,
+			client_id                      nvarchar(100)  NOT NULL,
+			client_id_issued_at            datetime2      NOT NULL CONSTRAINT DF_oauth2_rc_client_id_issued_at DEFAULT (SYSUTCDATETIME()),
+			client_secret                  nvarchar(200)  NULL,
+			client_secret_expires_at       datetime2      NULL,
+			client_name                    nvarchar(200)  NOT NULL,
+			client_authentication_methods  nvarchar(1000) NOT NULL,
+			authorization_grant_types      nvarchar(1000) NOT NULL,
+			redirect_uris                  nvarchar(1000) NULL,
+			post_logout_redirect_uris      nvarchar(1000) NULL,   -- SAS 1.1+
+			scopes                         nvarchar(1000) NOT NULL,
+			client_settings                nvarchar(2000) NOT NULL,
+			token_settings                 nvarchar(2000) NOT NULL,
+			CONSTRAINT PK_oauth2_registered_client PRIMARY KEY (id),
+			CONSTRAINT UQ_oauth2_registered_client_client_id UNIQUE (client_id)
+		);
+	
+	oauth2_authorization
+		CREATE TABLE dbo.oauth2_authorization (
+			id                              nvarchar(100)   NOT NULL,
+			registered_client_id            nvarchar(100)   NOT NULL,
+			principal_name                  nvarchar(200)   NOT NULL,
+			authorization_grant_type        nvarchar(100)   NOT NULL,
+			authorized_scopes               nvarchar(1000)  NULL,
+
+			attributes                      varbinary(max)  NULL,
+			state                           nvarchar(500)   NULL,           -- SAS 1.1 以後定義為字串欄位
+
+			authorization_code_value        varbinary(max)  NULL,
+			authorization_code_issued_at    datetime2       NULL,
+			authorization_code_expires_at   datetime2       NULL,
+			authorization_code_metadata     varbinary(max)  NULL,
+
+			access_token_value              varbinary(max)  NULL,
+			access_token_issued_at          datetime2       NULL,
+			access_token_expires_at         datetime2       NULL,
+			access_token_metadata           varbinary(max)  NULL,
+			access_token_type               nvarchar(100)   NULL,
+			access_token_scopes             nvarchar(1000)  NULL,
+
+			refresh_token_value             varbinary(max)  NULL,
+			refresh_token_issued_at         datetime2       NULL,
+			refresh_token_expires_at        datetime2       NULL,
+			refresh_token_metadata          varbinary(max)  NULL,
+
+			oidc_id_token_value             varbinary(max)  NULL,
+			oidc_id_token_issued_at         datetime2       NULL,
+			oidc_id_token_expires_at        datetime2       NULL,
+			oidc_id_token_metadata          varbinary(max)  NULL,
+			oidc_id_token_claims            nvarchar(max)   NULL,
+
+			-- Device Authorization Grant（SAS 1.1+）
+			user_code_value                 varbinary(max)  NULL,
+			user_code_issued_at             datetime2       NULL,
+			user_code_expires_at            datetime2       NULL,
+			user_code_metadata              varbinary(max)  NULL,
+
+			device_code_value               varbinary(max)  NULL,
+			device_code_issued_at           datetime2       NULL,
+			device_code_expires_at          datetime2       NULL,
+			device_code_metadata            varbinary(max)  NULL,
+
+			CONSTRAINT PK_oauth2_authorization PRIMARY KEY (id)
+		);
+
+		-- 建議索引（依據實務查詢需求加速查找）
+		CREATE INDEX IX_oauth2_authorization_state                    ON dbo.oauth2_authorization (state);
+		CREATE INDEX IX_oauth2_authorization_auth_code_value          ON dbo.oauth2_authorization (authorization_code_value);
+		CREATE INDEX IX_oauth2_authorization_access_token_value       ON dbo.oauth2_authorization (access_token_value);
+		CREATE INDEX IX_oauth2_authorization_refresh_token_value      ON dbo.oauth2_authorization (refresh_token_value);
+		CREATE INDEX IX_oauth2_authorization_user_code_value          ON dbo.oauth2_authorization (user_code_value);
+		CREATE INDEX IX_oauth2_authorization_device_code_value        ON dbo.oauth2_authorization (device_code_value);
+
+	oauth2_authorization_consent
+		CREATE TABLE dbo.oauth2_authorization_consent (
+			registered_client_id  nvarchar(100)  NOT NULL,
+			principal_name        nvarchar(200)  NOT NULL,
+			authorities           nvarchar(1000) NOT NULL,
+			CONSTRAINT PK_oauth2_authorization_consent PRIMARY KEY (registered_client_id, principal_name)
+		);
+
+	其他建議
+		1.外鍵（可選）：若你希望在 DB 層加強一致性，可加上 registered_client_id → oauth2_registered_client(id) 的外鍵；但注意部署/清資料時的順序與效能影響。
+		2.資料長度/型別：官方 schema 使用 varchar(1000/2000) 存 JSON/集合字串；若你有多語系需求，亦可改 nvarchar（本 DDL 已使用 nvarchar）。
+		3.時間預設值：client_id_issued_at 我以 SYSUTCDATETIME() 做為預設，等同官方 CURRENT_TIMESTAMP 的語意（但為 UTC、高精度）。
+		4.Migration 工具：可放成 Flyway V1__sas_schema_mssql.sql；未來升級至 SAS 新版時，請比對官方變更（例如 1.1 的新增欄位）再補 V2__... 腳本。
+		5.相容性說明：SAS JDBC 實作依賴這三張表的結構（類別文件也有特別強調需要對應 schema）。

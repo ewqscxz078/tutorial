@@ -1,0 +1,26 @@
+ref ChatGPT
+
+就算你用的是 WebClient 發 API，Spring Security（servlet 版）的 OAuth2 Client 在「跟 Auth Server 拿 token」那一步仍是用 RestTemplate。
+	因此你看到的 hitting Auth Server 的 log 會是 RestTemplate 的，而不是 WebClient。
+
+
+具體是哪個類在打 Auth Server？
+	以 client_credentials 為例（機器對機器）：
+		1.你在 WebClient 上用 .attributes(oauth2AuthorizedClient(clientRegistrationId("xxx")))（或 clientRegistrationId("xxx")）
+
+		2.ServletOAuth2AuthorizedClientExchangeFilterFunction 會向 OAuth2AuthorizedClientManager 要「已授權的 client」
+
+		3.AuthorizedClientServiceOAuth2AuthorizedClientManager 找不到快取或 token 過期 → 交給 ClientCredentialsOAuth2AuthorizedClientProvider
+
+		4.這個 provider 會呼叫
+			DefaultClientCredentialsTokenResponseClient（類型：OAuth2AccessTokenResponseClient<OAuth2ClientCredentialsGrantRequest>）
+
+		5.DefaultClientCredentialsTokenResponseClient 內部使用 RestOperations（預設就是 RestTemplate） 去打 Auth Server 的 token endpoint（通常 /oauth2/token），拿到 access token (JWT)
+
+		其他授權流程對應的實作也一樣是 RestTemplate（servlet 堆疊）：
+
+			* Authorization Code：DefaultAuthorizationCodeTokenResponseClient
+
+			* Refresh Token：DefaultRefreshTokenTokenResponseClient
+
+	* Reactive 堆疊（WebFlux）才是用 WebClient 去打 token endpoint；Servlet 堆疊預設一直是 RestTemplate。
