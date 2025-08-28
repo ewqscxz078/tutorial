@@ -1,0 +1,312 @@
+ref ChatGPT
+
+一個 標準的 Auth Server 金鑰管理策略裡，jwk_key 表的狀態通常會長這樣：
+	🔑 jwk_key 狀態模式
+		1.ACTIVE (1筆為主)
+			現在簽 Token 時使用的「主力金鑰」。
+			JWT header 的 kid 會對應這筆。
+
+		2.ROLLOVER / 過渡中 (0~1筆)
+			你可能準備要換金鑰，先生成新的一筆，但還沒正式啟用。
+			可以先標記為 PENDING 或 STAGING 狀態（看你系統設計）。
+			等 rollout 當天，切成 ACTIVE。
+
+		3.INACTIVE (多筆歷史紀錄)
+			舊金鑰，停止簽 Token，但 仍要保留。
+			原因：舊 Token 可能還在存活期內（例如 TTL=1h 或 1d），驗證端還需要能對應到舊的 kid。
+			等所有 Token 過期後（例如 7天、30天），這些金鑰才能真的清理掉。
+
+	🔄 常見輪換策略
+		* 單 Active 模式：永遠只有一筆 ACTIVE，到期前先生成新金鑰，等切換日直接替換。
+		* 雙 Active 模式：短時間內同時維護「舊 ACTIVE + 新 ACTIVE」，讓驗證端有緩衝（比較少見，因為驗證端通常只要能找到對應 kid 就行）。
+
+	實務上，最常見是：
+		* 表裡 1筆 ACTIVE
+		* 0或1筆 Pending/Staging
+		* 其他全部 INACTIVE
+
+	📌 為什麼需要保留多筆 INACTIVE？
+		因為 JWT 是 stateless，驗證時只能靠 kid 去 JWK Set 找對應公鑰。
+		如果你馬上刪掉舊金鑰 → 任何還沒過期的舊 Token 全部失效，會造成事故。
+		因此：
+			* 金鑰資料要保留一段「寬限期」
+			* 最短 = 舊 Token TTL
+			* 通常建議 = TTL × 1.5 或 2 倍（避免 clock skew / 分散式系統延遲）
+
+JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
+	* 一張 jwk_key 管主體（金鑰素材、狀態、時間窗、關聯上下游）。
+	* 一張 jwk_rotation_policy 管「怎麼轉」（週期、重疊期、演算法規格）。
+	* 一張 jwk_rotation_event 做稽核（誰、何時、做了什麼）。
+	* 以「每個 issuer、purpose(sig/enc)、alg 同時最多一把 ACTIVE」為原則（靠 filtered unique index 限制）。
+	* JWKS 對外僅曝露「ACTIVE + GRACE」且落在有效時間窗的 public JWK。
+
+	最小可行表：jwk_key
+		CREATE TABLE dbo.jwk_key (
+			id                  BIGINT IDENTITY(1,1) PRIMARY KEY,
+			issuer              NVARCHAR(200) NOT NULL,        -- 例： https://auth.example.com
+			kid                 NVARCHAR(128) NOT NULL,        -- JWK Key ID（對外）
+			purpose             NVARCHAR(8)  NOT NULL,         -- 'sig' or 'enc'
+			kty                 NVARCHAR(16) NOT NULL,         -- 'RSA','EC','OKP'...
+			alg                 NVARCHAR(32) NOT NULL,         -- 'RS256','ES256','EdDSA'...
+			key_bits            INT NULL,                      -- RSA 長度
+			curve               NVARCHAR(32) NULL,             -- EC 曲線 P-256 等
+			state               TINYINT NOT NULL,              -- 0=INACTIVE, 1=ACTIVE, 2=GRACE, 9=REVOKED
+			public_jwk          NVARCHAR(MAX) NOT NULL,        -- 對外公開的 JWK（僅公鑰部分）
+			public_pem          NVARCHAR(MAX) NULL,            -- (選) 公鑰 PEM
+			private_pkcs8       VARBINARY(MAX) NULL,           -- (選) 私鑰 PKCS#8（二進位，建議應用層加密/封裝）
+			private_kms_ref     NVARCHAR(256) NULL,            -- (選) 若用 HSM/KMS，存放 KeyId/別名
+			thumbprint_sha256   VARBINARY(32) NULL,            -- kid 以外需求的指紋
+			not_before          DATETIME2(3) NULL,             -- 此 key 可用起始（簽章/驗章）
+			not_after           DATETIME2(3) NULL,             -- 此 key 停用時間（通常保留驗章期）
+			activated_at        DATETIME2(3) NULL,             
+			grace_until         DATETIME2(3) NULL,             -- GRACE（僅驗章）到期時間
+			disabled_at         DATETIME2(3) NULL,
+			created_at          DATETIME2(3) NOT NULL CONSTRAINT DF_jwk_key_created DEFAULT SYSUTCDATETIME(),
+			last_used_at        DATETIME2(3) NULL,             -- 最近用來簽章的時間
+			rotated_from_id     BIGINT NULL,                   -- 關聯上一把
+			rotated_to_id       BIGINT NULL,                   -- 關聯下一把
+			comment             NVARCHAR(4000) NULL
+		);
+
+		-- kid 在同一 issuer 需唯一
+		CREATE UNIQUE INDEX UX_jwk_key_issuer_kid 
+		ON dbo.jwk_key(issuer, kid);
+
+		-- 查詢對外 JWKS 常用條件（issuer/state/purpose）
+		CREATE INDEX IX_jwk_key_issuer_state_purpose 
+		ON dbo.jwk_key(issuer, state, purpose) INCLUDE (kid, alg, not_before, not_after, grace_until);
+
+		-- 強制「同一 issuer+purpose+alg 同時最多一把 ACTIVE」
+		CREATE UNIQUE INDEX UX_jwk_key_single_active_per_alg
+		ON dbo.jwk_key(issuer, purpose, alg)
+		WHERE state = 1;  -- 1=ACTIVE
+
+		-- （選）限制 GRACE 也唯一（多數情境不強制）
+		-- CREATE UNIQUE INDEX UX_jwk_key_single_grace_per_alg
+		-- ON dbo.jwk_key(issuer, purpose, alg)
+		-- WHERE state = 2;  -- 2=GRACE
+
+		-- 外鍵（自連結）
+		ALTER TABLE dbo.jwk_key
+		ADD CONSTRAINT FK_jwk_key_rotated_from 
+		FOREIGN KEY(rotated_from_id) REFERENCES dbo.jwk_key(id);
+
+		ALTER TABLE dbo.jwk_key
+		ADD CONSTRAINT FK_jwk_key_rotated_to 
+		FOREIGN KEY(rotated_to_id) REFERENCES dbo.jwk_key(id);
+
+		-- 基本狀態檢核
+		ALTER TABLE dbo.jwk_key ADD CONSTRAINT CK_jwk_key_state
+		CHECK (state IN (0,1,2,9));
+	
+	建議：private_pkcs8 只在本地測試/無 KMS 時使用；正式區以 private_kms_ref 連到 HSM/KMS。應用程式握有解封/簽章能力，但 DB 不直接保存明文私鑰。
+
+	旋轉策略表：jwk_rotation_policy
+		CREATE TABLE dbo.jwk_rotation_policy (
+			id                      INT IDENTITY(1,1) PRIMARY KEY,
+			issuer                  NVARCHAR(200) NOT NULL,
+			purpose                 NVARCHAR(8)  NOT NULL,      -- 'sig' or 'enc'
+			alg                     NVARCHAR(32) NOT NULL,
+			key_bits                INT NULL,                   -- RSA 長度
+			curve                   NVARCHAR(32) NULL,          -- EC 曲線
+			rotate_every_days       INT NOT NULL,               -- 幾天換鑰
+			overlap_minutes         INT NOT NULL,               -- ACTIVE→GRACE 重疊多久（驗章容忍期）
+			not_before_skew_secs    INT NOT NULL DEFAULT 0,     -- NBF 時鐘偏移
+			max_token_ttl_minutes   INT NOT NULL,               -- 系統核發之最大 token TTL（便於計算 GRACE）
+			allow_parallel_active   BIT NOT NULL DEFAULT 0,     -- 是否允許同演算法同時多把 ACTIVE（通常否）
+			enabled                 BIT NOT NULL DEFAULT 1,
+			comment                 NVARCHAR(4000) NULL
+		);
+
+		CREATE UNIQUE INDEX UX_rotation_policy_key
+		ON dbo.jwk_rotation_policy(issuer, purpose, alg);
+
+	稽核表：jwk_rotation_event
+		CREATE TABLE dbo.jwk_rotation_event (
+			id           BIGINT IDENTITY(1,1) PRIMARY KEY,
+			issuer       NVARCHAR(200) NOT NULL,
+			jwk_key_id   BIGINT NULL,
+			event_type   NVARCHAR(32) NOT NULL,    -- 'CREATE','ACTIVATE','ROTATE','REVOKE','DISABLE'
+			old_state    TINYINT NULL,
+			new_state    TINYINT NULL,
+			note         NVARCHAR(4000) NULL,
+			actor        NVARCHAR(200) NULL,       -- 例： 'rotation-cron', 'admin@corp'
+			created_at   DATETIME2(3) NOT NULL CONSTRAINT DF_jwk_evt_created DEFAULT SYSUTCDATETIME()
+		);
+
+		CREATE INDEX IX_jwk_rotation_event_issuer_time
+		ON dbo.jwk_rotation_event(issuer, created_at DESC);
+
+		ALTER TABLE dbo.jwk_rotation_event
+		ADD CONSTRAINT FK_jwk_rotation_event_key
+		FOREIGN KEY(jwk_key_id) REFERENCES dbo.jwk_key(id);
+
+
+	JWKS 對外查詢邏輯（給實作參考）
+		* 對外 /oauth2/jwks 僅輸出：
+			state IN (ACTIVE, GRACE) 且 now BETWEEN not_before AND COALESCE(not_after, '9999-12-31')。
+
+			* ACTIVE：簽章 + 驗章
+			* GRACE：只驗章（保留舊 token 存活期）
+
+		* 簽章選 key：僅從 ACTIVE 中挑選（同 issuer/purpose/alg 僅一把，透過索引保證唯一）。
+
+		範例查詢（驗章/JWKS）：
+			SELECT kid, public_jwk
+			FROM dbo.jwk_key
+			WHERE issuer = @issuer
+			  AND purpose = 'sig'
+			  AND state IN (1,2)    -- ACTIVE or GRACE
+			  AND (not_before IS NULL OR not_before <= SYSUTCDATETIME())
+			  AND (not_after  IS NULL OR not_after  >= SYSUTCDATETIME());
+		
+		範例查詢（簽章用 ACTIVE）：
+			SELECT TOP(1) *
+			FROM dbo.jwk_key WITH (INDEX(UX_jwk_key_single_active_per_alg))
+			WHERE issuer = @issuer
+			  AND purpose = 'sig'
+			  AND alg = @alg
+			  AND state = 1          -- ACTIVE
+			  AND (not_before IS NULL OR not_before <= SYSUTCDATETIME())
+			  AND (not_after  IS NULL OR not_after  >= SYSUTCDATETIME());
+
+	典型 Rotation 流程（對應欄位）
+		1.CREATE：依 policy 產生新鑰（KMS/HSM 或軟體鍵），寫入 jwk_key（state=0 INACTIVE, 設 not_before 於將來）。
+
+		2.ACTIVATE：將新鑰轉為 ACTIVE（state=1, activated_at=now）；同時把舊的 ACTIVE 改成 GRACE（state=2, grace_until=now + overlap_minutes）。
+			* 受 UX_jwk_key_single_active_per_alg 約束，確保同演算法僅一把 ACTIVE。
+
+		3.GRACE 結束：當 grace_until 到期，舊鑰改 INACTIVE 或 REVOKED，並設定 not_after（至少大於系統最大 token TTL 以避免「尚存活 token 無法驗章」）。
+
+		4.清理：依合規與稽核政策，保留若干週期的舊鑰；僅當確定不再驗章才物理刪除（或永不刪，只標記）。
+
+		每步寫入 jwk_rotation_event 做稽核。
+
+	與 Spring Authorization Server（SAS）對接建議
+
+		* 你的 JWKSource<SecurityContext> 實作：
+			* 簽章時只挑 ACTIVE；驗章/公開 JWKS 時輸出 ACTIVE+GRACE 且落在時間窗。
+			* 以 issuer 區分多租戶或多環境（必要時與 token_profile 的 issuer/aud 對齊）。
+
+		* 唯一性＆表現：
+			* UX_jwk_key_single_active_per_alg 讓應用層不必寫複雜鎖；避免雙 ACTIVE 競爭。
+			* 常用查詢欄位（issuer/state/purpose/alg）都有索引，JWKS 輸出會很快。
+
+		* 私鑰管理：
+			* 正式環境優先 KMS/HSM（private_kms_ref）；本地/測試才考慮 private_pkcs8。
+			* 若 private_pkcs8 一定要存 DB，請在應用層再做 envelope encryption（e.g., AEAD）後再落 VARBINARY(MAX)。
+
+模式
+	| 項目       | 資料庫模式（現在）                                                | KMS/HSM（未來）                                               |
+	| --------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+	| 公鑰       | DB 明文存 `public_jwk_json`，對外 `/jwks`                       | 一樣；可由 KMS/HSM 取公鑰轉 JWK                                  |
+	| 私鑰       | **DB 存密文**（AES-GCM 等），服務解密到記憶體                         | **HSM/遠端簽章**：不拿私鑰；**KMS-Envelope**：短暫解密到記憶體        |
+	| Rotation  | DB 插入新 key → 切 `ACTIVE` → 舊 key 進 `GRACE` → 到期 `INACTIVE` | KMS：用 **Key Version / Alias**；HSM：新 slot/new key，流程類似  |
+	| 共享目錄    | 不需要                                                         | 不需要                                                       |
+	| 主要風險    | DEK/密文管理、解密權限                                            | IAM、可用性、配額/延遲（遠端簽章）                                  |
+
+模式優點比較
+	別把私鑰 PEM 明文長住在專案目錄或容器檔案系統。最佳做法依序是：
+		* HSM/KMS/ Vault（最佳） → 私鑰不落地 / 受控加密
+		* 資料庫（折衷） → 私鑰以「應用程式層加密」後存 DB，啟動時解封裝進記憶體
+		* 檔案系統（次佳） → 只在容器裡以短 TTL 的掛載密文（K8s Secret / Vault Agent）供用，別把明文放映像檔或永久磁碟
+		
+		排名高低，關鍵就是「私鑰會不會長期落地」以及「能不能審計/控管存取」。
+		即使使用 HSM/KMS/ Vault ，只是差異不用多存私鑰
+		差別在哪裡？
+			* DB 模式：你自己管公鑰 + 私鑰。
+			* HSM/KMS 模式：你只管「metadata + 公鑰」，簽章動作交給 API。
+				也就是說：表裡不再需要存私鑰密文。
+			* 但 rotation 流程（誰是 ACTIVE/GRACE、何時切換）完全一樣要做。
+
+	怎麼選（決策表）
+		| 場景                                | 建議                                                                                                                                                 |
+		| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+		| 企業環境、要審計/高安全                  | **HSM / 雲端 KMS（AWS KMS、GCP KMS、Azure Key Vault）或 HashiCorp Vault Transit**。用「遠端簽章」或「包封金鑰」。應用只拿到簽章結果或臨時解封裝後的 key material，並設 TTL。 |
+		| 多實例 Auth Server、要集中管控 rotation | **Vault / KMS 優先**；若暫無 → **存 DB，但以應用層加密（envelope encryption）**。DB 內只放密文與公開 JWK。                                                         |
+		| 單機 PoC / 開發                      | 可啟動時動態產生，或用本地檔案 **但不要進 Git**，並確保權限 600。                                                                                                  |
+
+	1. 風險來源：私鑰落地
+		* 私鑰一旦以「明文檔案」型態存在檔案系統：
+			* 容器 image 被人 dump → 私鑰跟著外洩。
+			* 部署環境的備份檔案 / log / 共享磁碟 → 可能不小心把私鑰也複製出去。
+			* 權限管理麻煩（檔案可能被其他進程誤讀）。
+
+		* DB 模式至少可透過 加密存放 + 權限管控，避免直接裸露。
+		* HSM/KMS 模式則是 私鑰根本不會「離開」安全模組，你只有用 API 請它簽章，自己永遠不拿私鑰明文。
+	2. 風險控管與審計
+		* 檔案系統：
+			幾乎沒審計，你很難追蹤誰什麼時候讀過 privateKey.pem。
+		* 資料庫：
+			至少可以靠 DB audit log、帳號權限、密文存放，管控範圍比檔案好。
+		* KMS/HSM：
+			每次「簽章/解密」都有 API call，可以審計、設定 IAM policy（誰能用哪支金鑰），安全等級最高。
+
+	3. 旋轉（rotation）便利性
+		* 檔案：
+			你得靠共享檔案系統或重新部署容器 → 多實例同步很麻煩。
+		* 資料庫：
+			中央化儲存，插一筆新鑰就能同步；所有服務讀 DB 即可。
+		* KMS/HSM：
+			直接建立新 Key version 或 alias 指向，應用端不改程式碼即可換。
+
+	4. 災難復原 / 備份
+		* 檔案：
+			備份容易遺漏；萬一機器掛了檔案不見，可能無法復原簽發舊 token。
+		* 資料庫：
+			隨 DB 備份流程走，至少有一致性。
+		* KMS/HSM：
+			由雲端或硬體模組管理，復原最完整，還有跨區/高可用。
+
+現在的情境
+	* 你只有 publicKey.pem / privateKey.pem 這樣的公私鑰對。
+	* 沒有 KMS / Vault。
+	* 想要支援 JWK rotation（要能有「舊的還能驗簽，新的一把負責簽章」的機制）。
+	* 多台 Auth Server 需要一致（因此不能只放在單機檔案裡）。
+	
+	存資料庫要存什麼？
+		CREATE TABLE jwk_key (
+			id BIGINT IDENTITY PRIMARY KEY,
+			kid VARCHAR(64) NOT NULL UNIQUE,         -- JWK 的 key ID
+			alg VARCHAR(32) NOT NULL,                -- 演算法，例如 RS256
+			kty VARCHAR(16) NOT NULL,                -- key type，例如 RSA
+			use VARCHAR(16) NOT NULL,                -- "sig" (簽章) 或 "enc"
+			public_jwk_json NVARCHAR(MAX) NOT NULL,  -- 公鑰 (JWK 格式，給 /jwks 發佈用)
+
+			private_pem_encrypted VARBINARY(MAX) NULL, -- 私鑰 PEM (建議加密後存，至少 BASE64)
+
+			state VARCHAR(16) NOT NULL,              -- ACTIVE / GRACE / INACTIVE
+			created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+			activated_at DATETIME2 NULL,
+			deactivated_at DATETIME2 NULL
+		);
+		說明
+
+			* 公鑰 (public_jwk_json)：
+				給 Resource Server 或 Client 透過 /jwks 端點抓取，驗簽使用。必須明文存，因為要公開。
+
+			* 私鑰 (private_pem_encrypted)：
+				只給 Auth Server 簽章用，存 DB，但至少要加密或 base64 包裹，避免直接裸 PEM。
+
+			* 狀態 (state)：
+				* ACTIVE → 簽章用這把。
+				* GRACE → 不再簽章，但 /jwks 仍要發佈，允許驗簽。
+				* INACTIVE → 歷史紀錄，可保留稽核，但 /jwks 不再發佈。
+
+		哪些要放「外部共享目錄」？
+			* 如果你已經用資料庫模式，那就 不需要再放外部共享目錄。
+			* 多台 Auth Server 啟動時，直接去 DB 載入「ACTIVE 私鑰」與「全部公鑰」。
+			* /jwks 端點從 DB 撈 ACTIVE + GRACE 的公鑰 組合成 JWKS JSON 回傳。
+			* rotation 時只要更新 DB，所有節點下次快取失效就會刷新，不需要共享檔案系統。
+		你只要記住這句話：
+			公鑰 → 放 DB 明文，給大家驗簽
+			私鑰 → 放 DB（加密存），只給 Auth Server 拿來簽章
+			不用再搞什麼外部共享檔案，DB 就是唯一真實來源
+
+		| 欄位                                            | 用途                                          |
+		| --------------------------------------------- | ------------------------------------------- |
+		| kid                                           | JWK Key ID，發 token 時會寫進 JWT header          |
+		| alg / kty / use                               | 算法類型、用途                                     |
+		| public\_jwk\_json                             | 對應的公鑰 JWK（從 KMS/HSM 抓公鑰轉成 JWK 存 DB 或 cache） |
+		| state                                         | ACTIVE / GRACE / INACTIVE                   |
+		| created\_at / activated\_at / deactivated\_at | lifecycle 管控                                |

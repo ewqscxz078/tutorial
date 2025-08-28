@@ -1,0 +1,177 @@
+ref ChatGPT
+
+三種漸進式測法，從最輕到較完整
+	A. 最輕量：純 Nimbus 單元／整合測試（不啟動 Resource Server）
+
+		目的：驗證「切換 active 後，新 JWT 用新 kid 簽；舊 JWT 仍可用 JWKS 內的舊公鑰驗證」。
+
+		關鍵觀念：
+			* 發 token 用 JwtEncoder（只看 active key）。
+			* 驗 token 用 NimbusJwtDecoder（看一組包含 active+previous 的 public JWK）。
+
+		範例（JUnit 偽碼骨架）：
+			import java.security.KeyPair;
+			import java.security.KeyPairGenerator;
+			import java.security.interfaces.RSAPrivateKey;
+			import java.security.interfaces.RSAPublicKey;
+			import java.time.Instant;
+			import java.util.List;
+			import java.util.concurrent.atomic.AtomicReference;
+
+			import com.nimbusds.jose.JWSAlgorithm;
+			import com.nimbusds.jose.jwk.JWK;
+			import com.nimbusds.jose.jwk.JWKSet;
+			import com.nimbusds.jose.jwk.KeyUse;
+			import com.nimbusds.jose.jwk.RSAKey;
+			import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+			import com.nimbusds.jose.proc.JWSKeySelector;
+			import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+			import com.nimbusds.jose.proc.SecurityContext;
+			import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+			import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+
+			import org.junit.jupiter.api.Test;
+			import static org.junit.jupiter.api.Assertions.*;
+
+			import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+			import org.springframework.security.oauth2.jwt.Jwt;
+			import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+			import org.springframework.security.oauth2.jwt.JwtDecoder;
+			import org.springframework.security.oauth2.jwt.JwtEncoder;
+			import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+			import org.springframework.security.oauth2.jwt.JwtException;
+			import org.springframework.security.oauth2.jwt.JwsHeader;
+			import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+			import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+
+			public class JwkRotationTest {
+
+			  // 兩把本地 JWK，kid: "A"(舊), "B"(新)
+			  private final RSAKey jwkA = generateRsa("A");
+			  private final RSAKey jwkB = generateRsa("B");
+
+			  // Encoder 只看 active；一開始 active = B
+			  private final AtomicReference<RSAKey> active = new AtomicReference<>(jwkB);
+
+			  private final JwtEncoder encoder = new NimbusJwtEncoder(
+				  (selector, ctx) -> selector.select(new JWKSet(List.of(active.get())))
+			  );
+
+			  // Decoder 看「A + B」兩把公鑰（模擬 /jwks 對外發布）
+			  private final JwtDecoder decoderAB = decoderFor(jwkA.toPublicJWK(), jwkB.toPublicJWK());
+
+			  @Test
+			  void rotate_active_and_validate_old_new_tokens() {
+				// 1) 發舊 token（先讓 active=A）
+				active.set(jwkA);
+				String tA = issue(encoder, "sub1", 300); // 300s
+
+				// 2) 切換 active 到 B，再發新 token
+				active.set(jwkB);
+				String tB = issue(encoder, "sub2", 300);
+
+				// 3) 用「A+B」公鑰都能驗
+				Jwt jwtA = decoderAB.decode(tA);
+				Jwt jwtB = decoderAB.decode(tB);
+				assertEquals("A", jwtA.getHeaders().get("kid"));
+				assertEquals("B", jwtB.getHeaders().get("kid"));
+
+				// 4) 模擬把 A 下架：只保留 B 公鑰
+				JwtDecoder decoderBonly = decoderFor(jwkB.toPublicJWK());
+
+				// 舊 token tA 應該驗不過（對應「JWKS 不再發布 A」）
+				assertThrows(JwtException.class, () -> decoderBonly.decode(tA));
+
+				// 新 token tB 仍可驗
+				decoderBonly.decode(tB);
+			  }
+
+			  private static JwtDecoder decoderFor(JWK... publicJwks) {
+				// 用 Nimbus 的 Processor + KeySelector（從「公鑰 JWKSet」挑 verification key）
+				JWKSet jwkSet = new JWKSet(List.of(publicJwks));
+				JWSKeySelector<SecurityContext> keySelector =
+					new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, new ImmutableJWKSet<>(jwkSet));
+				ConfigurableJWTProcessor<SecurityContext> proc = new DefaultJWTProcessor<>();
+				proc.setJWSKeySelector(keySelector);
+				return new NimbusJwtDecoder(proc);
+			  }
+
+			  private String issue(JwtEncoder enc, String sub, long seconds) {
+				Instant now = Instant.now();
+				String kid = active.get().getKeyID();
+				JwsHeader headers = JwsHeader.with(SignatureAlgorithm.RS256).keyId(kid).build();
+				JwtClaimsSet claims = JwtClaimsSet.builder()
+					.subject(sub)
+					.issuedAt(now)
+					.expiresAt(now.plusSeconds(seconds))
+					.build();
+				return enc.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+			  }
+
+			  // 產生一把 RSA JWK（測試用）
+			  private static RSAKey generateRsa(String kid) {
+				try {
+				  KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+				  kpg.initialize(2048);
+				  KeyPair kp = kpg.generateKeyPair();
+				  RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
+				  RSAPrivateKey pri = (RSAPrivateKey) kp.getPrivate();
+				  return new RSAKey.Builder(pub)
+					  .privateKey(pri)
+					  .keyUse(KeyUse.SIGNATURE)
+					  .algorithm(JWSAlgorithm.RS256)
+					  .keyID(kid)
+					  .build();
+				} catch (Exception e) {
+				  throw new IllegalStateException(e);
+				}
+			  }
+			}
+
+		你可以再加：
+			* clock skew 測試（驗證端允許 ±N 秒）。
+			* 不同 alg（RS→EC） 遷移的測試。
+			* 過期後 舊 token 應自然失效。
+	
+	B. 輕量 Resource Server（內嵌）驗證路徑
+		目的：多走一步，把「驗證端」用 Spring Security Resource Server 開起來，但仍不需要 Gateway/前端。
+		做法：
+
+			1.啟一個小型 Spring Boot 測試 context，註冊：
+				* 你的 JwkRotationConfig（兩把 key、可切換 active）。
+				* 一個 @RestController("/me")，加上 http.oauth2ResourceServer(jwt())。
+				* Resource Server 的 NimbusJwtDecoder 指向測試用 JWKS（可直接用 new JWKSet(…) 建構 JWKSource）。
+
+			2.測試步驟：
+				* active=A → 發 tokenA，MockMvc/WebTestClient 帶 Authorization: Bearer <tokenA> 打 /me 應 200。
+				* 切 active=B → 發 tokenB，兩者都應 200。
+				* 將 Resource Server 的 JWKS 改成只含 B（或你讓「JWKS Service」不再包含 A）→ tokenA 再打應 401、tokenB 還是 200。
+
+			這個做法能測到 Spring Security 的驗證流程、header 傳遞、授權規則等，但不必把 Gateway 拉進來。
+	
+	C. 端對端「含 JWKS 快取」行為測試（可選）
+		想順便驗證「驗證端會快取 JWKS、TTL 內不會重新抓」這件事，可用 MockWebServer（OkHttp） 當假的 JWKS 伺服器：
+
+			1.MockWebServer 回 /jwks.json：
+				* 第一次回傳 [A,B] 並帶 Cache-Control: max-age=60。
+				* 60 秒內再次請求仍回 [A,B]。
+				* 測試中間把 active 切到 B、再把 Mock 回應改為只回 [B]，等超過 TTL 再請求，驗證舊 token 開始失效。
+
+			2.Resource Server 的 NimbusJwtDecoder 用 …withJwkSetUri(mock.url("/jwks.json").toString())… 建構。
+
+			這能模擬真實部署時的「重疊期 + JWKS 快取」效果。
+
+		驗收清單（你應該看到的現象）
+			* 切換前（active=A）發的 token，header.kid=A。
+			* 切換後（active=B）發的 token，header.kid=B。
+			* JWKS 同時包含 A、B 時：兩者皆能被驗證通過。
+			* JWKS 只剩 B 時：
+				* 舊 token（kid=A）驗不過（401/JwtException）。
+				* 新 token（kid=B）驗得過。
+
+			* 若你在驗證端加了 JWKS 快取（max-age），在 TTL 內即使 JWKS 伺服器已移除 A，舊 token 可能仍可驗；TTL 到期後才會失效 —— 這就是為何要設定足夠的重疊期（≥ access token 最長壽命 + 快取 TTL + clock skew）。
+	
+	我怎麼選？
+		* 只想確認邏輯正確 → 選 A（純 Nimbus），最快。
+		* 想涵蓋 Spring Security Resource Server 設定 → 選 B。
+		* 想連帶驗證 JWKS 快取行為（最貼近實戰） → 在 B 上加 C 的 MockWebServer。

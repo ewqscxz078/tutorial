@@ -4,14 +4,14 @@ ref ChatGPT
 用語以 Spring Authorization Server（SAS）/ Spring Security 6.x、Spring Boot 3.x 為基準。
 
 	1) 整體思路（量很多時的核心觀念）
-		* 用宣告式註冊＋資料庫持久化：所有 client 都進 DB（SAS 內建 registered_client 表），來源則以 YAML/JSON 種子檔為主，透過 CI/CD 匯入，避免手動點選。
+		* 用宣告式註冊＋資料庫持久化：所有 client 都進 DB（SAS 內建 registered_client 表），來源則以 YAML/JSON 種子檔為主(詳見最後面備註說明)，透過 CI/CD 匯入，避免手動點選。
 
-		* 用**Token Profile（令牌樣板）**抽象化：把「授權型別、存活時間、audience、必帶 claims、scope 白名單」等抽成 Profile；每個 client 指向一個 Profile。大量 client 就只是「指派 Profile＋少量差異」。
+		* 用**Token Profile（令牌樣板）**抽象化(詳見最後面備註說明)：把「授權型別、存活時間、audience、必帶 claims、scope 白名單」等抽成 Profile；每個 client 指向一個 Profile。大量 client 就只是「指派 Profile＋少量差異」。
 
 		* 用Scope 與 Audience 治理：scope 命名規範＋audience（資源伺服器/API）對照表，讓前端/後端只要挑選對應 clientRegistrationId 就拿到正確的 JWT。
 
 		* 註冊 ID 穩定：不同環境用相同的 registrationId，client-id/secret、redirect-uri、issuer 可隨環境變（在屬性檔/DB 中分環境），但名稱不要變，避免前端改程式。
-	
+
 	2) Auth Server 端：資料模型與表
 		最少需要（SAS 內建＋建議擴充）：
 		內建表
@@ -21,8 +21,9 @@ ref ChatGPT
 
 		建議擴充（自建表）
 
-			* token_profile：id、name、grants、access_token_ttl、refresh_token_ttl、id_token_claims_template、allowed_scopes、audiences…
-
+			* token_profile (token 規格)：id、name、grants、access_token_ttl、refresh_token_ttl、id_token_claims_template、allowed_scopes、audiences…
+				registered_client 的明細 : 關聯使用的 token 細節
+				
 			* client_extra：client_id 外鍵＋標籤（team/owner/system）、環境(env)、用途（m2m/webapp/native）、是否啟用、旋轉策略等。
 
 			* jwk_key：KID、演算法、PEM/JWK、狀態（ACTIVE/INACTIVE）、建立/啟用/停用時間（方便 key 旋轉與稽核）。
@@ -319,3 +320,108 @@ DDL MSSQL 參考
 		3.時間預設值：client_id_issued_at 我以 SYSUTCDATETIME() 做為預設，等同官方 CURRENT_TIMESTAMP 的語意（但為 UTC、高精度）。
 		4.Migration 工具：可放成 Flyway V1__sas_schema_mssql.sql；未來升級至 SAS 新版時，請比對官方變更（例如 1.1 的新增欄位）再補 V2__... 腳本。
 		5.相容性說明：SAS JDBC 實作依賴這三張表的結構（類別文件也有特別強調需要對應 schema）。
+
+
+
+備註:
+	「種子檔」意思其實跟 seed data（種子資料）
+		背景
+			Spring Authorization Server (SAS) 本身提供一組內建的資料表（例如 registered_client），用來存放所有 OAuth2 Client 的資訊（client-id、secret、redirect-uri、scope、grant-type 等）。
+			但這些 client 不可能靠「手動進 DB」或「Console GUI 點選」維護，因為：
+
+				* 人工操作容易出錯
+
+				* 各環境（dev/test/prod）需要一致性
+
+				* 要符合 CI/CD 自動化布署
+			所以會建議：把所有 client 的定義寫在一個固定的檔案裡（YAML 或 JSON 格式）→ CI/CD pipeline 啟動時讀取這個檔案 → 種進資料庫。
+	
+		種子檔（seed file）的概念
+			* 就像資料庫初始化時的 data.sql 一樣，種子檔提供「初始資料來源」。
+
+			* 內容會描述所有已註冊的 OAuth2 client，例如：
+				oauth2:
+				  clients:
+					- clientId: my-service-a
+					  clientSecret: "{noop}secret-a"
+					  clientAuthenticationMethods: [ "client_secret_basic" ]
+					  authorizationGrantTypes: [ "client_credentials" ]
+					  scopes: [ "read", "write" ]
+					- clientId: my-service-b
+					  clientSecret: "{noop}secret-b"
+					  clientAuthenticationMethods: [ "client_secret_basic" ]
+					  authorizationGrantTypes: [ "authorization_code" ]
+					  redirectUris: [ "https://my-b-app/callback" ]
+					  scopes: [ "openid", "profile" ]
+				或 JSON 版本：
+					[
+					  {
+						"clientId": "my-service-a",
+						"clientSecret": "{noop}secret-a",
+						"clientAuthenticationMethods": ["client_secret_basic"],
+						"authorizationGrantTypes": ["client_credentials"],
+						"scopes": ["read","write"]
+					  }
+					]
+		CI/CD 匯入流程
+			1.種子檔 放在專案 repo（或獨立 config repo）
+
+			2.CI/CD pipeline 在部署 auth server 時：
+				* 將這個檔案掛進容器或複製到 /config=
+				* 啟動一個「資料初始化程式」讀這個檔案
+				* 如果 registered_client 表沒有該 client → insert
+				* 如果已存在 → update 或 skip
+
+			3.好處：
+				* 每次布署就能確保 DB 內 client 狀態與 repo 中的種子檔一致
+				* 避免 DBA/工程師手動改 DB
+				* 遷移新環境（dev/test/prod）只要一樣的種子檔
+
+		👉 總結：
+			「種子檔」就是 描述所有 OAuth2 client 註冊資料的 YAML/JSON 配置檔，
+			它是 單一真相來源 (source of truth)，透過 CI/CD 匯入 DB，讓 Spring Authorization Server 的 registered_client 表保持一致性與可追蹤性。
+	
+	
+	「Token Profile（令牌樣板）」 跟 Spring Boot 的 profile 完全無關，意思比較接近「範本配置」而不是環境 profile。
+		🔑 核心概念是：
+			你會有很多 RegisteredClient（可能上百上千個 machine-to-machine client）。
+
+			但它們的 Token 設定常常是「大同小異」：
+				* grant type（例如 client_credentials）
+				* access token TTL（例如 15 分鐘）
+				* refresh token TTL（可能關閉）
+				* audience（token 發給哪些 resource server）
+				* scope 白名單
+				* 必帶 claims（例如 clientId、org、環境標籤…）
+
+		如果每個 client 都要單獨複製這些設定 → 管理負擔會爆炸。
+		所以我們通常會做一個「抽象層」：
+		
+		方案 A：建一張 TokenProfile 表（推薦做法）
+			CREATE TABLE token_profile (
+				id BIGINT PRIMARY KEY,
+				code VARCHAR(50) UNIQUE NOT NULL,  -- 例如 "M2M_DEFAULT", "EXT_PARTNER"
+				grant_types VARCHAR(200),
+				access_token_ttl INT,              -- 秒數
+				refresh_token_ttl INT,
+				audience VARCHAR(500),
+				scope_whitelist VARCHAR(1000),
+				required_claims VARCHAR(1000)
+			);
+
+			ALTER TABLE registered_client ADD COLUMN token_profile_id BIGINT;
+
+			然後在 RegisteredClient 裡指向某個 profile：
+
+				clientA → M2M_DEFAULT
+
+				clientB → EXT_PARTNER
+
+				clientC → INTERNAL_LONG_LIVED
+
+		方案 B：純 YAML/JSON 種子檔抽象
+			不建新表，而是在 CI/CD 匯入 RegisteredClient 的時候，靠 YAML 抽象出「樣板」，然後展開成多個 client。
+			缺點是查詢/運維時不直觀，因為 DB 裡沒有 profile 概念，只有 client。
+
+		👉 結論：
+			這裡的 Profile 指的是 你自訂的「Token 設定範本」抽象層，通常會實作成一張 table（或至少是 YAML 種子檔的抽象），並不是 Spring Boot 的 profile。
