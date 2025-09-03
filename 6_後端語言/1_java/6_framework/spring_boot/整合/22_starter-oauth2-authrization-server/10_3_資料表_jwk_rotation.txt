@@ -58,7 +58,7 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 			thumbprint_sha256   VARBINARY(32) NULL,            -- kid 以外需求的指紋
 			not_before          DATETIME2(3) NULL,             -- 此 key 可用起始（簽章/驗章）
 			not_after           DATETIME2(3) NULL,             -- 此 key 停用時間（通常保留驗章期）
-			activated_at        DATETIME2(3) NULL,             
+			activated_at        DATETIME2(3) NULL,
 			grace_until         DATETIME2(3) NULL,             -- GRACE（僅驗章）到期時間
 			disabled_at         DATETIME2(3) NULL,
 			created_at          DATETIME2(3) NOT NULL CONSTRAINT DF_jwk_key_created DEFAULT SYSUTCDATETIME(),
@@ -69,11 +69,11 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 		);
 
 		-- kid 在同一 issuer 需唯一
-		CREATE UNIQUE INDEX UX_jwk_key_issuer_kid 
+		CREATE UNIQUE INDEX UX_jwk_key_issuer_kid
 		ON dbo.jwk_key(issuer, kid);
 
 		-- 查詢對外 JWKS 常用條件（issuer/state/purpose）
-		CREATE INDEX IX_jwk_key_issuer_state_purpose 
+		CREATE INDEX IX_jwk_key_issuer_state_purpose
 		ON dbo.jwk_key(issuer, state, purpose) INCLUDE (kid, alg, not_before, not_after, grace_until);
 
 		-- 強制「同一 issuer+purpose+alg 同時最多一把 ACTIVE」
@@ -88,17 +88,17 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 
 		-- 外鍵（自連結）
 		ALTER TABLE dbo.jwk_key
-		ADD CONSTRAINT FK_jwk_key_rotated_from 
+		ADD CONSTRAINT FK_jwk_key_rotated_from
 		FOREIGN KEY(rotated_from_id) REFERENCES dbo.jwk_key(id);
 
 		ALTER TABLE dbo.jwk_key
-		ADD CONSTRAINT FK_jwk_key_rotated_to 
+		ADD CONSTRAINT FK_jwk_key_rotated_to
 		FOREIGN KEY(rotated_to_id) REFERENCES dbo.jwk_key(id);
 
 		-- 基本狀態檢核
 		ALTER TABLE dbo.jwk_key ADD CONSTRAINT CK_jwk_key_state
 		CHECK (state IN (0,1,2,9));
-	
+
 	建議：private_pkcs8 只在本地測試/無 KMS 時使用；正式區以 private_kms_ref 連到 HSM/KMS。應用程式握有解封/簽章能力，但 DB 不直接保存明文私鑰。
 
 	旋轉策略表：jwk_rotation_policy
@@ -159,7 +159,7 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 			  AND state IN (1,2)    -- ACTIVE or GRACE
 			  AND (not_before IS NULL OR not_before <= SYSUTCDATETIME())
 			  AND (not_after  IS NULL OR not_after  >= SYSUTCDATETIME());
-		
+
 		範例查詢（簽章用 ACTIVE）：
 			SELECT TOP(1) *
 			FROM dbo.jwk_key WITH (INDEX(UX_jwk_key_single_active_per_alg))
@@ -210,7 +210,7 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 		* HSM/KMS/ Vault（最佳） → 私鑰不落地 / 受控加密
 		* 資料庫（折衷） → 私鑰以「應用程式層加密」後存 DB，啟動時解封裝進記憶體
 		* 檔案系統（次佳） → 只在容器裡以短 TTL 的掛載密文（K8s Secret / Vault Agent）供用，別把明文放映像檔或永久磁碟
-		
+
 		排名高低，關鍵就是「私鑰會不會長期落地」以及「能不能審計/控管存取」。
 		即使使用 HSM/KMS/ Vault ，只是差異不用多存私鑰
 		差別在哪裡？
@@ -263,7 +263,7 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 	* 沒有 KMS / Vault。
 	* 想要支援 JWK rotation（要能有「舊的還能驗簽，新的一把負責簽章」的機制）。
 	* 多台 Auth Server 需要一致（因此不能只放在單機檔案裡）。
-	
+
 	存資料庫要存什麼？
 		CREATE TABLE jwk_key (
 			id BIGINT IDENTITY PRIMARY KEY,

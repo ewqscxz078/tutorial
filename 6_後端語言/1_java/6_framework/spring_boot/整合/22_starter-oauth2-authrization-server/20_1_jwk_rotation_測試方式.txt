@@ -132,7 +132,7 @@ ref ChatGPT
 			* clock skew 測試（驗證端允許 ±N 秒）。
 			* 不同 alg（RS→EC） 遷移的測試。
 			* 過期後 舊 token 應自然失效。
-	
+
 	B. 輕量 Resource Server（內嵌）驗證路徑
 		目的：多走一步，把「驗證端」用 Spring Security Resource Server 開起來，但仍不需要 Gateway/前端。
 		做法：
@@ -148,7 +148,7 @@ ref ChatGPT
 				* 將 Resource Server 的 JWKS 改成只含 B（或你讓「JWKS Service」不再包含 A）→ tokenA 再打應 401、tokenB 還是 200。
 
 			這個做法能測到 Spring Security 的驗證流程、header 傳遞、授權規則等，但不必把 Gateway 拉進來。
-	
+
 	C. 端對端「含 JWKS 快取」行為測試（可選）
 		想順便驗證「驗證端會快取 JWKS、TTL 內不會重新抓」這件事，可用 MockWebServer（OkHttp） 當假的 JWKS 伺服器：
 
@@ -170,7 +170,7 @@ ref ChatGPT
 				* 新 token（kid=B）驗得過。
 
 			* 若你在驗證端加了 JWKS 快取（max-age），在 TTL 內即使 JWKS 伺服器已移除 A，舊 token 可能仍可驗；TTL 到期後才會失效 —— 這就是為何要設定足夠的重疊期（≥ access token 最長壽命 + 快取 TTL + clock skew）。
-	
+
 	我怎麼選？
 		* 只想確認邏輯正確 → 選 A（純 Nimbus），最快。
 		* 想涵蓋 Spring Security Resource Server 設定 → 選 B。

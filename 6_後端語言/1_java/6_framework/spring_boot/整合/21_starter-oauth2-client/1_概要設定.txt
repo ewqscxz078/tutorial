@@ -1,47 +1,151 @@
 ref ChatGPT
 
 pom.xml
-	<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-client</artifactId></dependency>
+	1) 需要的依賴
+		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-client</artifactId></dependency>
+		<!-- 若要用 WebClient -->
+		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webflux</artifactId></dependency>
 
 resource
-	yml 註冊該專案要使用那些 jwt
-		spring:
-		  security:
-			oauth2:
-			  client:
-				registration:
-				  my-client:
-					client-id: my-client-id
-					client-secret: my-client-secret
-					authorization-grant-type: client_credentials
-				provider:
-				  my-client:
-					token-uri: http://auth-server:8080/oauth2/token
-
+	application.yml
+		2) 註冊該專案要使用那些 jwt(provider + registration)
+			spring:
+			  security:
+				oauth2:
+				  client:
+					provider: # 提供 jwt 來源的 uri
+					  my-client:
+						token-uri: http://auth-server:8080/oauth2/token
+						authorization-uri: https://auth-server:8080/oauth2/authorize # 不用，但可填
+						jwk-set-uri: https://auth-server:8080/oauth2/jwks            # 非必要給 client，但常見
+					registration: # 註冊要使用的 jwt
+					  my-client:
+						provider: jwt-provider         # ← 必須對應上面 provider 區塊的 key，為了可以支援多種 jwt
+						client-id: my-client-id
+						client-secret: my-client-secret
+						authorization-grant-type: client_credentials # M2M模式
+						scope: # 存取權限
+						  - read # 可讀表示的權限代表，實際運用還是要看程式怎麼串接其語意
+						  - write
+						#client-authentication-method: client_secret_basic 額外可用設定
+						#client-name: 額外可用設定
+						#redirect-uri: 額外可用設定
 java
-	webclient 要有註冊 oauth2Configuration，才會自動 header 幫你埋入 jwt
-		比如
+	3) client 增加 token 額外的資訊
+		Spring Security 6 支援在請 token 時加額外參數
 			@Bean
-			WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
-				ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
-						new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+			OAuth2AuthorizedClientManager authorizedClientManager(
+				ClientRegistrationRepository regs,
+				OAuth2AuthorizedClientService svc) {
 
-				return WebClient.builder()
-						.apply(oauth2.oauth2Configuration())
-						.build();
+				var provider = new ClientCredentialsOAuth2AuthorizedClientProvider();
+				// 1) 透過 context.attributes 放 audience
+				provider.setContextAttributesMapper(request -> {
+					var attrs = new HashMap<String, Object>();
+					attrs.put(OAuth2AuthorizationContext.REQUEST_SCOPE_ATTRIBUTE_NAME, Set.of("read","write"));
+					attrs.put(OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME, null); // M2M 無 user
+					// 自訂參數（部分 IdP 支援）
+					attrs.put("audience", "https://api.example.com");
+					return attrs;
+				});
+
+				var manager = new DefaultOAuth2AuthorizedClientManager(regs, svc);
+				manager.setAuthorizedClientProvider(provider);
+				return manager;
 			}
 
-	呼叫時指定 clientRegistrationId
-		webclient.attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))
+	3.或是直接使用
+		建立 OAuth2AuthorizedClientManager（M2M 重點）
+			A. 用 AuthorizedClientServiceOAuth2AuthorizedClientManager（最簡潔）
+				@Bean
+				OAuth2AuthorizedClientManager authorizedClientManager(
+					ClientRegistrationRepository regs,
+					OAuth2AuthorizedClientService svc) {
 
+					var provider = new ClientCredentialsOAuth2AuthorizedClientProvider();
+					var manager = new AuthorizedClientServiceOAuth2AuthorizedClientManager(regs, svc);
+					manager.setAuthorizedClientProvider(provider);
+					return manager;
+				}
+			B. 或用 DefaultOAuth2AuthorizedClientManager
+				（可掛更多 provider，例如 refresh-token / device-code；M2M 通常不需要）
+	4) WebClient 與 token 自動附掛
+		要有註冊 oauth2Configuration，才會自動 header 幫你埋入 jwt
+			比如
+				@Bean
+				WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+					ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
+							new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
 
-什麼時候用哪個 Repository/Manager？
-	client_credentials：沒有使用者會話，
-		不需要 OAuth2AuthorizedClientRepository，
-			用 ClientRegistrationRepository 、OAuth2AuthorizedClientService 去建構 AuthorizedClientServiceOAuth2AuthorizedClientManager
-			再用 AuthorizedClientServiceOAuth2AuthorizedClientManager 去建構 ServletOAuth2AuthorizedClientExchangeFilterFunction
-	authorization_code（有登入使用者）：
-		用 ClientRegistrationRepository、OAuth2AuthorizedClientRepository（Session 內保存授權），
-			去建構 ServletOAuth2AuthorizedClientExchangeFilterFunction
-		同樣由 OAuth2ClientAutoConfiguration 幫你準備好。
+					return WebClient.builder()
+							.apply(oauth2.oauth2Configuration())
+							.build();
+				}
+
+		呼叫 api 時指定 clientRegistrationId (jwt id)
+			webclient.attributes(ServerOAuth2AuthorizedClientExchangeFilterFunction.clientRegistrationId(clientRegistrationId))
+
+	5) 不走 WebClient、純取 token（有時需要）
+		OAuth2AuthorizeRequest req = OAuth2AuthorizeRequest
+			.withClientRegistrationId("svc-a")
+			.principal("machine")            // 任意 non-null principal 名稱，無 session
+			.build();
+
+		OAuth2AuthorizedClient client = manager.authorize(req);
+		String accessToken = client.getAccessToken().getTokenValue();
+
+	6) Token 快取與更新
+
+		* Spring 會把 OAuth2AuthorizedClient 存在 OAuth2AuthorizedClientService（預設是 InMemory，若要可持久化，實作 JdbcOAuth2AuthorizedClientService 或自訂）。
+
+		* client_credentials 沒有 refresh token；到期時會自動再去拿一顆新的。
+
+	7) TLS / 信任庫（常被忽略）
+
+		* 若你的 AS 使用公司內部 CA，請把 CA 憑證加到 JVM truststore（或針對 WebClient 的 HttpClient 配置）。
+
+		* 在容器部署時確認 -Djavax.net.ssl.trustStore 或用程式碼指定。
+
+	8) 多環境（dev/sit/uat/prod）
+
+		* client-id/client-secret 切到外部變數（Vault/K8s Secret），不要硬寫在 yml。
+
+		* token-uri 用 profile 區分或 spring.config.import 指向環境化片段。
+
+	9) 私密客戶端驗證方法
+
+		* 常見：client_secret_basic 或 client_secret_post
+
+		* 安全性更高：private_key_jwt（需要在 AS 註冊公鑰，客戶端用私鑰對 token 請求做 JWT 簽章）
+			若採用 private_key_jwt，要在 ClientRegistration 設 client-authentication-method: private_key_jwt，並提供 JwtClientAuthenticationParametersConverter／客製化 Converter。
+
+	10) 錯誤處理與觀測
+		* WebClient 建議加上：
+
+			* timeout（connect/read）
+
+			* 針對「可重試的傳輸錯誤」做有限次重試（例如 5xx 與連線中斷）
+
+		* 加上 Micrometer（Timer/Observation）與 request/response logging（避免把機敏 token 打到 log）
+
+		* 對上游非 JSON 回應（HTML 錯誤頁）時，記得 fallback 以 String 抓原文記錄再轉自訂例外。
+
+	11) 測試建議（M2M）
+
+		* 使用 MockWebServer（okhttp）或 WireMock 模擬 AS 的 /oauth2/token 與目標 API。
+
+		* @SpringBootTest 下直接注入 WebClient，驗證會自動帶上 Authorization: Bearer ...。
+
+		* 若不啟動整個 context，可單獨 new AuthorizedClientServiceOAuth2AuthorizedClientManager + InMemory 的 ClientRegistrationRepository 來測 token 取用流程。
+
+Q:什麼時候用哪個 Repository/Manager？
+	A:
+		client_credentials：沒有使用者會話
+			不需要 OAuth2AuthorizedClientRepository，
+				用 ClientRegistrationRepository 、OAuth2AuthorizedClientService 去建構 AuthorizedClientServiceOAuth2AuthorizedClientManager
+				再用 AuthorizedClientServiceOAuth2AuthorizedClientManager 去建構 ServletOAuth2AuthorizedClientExchangeFilterFunction
+		authorization_code（有登入使用者）：
+			用 ClientRegistrationRepository、OAuth2AuthorizedClientRepository（Session 內保存授權），
+				去建構 ServletOAuth2AuthorizedClientExchangeFilterFunction
+			同樣由 OAuth2ClientAutoConfiguration 幫你準備好。
 

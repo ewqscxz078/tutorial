@@ -62,7 +62,7 @@ ref ChatGPT
 備註
 	機器對機器只有設定 ClientRegistrationId 沒有設定 principal
 		快取不會踩中
-	
+
 	正確 jwt 快取到的方式
 		方案 A：每次呼叫時帶入 principal（最直觀）
 			import static org.springframework.security.oauth2.client.web.reactive.function.client
@@ -85,7 +85,7 @@ ref ChatGPT
 			* clientRegistrationId(regId)：指定當次請求要用哪個註冊的 client。
 
 			* authentication(machine)：把固定的 Authentication（例如 username = "system"）掛進此次請求 → 快取鍵就會是 regId + "system"，後續同樣 principal 會命中快取。
-		
+
 		方案 B：預先把固定 principal 放進 SecurityContextHolder
 			如果你不想每次 .attributes(authentication(...))，可以在呼叫前（如 filter、切面、或執行緒初始化處）先放一個固定的 Authentication：
 				SecurityContextHolder.getContext().setAuthentication(
@@ -121,12 +121,12 @@ ref ChatGPT
 為什麼一定要 principal？
 	* Spring 的 OAuth2 Client 在 Servlet 環境下，OAuth2AuthorizedClient 的快取鍵是 clientRegistrationId + principalName。
 	* 沒有固定 principal（或每次不同），就會像沒快取一樣每次都去拿新 token。文件也示範了如何把 Authentication 放進 request attributes：authentication(…)
-	
-	
+
+
 	作法 A：在 WebClient 上加一個全域 Filter，幫每個請求塞 principal attribute
 
 	這招等同於每次呼叫都做 .attributes(authentication(machine))，只是你用一個全域 filter 自動幫你加。
-		
+
 		import java.util.List;
 
 		import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
@@ -134,8 +134,8 @@ ref ChatGPT
 		import org.springframework.context.annotation.Configuration;
 		import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 		import org.springframework.security.core.Authentication;
-		import org.springframework.web.reactive.function.client.ClientRequest;		
-		
+		import org.springframework.web.reactive.function.client.ClientRequest;
+
 		@Configuration
 		public class WebClientM2MConfig {
 
@@ -207,4 +207,3 @@ ref ChatGPT
 	機器對機器（client_credentials）建議用 AuthorizedClientServiceOAuth2AuthorizedClientManager，它會把 OAuth2AuthorizedClient 存到 OAuth2AuthorizedClientService；預設是 in-memory(InMemoryOauth2AuthorizedClientService)。
 
 	若你的應用是互動式網頁（有使用者 session）且採用 DefaultOAuth2AuthorizedClientManager + OAuth2AuthorizedClientRepository，則可能存放在 HttpSession（類別：HttpSessionOAuth2AuthorizedClientRepository）。但這通常是使用者登入流程（authorization_code）才會用到。
-	

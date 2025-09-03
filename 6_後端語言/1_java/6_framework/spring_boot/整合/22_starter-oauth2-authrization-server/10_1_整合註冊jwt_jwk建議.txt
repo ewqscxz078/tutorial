@@ -23,13 +23,13 @@ ref ChatGPT
 
 			* token_profile (token 規格)：id、name、grants、access_token_ttl、refresh_token_ttl、id_token_claims_template、allowed_scopes、audiences…
 				registered_client 的明細 : 關聯使用的 token 細節
-				
+
 			* client_extra：client_id 外鍵＋標籤（team/owner/system）、環境(env)、用途（m2m/webapp/native）、是否啟用、旋轉策略等。
 
 			* jwk_key：KID、演算法、PEM/JWK、狀態（ACTIVE/INACTIVE）、建立/啟用/停用時間（方便 key 旋轉與稽核）。
 
 			實務上：registered_client 加上一個自訂欄位（或 side table client_profile_map）指向 token_profile，你就能把大量 client 的共通令牌策略集中管理。\
-		
+
 	3) 註冊流程（宣告式與自動化）
 		* 種子檔（YAML/JSON）→ Importer：在 CI/CD 建置階段跑一次 importer，把差異套用到 DB（新增/更新/停用）。
 
@@ -67,14 +67,14 @@ ref ChatGPT
 				clientId: ${BILLING_JOB_WRITER_ID}
 				clientSecret: ${BILLING_JOB_WRITER_SECRET}
 				profile: m2m-default
-	
+
 	4) JWK 與簽章（含旋轉）
 		* 使用 RS256 或 ES256（建議 RS/EC 皆可，但 RS256最普遍），每把 key 有 KID，JWKS endpoint 提供多 key；active 旗標控制當前簽章用哪把。
 
 		* 旋轉策略：定期產新→標記新為 ACTIVE、保留舊為 INACTIVE 一段時間→等資源端都已抓到新 JWKS 再下架舊 key。
 
 		* 資源伺服器 JWK 快取：設定合理 TTL 與失敗回退（一般 frameworks 會自帶，確保 KID 切換不會打斷）。
-	
+
 		SAS JWKSource（範例骨架）：
 			@Bean
 			JWKSource<SecurityContext> jwkSource(JwkRepository repo) {
@@ -89,7 +89,7 @@ ref ChatGPT
 		* 常見進階：azp（Authorized party）、tenant、roles、permissions、業務 IDs 等。
 
 		* 建議用 OAuth2TokenCustomizer<JwtEncodingContext> 集中處理，依 profile / client / scope 決定注入哪些 claims。
-	
+
 		範例：
 			@Bean
 			OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer(TokenProfileService profiles) {
@@ -121,7 +121,7 @@ ref ChatGPT
 			* 各環境透過屬性檔注入 client-id/secret（或僅 public client + PKCE）、issuer-uri、redirect-uri。
 
 			* 只要使用該 registrationId，就會依據 Auth Server 的 token_profile 產生對應的 JWT（aud、scope、TTL 一致）
-		
+
 			application-*.yml（客戶端）：
 				spring:
 				  security:
@@ -143,7 +143,7 @@ ref ChatGPT
 			一個目標資源/權限集合 = 一個 registrationId。想要 billing 可寫入，就使用 billing-job-writer；想看報表，就用 billing-report-reader。
 
 			WebClient 使用對應 registrationId，後面透過 OAuth2AuthorizedClientManager 自動拿取/重用 Access Token。
-			
+
 			application-*.yml（客戶端）：
 				spring:
 				  security:
@@ -171,9 +171,9 @@ ref ChatGPT
 					  .apply(oauth.oauth2Configuration())
 					  .build();
 				}
-				
+
 				重點：前端/後端只需要挑對的 registrationId，其餘（audience、scope、TTL、claims）由 Auth Server 的 Token Profile 決定。這是大量管理時最穩的分工。
-	
+
 	7) 命名規範與對照矩陣（大量客戶端的管理關鍵）
 		* registrationId：<team>-<app>-<purpose>（例如 fin-billing-job-writer、ui-portal-web）
 
@@ -184,7 +184,7 @@ ref ChatGPT
 		* 建立“對照表”（CSV/Sheet/DB）：
 
 		* 權責單位 / 系統 / registrationId / client-id / profile / scopes / audiences / 環境 / 旋轉日期 / 負責人
-	
+
 	8) 多環境策略（dev/sit/uat/prod）
 		* 固定 registrationId，其餘（client-id、client-secret、redirect-uri、issuer-uri）因環境不同而異。
 
@@ -197,7 +197,7 @@ ref ChatGPT
 			3.CI 匯入時填值，或部署時由 Vault/變數注入。
 
 		* 若 client-id/secret 相同，但 redirect-uri / scope / grants 不同，會導致授權/驗證錯誤（授權伺服器會依 DB 端配置為準，客戶端提供不符就被拒）。建議保持一致，差異集中在環境 URL 與秘密。
-	
+
 	9) 監控、輪替與稽核
 		* client-secret 旋轉：設排程提醒與自動替換流程（CI 注入新 secret，切換/回退機制）。
 
@@ -226,11 +226,11 @@ ref ChatGPT
 	4.JWK 用 KID + 多把 key 管理，定期旋轉；資源端設好 JWKS 快取與回補。
 
 	5.維護一份對照矩陣（registrationId ↔ scopes/audiences/profile/owner/env），支援批量治理。
-	
+
 
 
 DDL MSSQL 參考
-	
+
 	oauth2_registered_client
 		CREATE TABLE dbo.oauth2_registered_client (
 			id                             nvarchar(100)  NOT NULL,
@@ -249,7 +249,7 @@ DDL MSSQL 參考
 			CONSTRAINT PK_oauth2_registered_client PRIMARY KEY (id),
 			CONSTRAINT UQ_oauth2_registered_client_client_id UNIQUE (client_id)
 		);
-	
+
 	oauth2_authorization
 		CREATE TABLE dbo.oauth2_authorization (
 			id                              nvarchar(100)   NOT NULL,
@@ -335,7 +335,7 @@ DDL MSSQL 參考
 
 				* 要符合 CI/CD 自動化布署
 			所以會建議：把所有 client 的定義寫在一個固定的檔案裡（YAML 或 JSON 格式）→ CI/CD pipeline 啟動時讀取這個檔案 → 種進資料庫。
-	
+
 		種子檔（seed file）的概念
 			* 就像資料庫初始化時的 data.sql 一樣，種子檔提供「初始資料來源」。
 
@@ -380,8 +380,8 @@ DDL MSSQL 參考
 		👉 總結：
 			「種子檔」就是 描述所有 OAuth2 client 註冊資料的 YAML/JSON 配置檔，
 			它是 單一真相來源 (source of truth)，透過 CI/CD 匯入 DB，讓 Spring Authorization Server 的 registered_client 表保持一致性與可追蹤性。
-	
-	
+
+
 	「Token Profile（令牌樣板）」 跟 Spring Boot 的 profile 完全無關，意思比較接近「範本配置」而不是環境 profile。
 		🔑 核心概念是：
 			你會有很多 RegisteredClient（可能上百上千個 machine-to-machine client）。
@@ -396,7 +396,7 @@ DDL MSSQL 參考
 
 		如果每個 client 都要單獨複製這些設定 → 管理負擔會爆炸。
 		所以我們通常會做一個「抽象層」：
-		
+
 		方案 A：建一張 TokenProfile 表（推薦做法）
 			CREATE TABLE token_profile (
 				id BIGINT PRIMARY KEY,

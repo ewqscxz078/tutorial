@@ -24,7 +24,7 @@ ref ChatGPT
 	* 這部分預設 Spring 只會記一個 HTTP access log（如果 Tomcat/Undertow 有開 access log 才看得到）。
 
 	* Spring Security 本身並不會在 DEBUG 打出「誰來取 JWK」。
-	
+
 	* 如果要觀察 JWK 解析過程，可以開：
 		logging:
 		  level:

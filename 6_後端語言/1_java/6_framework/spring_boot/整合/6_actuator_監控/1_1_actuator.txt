@@ -339,7 +339,7 @@ spring boot 3 之後
 	  endpoints:
 		jackson:
 		  isolated-object-mapper: false # 預設為 true，actuator jackson 格式化與 頁面 jackson 格式化是否隔離分開
-	  endpoint: 
+	  endpoint:
 		env:
 		  show-values: when-authorized # 要設定才能看到具體值，否則預設是顯示 * 格式
 		  roles: actuator #依據配置的 spring security for actuator 配置角色
