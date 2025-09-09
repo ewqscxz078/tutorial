@@ -1,0 +1,153 @@
+ref ChatGPT
+
+resource server
+	JWT 可以「指定要用哪群 JWK」來驗簽，常見做法是透過 kid (Key ID) 與 不同的 JWK Set 端點 來區隔
+
+常見的做法
+	1. 用 不同的 kid + 同一個 /jwks
+		* JWT header 帶有 kid，Decoder 會去 /jwks 找到相符的公鑰驗簽。
+		* 這種情況下「同一組 /jwks」可以同時容納：
+			* 一些外部共用、不做 rotation 的固定公鑰。
+			* 一些內部會定期 rotation 的動態公鑰。
+
+		* 優點：維護單一端點。
+		* 缺點：外部的 key 無法控管，可能會讓 JWKS 越來越大，或者內外界線模糊。
+
+	2. 用 不同的 jwk set（不同 URL/Issuer）
+		* 最乾淨的方式是「不同 Issuer 代表不同的 key policy」：
+			外部（kong 發的）：例如 https://kong.example.com/jwks
+			內部（auth server 發的）：例如 https://auth.internal.local/jwks
+
+		* 你的服務在驗 JWT 時，先根據 Issuer (iss) claim 或 audience (aud) claim，決定要去哪個 JWK Set 拉公鑰。
+		* 優點：邊界清楚，內外部信任鏈可分開治理。
+		* 缺點：服務要能處理「多個 JWK source」。
+
+	3. 服務端維護多個 JwtDecoder
+
+		在 Spring Security（Spring Authorization Server 或 Resource Server）裡，你可以這樣做：
+			* 一個 JwtDecoder 對應「內部 JWK rotation 的 source」。
+			* 另一個 JwtDecoder 對應「外部 kong 的固定公鑰」。
+
+		然後透過 JwtIssuerAuthenticationManagerResolver 或自訂的 AuthenticationManagerResolver<HttpServletRequest>，動態決定要用哪個 decoder。
+			範例：
+				@Bean
+				AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver() {
+					return new JwtIssuerAuthenticationManagerResolver(
+						"https://auth.internal.local/",
+						"https://kong.example.com/"
+					);
+				}
+		這樣一來：
+			iss = https://auth.internal.local/ → 用內部 jwks（有 rotation）。
+			iss = https://kong.example.com/ → 用外部 jwks（固定 key，不 rotation）。
+
+建議策略（依照你的情境）
+
+	外部 kong：你控制不了 rotation，就讓它獨立一組 JWKS / Issuer，並且只驗它需要的 token。
+
+	內部系統：用你自己的 Auth Server，搭配 DB 模式的 JWK rotation。
+
+	Resource Server（被呼叫方）：必須能根據 iss 或 aud 分辨「該用哪群 JWK 驗簽」。
+
+👉 總結：
+	JWT 本身透過 kid 可以指定單一金鑰，但**「指定哪群 JWK」通常是靠 iss（Issuer）或 aud（Audience）來區分**，
+	再搭配多個 JWKS 來源。這樣你就能同時支持外部 kong（固定 key）與內部（有 rotation 的 key）。
+
+重點是用 AuthenticationManagerResolver<HttpServletRequest> 依 iss（Issuer）把請求導到對應的 JwtDecoder
+	目標能力
+		* 依 iss（或你要也能改成看 aud）把 JWT 分流到不同的 JWK 群。
+
+		* 內部 Issuer：走 OIDC 或公開的 /.well-known/openid-configuration，自動發現 jwks_uri（支援 rotation）。
+
+		* 外部 Kong Issuer：可用
+
+			* issuer-uri（若 Kong 有對外 OIDC metadata），或
+
+			* 直接指定 jwk-set-uri，或
+
+			* 乾脆放固定 PEM 公鑰（若真的完全無 rotation）。
+
+	要達成的需求
+		1.有兩群 JWT
+			內部 JWT：由你的 Auth Server 簽發 → 要有 JWK rotation。
+			外部 JWT（例如 Kong）：你沒辦法控管 rotation，只能用它提供的一組固定 JWK / 公鑰。
+
+		2.Resource Server 要能同時驗證這兩種 JWT，而且要知道該用哪一群 JWK 來驗。
+
+	最佳策略建議
+		👉 用 iss (Issuer Claim) 區分，是最乾淨、最穩定的做法。
+			原因：
+				* JWT 規範本來就要求 iss 指明「這個 token 是哪個 issuer 發的」。
+				* 你可以把「每個 issuer 綁定一組 JWKS」：
+					* iss=https://auth.internal.local → 用內部的 JWKS（有 rotation）。
+					* iss=https://kong.example.com → 用外部 Kong 的 JWKS（固定不變）。
+				* Spring Security（或其他驗證框架）都有支援「多個 Issuer → 多個 JWKS」的 resolver 機制，不用自己硬寫全部邏輯。
+	為什麼不用單靠 kid
+		* kid 只能在「同一個 JWKS 集合裡」挑哪把 key。
+		* 但你這裡其實是「兩個完全不同的金鑰來源」（一個內部自己控管 rotation，一個外部固定 key）。
+		* 若全都混進同一個 JWKS，就很難管轄 rotation 與 policy，還會有安全邊界不清的問題。
+
+	✅ 總結一句：
+		是的，最佳策略就是：JWT 先看 iss（Issuer），再決定去用哪一群 JWKS 來驗證。
+		內部 iss → 內部 JWKS（rotation）。
+		外部 iss → 外部 JWKS（固定 key）。
+
+核心程式碼範例
+	resource server 
+		1. application.yml
+			security:
+			  jwt:
+				internal:
+				  issuer: https://auth.internal.local
+				  jwk-set-uri: https://auth.internal.local/oauth2/jwks
+				kong:
+				  issuer: https://kong.example.com
+				  jwk-set-uri: https://kong.example.com/jwks
+		
+		2. SecurityConfig.java
+			import jakarta.servlet.http.HttpServletRequest;
+			import org.springframework.context.annotation.Bean;
+			import org.springframework.context.annotation.Configuration;
+			import org.springframework.security.authentication.AuthenticationManager;
+			import org.springframework.security.authentication.AuthenticationManagerResolver;
+			import org.springframework.security.authentication.ProviderManager;
+			import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+			import org.springframework.security.oauth2.jwt.*;
+			import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+			import org.springframework.security.web.SecurityFilterChain;
+
+			import java.util.HashMap;
+			import java.util.Map;
+
+			@Configuration
+			public class SecurityConfig {
+
+				@Bean
+				SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+					http
+						.authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+						.oauth2ResourceServer(oauth2 -> oauth2
+							.authenticationManagerResolver(authenticationManagerResolver())
+						);
+					return http.build();
+				}
+
+				@Bean
+				AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver() {
+					// 1. 建立不同的 JwtDecoder
+					JwtDecoder internalDecoder =
+						NimbusJwtDecoder.withJwkSetUri("https://auth.internal.local/oauth2/jwks").build();
+					JwtDecoder kongDecoder =
+						NimbusJwtDecoder.withJwkSetUri("https://kong.example.com/jwks").build();
+
+					// 2. 建立 AuthenticationManager (一個 issuer 對應一個)
+					Map<String, AuthenticationManager> managers = new HashMap<>();
+					managers.put("https://auth.internal.local",
+						new ProviderManager(new JwtAuthenticationProvider(internalDecoder)));
+					managers.put("https://kong.example.com",
+						new ProviderManager(new JwtAuthenticationProvider(kongDecoder)));
+
+					// 3. 用 Spring 提供的 JwtIssuerAuthenticationManagerResolver
+					return new JwtIssuerAuthenticationManagerResolver(managers::get);
+				}
+			}

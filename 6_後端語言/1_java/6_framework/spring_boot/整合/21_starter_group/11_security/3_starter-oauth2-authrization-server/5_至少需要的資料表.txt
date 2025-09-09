@@ -13,3 +13,5 @@ ref ChatGPT
 
 	3.oauth2_authorization_consent（M2M 通常不需要）
 		* 以使用者同意為核心的情境才會用到；client_credentials 不會用。
+	
+	4.key rotation 排程用的 shedlock table 確保一個排程執行
