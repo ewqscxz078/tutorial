@@ -9,4 +9,4 @@
 spring boot 簡化 spring 應用開發約定大於配置
 
 spring boot -> j2ee 一站式解決方案
-spring cloud -> 分布是整體解決方案
+spring cloud -> 分散式整體解決方案
