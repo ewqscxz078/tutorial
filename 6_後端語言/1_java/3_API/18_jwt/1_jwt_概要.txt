@@ -97,3 +97,59 @@ JSON Web Token（JWT）
 
 	不過其實這還有很多探討的空間，在這篇文章沒有去說，Session/Cookie的架構其實也是可以跟JWT並行，端看應用場景。
 	但就我兩者都使用過的經驗來看，我覺得JWT的方式的確很簡單易懂，Session的機制有時候的確很煩人。
+
+
+備註
+	為什麼 Base64 要分 一般 Base64 和 Base64URL？
+		JWT、JWS、JWE 這些規範（RFC 7515、RFC 7519）要求 Base64URL，而不是傳統 Base64。原因就在於 安全傳輸與相容性。
+		1. 傳統 Base64 的問題
+			標準 Base64 字元表：
+				A–Z a–z 0–9 + /
+				以及 padding 用的 =。
+			問題：
+				* + 和 / 在 URL、路徑、Query string 裡會有特殊意義：
+
+					+ 在 application/x-www-form-urlencoded 會被解釋成「空白」。
+
+					/ 在 URL 路徑中是分隔符。
+
+				* = 在 URL query、某些 cookie header 也容易被誤處理，甚至被砍掉。
+			
+			如果把一個含有 +、/ 的 Base64 token 直接塞到 URL 或 cookie，很容易因為轉碼錯誤而壞掉。
+		
+		2. Base64URL 的設計
+			Base64URL 對字元集做了替換：
+				A–Z a–z 0–9 - _
+				和 padding = 可省略。
+			好處：
+				* - 和 _ 在 URL 裡不需額外 encode。
+				* 移除了 +、/ 這些「在 URL 有特殊用途」的字元。
+				* 去掉 =，可以避免尾端 padding 在某些情境被截斷或誤處理。
+
+				因此 Base64URL 可以安全地放在 URL、cookie、header 中傳輸，完全不需要再 URL encode。
+		
+		3. 舉例比較
+			假設字串 "abc123"
+				* 標準 Base64：YWJjMTIz
+				* Base64URL：一樣是 YWJjMTIz（剛好沒有特殊字元）
+
+			但如果字串比較特殊，例如 {"alg":"RS256"}：
+				* 標準 Base64：eyJhbGciOiJSUzI1NiJ9（尾端可能帶 =）
+				* Base64URL：eyJhbGciOiJSUzI1NiJ9（尾端 padding = 被省略）
+
+			再看一個會出現 / 的例子： 原始 bytes = 0xFB
+				* 標準 Base64：+w==
+				* Base64URL：-w
+
+				你就看到 /（0x2f）在 URL-safe 版本變成了 -。
+
+		4. JWT 為什麼強制 Base64URL？
+			因為 JWT 設計就是要「放在 HTTP header / query / cookie 裡傳遞」，如果還用傳統 Base64：
+				* 每次都要額外做 URL encode / decode，很麻煩。
+				* 容易出現轉壞（例如 / 被誤當路徑分隔，+ 被 decode 成空白）。
+			所以 RFC 7515（JWS 標準）直接規定必須用 Base64URL，這就是為什麼新版 jwt 會這麼嚴格。
+
+		✅ 總結
+			Base64：適合 binary → text 轉換，但不適合直接塞 URL。
+			Base64URL：專門為「網路傳輸」設計，字元集安全、無 padding。
+			JWT 必須用 Base64URL，才能保證 token 在 HTTP header、URL、cookie 中安全傳輸。
