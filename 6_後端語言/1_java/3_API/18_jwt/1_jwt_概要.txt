@@ -108,9 +108,7 @@ JSON Web Token（JWT）
 				以及 padding 用的 =。
 			問題：
 				* + 和 / 在 URL、路徑、Query string 裡會有特殊意義：
-
 					+ 在 application/x-www-form-urlencoded 會被解釋成「空白」。
-
 					/ 在 URL 路徑中是分隔符。
 
 				* = 在 URL query、某些 cookie header 也容易被誤處理，甚至被砍掉。
