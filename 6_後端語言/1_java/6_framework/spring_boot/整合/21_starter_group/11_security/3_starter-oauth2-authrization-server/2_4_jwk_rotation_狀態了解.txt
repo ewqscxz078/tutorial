@@ -1,0 +1,166 @@
+ref ChatGPT
+
+假定狀態設定規劃定義
+	public enum JwkStatus { 
+		ACTIVE, PREV_ACTIVE, TRANSITION, INACTIVE, COMPROMISED
+	}
+
+	正常輪轉是 ACTIVE ⇄ TRANSITION / PREV_ACTIVE → INACTIVE，
+	事故輪轉是 任何狀態 → COMPROMISED（終止點）。
+
+狀態解釋
+	ACTIVE
+		* 唯一一把用來簽發 Token 的金鑰。
+		* Auth Server 在產生 JWT 時，只能用這把的 私鑰。
+		* /jwks 端點必須包含它的 公鑰，以便 Resource Server 驗證新產生的 Token。
+		* 系統設計上通常要求「只會有一把 ACTIVE」。
+	
+	PREV_ACTIVE
+		* 指的是「上一把曾經是 ACTIVE 的金鑰」。
+		* 用途：支援 舊 Token 還在有效期時的驗證。
+		* 這些 Token 是在舊金鑰 ACTIVE 時簽的，雖然 Auth Server 現在不再用它簽，但 Resource Server 還需要它的公鑰來驗證。
+		* /jwks 端點應該繼續發佈這把公鑰，直到舊 Token 過期 + 緩衝期過後，才可以移除。
+	
+	TRANSITION
+		* 「準備要成為下一個 ACTIVE 的新金鑰」。
+		* Auth Server 先產生一把新金鑰（status=TRANSITION），並把它的 公鑰發佈到 /jwks。
+		* 此時還是用舊的 ACTIVE 簽，但因為新公鑰已經在 JWKS，Resource Server 提前知道「有一把新 kid 存在」。
+		* 等你正式切換時，這把 TRANSITION 才會變成 ACTIVE。
+	
+	INACTIVE
+		* 「歷史紀錄，已經完全失效的金鑰」。
+		* 不會再用來簽 Token，也不再出現在 JWKS。
+		* 通常保留在資料庫只做稽核用途（例如追查一個 Token 的 kid，確認當時是哪把 key 簽的）。
+		* 可以設定 retention 週期（例如保留 6 個月）後刪掉。
+	
+	COMPROMISED
+		* 標記 key=COMPROMISED，立即從 JWKS 發佈集合移除該公鑰。
+		* 立刻切到健康的新 ACTIVE（若已有 TRANSITION 就升級；否則先快速產生一把）。
+		* 廣播快取失效：
+		* JWKS 回應加入 Cache-Control: no-store, must-revalidate（臨時事故期間）。
+		* 或改版 JWKS URL（例如加版本參數 /.well-known/jwks.json?v=20250910-1230），迫使 RS 重抓。
+		* 建立/同步 kid denylist（見下段 Resource Server）。
+
+		1) Resource Server 驗證策略
+			* 在 JwtDecoder 之外，加一層 kid denylist 檢查。命中即拒絕，不進入簽章驗證流程。
+			* 正常情況靠 JWKS 驗證；事故時，denylist 立刻生效，避免依賴遠端快取刷新時序。
+				@Bean
+				public JwtDecoder jwtDecoder(@Value("${jwks.uri}") String jwksUri) {
+					NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
+
+					OAuth2TokenValidator<Jwt> defaultValidators =
+						new DelegatingOAuth2TokenValidator<>(
+							new JwtTimestampValidator(),         // 時效
+							new JwtIssuerValidator("https://issuer.example") // iss 檢核
+						);
+
+					OAuth2TokenValidator<Jwt> kidDenyValidator = jwt -> {
+						String kid = (String) jwt.getHeaders().get("kid");
+						return denylistService.isDenied(kid)
+							? OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "compromised kid", null))
+							: OAuth2TokenValidatorResult.success();
+					};
+
+					decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(kidDenyValidator, defaultValidators));
+					return decoder;
+				}
+
+		2) JWKS 快取控制建議
+			平時：Cache-Control: max-age=300, must-revalidate（或視情況 60~600s）。
+			事故窗口：Cache-Control: no-store, must-revalidate + 變更 URL 版本，確保 RS 立即重抓。
+			某些 RS/SDK 會有內建 JWKS 快取，事故時把 TTL 調成極低或重建 Decoder 以強制刷新。
+
+		3) 已簽發 Token 怎麼辦？
+			正常輪轉：保留 PREV_ACTIVE 公鑰於 JWKS，讓舊 token 自然過期。
+			COMPROMISED：不允許；所有帶被盜 kid 的 token 一律拒絕（denylist）。
+			若你的生態支援 introspection / token revocation（例如非 JWT 的 Opaque token 或自建 jti 清單），可針對特定高風險範圍（某時段、某客戶）做 JTI 撤銷；但對純 JWT 無狀態驗證，最可靠是 kid denylist。
+
+		4) 補強措施
+			縮短 token TTL（事故期間先把 access_token TTL 壓到 1~5 分鐘）。
+			Audience/Scope 最小化：即使外洩也降低濫用面。
+			Private key 保護：Prod 建議 HSM/KMS，即便外洩也多半是公鑰集合或備份層面，而非私鑰本體。
+			審計：記錄 kid 的生命週期與操作人、時間戳，方便稽核。
+		
+		本機／測試如何演練 COMPROMISED
+			用你先前的本機「模擬輪轉」樣板再加兩個管理指令即可：
+				* POST /local/jwk-ops/compromise/{kid}
+					* 將該 kid 標記為 COMPROMISED
+					* 從發佈集合（JWKS）移除
+					* denylist += kid
+					* 調整 JWKS 快取標頭（或切換版本參數）
+				* POST /local/jwk-ops/denylist/{kid} / .../allowlist/{kid}
+					* 方便單元/整合測試驗證 RS 的拒絕行為。
+
+輪轉流程示意
+	1.現況：
+		* KeyA = ACTIVE
+		* JWKS = { KeyA 公鑰 }
+	2.新增新 key（KeyB）：
+		* KeyA = ACTIVE
+		* KeyB = TRANSITION
+		* JWKS = { KeyA 公鑰, KeyB 公鑰 }
+		Resource Server 提前知道 KeyB。
+	3.正式切換：
+		* KeyA → PREV_ACTIVE
+		* KeyB → ACTIVE
+		* JWKS = { KeyA 公鑰, KeyB 公鑰 }
+		* 新 Token 開始用 KeyB 簽，但舊 Token 還能靠 KeyA 驗證。
+	4.清理舊 key（等 KeyA 簽發的 Token 全過期 + 緩衝時間後）：
+		* KeyA → INACTIVE
+		* KeyB = ACTIVE
+		* JWKS = { KeyB 公鑰 }
+
+總結
+	* ACTIVE：唯一簽 Token。
+	* PREV_ACTIVE：舊簽章用，但還在發佈，支援驗證。
+	* TRANSITION：候選金鑰，先發佈公鑰，之後才升格成 ACTIVE。
+	* INACTIVE：完全退休，純稽核。
+	這四種狀態剛好把「新舊重疊」與「安全清理」的流程 cover 到。
+
+常見命名差異對照
+	| 我之前給的名字       | 有些文件/實作可能叫               | 概念說明                  |
+	| ---------------- | ---------------------------- | --------------------- |
+	| **ACTIVE**       | current / primary / signing  | 唯一能簽 Token 的 key      |
+	| **TRANSITION**   | next / candidate / staged    | 已產生並對外發佈公鑰，但尚未簽 Token |
+	| **PREV\_ACTIVE** | previous / old / grace       | 剛退役但還要留著，支援舊 Token 驗證 |
+	| **INACTIVE**     | retired / disabled / removed | 已完全停用，不再發佈，只留紀錄       |
+
+
+放進文件（例如 Markdown、PlantUML/Graphviz 轉圖）使用 ref https://ikalas.com/app/mermaid-live-editor
+	Mermaid 圖（循序輪轉）時間軸
+		sequenceDiagram
+			participant Client
+			participant AuthServer
+			participant ResourceServer
+
+			Note over AuthServer: 初始狀態<br/>KeyA = ACTIVE
+			AuthServer->>Client: 發 JWT (kid=KeyA)
+			Client->>ResourceServer: 攜帶 Token(kid=KeyA)
+			ResourceServer->>AuthServer: 抓 JWKS {KeyA}
+
+			Note over AuthServer: 引入 KeyB<br/>KeyB = TRANSITION
+			AuthServer->>Client: 發 JWT (kid=KeyA)
+			ResourceServer->>AuthServer: 抓 JWKS {KeyA, KeyB}
+
+			Note over AuthServer: 切換到 KeyB<br/>KeyB = ACTIVE, KeyA = PREV_ACTIVE
+			AuthServer->>Client: 發 JWT (kid=KeyB)
+			Client->>ResourceServer: Token(kid=KeyB)
+			ResourceServer->>AuthServer: 驗證 kid=KeyB<br/>或舊 Token kid=KeyA
+
+			Note over AuthServer: 舊 Token 全過期<br/>KeyA -> INACTIVE
+			ResourceServer->>AuthServer: JWKS {KeyB}
+
+
+	Mermaid 狀態圖（Key 狀態遷移） 狀態遷移圖
+		stateDiagram-v2
+			[*] --> ACTIVE : 新產生的金鑰並啟用
+			ACTIVE --> PREV_ACTIVE : 有新金鑰切換成 ACTIVE
+			PREV_ACTIVE --> INACTIVE : 舊 Token 全過期後清理
+			ACTIVE --> INACTIVE : 強制下架/作廢
+			ACTIVE --> TRANSITION : 提前發佈新金鑰（候選）
+			TRANSITION --> ACTIVE : 正式切換
+
+	這樣團隊文件裡就能直觀看到：
+		雙發佈（ACTIVE + PREV/TRANSITION 同時存在）
+		單簽章（只有 ACTIVE 拿來簽 Token）
+		寬限期（PREV_ACTIVE 保留到舊 Token 過期）

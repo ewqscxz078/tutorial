@@ -42,3 +42,199 @@
 	
 	5.取代部分 Lombok @Data 用例
 		* 如果只需要簡單的資料承載，record 比較乾淨，不需要額外的 annotation processor。
+
+
+格式
+	public record User(String id, String name, int age) {
+		// 你可以額外寫方法，但不能有非 static 欄位
+		public String displayName() {
+			return name + " (" + id + ")";
+		}
+	}
+
+特點：
+	自動生成：
+		* private final 欄位
+		* 建構子 (canonical constructor)
+		* Getter（用方法名直接取值，不是 getXxx()，而是 xxx()）
+		* equals()、hashCode()、toString()
+
+record vs Bean 差異表
+	| 特性                       | 傳統 Bean      | Lombok @Data | `record`         |
+	| ------------------------ | ------------ | ------------ | ---------------- |
+	| 欄位                       | mutable (可改) | 可選 `final`   | 預設 `final` (不可變) |
+	| Getter                   | `getXxx()`   | `getXxx()`   | `xxx()`          |
+	| Setter                   | 有/需手寫        | 自動生成         | ❌ 不允許            |
+	| equals/hashCode/toString | 需手寫/IDE      | 自動生成         | 自動生成             |
+	| 建構子                      | 需手寫          | 自動生成         | 自動生成 (canonical) |
+	| 不可變性                     | ❌            | 可選           | ✅ 預設             |
+	| 語法精簡                     | ❌            | ✅            | ✅（更內建）           |
+
+適合「只想存資料，不想改資料」的場合，像是：
+	DTO / API 回傳物件
+		Event / Message 物件
+		值物件 (Value Object, e.g. Point(x, y))
+
+
+推薦的使用方式
+	1) Spring Data JPA 投影 (Projection) 回傳 record
+		範例：class-based projection（JPQL constructor expression）
+			// DTO / Projection
+			public record UserSummary(Long id, String name) {}
+
+			public interface UserRepository extends JpaRepository<User, Long> {
+
+				@Query("""
+					   select new com.example.dto.UserSummary(u.id, u.name)
+					   from User u
+					   where u.status = :status
+					   """)
+				List<UserSummary> findAllByStatus(@Param("status") Status status);
+			}
+			select new ... 只要參數順序與 record 的 canonical constructor 一致即可。
+		
+		或：方法回傳型別直接是 record（部分情境）
+			public record UserNameOnly(String name) {}
+
+			List<UserNameOnly> findByAgeGreaterThan(int age);
+			
+			Spring Data 會嘗試用投影建立結果；若命名推斷不夠，用 @Query 最穩。
+	
+	2) REST DTO / API 邊界物件
+		// Request DTO
+		public record CreateUserCmd(String name, int age) {}
+
+		// Response DTO
+		public record UserView(Long id, String name, int age) {}
+		
+		* Jackson 2.12+ 原生支援 record，Spring Boot 2.6+ 幾乎開箱即用。
+
+		* 優點：不可變、可讀性高、無樣板程式碼。
+	
+	3) Domain Event / Message Payload
+		public record UserCreatedEvent(Long id, String name, Instant occurredAt) {}
+		* 串 Kafka / RabbitMQ 當 payload 很適合（穩定不可變）。
+	
+	4) 查詢模型（CQRS 讀側）
+		* 寫入側用 Entity；讀側用 record 搭配投影查詢，避免把整個 Entity 拉出來（尤其關聯很深時）。
+
+	Entity ↔ DTO/Record 的轉換
+		小型專案：手寫 mapping（建構 new Dto(e.getId(), e.getName(), ...)）。
+		中大型：用 MapStruct 產生 mapper；或直接用 JPQL select new 讓 DB 組裝好 DTO（效能更佳，少一次映射）。
+
+小心事項
+	* 懶加載欄位：用投影時盡量只選你要的欄位，避免觸發 N+1。
+	* record 的 equals/hashCode`：以所有 component 值為準。當成純資料載體 OK，不要把它誤用為 Entity 身分模型。
+	* 雙向關聯：DTO/record 裡通常不要放整個關聯物件（避免序列化遞迴）；只放 id 或必要的扁平欄位。
+
+總結
+	✅ Entity：維持傳統可用於 JPA 的 class（可 no-args、可 field access）。
+	✅ record：用在 DTO / Projection / Event / Value Object / 讀側。
+	✅ 效能與維護性：優先用 JPQL constructor expression 或 Spring Data 投影，直接回 record，減少不必要的物件映射與樣板程式碼。
+
+
+缺點
+	record 在欄位很多時，呼叫建構子會變得又長又醜；但有幾個實務招可以把「長參數列」的痛點降到很低：
+	
+	1) 一行一參數，讓可讀性回來
+		IDE 設定自動換行，呼叫端這樣寫可讀性其實不差：
+		var user = new User(
+			"u01",
+			"David",
+			30,
+			new Address("TW", "Taipei", "Xinyi Rd"),
+			List.of("admin", "staff"),
+			Instant.parse("2025-09-10T06:00:00Z")
+		);
+		每個參數都能清楚對齊與對應型別，PR review 也容易。
+	
+	2) 把欄位分群成更小的 Value Objects
+		過長通常代表概念混在一起。把相關欄位打包成小型 value object/子 record，讓頂層變短、語意更清楚：
+			public record Name(String first, String last) {}
+			public record Contact(String email, String phone) {}
+			public record Address(String country, String city, String street) {}
+
+			public record User(
+				String id,
+				Name name,
+				Contact contact,
+				Address address,
+				List<String> roles
+			) {}
+
+		頂層 User 參數立即縮短，邏輯聚合也更好維護（壞味道直接變設計改善）。
+
+	3) 用 JPQL constructor expression / 投影，讓「建構很長」發生在 Repository，不是在業務邏輯
+		當你是從 DB 查出 DTO 時，用 select new ... 直接回 record，呼叫端根本看不到長參數：
+			public record UserView(Long id, String name, String email, String city) {}
+
+			@Query("""
+			  select new com.example.api.UserView(u.id, u.name, u.email, u.address.city)
+			  from User u
+			  where u.status = :status
+			""")
+			List<UserView> findViewsByStatus(Status status);
+		
+		呼叫端拿到 UserView，完全沒有手動 new UserView(...) 的長串參數問題。
+	
+	4) 需要「具名參數」感覺？在外面包一層 Builder/Command，再轉成 record
+		record 天生沒有 builder，但你可以在邊界層（接收表單/JSON 的地方）用可變的 command/builder，
+		最後一次性轉為不可變 record：
+
+			// 可變的輸入物件（例如 MVC @RequestBody）
+			@Data
+			public class CreateUserCmd {
+			  private String id;
+			  private String firstName;
+			  private String lastName;
+			  private String email;
+			  private String phone;
+			  private String country;
+			  private String city;
+			  private String street;
+			}
+
+			// 不可變核心模型
+			public record User(
+				String id, Name name, Contact contact, Address address
+			){}
+
+			// 轉換（手寫或用 MapStruct）
+			static User toUser(CreateUserCmd c) {
+			  return new User(
+				  c.getId(),
+				  new Name(c.getFirstName(), c.getLastName()),
+				  new Contact(c.getEmail(), c.getPhone()),
+				  new Address(c.getCountry(), c.getCity(), c.getStreet())
+			  );
+			}
+		這樣呼叫端用「具名欄位」填資料，核心模型仍維持 record 的乾淨不可變。
+	
+	5) 靠 JSON / YAML 綁定來「避開手寫長建構子」
+		在 Spring 裡，record 跟 Jackson 很合：
+			* Controller 的 @RequestBody 直接綁到 record，你不用自己寫 new Xxx(...)。
+			* Spring Boot 的設定綁定（@ConfigurationProperties）也很適合用 record（Java 16+），照樣自動注入。
+	
+	6) 提供「複製 with 方法」讓改一兩個欄位時不必重列所有參數
+		record 沒內建 wither，但你可以自己加複製工廠，針對變動常見的欄位做輕量修改：
+			public record User(String id, String name, int age) {
+			  public User withAge(int newAge) { return new User(id, name, newAge); }
+			}
+		使用時簡短安全：user = user.withAge(31);
+		
+	7) 若很多欄位都「可選/選填」→ 考慮改回 Class + @Builder
+		當一個型別充滿 optional 欄位或組合爆炸，record 未必是最佳解。
+		這時候傳統 class + Lombok @Builder（或 Immutables/AutoValue 類似工具）會更舒服：
+			@Builder
+			public class ReportOptions {
+			  private String title;
+			  private String author;
+			  private Integer pageSize;
+			  private Boolean includeToc;
+			  // ...
+			}
+		這是「需求不明確、多可選欄位」的訊號，builder 會比 record 友善。
+	小結
+		* 參數長 ≠ 一定不好；關鍵在語意聚合與呼叫端是否需要手動列出。
+		* 優先用：分群成小值物件、Repository 端投影、在邊界層用可變輸入物件再轉 record。
+		* 若欄位大多可選或組合很多 → 用 Builder 模式的 class 才是王道。
