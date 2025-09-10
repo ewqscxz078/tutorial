@@ -1,0 +1,44 @@
+概要
+	Java 的 record 語法 是在 Java 14 (2020 年 3 月) 首次引入，作為 Preview Feature (預覽功能)，需要在編譯與執行時加上 --enable-preview 才能使用。
+
+	後續版本狀態：
+		Java 14、15：Preview (預覽功能)。
+		Java 16 (2021 年 3 月)：正式成為 標準功能 (GA)，不需要 --enable-preview。
+
+		所以：
+			👉 Java 16 起，record 可以正式使用。
+
+	record 的用途
+		record 是一種特殊的 資料類型 (data carrier)，主要用來定義只用來承載資料、
+		不需要太多樣板程式碼 (boilerplate) 的類別。
+
+適合的情境：
+	1.不可變資料 (Immutable Data)
+		* 預設欄位是 final，物件建立後無法修改。
+		* 適合用於傳遞資料、DTO (Data Transfer Object)、事件模型等。
+			public record User(String id, String name, int age) {}
+		
+	2.代替 JavaBean / DTO
+		* 不需要自己寫 getter、equals()、hashCode()、toString()。
+		* 編譯器自動產生。
+			User u = new User("u01", "David", 30);
+			System.out.println(u.name()); // getter 自動有
+
+	3.值對 (Value Objects)
+		* 適合用於只需承載值、不需要邏輯的方法，例如 (x, y)、Range(min, max)。
+	
+	4.Pattern Matching / Switch 整合
+		* 在 Java 17+ 搭配 Pattern Matching for switch 更直覺。
+			sealed interface Shape permits Circle, Rectangle {}
+			record Circle(double radius) implements Shape {}
+			record Rectangle(double width, double height) implements Shape {}
+
+			static double area(Shape shape) {
+				return switch (shape) {
+					case Circle c -> Math.PI * c.radius() * c.radius();
+					case Rectangle r -> r.width() * r.height();
+				};
+			}
+	
+	5.取代部分 Lombok @Data 用例
+		* 如果只需要簡單的資料承載，record 比較乾淨，不需要額外的 annotation processor。
