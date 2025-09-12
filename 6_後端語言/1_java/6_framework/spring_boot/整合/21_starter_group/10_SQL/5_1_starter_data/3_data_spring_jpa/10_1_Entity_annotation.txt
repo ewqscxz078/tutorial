@@ -44,6 +44,11 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 		precision 和 scale：
 			用於指定數值類型屬性的精度和小數位數。
 
+	@Basic(fetch = FetchType.LAZY)
+		* 對大型欄位（尤其是密鑰）常見做法：只有用到時才抓，避免每次 query 都把整個密文載回。
+		* Hibernate 會幫你用 bytecode enhancement 或者 secondary select 延遲載入。
+		* ⚠️ 前提是你有啟用 Hibernate 的 lazy load enhancement，否則有時會被忽略。
+
 	常見資料庫欄位轉換
 		db varchar/char 轉 java String
 			@Column(name="db_column_name", length = ${資料庫.table.column_size})
@@ -58,6 +63,16 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 			@Temporal(TemporalType.TIMESTAMP)
 			@Column(name = "db_column_name")
 				JPA 會根據資料庫類型自動選擇適當的對應策略，你不需要直接指定資料庫中列的類型
+
+		db VARBINARY(MAX)
+			@Lob
+				* 告訴 JPA 這個欄位是大型物件（binary LOB）。
+				* 在 Hibernate + MSSQL 上，會把 byte[] → VARBINARY(MAX) 對應正確。
+				* 如果你沒加 @Lob，單純的 byte[] 預設會變成 VARBINARY(255)（長度有限制）。
+			
+			如果你完全不想依賴 @Lob，也可以直接指定：
+				@Column(name = "private_pkcs8", columnDefinition = "VARBINARY(MAX)")
+				private byte[] privatePkcs8;			
 
 @Transient
 	指定某 entity 欄位不轉換到資料庫
@@ -77,4 +92,5 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 
 @JoinColumn
 	設定關聯表之間的外鍵映射。在多對一或一對多關係中，用於指定關聯的外鍵欄位。
+
 

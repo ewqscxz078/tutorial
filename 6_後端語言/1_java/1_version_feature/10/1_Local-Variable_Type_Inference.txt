@@ -1,3 +1,50 @@
 局部變量類型推斷（Local-Variable Type Inference）：
 	使用var關鍵字，允許編譯器推斷局部變量的類型。
 		var list = new ArrayList<String>();
+
+
+var 只能用在 區域變數 的情境，具體限制：
+	1.區域變數宣告
+		var list = new ArrayList<String>();  // list 被推斷為 ArrayList<String>
+	
+	2.for-each loop
+		for (var entry : map.entrySet()) {
+			System.out.println(entry.getKey() + "=" + entry.getValue());
+		}
+		
+		對比傳統 for loop
+		for (var i = 0; i < 10; i++) {
+			System.out.println(i);
+		}
+
+⚠️ 不能用的地方：
+	* 方法參數
+	* 方法回傳型別
+	* 成員變數 (class fields)
+	* catch 區塊的 exception (Java 11+ 才加了 var for lambda parameters，但一般不建議)
+
+
+📌 好處
+	1.減少重複程式碼 (boilerplate)
+		Map<String, List<Integer>> map = new HashMap<String, List<Integer>>();
+		// 用 var
+		var map = new HashMap<String, List<Integer>>();
+
+	2.提升可讀性（在泛型很長時）
+		型別資訊通常在右邊已經很清楚，左邊就不用再寫一次。
+	
+	3.搭配建構式/泛型推斷方便
+		var stream = list.stream().filter(x -> x > 10).map(String::valueOf);
+
+📌 需要注意的地方
+	不是動態型別：
+		var 在編譯時就已經確定型別，跟 JavaScript / Python 的動態型別不同。
+			var x = 10;   // int
+			x = "abc";    // 編譯錯誤
+	可讀性爭議：
+		若右邊推斷型別不明顯，會讓程式碼更難懂。
+			var data = getData(); // data 型別是啥？要去查方法才知道
+
+✅ 結論：
+	Java 10 引入 var，用於 區域變數型別推斷。
+	好處在於減少重複、提升可讀性（特別是泛型），但要小心不要過度使用，否則會降低程式碼清晰度。

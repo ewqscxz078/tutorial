@@ -90,6 +90,11 @@ ref ChatGPT
 					* 調整 JWKS 快取標頭（或切換版本參數）
 				* POST /local/jwk-ops/denylist/{kid} / .../allowlist/{kid}
 					* 方便單元/整合測試驗證 RS 的拒絕行為。
+		🔑 總結：
+			正規 rotation 應該保證永遠至少有 2 把金鑰（ACTIVE + TRANSITION/NEXT）。
+			如果沒有事先準備，ACTIVE+PREV_ACTIVE 一起撤銷，就會陷入「沒有可簽發的金鑰」的 downtime。
+			所以 外洩情境的防呆點就是：永遠保持一把未曝光的新金鑰隨時待命。
+
 
 輪轉流程示意
 	1.現況：

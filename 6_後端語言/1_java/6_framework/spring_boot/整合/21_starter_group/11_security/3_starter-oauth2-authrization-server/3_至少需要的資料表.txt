@@ -4,6 +4,7 @@ ref ChatGPT
 2.建議持久化 oauth2_registered_client 的資料
 
 最少需要的資料表
+	
 	1.oauth2_registered_client（必要）
 		* 放 client 的靜態設定：client_id、client_secret（或其它認證方式）、授權模式（client_credentials）、scope、token/ID Token 的設定（存活時間、是否使用自含式 JWT、簽章演算法等）。
 
@@ -15,3 +16,13 @@ ref ChatGPT
 		* 以使用者同意為核心的情境才會用到；client_credentials 不會用。
 	
 	4.key rotation 排程用的 shedlock table 確保一個排程執行
+	
+	5.oauth2_auth_server jwk rotation 用
+		jwk_key *
+		jwk_denylist *
+		jwk_rotation_policy * ref 10_3_資料表_jwk_rotation
+		jwk_rotation_event * ref 10_3_資料表_jwk_rotation
+		總結建議
+			* 最小可行：jwk_key + jwk_denylist（KID 與 JTI 兩種型態都支援）。
+			* 需要熱調策略/合規審計：再加 jwk_rotation_policy、jwk_rotation_event。
+			* 分散式一致的 JWKS/ETag：傾向放 分散式快取（而非 DB 表）。

@@ -40,64 +40,117 @@ JWK rotation 資料模型與 MSSQL DDL 範本。設計重點：
 	* 以「每個 issuer、purpose(sig/enc)、alg 同時最多一把 ACTIVE」為原則（靠 filtered unique index 限制）。
 	* JWKS 對外僅曝露「ACTIVE + GRACE」且落在有效時間窗的 public JWK。
 
-	最小可行表：jwk_key
-		CREATE TABLE dbo.jwk_key (
-			id                  BIGINT IDENTITY(1,1) PRIMARY KEY,
-			issuer              NVARCHAR(200) NOT NULL,        -- 例： https://auth.example.com
-			kid                 NVARCHAR(128) NOT NULL,        -- JWK Key ID（對外）
-			purpose             NVARCHAR(8)  NOT NULL,         -- 'sig' or 'enc'
-			kty                 NVARCHAR(16) NOT NULL,         -- 'RSA','EC','OKP'...
-			alg                 NVARCHAR(32) NOT NULL,         -- 'RS256','ES256','EdDSA'...
-			key_bits            INT NULL,                      -- RSA 長度
-			curve               NVARCHAR(32) NULL,             -- EC 曲線 P-256 等
-			state               TINYINT NOT NULL,              -- 0=INACTIVE, 1=ACTIVE, 2=GRACE, 9=REVOKED
-			public_jwk          NVARCHAR(MAX) NOT NULL,        -- 對外公開的 JWK（僅公鑰部分）
-			public_pem          NVARCHAR(MAX) NULL,            -- (選) 公鑰 PEM
-			private_pkcs8       VARBINARY(MAX) NULL,           -- (選) 私鑰 PKCS#8（二進位，建議應用層加密/封裝）
-			private_kms_ref     NVARCHAR(256) NULL,            -- (選) 若用 HSM/KMS，存放 KeyId/別名
-			thumbprint_sha256   VARBINARY(32) NULL,            -- kid 以外需求的指紋
-			not_before          DATETIME2(3) NULL,             -- 此 key 可用起始（簽章/驗章）
-			not_after           DATETIME2(3) NULL,             -- 此 key 停用時間（通常保留驗章期）
-			activated_at        DATETIME2(3) NULL,
-			grace_until         DATETIME2(3) NULL,             -- GRACE（僅驗章）到期時間
-			disabled_at         DATETIME2(3) NULL,
-			created_at          DATETIME2(3) NOT NULL CONSTRAINT DF_jwk_key_created DEFAULT SYSUTCDATETIME(),
-			last_used_at        DATETIME2(3) NULL,             -- 最近用來簽章的時間
-			rotated_from_id     BIGINT NULL,                   -- 關聯上一把
-			rotated_to_id       BIGINT NULL,                   -- 關聯下一把
-			comment             NVARCHAR(4000) NULL
-		);
+	jwk_key(MSSQL DDL)
+		最小可行表
+			CREATE TABLE dbo.oauth_jwk (
+			  kid         VARCHAR(64) PRIMARY KEY,
+			  jwk_json    TEXT NOT NULL,         -- 存 JWK (含私鑰部分)；若用 Vault/KMS，這裡可只存引用
+			  status      VARCHAR(16) NOT NULL,  -- 'ACTIVE' | 'STAGED' | 'RETIRED'
+			  created_at  TIMESTAMP NOT NULL,
+			  not_before  TIMESTAMP NULL,
+			  not_after   TIMESTAMP NULL
+			);
 
-		-- kid 在同一 issuer 需唯一
-		CREATE UNIQUE INDEX UX_jwk_key_issuer_kid
-		ON dbo.jwk_key(issuer, kid);
+		中階版
+			CREATE TABLE dbo.jwk_key (
+			  id                BIGINT IDENTITY(1,1) PRIMARY KEY,
+			  issuer            NVARCHAR(200) NOT NULL,         -- e.g. https://auth.example.com
+			  kid               NVARCHAR(128) NOT NULL,         -- 對外唯一 Key ID
+			  kty               NVARCHAR(16)  NOT NULL,         -- 'RSA','EC','OKP'...
+			  alg               NVARCHAR(32)  NOT NULL,         -- 'RS256','ES256','EdDSA'...
+			  state             TINYINT       NOT NULL,         -- 0=INACTIVE, 1=ACTIVE, 2=GRACE, 9=REVOKED
+			  public_jwk        NVARCHAR(MAX) NOT NULL,         -- 僅公鑰部分 (供 JWKS)
+			  -- 私鑰託管二選一：應用層加密後的 PKCS#8 或 HSM/KMS 參考
+			  private_pkcs8     VARBINARY(MAX) NULL,            -- 存密文（建議 AES-GCM 封裝）
+			  //private_key_ref   NVARCHAR(256)  NULL,          -- 未來有 HSM/KMS/Vault 來源時用
+				資料來源範例:
+					pkcs11:token=HSM1;slot-id=1;object=auth-rsa;type=private（HSM/PKCS#11）
+					aws-kms:arn:aws:kms:ap-northeast-1:123456789012:key/abcd-...
+					gcp-kms:projects/p/locations/l/keyRings/r/cryptoKeys/k/cryptoKeyVersions/1
+					azure-kv:https://myvault.vault.azure.net/keys/jwk-signing/abcd1234
+					vault:kv/auth/jwk/signing?version=3
 
-		-- 查詢對外 JWKS 常用條件（issuer/state/purpose）
-		CREATE INDEX IX_jwk_key_issuer_state_purpose
-		ON dbo.jwk_key(issuer, state, purpose) INCLUDE (kid, alg, not_before, not_after, grace_until);
+			  not_before        DATETIME2(3)   NULL,
+			  not_after         DATETIME2(3)   NULL,
+			  activated_at      DATETIME2(3)   NULL,
+			  grace_until       DATETIME2(3)   NULL,
+			  disabled_at       DATETIME2(3)   NULL,
+			  created_at        DATETIME2(3)   NOT NULL CONSTRAINT DF_jwk_created DEFAULT SYSUTCDATETIME(),
+			  comment           NVARCHAR(1000) NULL
+			);
 
-		-- 強制「同一 issuer+purpose+alg 同時最多一把 ACTIVE」
-		CREATE UNIQUE INDEX UX_jwk_key_single_active_per_alg
-		ON dbo.jwk_key(issuer, purpose, alg)
-		WHERE state = 1;  -- 1=ACTIVE
+			-- 唯一鍵：同 issuer 下 kid 唯一
+			CREATE UNIQUE INDEX UX_jwk_issuer_kid ON dbo.jwk_key(issuer, kid);
 
-		-- （選）限制 GRACE 也唯一（多數情境不強制）
-		-- CREATE UNIQUE INDEX UX_jwk_key_single_grace_per_alg
-		-- ON dbo.jwk_key(issuer, purpose, alg)
-		-- WHERE state = 2;  -- 2=GRACE
+			-- 快查目前可對外發布的鍵（ACTIVE/GRACE 內、尚未 not_after）：
+			CREATE INDEX IX_jwk_publishable
+			ON dbo.jwk_key(issuer, state, not_after)
+			INCLUDE (kid, public_jwk);
 
-		-- 外鍵（自連結）
-		ALTER TABLE dbo.jwk_key
-		ADD CONSTRAINT FK_jwk_key_rotated_from
-		FOREIGN KEY(rotated_from_id) REFERENCES dbo.jwk_key(id);
+			-- 常用查詢：目前 ACTIVE 的鍵
+			CREATE INDEX IX_jwk_active ON dbo.jwk_key(issuer) WHERE state = 1;
 
-		ALTER TABLE dbo.jwk_key
-		ADD CONSTRAINT FK_jwk_key_rotated_to
-		FOREIGN KEY(rotated_to_id) REFERENCES dbo.jwk_key(id);
+			-- （選擇性）避免同 issuer 同時多把 ACTIVE：
+			-- 若你希望「同一 issuer 僅允許單一 ACTIVE」，可用 filtered unique + computed column（需要額外欄位）
 
-		-- 基本狀態檢核
-		ALTER TABLE dbo.jwk_key ADD CONSTRAINT CK_jwk_key_state
-		CHECK (state IN (0,1,2,9));
+		進階版
+			CREATE TABLE dbo.jwk_key (
+				id                  BIGINT IDENTITY(1,1) PRIMARY KEY,
+				issuer              NVARCHAR(200) NOT NULL,        -- 例： https://auth.example.com
+				kid                 NVARCHAR(128) NOT NULL,        -- JWK Key ID（對外）
+				purpose             NVARCHAR(8)  NOT NULL,         -- 'sig' or 'enc'，一般jwt都是 sig；若有特定需求是 JWE 則就是用 enc
+				kty                 NVARCHAR(16) NOT NULL,         -- 'RSA','EC','OKP'...
+				alg                 NVARCHAR(32) NOT NULL,         -- 'RS256','ES256','EdDSA'...
+				key_bits            INT NULL,                      -- RSA 長度
+				curve               NVARCHAR(32) NULL,             -- EC 曲線 P-256 等
+				state               TINYINT NOT NULL,              -- 0=INACTIVE, 1=ACTIVE, 2=GRACE, 9=REVOKED
+				public_jwk          NVARCHAR(MAX) NOT NULL,        -- 對外公開的 JWK（僅公鑰部分）
+				public_pem          NVARCHAR(MAX) NULL,            -- (選) 公鑰 PEM
+				private_pkcs8       VARBINARY(MAX) NULL,           -- (選) 私鑰 PKCS#8（二進位，建議應用層加密/封裝）
+				private_kms_ref     NVARCHAR(256) NULL,            -- (選) 若用 HSM/KMS，存放 KeyId/別名
+				thumbprint_sha256   VARBINARY(32) NULL,            -- kid 以外需求的指紋
+				not_before          DATETIME2(3) NULL,             -- 此 key 可用起始（簽章/驗章）
+				not_after           DATETIME2(3) NULL,             -- 此 key 停用時間（通常保留驗章期）
+				activated_at        DATETIME2(3) NULL,
+				grace_until         DATETIME2(3) NULL,             -- GRACE（僅驗章）到期時間
+				disabled_at         DATETIME2(3) NULL,
+				created_at          DATETIME2(3) NOT NULL CONSTRAINT DF_jwk_key_created DEFAULT SYSUTCDATETIME(),
+				last_used_at        DATETIME2(3) NULL,             -- 最近用來簽章的時間
+				rotated_from_id     BIGINT NULL,                   -- 關聯上一把
+				rotated_to_id       BIGINT NULL,                   -- 關聯下一把
+				comment             NVARCHAR(4000) NULL
+			);
+
+			-- kid 在同一 issuer 需唯一
+			CREATE UNIQUE INDEX UX_jwk_key_issuer_kid
+			ON dbo.jwk_key(issuer, kid);
+
+			-- 查詢對外 JWKS 常用條件（issuer/state/purpose）
+			CREATE INDEX IX_jwk_key_issuer_state_purpose
+			ON dbo.jwk_key(issuer, state, purpose) INCLUDE (kid, alg, not_before, not_after, grace_until);
+
+			-- 強制「同一 issuer+purpose+alg 同時最多一把 ACTIVE」
+			CREATE UNIQUE INDEX UX_jwk_key_single_active_per_alg
+			ON dbo.jwk_key(issuer, purpose, alg)
+			WHERE state = 1;  -- 1=ACTIVE
+
+			-- （選）限制 GRACE 也唯一（多數情境不強制）
+			-- CREATE UNIQUE INDEX UX_jwk_key_single_grace_per_alg
+			-- ON dbo.jwk_key(issuer, purpose, alg)
+			-- WHERE state = 2;  -- 2=GRACE
+
+			-- 外鍵（自連結）
+			ALTER TABLE dbo.jwk_key
+			ADD CONSTRAINT FK_jwk_key_rotated_from
+			FOREIGN KEY(rotated_from_id) REFERENCES dbo.jwk_key(id);
+
+			ALTER TABLE dbo.jwk_key
+			ADD CONSTRAINT FK_jwk_key_rotated_to
+			FOREIGN KEY(rotated_to_id) REFERENCES dbo.jwk_key(id);
+
+			-- 基本狀態檢核
+			ALTER TABLE dbo.jwk_key ADD CONSTRAINT CK_jwk_key_state
+			CHECK (state IN (0,1,2,9));
 
 	建議：private_pkcs8 只在本地測試/無 KMS 時使用；正式區以 private_kms_ref 連到 HSM/KMS。應用程式握有解封/簽章能力，但 DB 不直接保存明文私鑰。
 

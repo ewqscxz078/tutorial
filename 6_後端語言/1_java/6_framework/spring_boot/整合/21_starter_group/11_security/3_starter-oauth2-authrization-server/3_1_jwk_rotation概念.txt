@@ -44,7 +44,7 @@ JWK 旋轉（rotation）的核心是「新舊金鑰並存一段時間」：
 			RETIRED（不再發佈，等清除）
 			COMPROMISED（撤銷）。
 
-		資料表（或改用 Vault/KMS）
+		簡易資料表（或改用 Vault/KMS）
 		CREATE TABLE oauth_jwk (
 		  kid         VARCHAR(64) PRIMARY KEY,
 		  jwk_json    TEXT NOT NULL,         -- 存 JWK (含私鑰部分)；若用 Vault/KMS，這裡可只存引用
