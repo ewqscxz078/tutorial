@@ -1,0 +1,51 @@
+旋轉策略表：oauth2aj003 : jwk_denylist 
+	1. 最簡單版：只存 kid
+		CREATE TABLE jwk_denylist (
+			id          BIGINT IDENTITY(1,1) PRIMARY KEY,
+			issuer      NVARCHAR(200) NOT NULL,       -- 哪個 Auth Server 的金鑰
+			kid         NVARCHAR(128) NOT NULL,       -- JWK 的 Key ID
+			reason      NVARCHAR(200) NULL,           -- 封鎖原因 (compromised, retired, manual)
+			created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+			expires_at  DATETIME2 NULL                -- 可選，封鎖期限 (e.g. grace 過後自動清掉)
+		);
+		CREATE INDEX IX_jwk_denylist_issuer_kid ON jwk_denylist(issuer, kid);
+
+		👉 這個設計就是對應你 inMemory repo 的「封鎖 kid」版本。
+
+	2. 擴充版：封鎖 Token (jti)
+		如果你要精細到 個別 JWT Token 被撤銷（例如 user logout、token 黑名單），需要加上 token 的 jti（JWT ID）。
+		CREATE TABLE token_denylist (
+			id          BIGINT IDENTITY(1,1) PRIMARY KEY,
+			issuer      NVARCHAR(200) NOT NULL,       -- 哪個 Auth Server
+			jti         NVARCHAR(128) NOT NULL,       -- JWT 的唯一識別 (token 裡的 jti)
+			subject     NVARCHAR(200) NULL,           -- 可選，用來追查 (sub claim)
+			reason      NVARCHAR(200) NULL,           -- 封鎖原因
+			created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+			expires_at  DATETIME2 NOT NULL
+		);
+		CREATE INDEX IX_token_denylist_issuer_jti ON token_denylist(issuer, jti);
+
+		👉 這會被用在 logout / refresh token revoke 的場景。
+	
+	3. 混合版：同時支援 kid + jti
+		有些系統會放一起，因為有時候要封鎖某把金鑰，有時候要封鎖單一 token。
+		CREATE TABLE jwk_denylist (
+			id          BIGINT IDENTITY(1,1) PRIMARY KEY,
+			issuer      NVARCHAR(200) NOT NULL,
+			kid         NVARCHAR(128) NULL,           -- 封鎖某把金鑰時填
+			jti         NVARCHAR(128) NULL,           -- 封鎖某個 token 時填
+			subject     NVARCHAR(200) NULL,			  -- 封鎖某個 token : 可選，用來追查 (sub claim)
+			reason      NVARCHAR(200) NULL,			  -- 封鎖原因 (compromised, retired, manual)
+			created_at  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+			expires_at  DATETIME2 NULL
+		);
+		CREATE INDEX IX_jwk_denylist_issuer_kid ON jwk_denylist(issuer, kid) WHERE kid IS NOT NULL;
+		CREATE INDEX IX_jwk_denylist_issuer_jti ON jwk_denylist(issuer, jti) WHERE jti IS NOT NULL;
+
+📌 建議
+
+	如果你目前的 inMemory repo 只是針對 JWK Key rotation 時，封鎖某把金鑰 (kid) → 選 方案 1。
+
+	如果你還要支援 單一 Token 撤銷 (logout, refresh token revoke) → 要 方案 2 或 方案 3。
+
+	欄位 expires_at 很重要，因為 token 本身有 TTL，過期後黑名單可以自動清理，避免表太大。
