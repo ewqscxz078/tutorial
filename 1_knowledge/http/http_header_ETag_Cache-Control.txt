@@ -13,11 +13,33 @@ ref chatGPT
 		✅ 節省頻寬、加快響應，但還是會有一次 HTTP 往返。
 
 2.Http header : Cache-Control
-	* 本質：告訴客戶端「你可以在本地保存多久，不用問我」。
-	* 例如：
-		Cache-Control: max-age=300
-		代表「這份回應 5 分鐘內直接用快取，不要打 API」。
-	* 過了 5 分鐘，客戶端才會去重新驗證（通常帶 If-None-Match 或 If-Modified-Since）。
+	1.Http header : Cache-Control 之 max-age
+		* 本質：告訴客戶端「你可以在本地保存多久，不用問我」。
+		* 例如：
+			Cache-Control: max-age=300
+			代表「這份回應 5 分鐘內直接用快取，不要打 API」。
+		* 過了 5 分鐘，客戶端才會去重新驗證（通常帶 If-None-Match 或 If-Modified-Since）。
+
+	2.Http header : Cache-Control 之 must-revalidate
+		must-revalidate = 到期就一定要回源驗證，不能偷用過期快取。
+
+		* 沒過期時：照 max-age 用快取就好。
+
+		* 一過期（stale）：瀏覽器/代理必須送條件式請求（帶 If-None-Match/If-Modified-Since）去原站確認。
+
+			* 若內容沒變 → 回 304 Not Modified，省流量但已驗證。
+
+			* 若無法連到原站/出錯 → 不得直接回舊快取（除非你另設 stale-if-error）。
+
+		* 避免代理在離線或錯誤時把過期的公鑰繼續端給下游
+
+	3.Http header : Cache-Control 之 cachePrivate
+		
+		* 代表只允許終端（瀏覽器）快取，CDN/反向代理不會存。
+			如果你希望 CDN 也快取 JWKS（通常是可以的，因為 JWKS 是公開資料），可改用 .cachePublic()，並視需要加 s-maxage。
+		
+		* 如果你很在意可用性，願意在源站短暫失效時容忍舊內容，可額外加 stale-if-error=60（或更長），但這會降低撤銷的即時性—安全面要自行取捨。
+
 
 
 3.搭配使用

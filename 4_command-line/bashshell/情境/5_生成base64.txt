@@ -1,0 +1,23 @@
+ref ChatGPT
+
+產生 AES-256 key
+
+	Linux / macOS（OpenSSL）
+		# 產生 32 bytes (= 256 bits)，並以 base64 輸出
+		openssl rand -base64 32
+		# 範例輸出：w4H2r9k3vR0mX8Q1s9K2jB4c5t7yZ0pL3a1bC2dE4f=
+	
+	Linux / macOS（xxd + /dev/urandom）
+		head -c 32 /dev/urandom | base64
+	
+	Windows PowerShell
+		# 產生 32 bytes，輸出 base64
+		[Convert]::ToBase64String((New-Object Byte[] 32 | %{ (Get-Random -Minimum 0 -Maximum 256) } ))
+
+生成並立刻以 curl 上傳（示意）
+	請只在受控內網和加密連線下使用，下例僅示意管理 API 的 payload：
+		KEY=$(openssl rand -base64 32)
+		curl -X POST https://admin:8443/crypto/keys \
+		  -H "Authorization: Bearer <admin-token>" \
+		  -H "Content-Type: application/json" \
+		  -d "{\"kid\":\"v2\",\"base64Key\":\"${KEY}\"}"

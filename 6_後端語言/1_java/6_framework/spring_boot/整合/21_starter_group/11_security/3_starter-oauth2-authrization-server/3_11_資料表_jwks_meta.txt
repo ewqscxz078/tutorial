@@ -1,0 +1,11 @@
+jwks cache meta：oauth2aj005 : jwks_meta 
+	CREATE TABLE jwks_meta (
+	  issuer         NVARCHAR(200) NOT NULL,
+	  purpose        VARCHAR(8)    NOT NULL,         -- 'SIG' | 'ENC'
+	  alg            NVARCHAR(32)  NOT NULL DEFAULT '__ANY__',
+      jwks_hash      VARCHAR(100)  NULL;             -- 例: 'sha256:AbCd...'(base64url, 無 '=')
+	  revision       BIGINT        NOT NULL DEFAULT 1,
+	  last_modified  DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
+	  key_count      INT           NOT NULL DEFAULT 0,
+	  CONSTRAINT pk_jwks_meta PRIMARY KEY (issuer, purpose, alg)
+	);
