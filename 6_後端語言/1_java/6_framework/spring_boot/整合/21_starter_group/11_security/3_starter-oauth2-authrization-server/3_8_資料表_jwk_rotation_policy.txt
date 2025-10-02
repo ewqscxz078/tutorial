@@ -1,0 +1,170 @@
+
+
+旋轉策略表：oauth2aj001 : jwk_rotation_policy
+	v1
+		CREATE TABLE dbo.jwk_rotation_policy (
+			id                      INT IDENTITY(1,1) PRIMARY KEY,
+			issuer                  NVARCHAR(200) NOT NULL,     -- e.g. https://auth.example.com
+			purpose                 NVARCHAR(8)  NOT NULL,      -- 'sig' or 'enc'
+			alg                     NVARCHAR(32) NOT NULL,      -- 'RS256','ES256','EdDSA'...
+			key_bits                INT NULL,                   -- RSA 長度
+			curve                   NVARCHAR(32) NULL,          -- EC 曲線
+			rotate_every_days       INT NOT NULL,               -- 幾天換鑰
+			overlap_minutes         INT NOT NULL,               -- ACTIVE→GRACE 重疊多久（驗章容忍期）
+			not_before_skew_secs    INT NOT NULL DEFAULT 0,     -- NBF 時鐘偏移
+			max_token_ttl_minutes   INT NOT NULL,               -- 系統核發之最大 token TTL（便於計算 GRACE）
+			allow_parallel_active   BIT NOT NULL DEFAULT 0,     -- 是否允許同演算法同時多把 ACTIVE（通常否）
+			enabled                 BIT NOT NULL DEFAULT 1,
+			comment                 NVARCHAR(4000) NULL
+		);
+		CREATE UNIQUE INDEX UX_rotation_policy_key
+		ON dbo.jwk_rotation_policy(issuer, purpose, alg);
+
+	v2
+		CREATE TABLE dbo.jwk_rotation_policy (
+		  id                   BIGINT IDENTITY(1,1) PRIMARY KEY,
+		  issuer               NVARCHAR(200) NOT NULL,       -- e.g. https://auth.example.com
+		  purpose              NVARCHAR(8)   NOT NULL,       -- 'sig' or 'enc'
+		  kty                  NVARCHAR(16)  NOT NULL,       -- 'RSA','EC','OKP'...
+		  alg                  NVARCHAR(32)  NOT NULL,       -- 'RS256','ES256','EdDSA'...
+		  rotation_interval_days   INT        NOT NULL,      -- 多久輪一次（例：30）
+		  transition_days          INT        NOT NULL,      -- ACTIVE -> PREV_ACTIVE 的過渡期（例：7）
+		  prev_active_days         INT        NOT NULL,      -- 保留上一把 ACTIVE 的天數（例：7）
+		  overlap_grace_days       INT        NOT NULL,      -- 舊 token 容忍期（資源端驗證 grace）（例：1~3）
+		  auto_rotate              BIT        NOT NULL,      -- 是否自動輪轉
+		  max_keys_retained        INT        NOT NULL,      -- 最多保留幾把歷史鑰（含非發佈）		  
+		  last_rotated_at          DATETIME2  NULL,
+		  next_rotate_at           DATETIME2  NULL,
+		  created_at               DATETIME2  NOT NULL DEFAULT SYSUTCDATETIME(),
+		  updated_at               DATETIME2  NOT NULL DEFAULT SYSUTCDATETIME()
+		);
+
+		CREATE UNIQUE INDEX UX_jwk_rotation_policy_issuer_purpose_alg
+		  ON dbo.jwk_rotation_policy(issuer, purpose, alg);
+
+		CREATE INDEX IX_jwk_rotation_policy_next_due
+		  ON dbo.jwk_rotation_policy(next_rotate_at) WHERE auto_rotate = 1;
+
+	v3 : 
+		MSSQL sample ddl
+			CREATE TABLE dbo.jwk_rotation_policy (
+			  id                     BIGINT IDENTITY(1,1) PRIMARY KEY,
+			  issuer                 NVARCHAR(200) NOT NULL,         -- e.g. https://auth.example.com
+			  purpose                NVARCHAR(8)   NOT NULL,         -- 'sig' | 'enc'
+			  kty                    NVARCHAR(16)  NOT NULL,         -- 'RSA' | 'EC' | 'OKP' ...
+			  alg                    NVARCHAR(32)  NOT NULL,         -- 'RS256' | 'ES256' | 'EdDSA' ...
+
+			  -- 策略時間：存 ISO-8601 Duration 字串，如 PT30M / PT2H / P1D
+			  rotation_interval_iso  NVARCHAR(40)  NOT NULL CONSTRAINT DF_jrp_rotation_interval_iso DEFAULT N'P1D',
+			  transition_iso         NVARCHAR(40)  NOT NULL CONSTRAINT DF_jrp_transition_iso        DEFAULT N'P7D',
+			  prev_active_iso        NVARCHAR(40)  NOT NULL CONSTRAINT DF_jrp_prev_active_iso       DEFAULT N'P7D',
+			  overlap_grace_iso      NVARCHAR(40)  NOT NULL CONSTRAINT DF_jrp_overlap_grace_iso     DEFAULT N'PT48H',
+
+			  auto_rotate            BIT           NOT NULL CONSTRAINT DF_jrp_auto_rotate           DEFAULT (1),
+			  max_keys_retained      INT           NOT NULL CONSTRAINT DF_jrp_max_keys_retained     DEFAULT (6),
+
+			  inactive_retention_iso NVARCHAR(40)  NOT NULL CONSTRAINT DF_jrp_inactive_retention_iso DEFAULT N'P90D',
+			  wipe_private_key_only  BIT           NOT NULL CONSTRAINT DF_jrp_wipe_private_key_only  DEFAULT (1),
+
+			  last_rotated_at        DATETIME2     NULL,
+			  next_rotate_at         DATETIME2     NULL,
+
+			  created_at             DATETIME2     NOT NULL CONSTRAINT DF_jrp_created_at            DEFAULT SYSUTCDATETIME(),
+			  updated_at             DATETIME2     NOT NULL CONSTRAINT DF_jrp_updated_at            DEFAULT SYSUTCDATETIME(),
+
+			  -- 唯一鍵：同 issuer/purpose/alg 僅一條策略
+			  CONSTRAINT UX_jrp_issuer_purpose_alg UNIQUE (issuer, purpose, alg),
+
+			  -- 基本檢核
+			  CONSTRAINT CK_jrp_purpose CHECK (purpose IN (N'sig', N'enc')),
+			  CONSTRAINT CK_jrp_rotation_interval_iso CHECK (rotation_interval_iso LIKE N'P%'),
+			  CONSTRAINT CK_jrp_transition_iso        CHECK (transition_iso        LIKE N'P%'),
+			  CONSTRAINT CK_jrp_prev_active_iso       CHECK (prev_active_iso       LIKE N'P%'),
+			  CONSTRAINT CK_jrp_overlap_grace_iso     CHECK (overlap_grace_iso     LIKE N'P%')
+			);
+			GO
+
+			-- 到期自動輪轉常用查詢：過濾索引（僅 auto_rotate=1 且有時間者）
+			CREATE INDEX IX_jrp_next_due
+			  ON dbo.jwk_rotation_policy (next_rotate_at)
+			  WHERE auto_rotate = 1 AND next_rotate_at IS NOT NULL;
+			GO
+
+			-- 依 issuer 查詢/發佈時會用到
+			CREATE INDEX IX_jrp_issuer ON dbo.jwk_rotation_policy (issuer);
+			GO
+			
+			塞入資料範例
+				-- 使用預設值（因為沒指定欄位）
+				INSERT INTO dbo.jwk_rotation_policy(issuer, purpose, kty, alg)
+				VALUES (N'https://auth.example.com', N'sig', N'RSA', N'RS256');
+				-- rotation_interval_iso 將自動是 'P1D'
+
+				-- 明確使用 DEFAULT 關鍵字
+				INSERT INTO dbo.jwk_rotation_policy(issuer, purpose, kty, alg, rotation_interval_iso)
+				VALUES (N'https://auth.example.com', N'sig', N'RSA', N'RS256', DEFAULT);
+
+
+		通用 ddl
+			-- Portable baseline DDL (aims for broad compatibility)
+			CREATE TABLE jwk_rotation_policy (
+			  id                      BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+			  issuer                  VARCHAR(200) NOT NULL,        -- e.g. https://auth.example.com
+			  purpose                 VARCHAR(8)   NOT NULL,        -- 'sig' | 'enc'
+			  kty                     VARCHAR(16)  NOT NULL,        -- 'RSA' | 'EC' | 'OKP' ...
+			  alg                     VARCHAR(32)  NOT NULL,        -- 'RS256' | 'ES256' | 'EdDSA' ...
+
+			  -- ISO-8601 duration literals (PT30M / PT2H / P1D ...)
+			  rotation_interval_iso   VARCHAR(40)  NOT NULL DEFAULT 'P1D',
+			  transition_iso          VARCHAR(40)  NOT NULL DEFAULT 'P7D',
+			  prev_active_iso         VARCHAR(40)  NOT NULL DEFAULT 'P7D',
+			  overlap_grace_iso       VARCHAR(40)  NOT NULL DEFAULT 'PT48H',
+
+			  -- Use SMALLINT(0/1) for booleans to maximize portability
+			  auto_rotate             SMALLINT     NOT NULL DEFAULT 1,
+			  max_keys_retained       INT          NOT NULL DEFAULT 6,
+
+			  inactive_retention_iso  VARCHAR(40)  NOT NULL DEFAULT 'P90D',
+			  wipe_private_key_only   SMALLINT     NOT NULL DEFAULT 1,
+
+			  last_rotated_at         TIMESTAMP    NULL,
+			  next_rotate_at          TIMESTAMP    NULL,
+
+			  created_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			  updated_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+			  CONSTRAINT ux_jrp_issuer_purpose_alg UNIQUE (issuer, purpose, alg),
+
+			  -- lightweight validations
+			  CONSTRAINT ck_jrp_bool_auto_rotate
+				CHECK (auto_rotate IN (0, 1)),
+			  CONSTRAINT ck_jrp_bool_wipe_only
+				CHECK (wipe_private_key_only IN (0, 1)),
+			  CONSTRAINT ck_jrp_purpose
+				CHECK (purpose IN ('sig', 'enc')),
+			  CONSTRAINT ck_jrp_rotation_interval_iso
+				CHECK (rotation_interval_iso LIKE 'P%'),
+			  CONSTRAINT ck_jrp_transition_iso
+				CHECK (transition_iso LIKE 'P%'),
+			  CONSTRAINT ck_jrp_prev_active_iso
+				CHECK (prev_active_iso LIKE 'P%'),
+			  CONSTRAINT ck_jrp_overlap_grace_iso
+				CHECK (overlap_grace_iso LIKE 'P%')
+			);
+
+			-- Common secondary indexes
+			CREATE INDEX ix_jrp_issuer ON jwk_rotation_policy (issuer);
+
+			-- Portable substitute for a filtered index:
+			-- Query can use WHERE auto_rotate = 1 AND next_rotate_at IS NOT NULL
+			-- and still benefit from this composite index.
+			CREATE INDEX ix_jrp_due ON jwk_rotation_policy (auto_rotate, next_rotate_at);
+
+			塞入資料範例
+				-- 不指定有 DEFAULT 的欄位，會自動帶入預設值
+				INSERT INTO jwk_rotation_policy (issuer, purpose, kty, alg)
+				VALUES ('https://auth.example.com', 'sig', 'RSA', 'RS256');
+
+				-- 指定某欄位用 DEFAULT（其他欄位照給值）
+				INSERT INTO jwk_rotation_policy (issuer, purpose, kty, alg, rotation_interval_iso)
+				VALUES ('https://auth.example.com', 'sig', 'RSA', 'RS256', DEFAULT);		

@@ -1,0 +1,38 @@
+
+常見資料庫支援狀況
+
+coalesce(k.disabledAt, :now)
+
+	* PostgreSQL / MySQL / MariaDB / SQL Server / Oracle（也有 NVL）/ SQLite / H2… 都支援 COALESCE.
+
+	* 各家有自家別名：SQL Server 有 ISNULL、MySQL 有 IFNULL、Oracle 有 NVL，但這些是非標準；要可攜性仍以 COALESCE 為主。
+
+注意小細節：
+
+	型別相容：所有引數需可隱式轉成同一型別（這裡 disabledAt 與 :now 都要是 timestamp/Instant 對應型別）。
+
+	Oracle 空字串 等於 NULL（VARCHAR2/CHAR），但對 timestamp 不影響。
+
+	索引使用：在 SET 子句用 COALESCE OK；若用在 WHERE、ORDER BY 上可能影響索引走法（必要時可分兩段更新或用功能性索引）。
+
+	JPQL 等價寫法：CASE WHEN k.disabledAt IS NULL THEN :now ELSE k.disabledAt END（同樣可攜）。
+
+
+用 coalesce(k.disabledAt, :now) 而不是硬塞 k.disabledAt = :now 有這些實務上的好處：
+	1.保留第一次失效時間（審計正確性）
+		disabledAt 通常代表「這把 key 第一次被下線/失效的時間」。
+		多次執行 cleanup（或不同規則再次降階）時，不要覆寫已存在的 disabledAt，否則會改寫歷史。
+
+	2.保留保留期計算的基準點
+		後續 purge 常用 disabledAt < now - retention 來判斷是否可刪。
+		若每次都覆寫為最新 now，會把保留期往後推，導致預期內該清掉的資料清不掉。
+
+	3.冪等性（idempotency）
+		cleanup 可能重複執行。coalesce 讓「第一次賦值生效、之後維持不變」，避免同一批資料每跑一次就變一次時間。
+
+	4.減少不必要的寫入副作用
+		直接覆寫會導致行版本變動、updated_at/CDC/觸發器啟動、索引重寫，增加寫放大。
+		coalesce 能在已有 disabledAt 的情況下保留原值，雖然這條語句仍是 UPDATE，但至少不會把關鍵審計欄位改掉。
+
+	5.避免影響排序/查詢語意
+		有些報表或查詢會依 disabledAt 排序/篩選。覆寫會讓舊事件看起來像新事件，混淆分析。

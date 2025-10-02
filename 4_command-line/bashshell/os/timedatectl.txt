@@ -1,0 +1,6 @@
+ref ChatGPT
+
+查目前系統時區
+	（大多數現代 Linux / systemd）
+		timedatectl                       # 顯示詳細資訊
+		timedatectl show -p Timezone --value   # 只印 IANA ID，例如 Asia/Taipei

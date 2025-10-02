@@ -72,8 +72,11 @@ auto reload in prod
 	additivity：是否向上級logger傳遞打印信息，默認為true
 
 <root>
-	也是<logger>元素，但是它是根logger，只有一個level屬性，因為它的name就是ROOT
-
+	1.也是<logger>元素，但是它是根logger，只有一個level屬性，因為它的name就是ROOT
+    2.只影響沒有明確宣告等級的 <logger> 之 package 路徑，也就預設值的 log level
+	3.Actuator /actuator/loggers/{name}
+		* 會同時顯示 configuredLevel（直接設定的值，可能來自 XML/屬性/運行時變更）與 effectiveLevel（實際生效，會考慮繼承）。
+		* 若看到 configuredLevel=null 而 effectiveLevel=DEBUG，代表它是繼承來的（例如繼承 root=DEBUG）；若 configuredLevel=ERROR，就不會被 root 的 DEBUG 覆蓋。
 
 指定部分 java package log level
 	<logger name="tw.gov.moi" level="DEBUG" />

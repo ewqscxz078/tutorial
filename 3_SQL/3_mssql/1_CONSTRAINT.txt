@@ -1,0 +1,5 @@
+CONSTRAINT
+	設定預設值為字串 P1D（ISO-8601 的「1 天」），當你 INSERT 一列而沒有提供這個欄位（或用 DEFAULT 關鍵字）時，就會自動填這個值
+
+	  -- 策略時間：存 ISO-8601 Duration 字串，如 PT30M / PT2H / P1D
+	  rotation_interval_iso  NVARCHAR(40)  NOT NULL CONSTRAINT DF_jrp_rotation_interval_iso DEFAULT N'P1D',

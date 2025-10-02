@@ -1,0 +1,25 @@
+ref ChatGPT
+
+
+spring:
+  task:
+    scheduling:
+#      pool:
+#	    size: 1  # 預設值1，建議依據專案狀況設定適當值，預設只有單執行緒，任何較久的工作都會把其他排程「卡住/延遲」。如果你有多個排程、或任務可能跑較久，務必調大（例如 4、8，依 CPU 與任務重疊度）
+#      thread-name-prefix: scheduling- # 預設值 scheduling-，為了 Log/監控更好辨識排程執行緒，建議改如 sched-、jobs-
+#      shutdown:
+#	    await-termination: false # 預設值false，服務關機時預設不等排程收尾。若有需要把批次收尾或寫檔/發送完成，請設成 true。
+#       await-termination-period: 0s  # 預設值0，搭配上面屬性，設定等待時間（如 30s、60s），避免關機時中斷在半途。
+
+再補幾個 非屬性層級但跟排程穩定性密切的常見做法（看需求採用）：
+	* 避免任務重疊：Spring 原生 @Scheduled 不會幫你防重疊（多執行緒或多節點容易「重複跑」）。
+
+	* 單機：把 pool.size 設為 1 可以避免同一時間多個任務併發，但會互相排隊。
+
+	* 多節點/叢集：建議用 ShedLock 等分散式鎖（JDBC/Redis），在方法上加鎖避免同一 Cron 在多台同時執行。
+
+	* 錯誤處理（ErrorHandler）：預設只會記 Log。關鍵任務建議自訂 ErrorHandler（或實作 SchedulingConfigurer 設置），把例外納入告警/重試。
+
+	* 任務太重時：@Scheduled 只用來「觸發」，重工作業丟進 @Async、佇列或批次框架（如 Spring Batch），避免堵塞排程執行緒。
+
+	* Cron 解析：Spring 的 Cron 是 6 欄位（含秒），和 Linux crontab 的 5 欄位不同；跨環境複製時要留意。

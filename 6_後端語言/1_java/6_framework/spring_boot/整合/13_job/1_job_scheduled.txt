@@ -139,6 +139,18 @@ Running Tasks in Parallel
 		spring.task.scheduling.pool.size=5
 
 
+設定 zone
+	比如 @Scheduled(cron = "0 */2 * * * *", zone = "Asia/Taipei")
+		time-zone: Asia/Taipei #預設值（未設=JVM 系統時區），強烈建議明確設定（如 Asia/Taipei 或 UTC），避免容器/不同機器預設時區不一致造成 Cron 偏移。
+	spring boot 3 之後 yml 不再支援全域設定
+		spring:
+		  task:
+			scheduling:
+			  time-zone: Asia/Taipei
+	建議調整到自訂 yml 整合，例如
+		@Scheduled(cron = "${app.jobs.cron-or-fixed}", zone = "${app.default-zone")
+
+
 同場加碼
 	task async scheduled with logback mdc
 	https://salahuddin-s.medium.com/mdc-logging-with-async-scheduled-threads-in-spring-boot-6675c2b4a074
