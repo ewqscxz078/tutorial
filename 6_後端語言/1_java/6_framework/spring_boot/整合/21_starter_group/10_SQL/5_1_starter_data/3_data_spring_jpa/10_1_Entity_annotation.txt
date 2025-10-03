@@ -4,6 +4,11 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 	被視為一個可持久化的實體，它的實例可以被存儲到數據庫中，並且可以通過JPA進行管理
 @Table
 	可以指定表名(name)、索引(indexes)、唯一約束(uniqueConstraints)等
+	
+	uniqueConstraints
+		1.告訴 JPA Provider（例如 Hibernate）這個表在 資料庫層 需要一個複合唯一鍵
+		2.若你啟用 Hibernate 的 DDL 產生（例如 spring.jpa.hibernate.ddl-auto=create|update），它會幫你在 DB 上 建立 這個 unique constraint。
+
 @Id
 	指定實體類別中的一個欄位作為主鍵，該欄位將映射到數據庫表的主鍵欄位。
 @GeneratedValue

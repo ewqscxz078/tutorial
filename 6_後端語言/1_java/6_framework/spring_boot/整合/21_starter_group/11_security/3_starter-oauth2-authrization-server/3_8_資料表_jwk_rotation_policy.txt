@@ -128,7 +128,7 @@
 			  wipe_private_key_only   SMALLINT     NOT NULL DEFAULT 1,
 
 			  last_rotated_at         TIMESTAMP    NULL,
-			  next_rotate_at          TIMESTAMP    NULL,
+			  next_rotate_at          TIMESTAMP    NULL,            -- 一般塞入應為 當前時間 + rotation_interval_iso
 
 			  created_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			  updated_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,

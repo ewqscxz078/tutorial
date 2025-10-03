@@ -1,0 +1,46 @@
+ref ChatGPT
+
+屬於 JPA lifecycle callbacks，在實體透過 EntityManager 被寫入 DB 前自動觸發
+	@PrePersist 
+		首次 insert 前呼叫，以利自動處理 Persist bean 內容
+		例如
+			@PrePersist
+			void prePersist() {
+				final Instant now = Instant.now();
+				this.createdAt = now;
+				this.updatedAt = now;
+				if (this.nextRotateAt == null && this.rotationInterval != null && !this.rotationInterval.isNegative()
+						&& !this.rotationInterval.isZero()) {
+					this.nextRotateAt = now.plus(this.rotationInterval);
+				}
+			}
+			1.把 createdAt 和 updatedAt 設為 now。
+			2.若 nextRotateAt 沒有手動給值、且 rotationInterval 是正值，就自動算出 nextRotateAt = now + rotationInterval。
+			3.這樣能確保「寫入當下」欄位總是有一致的預設值。
+
+	@PreUpdate
+		每次 update 前呼叫，以利自動處理 Persist bean 內容
+		例如
+			@PreUpdate
+			void preUpdate() {
+				this.updatedAt = Instant.now();
+			}
+			1.updatedAt 更新成現在時間，維持修改時間戳的一致性。
+			
+
+	為什麼用它們？
+		* 集中預設行為：避免每個 service/save 都要手動塞
+			比如 createdAt/updatedAt/nextRotateAt。
+		* 資料一致性：確保所有 insert/update 都遵守同一套規則。
+
+	需要注意的坑
+		* 只在 JPA 管理的實體操作時生效
+			JPQL/Criteria bulk 更新（update ... where ...）和 原生 SQL 會略過 lifecycle callbacks，updatedAt 不會自動更新。這種情況要靠 DB trigger、或手動設置欄位、或改為逐筆載入更新。
+		* 時間來源：Instant.now() 是 UTC 時間（這是好事），但如果你要跟 DB 的 CURRENT_TIMESTAMP 對齊避免 clock drift，可以考慮
+			1.由 DB 產生時間（default/trigger），或
+			2.在應用層統一注入 Clock（可測試、可 mock），例如 @Autowired Clock clock; Instant.now(clock);
+		* 替代寫法（Hibernate 提供）：
+			@CreationTimestamp / @UpdateTimestamp 自動幫你塞 createdAt/updatedAt（一樣有 bulk 更新不觸發的限制）。
+
+額外建議
+	若你有很多 entity 都要同樣邏輯，抽出 EntityListener（例如 @EntityListeners(AuditTimestampsListener.class)）集中維護 createdAt/updatedAt 規則。
