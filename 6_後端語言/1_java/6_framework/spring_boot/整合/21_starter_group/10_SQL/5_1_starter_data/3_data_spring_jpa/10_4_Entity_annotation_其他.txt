@@ -42,5 +42,26 @@ ref ChatGPT
 		* 替代寫法（Hibernate 提供）：
 			@CreationTimestamp / @UpdateTimestamp 自動幫你塞 createdAt/updatedAt（一樣有 bulk 更新不觸發的限制）。
 
-額外建議
-	若你有很多 entity 都要同樣邏輯，抽出 EntityListener（例如 @EntityListeners(AuditTimestampsListener.class)）集中維護 createdAt/updatedAt 規則。
+	額外建議
+		若你有很多 entity 都要同樣邏輯，抽出 EntityListener（例如 @EntityListeners(AuditTimestampsListener.class)）集中維護 createdAt/updatedAt 規則。
+		
+
+決定「這個轉換要不要全專案全欄位自動套用」
+	@Converter(autoApply = true|false)
+	
+	autoApply = true
+		全域自動。凡是 相同 Java 型別 的欄位（含 @Embeddable 內）都會套用這個 Converter，除非你在欄位上寫 @Convert(disableConversion = true) 或用另一個 converter 覆蓋。
+	
+	autoApply = false
+		局部 opt-in。只有你明確在欄位上標 @Convert(converter = …) 的時候才會用。
+	
+	規則：欄位上的 @Convert 具有較高優先權，可覆蓋 autoApply=true 的全域設定。
+
+	什麼時候該用 autoApply = true？
+		你確定專案中該 Java 型別只有一種儲存策略，而且你希望未來新增欄位也自動一致。
+		例：JwkState 統一存 TINYINT 代碼。
+
+	什麼時候該用 autoApply = false？
+		同一型別有多種可能格式（Duration: ISO 字串 vs 整數秒）。
+		安全/加密這類需要明確 opt-in的欄位（byte[] 加密）。
+		你預期將來會有另一個 converter 也會處理同型別（避免「兩個 autoApply=true 衝突」的部署錯誤）。
