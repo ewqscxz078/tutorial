@@ -1,0 +1,11 @@
+ref ChatGPT
+
+丟失連線到某IP:PORT 的連線(非拒絕)
+	# 丟棄來自 WSO2 的連線（請換成 WSO2 的來源 IP）
+		sudo iptables -A INPUT -p tcp --dport <PORT> -s <WSO2_IP> -j DROP
+
+	# 恢復
+		sudo iptables -D INPUT -p tcp --dport <PORT> -s <WSO2_IP> -j DROP
+
+	# 確認規則
+		iptables -L -n --lin-numbers

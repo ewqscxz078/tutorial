@@ -1,0 +1,59 @@
+ref ChatGPT
+
+1.jwk oauth2_authorization 紀錄的使用狀況
+2.建議持久化 oauth2_registered_client 的資料
+
+最少需要的資料表
+
+	1.oauth2_auth_server jwk rotation 用
+		jwk_rotation_policy * ref 3_8_資料表_jwk_rotation
+		jwk_key *
+		jwk_meta 快取版本控制用
+		jwk_rotation_event * ref 3_8_資料表_jwk_rotation
+		jwk_denylist *
+		總結建議
+			* 最小可行：jwk_key + jwk_denylist（KID 與 JTI 兩種型態都支援）。
+			* 需要熱調策略/合規審計：再加 jwk_rotation_policy、jwk_rotation_event。
+			* 分散式一致的 JWKS/ETag：傾向放 分散式快取（而非 DB 表）。
+
+	2.oauth2_client 相關（必要）
+		1) Registered Client（客戶端註冊），ref RegisteredClient
+			oauth2_registered_client
+				子表
+					oauth2_client_grant_type
+					oauth2_client_redirect_uri  			# 認證模式需要用到
+					oauth2_client_post_logout_redirect_uri	# 認證模式需要用到
+					oauth2_client_scope
+					oauth2_client_auth_method
+					
+				其他延伸	
+					oauth2_client_resource_indicator		#?
+					oauth2_client_audience                  #?
+					
+					oauth2_client_grant_type(client_id, grant_type) —— 例：authorization_code, client_credentials, refresh_token, device_code
+					oauth2_client_redirect_uri(client_id, redirect_uri)
+					oauth2_client_post_logout_redirect_uri(client_id, post_logout_redirect_uri)（如用 OIDC RP-Logout）
+					oauth2_client_scope(client_id, scope) —— 僅客戶端「宣告」可申請的範圍
+					oauth2_client_auth_method(client_id, method)（若需要同時允許多種）
+					oauth2_client_resource_indicator(client_id, resource)（如採用 RFC 8707 resource indicators）
+					oauth2_client_audience(client_id, aud)（如你採用 audience 驗證）
+					以上全部以 (client_id, value) 為複合 PK；欄位型態 VARCHAR(…)，NOT NULL。
+		
+		2) Token / JWT 設定（每 Client 可覆寫）
+			oauth2_client_token_settings
+			oauth2_client_jwt_settings
+				子表
+					oauth2_client_jwe_settings              # option
+
+		* 放 client 的靜態設定：client_id、client_secret（或其它認證方式）、授權模式（client_credentials）、scope、token/ID Token 的設定（存活時間、是否使用自含式 JWT、簽章演算法等）。
+		
+	3.oauth2_authorization（強烈建議）
+		* 放「已核發的存取權杖」及其狀態與附加資訊：access_token（含到期時間、claims）、refresh_token（若有）、attributes/metadata 等。
+		* 即使是 M2M，多數系統還是會保留這張表以便稽核、撤銷、疑難排除。
+
+	4.oauth2_authorization_consent（M2M 通常不需要）
+		* 以使用者同意為核心的情境才會用到；client_credentials 不會用。
+
+	5.key rotation 排程用的 shedlock table 確保一個排程執行
+		shedlock
+
