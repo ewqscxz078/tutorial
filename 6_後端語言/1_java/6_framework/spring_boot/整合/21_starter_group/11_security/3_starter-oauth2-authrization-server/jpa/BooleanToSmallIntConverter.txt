@@ -1,0 +1,24 @@
+package com.example.authserver.model;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+
+/**
+ * 將 Boolean ↔ SMALLINT(0/1)。
+ * 只在有 @Convert(converter=...) 的欄位生效（避免全域套用影響其他表）。
+ */
+@Converter(autoApply = false)
+public class BooleanToSmallIntConverter implements AttributeConverter<Boolean, Short> {
+
+    @Override
+    public Short convertToDatabaseColumn(Boolean attribute) {
+        if (attribute == null) return null;
+        return (short) (attribute ? 1 : 0);
+    }
+
+    @Override
+    public Boolean convertToEntityAttribute(Short dbData) {
+        if (dbData == null) return null;
+        return dbData != 0;
+    }
+}

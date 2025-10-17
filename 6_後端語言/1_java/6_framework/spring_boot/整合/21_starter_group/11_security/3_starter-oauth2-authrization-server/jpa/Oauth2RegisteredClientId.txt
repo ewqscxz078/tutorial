@@ -1,0 +1,44 @@
+package com.example.authserver.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+/** 複合主鍵：issuer + client_id */
+@Embeddable
+public class Oauth2RegisteredClientId implements Serializable {
+
+    @Column(name = "issuer", nullable = false, length = 200)
+    private String issuer;
+
+    @Column(name = "client_id", nullable = false, length = 100)
+    private String clientId;
+
+    public Oauth2RegisteredClientId() {}
+
+    public Oauth2RegisteredClientId(String issuer, String clientId) {
+        this.issuer = issuer;
+        this.clientId = clientId;
+    }
+
+    public String getIssuer() { return issuer; }
+    public void setIssuer(String issuer) { this.issuer = issuer; }
+
+    public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Oauth2RegisteredClientId that)) return false;
+        return Objects.equals(issuer, that.issuer) &&
+               Objects.equals(clientId, that.clientId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(issuer, clientId);
+    }
+}

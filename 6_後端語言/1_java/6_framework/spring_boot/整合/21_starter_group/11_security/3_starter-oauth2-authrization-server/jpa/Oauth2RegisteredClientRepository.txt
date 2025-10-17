@@ -1,0 +1,47 @@
+package com.example.authserver.repo;
+
+import com.example.authserver.model.Oauth2RegisteredClient;
+import com.example.authserver.model.Oauth2RegisteredClientId;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+public interface Oauth2RegisteredClientRepository
+        extends JpaRepository<Oauth2RegisteredClient, Oauth2RegisteredClientId> {
+
+    // 你指定的寫法（使用底線走訪 embeddedId 欄位路徑）
+    Optional<Oauth2RegisteredClient> findById_IdIssuerAndId_ClientId(String issuer, String clientId);
+
+    // 等價寫法（無底線），任選其一使用即可
+    Optional<Oauth2RegisteredClient> findByIdIssuerAndIdClientId(String issuer, String clientId);
+
+    // 依唯一 rc_id 查（建議常用）
+    Optional<Oauth2RegisteredClient> findByRcId(String rcId);
+
+    // 依 issuer 列出全部（管理後台常用）
+    List<Oauth2RegisteredClient> findAllById_Issuer(String issuer);
+
+    // 快速啟用/停用
+    @Modifying
+    @Query("""
+           update Oauth2RegisteredClient c
+              set c.enabled = :enabled, c.updatedAt = :now
+            where c.id.issuer = :issuer and c.id.clientId = :clientId
+           """)
+    int updateEnabled(String issuer, String clientId, boolean enabled, Instant now);
+
+    // 快速更新 clientSecret（已是雜湊值）
+    @Modifying
+    @Query("""
+           update Oauth2RegisteredClient c
+              set c.clientSecretHash = :secretHash,
+                  c.clientSecretExpiresAt = :expiresAt,
+                  c.updatedAt = :now
+            where c.id.issuer = :issuer and c.id.clientId = :clientId
+           """)
+    int rotateClientSecret(String issuer, String clientId, String secretHash, Instant expiresAt, Instant now);
+}

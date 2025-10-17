@@ -1,0 +1,116 @@
+ref ChatGPT
+
+Q: 一般介面 xxxRepository 宣告 @Repository 並繼承 JpaRepository 則 xxxRepository 就可以馬上使用現成常用的api 
+不然就是在 xxxRepository 自行額外擴展其他需要的 api ，但是有時候需要其他元件 與當前 xxxRepository 互動 
+或是 xxxRepository 自行額外擴展要再加一點點有加工，會建議寫在哪邊?
+
+A: 下面用「決策口訣 + 範例」幫你快速判斷該放哪裡。結論先講：
+	1.需要 EntityManager / 複雜查詢 / 效能調校（@QueryHints、批次、lock、EntityGraph）
+		→ 放 XxxRepositoryImpl（或 Repository Fragment）。
+
+	2.需要編排多個 Repository、呼叫其他元件（HTTP、加解密、檔案、MQ）、跨 Aggregate 的交易流程 
+		→ 放 Service。
+
+	3.只是把同一個 Repository 的現有方法稍微包一層（無需新 bean），或做很小的組合邏輯 
+		→ 放 XxxRepository 介面的 default method。
+		
+
+	1) XxxRepositoryImpl（或自定義 Repository Fragment）
+		適合：
+			* 需要 EntityManager / JPA Criteria / Specification / Querydsl。
+			* 需要控制 Flush、Batch、Lock Mode、Hint、fetch join、EntityGraph。
+			* 需要與其他 Repository合作，但仍屬於資料存取層的工作（單一 Aggregate 內的讀寫最佳化）。
+
+		優點：
+			* 保持分層清晰（infra/persistence 邏輯不外流到 service）。
+			* 可注入任何 Spring bean（EntityManager、其他 repo、工具類）。
+			* 測試容易（針對資料存取單元測）。
+		
+		典型寫法（Fragment 風格，推薦）：
+			public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryExt {
+				// 衍生查詢或 @Query ...
+			}
+
+			public interface OrderRepositoryExt {
+				List<Order> search(OrderFilter f, Pageable pageable);
+			}
+
+			@RequiredArgsConstructor
+			class OrderRepositoryImpl implements OrderRepositoryExt { // 名稱規則：主Repo名 + Impl
+				private final EntityManager em;
+
+				@Override
+				@Transactional(readOnly = true)
+				public List<Order> search(OrderFilter f, Pageable pageable) {
+					// Criteria / JPQL / Querydsl...
+					// 可加 EntityGraph、LockMode、Hints 等
+					return /* ... */;
+				}
+			}
+
+	2) Service
+		適合：
+			* 多個 Repository 的協作、跨 Aggregate 的一致性、商業規則。
+			* 會呼叫外部系統或其他元件（HTTP、MQ、加解密、檔案、快取）並搭配資料庫操作。
+			* 交易邊界（@Transactional）通常放在 Service，確保一個用例的整體一致性。
+
+		優點：
+			* 讓 Repository 專心做「資料存取」，Service 承載「用例流程 + 規則」。
+			* 易於將後續的事件（domain event / outbox）放在 Service 邏輯裡發佈。
+		
+		寫法範例
+			@Service
+			@RequiredArgsConstructor
+			public class PlaceOrderService {
+				private final OrderRepository orderRepo;
+				private final StockService stockService;
+				private final PaymentGateway payment;
+
+				@Transactional
+				public OrderId place(PlaceOrderRequest req) {
+					stockService.reserve(req.items());          // 外部或內部元件
+					PaymentResult pr = payment.charge(req.card);
+					Order order = Order.create(req, pr);
+					orderRepo.save(order);                      // 單一聚合持久化
+					return order.getId();
+				}
+			}
+
+	3) Repository 介面的 default method
+		適合：
+			* 只是把既有 Repository 方法再封裝一下，例如「找不到就丟自訂例外」、「常用查詢 + map/組裝少量 DTO」。
+			* 不需要 EntityManager、不需要注入其他 bean。
+			* 想要更好的語意與少量複用，但不想新增 Impl。
+
+		優點：
+			* 最少樣板、就地封裝。
+			* 可以標 @Transactional(readOnly=true)（由代理攔截生效）。
+
+		限制 / 地雷：
+			* 不能注入 bean（介面無法 @Autowired）
+			* 若需要 EntityManager 或其他 Repository，就不適合。
+			* 複雜/長邏輯會讓介面變臃腫。
+		
+		寫法範例
+			public interface UserRepository extends JpaRepository<User, Long> {
+
+				Optional<User> findByEmail(String email);
+
+				default User mustGetByEmail(String email) {
+					return findByEmail(email)
+						.orElseThrow(() -> new NoSuchElementException("user not found: " + email));
+				}
+
+				@Transactional(readOnly = true)
+				default boolean existsActiveByEmail(String email) {
+					return findByEmail(email).map(User::isActive).orElse(false);
+				}
+			}
+
+實務建議（口訣）
+	1.查詢很狠 → Impl；流程很長 → Service；包裝很小 → default。
+	2.交易邊界：大多放 Service；Repo Impl 的方法可 readOnly=true 為主，有必要才開寫入/鎖。
+	3.避免「Repo 注入 Service」或「Repo 發事件/HTTP」：破壞層次、容易循環依賴。
+	4.跨聚合一致性與外部整合，一定放 Service。
+	5.需要可測性與效能最佳化（批次、Hint、EntityGraph）→ Impl/Fragment。
+	6.default method 僅做語意糖與小組合，一旦長成就搬去 Impl 或 Service。

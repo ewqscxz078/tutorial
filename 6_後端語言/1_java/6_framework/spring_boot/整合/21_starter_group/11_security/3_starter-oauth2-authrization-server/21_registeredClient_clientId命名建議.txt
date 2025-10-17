@@ -1,0 +1,49 @@
+ref ChatGPT
+
+
+registeredClient 的 clientId 命名建議
+	建議命名格式
+		<appType>-<owner>-<systemOrApp>-<purpose?>-<env?>
+			* 全小寫、用 - 分隔；避免空白與底線。
+			* 最少三段（appType-owner-systemOrApp），其餘為可選。
+			* client_id 在 同一 issuer 範圍內唯一；不同 issuer 可重複（但建議仍盡量一致）。
+
+
+	欄位說明
+		* appType（必填）：依用戶端類型加前綴，方便一眼辨識
+			* svc（後端服務 / M2M）
+			* job（批次/排程任務）
+			* gw（API Gateway / 反向代理）
+			* web（伺服器渲染 Web App）
+			* spa（前端 SPA，通常配合 PCKE）
+			* cli（命令列工具）
+			* bff（Backend-for-Frontend）
+			* dev（開發工具/內部小工具用戶端，可選）
+		* owner（必填）：系統擁有團隊或域，例如 team-a、ops、fin、core
+		* systemOrApp（必填）：服務或系統代號，建議 2–24 字元，[a-z0-9-]
+		* purpose（可選）：如 ingest、sync、reader、writer、admin 等職責
+		* env（可選）：dev|sit|uat|stg|prod
+
+		習慣上 prod 可省略（沒有尾碼代表正式環境），其它環境一定要標
+		若同一系統會在多個 issuer同名註冊，建議 不要把 issuer 放進 client_id；用一致的 client_id，靠資料庫的 (issuer, client_id) 唯一即可。真的需要跨發行者唯一可辨時，再加入短碼 -ix（如 -isz 代表 on-prem issuer z）。
+
+	範例
+		svc-team-a-orders-reader-stg
+		svc-team-a-orders-reader（= prod）
+		job-data-sync-billing-uat
+		gw-platform-edge-prod（或 gw-platform-edge）
+		web-hr-portal-uat
+		spa-retail-pos-dev
+		cli-ops-maint
+
+	命名守則（Do / Don’t）
+		Do
+			* 一眼看出類型/歸屬/系統/用途/環境。
+			* prod 省略，其他環境必標。
+			* 若要拆權責（read/write/admin），用 purpose 明確分出多個 client。
+			* 同一系統跨 issuer 維持 相同 client_id，靠 (issuer, client_id) 區分。
+
+		Don’t
+			* 不要放個資、機敏資訊（email、IP、域名）。
+			* 不要混用底線與大小寫（svc_teamA_Orders ×）。
+			* 不用把日期或版本塞進 client_id（版本放在客戶端紀錄或註記欄位）。

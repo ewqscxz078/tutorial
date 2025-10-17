@@ -1,0 +1,9 @@
+流程總結
+
+	1.輪替：ACTIVE → 新版入庫為 ACTIVE，舊版改 PREV_ACTIVE + grace_until；主表 client_secret_hash/…expires_at 同步新值；policy 更新 last_rotated_at/next_rotate_at。
+
+	2.降階：PREV_ACTIVE 且 grace_until <= now → INACTIVE。
+
+	3.清理：只保留最近 max_secrets_retained 版（含 ACTIVE/PREV_ACTIVE/INACTIVE；如要更嚴，可只刪 INACTIVE）。
+
+	4.避免重複密碼：以 PasswordEncoder.matches 對比近期（reuseCooldown 覆蓋的時間窗）避免碰撞。

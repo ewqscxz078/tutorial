@@ -1,0 +1,118 @@
+ref ChatGPT
+
+建議總則
+
+	* 能為 null 的配置：用包裝型別（Integer, Long, Double, Boolean），便於「未設定 vs 設了 0」做區分，也利於 Bean Validation。
+
+	* 不應為 null 且有預設值：可用基本型別（int, long, double, boolean）並在類別內給合理預設。
+
+	* 涉及單位（時間、容量）：優先用 Duration、DataSize，不用自己再拆單位。
+
+	* 金額／高精度小數：用 BigDecimal，避免 double/float 誤差。
+
+	* 非常大的整數（ID、序號）：用 long/Long；超過 64-bit 才考慮 BigInteger。
+
+常見情境 → 型別對照
+	| 需求/語意                 | 推薦型別               | yml 範例                                  | 備註                                                |
+	| --------------------- | ------------------ | --------------------------------------- | ------------------------------------------------- |
+	| 埠號、重試次數、執行緒數          | `Integer`（或 `int`） | `port: 8080` / `retries: 3`             | 用 `Integer` 可區分未設定；加 `@Min @Max` 驗證               |
+	| 逾時、TTL、排程間隔           | `Duration`         | `timeout: 30s` / `ttl: PT15M`           | 支援 `ns/ms/s/m/h/d` 及 ISO-8601；可搭配 `@DurationUnit` |
+	| 檔案大小、緩衝區、快取上限（位元組）    | `DataSize`         | `buffer-size: 512KB` / `max-size: 10MB` | 支援 `B,KB,MB,GB,TB`；可搭 `@DataSizeUnit`             |
+	| 金額、匯率、百分比（需精準）        | `BigDecimal`       | `price: 123.45` / `rate: 0.075`         | 若要保留小數精度，**不要**用 `double`                         |
+	| 計數器、雪花ID、epoch millis | `Long`/`long`      | `epoch-ms: 1728890000000`               | epoch 秒/毫秒通常用 `long`                              |
+	| 機率、非關鍵小數（可接受誤差）       | `Double`/`double`  | `ratio: 0.3333`                         | 如需精準仍選 `BigDecimal`                               |
+	| 旗標/開關但想「未設定」可辨        | `Boolean`          | `enabled: true`                         | `boolean` 無法分辨未設定                                 |
+	| 超大整數（> 64-bit）        | `BigInteger`       | `big-num: "12345678901234567890"`       | 寫字串避免 YAML/轉換誤差                                   |
+
+
+Spring Boot 綁定細節與技巧
+
+	1.@ConfigurationProperties 支援自動轉型
+		* Duration："2h", "30s", "PT15M" 都可。必要時可加 @DurationUnit(ChronoUnit.SECONDS) 指定預設單位（如使用純數字 timeout: 30）。
+		* DataSize："256KB", "10MB" 等；可加 @DataSizeUnit(DataUnit.MEGABYTES) 指定預設單位。
+
+	2.避免 Optional<T> 作為屬性型別（官方不建議）：改用包裝型別 + 預設值/驗證。
+
+	3.Bean Validation（強烈建議加上界線）：
+		@Min(0) @Max(65535) private Integer port;
+		@PositiveOrZero private Integer retries;
+		@NotNull private Duration requestTimeout;
+
+	4.給預設值：
+		* 若用 Lombok，可在欄位給初值；或在 @ConstructorBinding/record 的建構子裡處理。
+
+	5.YAML 表示：
+		* 對於大數或需精度者（BigDecimal、BigInteger），必要時用引號避免意外解析（例如科學記號或前置零）。
+
+	6.不要用 float：誤差更大，沒有實際優勢。
+
+	7.單位字串 vs 結構型別：只要碰到「時間/大小」這類帶單位的設定，優先 Duration/DataSize，遠比 long + 自訂單位 易讀且不易出錯。
+
+	簡易範例
+		@ConfigurationProperties(prefix = "app")
+		@Validated
+		public class AppProps {
+
+		  @Min(1) @Max(200)
+		  private Integer workerThreads = 8; // 可 null，未設定就用 8
+
+		  @NotNull
+		  private Duration requestTimeout = Duration.ofSeconds(30);
+
+		  // 純數字且想用「秒」當預設單位，可這樣寫：
+		  @DurationUnit(ChronoUnit.SECONDS)
+		  private Duration cacheTtl = Duration.ofMinutes(5);
+
+		  @NotNull
+		  private DataSize maxUploadSize = DataSize.ofMegabytes(50);
+
+		  @DecimalMin("0.0")
+		  private BigDecimal taxRate = new BigDecimal("0.05");
+
+		  private Long idSeed; // 可非常大
+
+		  private Boolean featureXEnabled; // null=未設定；true/false=明確
+		  // getters/setters...
+		}
+
+	application.yml
+		app:
+		  worker-threads: 16
+		  request-timeout: 45s
+		  cache-ttl: 600      # 因為有 @DurationUnit(SECONDS) → 600s
+		  max-upload-size: 128MB
+		  tax-rate: "0.075"   # BigDecimal 建議加引號保精度
+		  id-seed: 9223372036854770000
+		  feature-x-enabled: true
+
+
+
+YAML 與 Spring Boot 綁定的差異，讓你更精準地控制「未設定 / 空字串 / 空集合 / null」：
+	常見四種寫法與效果
+		| 寫法          | YAML 值 | 綁到 `String` | 綁到 `Optional<String>` | 說明                         |
+		| ------------ | ------- | ----------- | --------------------- | -------------------------- |
+		| （整行拿掉或註解）| **缺席** | `null`      | `Optional.empty()`    | **最典型的「不設定」**，讓程式用預設值。     |
+		| `key:`       | `null`  | `null`      | `Optional.empty()`    | 明確指定為 `null`，效果同未設定。       |
+		| `key: ""`    | 空字串    | `""`        | `Optional.of("")`     | 與 `null` 不同：是**有設定但為空字串**。 |
+		| `key: ~`     | `null`  | `null`      | `Optional.empty()`    | YAML 的 `null` 別名。          |
+
+	集合類型也類似：
+		| 寫法             | 綁到 `List<?>` | 綁到 `Map<?,?>` | 說明                     |
+		| --------------- | ------------ | ------------- | ---------------------- |
+		| （整段拿掉/註解）    | `null`       | `null`        | 視為「不設定」。               |
+		| `list:`（不跟值）  | `null`       | –             | 與未設定相同。                |
+		| `list: []`      | 空清單          | –             | **顯式清空**（與 `null` 不同）。 |
+		| `map:`（不跟值）   | –            | `null`        | 與未設定相同。                |
+		| `map: {}`       | –            | 空 Map         | **顯式清空**。              |
+
+
+	什麼時候要用 null/空字串/空集合？
+		* 想覆蓋上游設定成「沒有」：
+			上游 profile 以前有給值，你在下游想清掉它：
+				* String／URI 類：用 key:（或 key: ~）→ 變 null。
+				* 清成空字串而非 null：用 key: ""。
+				* List/Map 清空：用 list: []、map: {}。
+
+		* 保留可觀察語意（給 Loader 區分）：
+			* null/缺席：代表「請用預設」。
+			* 空字串 "" / 空集合 []/{}：代表「我有意識地設定為空」。

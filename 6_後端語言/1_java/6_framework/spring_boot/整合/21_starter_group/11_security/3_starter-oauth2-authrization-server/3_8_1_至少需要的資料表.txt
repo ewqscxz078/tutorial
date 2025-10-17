@@ -19,7 +19,10 @@ ref ChatGPT
 	2.oauth2_Registered_Client 相關（必要）
 		客戶註冊資訊
 			1) Registered Client（客戶註冊資訊），ref RegisteredClient
-				oauth2_registered_client
+				oauth2_registered_client_secret_policy		   	# 主表 policy of client_secret
+				oauth2_registered_client_secret_rotation 		# client_secret 紀錄表 : 旋轉 client_secret 用
+
+				oauth2_registered_client : 主表
 					子表
 						oauth2_client_auth_method				# （若需要同時允許多種）
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<ClientAuthenticationMethod> clientAuthenticationMethods
@@ -31,8 +34,7 @@ ref ChatGPT
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<String> postLogoutRedirectUris
 						oauth2_client_scope                     # 僅客戶端「宣告」可申請的範圍
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<String> scopes
-				  
-						
+
 					其他延伸	
 						oauth2_client_resource_indicator		# （如採用 RFC 8707 resource indicators）
 						oauth2_client_audience                  # （如採用 audience 驗證）
@@ -60,54 +62,54 @@ ref ChatGPT
 			audience 決策、簽章選擇、加密策略、Claims 對映，不進 RegisteredClient，而是被 Service 在授權/發 Token/回應組裝時查表使用。
 		2.好處是把客戶端註冊（穩定資料）與發行策略（常變動、可覆寫、可審核）解耦，後續要擴 OIDC/多 Issuer/多 alg/JWE 都能加規則而不用改 RegisteredClient 結構
 
-		oauth2_client_resource_indicator
-			* 做什麼：列出此 client 允許帶的 resource（RFC 8707）。
-			* 什麼時候查：
-				* /authorize（授權碼）或 /token（client_credentials）收到 resource 參數時，用來驗證白名單。
-			* 誰用：你自訂的 AudienceService / 請求驗證器（AuthorizationEndpoint/TokenEndpoint 的 validator）。
-		
-		oauth2_client_audience
-			* 做什麼：宣告 client 能拿到的受眾（audience）白名單。
-			* 什麼時候查：
-				* 決定 Access Token 的 aud 時，將請求的 resource或scope 推導的預設 audience與此白名單取交集。
-			* 誰用：AudienceService（在 OAuth2TokenCustomizer<JwtEncodingContext> 被呼叫）。
-		
-		oauth2_scope_resource
-			* 做什麼：把 scope 映射到預設 audience（當請求沒帶 resource 時）。
-			* 什麼時候查：計算預設 audience；同上由 AudienceService 使用。
-		
-		oauth2_resource
-			* 做什麼：資源伺服器主檔（aud、描述、可選 jwks_uri）。
-			* 什麼時候查：
-				* 驗證 aud 是否存在/啟用；
-				* 若你要做 JWE 給資源端（罕見），可用 jwks_uri 取 RS 公鑰。
-			* 誰用：AudienceService（存在性/啟用檢查）、JwePolicyService（若做加密）。
+			oauth2_client_resource_indicator
+				* 做什麼：列出此 client 允許帶的 resource（RFC 8707）。
+				* 什麼時候查：
+					* /authorize（授權碼）或 /token（client_credentials）收到 resource 參數時，用來驗證白名單。
+				* 誰用：你自訂的 AudienceService / 請求驗證器（AuthorizationEndpoint/TokenEndpoint 的 validator）。
 
-		token_signing_selection
-			* 做什麼：決定 哪種 alg/purpose 用來簽哪一類 token（access_token/id_token/userinfo/introspection），可做 GLOBAL 或 CLIENT 覆寫，並有 priority。
-			* 什麼時候查：
-				* 發 Token 前，決定要用的簽章 alg 與（間接）kid；
-				* 之後去你的 jwk_key 表挑該 alg 的 ACTIVE key。
-			* 誰用：SigningSelector（你自訂的服務），被 JWKSource / JwtEncoder 呼叫。
-		
-		oauth2_client_jwe_settings
-			* 做什麼：客戶端層級的加密策略（要不要加密、enc_alg/enc_enc、哪些回應要加密：id_token / userinfo / introspection…）。
-			* 什麼時候查：
-				* 你決定要把 ID Token 或其他回應做 JWE 時。SAS 預設只簽不加密，做 JWE 需自訂 encoder/回應器。
-			* 誰用：JwePolicyService（由 OAuth2TokenCustomizer 或自訂 JwtEncoder/response handler 採用）。
-		
-		jwt_claim_mapping
-			* 做什麼：可配置的 自訂 claims 規則（依 issuer/client/scope/grant_type/token_type…）。source/expression 可用 FIXED/USER_ATTR/SQL/HTTP/SPEL 等。
-			* 什麼時候查：
-				* 發 Token（特別是 Access Token、也可含 ID Token）時組 claims。
-			* 誰用：ClaimRuleService，在 OAuth2TokenCustomizer<JwtEncodingContext> 內被呼叫，將結果 ctx.getClaims().claim(k,v)。
+			oauth2_client_audience
+				* 做什麼：宣告 client 能拿到的受眾（audience）白名單。
+				* 什麼時候查：
+					* 決定 Access Token 的 aud 時，將請求的 resource或scope 推導的預設 audience與此白名單取交集。
+				* 誰用：AudienceService（在 OAuth2TokenCustomizer<JwtEncodingContext> 被呼叫）。
+			
+			oauth2_scope_resource
+				* 做什麼：把 scope 映射到預設 audience（當請求沒帶 resource 時）。
+				* 什麼時候查：計算預設 audience；同上由 AudienceService 使用。
+			
+			oauth2_resource
+				* 做什麼：資源伺服器主檔（aud、描述、可選 jwks_uri）。
+				* 什麼時候查：
+					* 驗證 aud 是否存在/啟用；
+					* 若你要做 JWE 給資源端（罕見），可用 jwks_uri 取 RS 公鑰。
+				* 誰用：AudienceService（存在性/啟用檢查）、JwePolicyService（若做加密）。
 
-		一圖流：整體掛點
-			* /authorize（如用授權碼）：AudienceService 驗 resource → 決議 audiences → 存進 Authorization attributes
-			* /token：
-				* SigningSelector 查 token_signing_selection → 選 alg（→ 你 jwk_key 挑 ACTIVE key）
-				* AudienceService 決 aud（resource/scope + client 白名單）
-				* ClaimRuleService 根據 jwt_claim_mapping 塞自訂 claims
-				* （可選）JwePolicyService 依 oauth2_client_jwe_settings 決定是否改走 JWE encoder
+			token_signing_selection
+				* 做什麼：決定 哪種 alg/purpose 用來簽哪一類 token（access_token/id_token/userinfo/introspection），可做 GLOBAL 或 CLIENT 覆寫，並有 priority。
+				* 什麼時候查：
+					* 發 Token 前，決定要用的簽章 alg 與（間接）kid；
+					* 之後去你的 jwk_key 表挑該 alg 的 ACTIVE key。
+				* 誰用：SigningSelector（你自訂的服務），被 JWKSource / JwtEncoder 呼叫。
+			
+			oauth2_client_jwe_settings
+				* 做什麼：客戶端層級的加密策略（要不要加密、enc_alg/enc_enc、哪些回應要加密：id_token / userinfo / introspection…）。
+				* 什麼時候查：
+					* 你決定要把 ID Token 或其他回應做 JWE 時。SAS 預設只簽不加密，做 JWE 需自訂 encoder/回應器。
+				* 誰用：JwePolicyService（由 OAuth2TokenCustomizer 或自訂 JwtEncoder/response handler 採用）。
+			
+			jwt_claim_mapping
+				* 做什麼：可配置的 自訂 claims 規則（依 issuer/client/scope/grant_type/token_type…）。source/expression 可用 FIXED/USER_ATTR/SQL/HTTP/SPEL 等。
+				* 什麼時候查：
+					* 發 Token（特別是 Access Token、也可含 ID Token）時組 claims。
+				* 誰用：ClaimRuleService，在 OAuth2TokenCustomizer<JwtEncodingContext> 內被呼叫，將結果 ctx.getClaims().claim(k,v)。
 
-			* /userinfo / introspection：同樣可用 jwt_claim_mapping 與（可選）oauth2_client_jwe_settings
+			一圖流：整體掛點
+				* /authorize（如用授權碼）：AudienceService 驗 resource → 決議 audiences → 存進 Authorization attributes
+				* /token：
+					* SigningSelector 查 token_signing_selection → 選 alg（→ 你 jwk_key 挑 ACTIVE key）
+					* AudienceService 決 aud（resource/scope + client 白名單）
+					* ClaimRuleService 根據 jwt_claim_mapping 塞自訂 claims
+					* （可選）JwePolicyService 依 oauth2_client_jwe_settings 決定是否改走 JWE encoder
+
+				* /userinfo / introspection：同樣可用 jwt_claim_mapping 與（可選）oauth2_client_jwe_settings

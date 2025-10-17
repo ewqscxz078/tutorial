@@ -1,0 +1,118 @@
+package com.example.authserver.model;
+
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Objects;
+
+/**
+ * 將 (issuer, client_id) 作為複合主鍵。
+ */
+@Entity
+@Table(
+    name = "oauth2_registered_client",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "UQ_oauth2_rc_id", columnNames = "rc_id")
+    }
+)
+public class Oauth2RegisteredClient {
+
+    @EmbeddedId
+    private Oauth2RegisteredClientId id;
+
+    @Column(name = "rc_id", nullable = false, length = 100)
+    private String rcId; // = RegisteredClient.id（常見為 UUID 字串）
+
+    @Column(name = "client_id_issued_at", nullable = false)
+    private Instant clientIdIssuedAt;
+
+    @Column(name = "client_secret_hash", length = 200)
+    private String clientSecretHash;
+
+    @Column(name = "client_secret_expires_at")
+    private Instant clientSecretExpiresAt;
+
+    @Column(name = "client_name", nullable = false, length = 200)
+    private String clientName;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @Convert(converter = BooleanToSmallIntConverter.class)
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled;
+
+    @Lob
+    @Column(name = "client_notes")
+    private String clientNotes;
+
+    /* ----- lifecycle hooks ----- */
+
+    @PrePersist
+    void prePersist() {
+        final Instant now = Instant.now();
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
+        if (clientIdIssuedAt == null) clientIdIssuedAt = now;
+        if (enabled == null) enabled = Boolean.TRUE;
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = Instant.now();
+    }
+
+    /* ----- getters / setters ----- */
+
+    public Oauth2RegisteredClientId getId() { return id; }
+    public void setId(Oauth2RegisteredClientId id) { this.id = id; }
+
+    public String getRcId() { return rcId; }
+    public void setRcId(String rcId) { this.rcId = rcId; }
+
+    public Instant getClientIdIssuedAt() { return clientIdIssuedAt; }
+    public void setClientIdIssuedAt(Instant clientIdIssuedAt) { this.clientIdIssuedAt = clientIdIssuedAt; }
+
+    public String getClientSecretHash() { return clientSecretHash; }
+    public void setClientSecretHash(String clientSecretHash) { this.clientSecretHash = clientSecretHash; }
+
+    public Instant getClientSecretExpiresAt() { return clientSecretExpiresAt; }
+    public void setClientSecretExpiresAt(Instant clientSecretExpiresAt) { this.clientSecretExpiresAt = clientSecretExpiresAt; }
+
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Boolean getEnabled() { return enabled; }
+    public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+
+    public String getClientNotes() { return clientNotes; }
+    public void setClientNotes(String clientNotes) { this.clientNotes = clientNotes; }
+
+    /* ----- convenience accessors for PK fields ----- */
+
+    @Transient
+    public String getIssuer() { return id != null ? id.getIssuer() : null; }
+
+    @Transient
+    public String getClientId() { return id != null ? id.getClientId() : null; }
+
+    /* ----- equals / hashCode（建議依主鍵） ----- */
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Oauth2RegisteredClient that)) return false;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() { return Objects.hash(id); }
+}

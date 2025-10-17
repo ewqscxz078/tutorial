@@ -1,87 +1,209 @@
 -- 1) Registered Client 主表（以 client_id 當 PK，便於子表引用）
 oauth2_registered_client
 	CREATE TABLE oauth2_registered_client (
+		-- 主鍵：(issuer, rc_id)
+		-- 唯一鍵：(issuer, client_id)
+		-- （可選）全域唯一：對 rc_id 加一個 UNIQUE（若你保證 rc_id 以 UUID 產生且希望全域唯一）
+		-- 索引：針對常見過濾與維運工單設置覆蓋索引
+
 	  issuer                    VARCHAR(200) NOT NULL,      -- 由於環境架構跨區多一個 issuer，需要區別用
-	  client_id                 VARCHAR(100)  NOT NULL,     -- spring-security-oauth2-authorization-server.RegisteredClient.clientId
 	  rc_id                     VARCHAR(100) NOT NULL,      -- spring-security-oauth2-authorization-server.RegisteredClient.id，UUID 字串
+
+	  client_id                 VARCHAR(100)  NOT NULL,     -- 對應 spring-security-oauth2-authorization-server.RegisteredClient.clientId
 	  client_id_issued_at       TIMESTAMP     NOT NULL,     -- spring-security-oauth2-authorization-server.RegisteredClient.clientIdIssuedAt，UTC
 	  client_secret_hash        VARCHAR(200)  NULL,         -- spring-security-oauth2-authorization-server.RegisteredClient.clientSecret
 	  client_secret_expires_at  TIMESTAMP     NULL,         -- spring-security-oauth2-authorization-server.RegisteredClient.clientSecretExpiresAt，UTC
 	  client_name               VARCHAR(200)  NOT NULL,     -- spring-security-oauth2-authorization-server.RegisteredClient.clientName
-	  
-	  -- require_proof_key         SMALLINT      NOT NULL,     -- 0/1
-	  -- require_user_consent      SMALLINT      NOT NULL,     -- 0/1
-	  -- token_endpoint_auth_method      VARCHAR(50)  NOT NULL,
-	  -- token_endpoint_auth_signing_alg  VARCHAR(20)  NULL,
-	  -- jwks_uri                  VARCHAR(500)  NULL,
-	  -- client_jwks_trust_kid     SMALLINT      NOT NULL,     -- 0/1
 
 	  created_at                TIMESTAMP     NOT NULL,     -- UTC
 	  updated_at                TIMESTAMP     NOT NULL,     -- UTC
 	  enabled                   SMALLINT      NOT NULL,     -- 0/1
 	  client_notes              TEXT          NULL,
 
-	  CONSTRAINT PK_oauth2_registered_client PRIMARY KEY (issuer, client_id),
-	  CONSTRAINT UQ_oauth2_rc_id UNIQUE (rc_id)
+	  -- 主鍵：多 issuer 模式更好對齊下游外鍵
+	  CONSTRAINT PK_oauth2_rc PRIMARY KEY (issuer, rc_id),
+
+	  -- 同 issuer 下 client_id 必須唯一（查詢也靠它）
+	  CONSTRAINT UX_oauth2_rc_issuer_clientid UNIQUE (issuer, client_id),
+
+	  -- 可選：若你想強制 rc_id 全域唯一（跨 issuer 也唯一），再加一條 Unique
+	  CONSTRAINT UX_oauth2_rc_rcid UNIQUE (rc_id),
+
+	  -- 資料品質約束 :
+	  CONSTRAINT CK_oauth2_rc_enabled CHECK (enabled IN (0, 1)),
+
+	  -- 資料品質約束 : 若沒有 secret，則不應該有 expires_at（避免孤兒值）
+	  CONSTRAINT CK_oauth2_rc_secret_exp
+		CHECK (client_secret_hash IS NOT NULL OR client_secret_expires_at IS NULL),
+
+	  -- 資料品質約束 : updated_at 不得早於 created_at（通用寫法）
+	  CONSTRAINT CK_oauth2_rc_time_order CHECK (updated_at >= created_at)
 
 	);
+	  -- require_proof_key         SMALLINT      NOT NULL,     -- 0/1 若要正規化則不建議放在 oauth2_registered_client
+	  -- require_user_consent      SMALLINT      NOT NULL,     -- 0/1 若要正規化則不建議放在 oauth2_registered_client
+	  -- token_endpoint_auth_method      VARCHAR(50)  NOT NULL, -- 若要正規化則不建議放在 oauth2_registered_client
+	  -- token_endpoint_auth_signing_alg  VARCHAR(20)  NULL,	-- 若要正規化則不建議放在 oauth2_registered_client
+	  -- jwks_uri                  VARCHAR(500)  NULL,			-- 若要正規化則不建議放在 oauth2_registered_client
+	  -- client_jwks_trust_kid     SMALLINT      NOT NULL,     -- 0/1 若要正規化則不建議放在 oauth2_registered_client
 
--- 1.x) 子表（集合型欄位都做成 (issuer, client_id) 複合鍵）
+-- 常用查詢/維運用索引（通用 btree）
+-- 1) 發卡與驗證流程：依 issuer+client_id 裝載 RegisteredClient
+--    已有 UNIQUE(issuer, client_id) 可覆蓋此需求，無需再建索引
+
+-- 2) 後台清單/查詢（分頁）
+CREATE INDEX IX_oauth2_rc_issuer_enabled_updated
+  ON oauth2_registered_client (issuer, enabled, updated_at);
+
+-- 3) 維運：找即將過期或已過期的 secret
+--    注意：若資料庫支援「僅非 NULL 的部分索引」可改為部分索引，這裡用通用做法
+CREATE INDEX IX_oauth2_rc_secret_exp
+  ON oauth2_registered_client (client_secret_expires_at);
+
+-- 4) 依建立時間或更新時間做報表/清單
+CREATE INDEX IX_oauth2_rc_issuer_created
+  ON oauth2_registered_client (issuer, created_at);
+CREATE INDEX IX_oauth2_rc_issuer_updated
+  ON oauth2_registered_client (issuer, updated_at);
+
+-- 5) 若你常用 client_name 關鍵字搜尋，視資料庫能力再補全文索引；
+--    通用情境下至少加個前綴搜尋可用的索引（注意 LIKE 'abc%' 有效）
+CREATE INDEX IX_oauth2_rc_issuer_clientname
+  ON oauth2_registered_client (issuer, client_name);
+	
+
+-- 1.x) 子表（集合型欄位都做成 (issuer, rc_id) 複合鍵）
 	oauth2_client_auth_method
 		-- 端點認證方法（集合）
 		CREATE TABLE oauth2_client_auth_method ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<ClientAuthenticationMethod> clientAuthenticationMethods
-		  issuer    VARCHAR(200) NOT NULL,
-		  client_id VARCHAR(100) NOT NULL,
-		  method    VARCHAR(50)  NOT NULL,          -- client_secret_basic / private_key_jwt / ...
-		  CONSTRAINT PK_oauth2_client_auth_method PRIMARY KEY (issuer, client_id, method),
-		  CONSTRAINT FK_cam_client FOREIGN KEY (issuer, client_id)
-		    REFERENCES oauth2_registered_client (issuer, client_id)
+		  issuer    	VARCHAR(200) NOT NULL,
+		  rc_id 		VARCHAR(100) NOT NULL,
+		  auth_method	VARCHAR(64)  NOT NULL,          -- client_secret_basic / private_key_jwt / ...
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_auth_method PRIMARY KEY (issuer, rc_id, auth_method),
+		  -- CONSTRAINT FK_cam_client FOREIGN KEY (issuer, rc_id)
+		  --   REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
 
 	oauth2_client_grant_type
 		CREATE TABLE oauth2_client_grant_type ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<AuthorizationGrantType> authorizationGrantTypes
-		  issuer      VARCHAR(200) NOT NULL,
-		  client_id   VARCHAR(100) NOT NULL,
-		  grant_type  VARCHAR(50)  NOT NULL,
-		  CONSTRAINT PK_oauth2_client_grant_type PRIMARY KEY (client_id, grant_type),
-		  CONSTRAINT FK_grant_type_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
+		  issuer      	VARCHAR(200) NOT NULL,
+		  rc_id   		VARCHAR(100) NOT NULL,
+		  grant_type  	VARCHAR(50)  NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_grant_type PRIMARY KEY (issuer, rc_id, grant_type),
+		  -- CONSTRAINT FK_grant_type_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
 
 	oauth2_client_redirect_uri
 		CREATE TABLE oauth2_client_redirect_uri ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> redirectUris
-		  issuer       VARCHAR(200) NOT NULL,
-		  client_id    VARCHAR(100) NOT NULL,
-		  redirect_uri VARCHAR(500) NOT NULL,
-		  CONSTRAINT PK_oauth2_client_redirect_uri PRIMARY KEY (client_id, redirect_uri),
-		  CONSTRAINT FK_redirect_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
+		  issuer       	VARCHAR(200) NOT NULL,
+		  rc_id    		VARCHAR(100) NOT NULL,
+		  redirect_uri 	VARCHAR(500) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_redirect_uri PRIMARY KEY (issuer, rc_id, redirect_uri),
+		  -- CONSTRAINT FK_redirect_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
 	
 	oauth2_client_post_logout_redirect_uri
 		CREATE TABLE oauth2_client_post_logout_redirect_uri ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> postLogoutRedirectUris
 		  issuer       				VARCHAR(200) NOT NULL,
-		  client_id                 VARCHAR(100) NOT NULL,
+		  rc_id                 VARCHAR(100) NOT NULL,
 		  post_logout_redirect_uri  VARCHAR(500) NOT NULL,
-		  CONSTRAINT PK_oauth2_client_post_logout_redirect_uri PRIMARY KEY (client_id, post_logout_redirect_uri),
-		  CONSTRAINT FK_plru_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_post_logout_redirect_uri PRIMARY KEY (issuer, rc_id, post_logout_redirect_uri),
+		  -- CONSTRAINT FK_plru_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
 
 	oauth2_client_scope
 		CREATE TABLE oauth2_client_scope (						-- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> scopes
 		  issuer    VARCHAR(200) NOT NULL,
-		  client_id VARCHAR(100) NOT NULL,
+		  rc_id VARCHAR(100) NOT NULL,
 		  scope     VARCHAR(100) NOT NULL,
-		  CONSTRAINT PK_oauth2_client_scope PRIMARY KEY (client_id, scope),
-		  CONSTRAINT FK_scope_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_scope PRIMARY KEY (issuer, rc_id, scope),
+		  -- CONSTRAINT FK_scope_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
-	
+
+	-- ClientSettings（每個 RegisteredClient 一筆）
+		CREATE TABLE oauth2_client_settings (
+		  issuer                               VARCHAR(200)  NOT NULL,
+		  rc_id                                 VARCHAR(100)  NOT NULL,  -- FK -> oauth2_registered_client(issuer, rc_id)
+
+		  require_pkce                          SMALLINT      NOT NULL DEFAULT 0,   -- = ClientSettings.requireProofKey
+		  require_consent                       SMALLINT      NOT NULL DEFAULT 1,   -- = ClientSettings.requireAuthorizationConsent
+		  jwk_set_url                           VARCHAR(400),                      -- = ClientSettings.jwkSetUrl
+		  token_endpoint_auth_sign_alg          VARCHAR(50),                       -- = ClientSettings.tokenEndpointAuthenticationSigningAlgorithm
+		  x509_certificate_subject_dn			VARCHAR(400),                      -- = ClientSettings.x509CertificateSubjectDn
+
+		  -- 預留擴充：放 SAS 新增或自訂的 client setting
+		  extra_json                            TEXT,                           -- JSON字串（可選），若要正規化可考慮 oauth2_client_setting_kv
+
+		  created_at                            TIMESTAMP        NOT NULL,
+		  updated_at                            TIMESTAMP        NOT NULL,
+
+		  CONSTRAINT PK_oauth2_client_settings PRIMARY KEY (issuer, rc_id),
+		  -- CONSTRAINT FK_oauth2_client_settings_client
+		  -- 	FOREIGN KEY (issuer, rc_id)
+		  --   REFERENCES oauth2_registered_client(issuer, rc_id)
+		);
+
+		ClientSettings → oauth2_client_settings
+			* requireProofKey → require_pkce
+			* requireAuthorizationConsent → require_consent
+			* jwkSetUrl → jwk_set_url
+			* tokenEndpointAuthenticationSigningAlgorithm → token_endpoint_auth_sign_alg
+			* x509CertificateBoundAccessTokens（若版本有用到）→ x509_cert_bound_access_tokens
+			* 其他版本新增 / 客製 → extra_json
+
+	-- TokenSettings（每個 RegisteredClient 一筆）
+		CREATE TABLE oauth2_token_settings (
+		  issuer                               VARCHAR(200)  NOT NULL,
+		  rc_id                                 VARCHAR(100)  NOT NULL,   -- FK -> oauth2_registered_client(issuer, rc_id)
+
+		  access_token_ttl_iso                  VARCHAR(40),             -- = TokenSettings.accessTokenTimeToLive
+		  refresh_token_ttl_iso                 VARCHAR(40),             -- = TokenSettings.refreshTokenTimeToLive
+		  reuse_refresh_tokens                  SMALLINT,                -- = TokenSettings.reuseRefreshTokens
+		  authorization_code_ttl_iso            VARCHAR(40),             -- = TokenSettings.authorizationCodeTimeToLive
+		  device_code_ttl_iso                   VARCHAR(40),             -- = TokenSettings.deviceCodeTimeToLive
+		  id_token_signature_alg                VARCHAR(50),             -- = TokenSettings.idTokenSignatureAlgorithm（例如 RS256, ES256）
+		  access_token_format                   VARCHAR(50),             -- = TokenSettings.accessTokenFormat（例如 self-contained / reference）
+
+		  x509_cert_bound_access_tokens         SMALLINT      NOT NULL DEFAULT 0,   -- = TokenSettings.x509CertificateBoundAccessTokens（若用得到）
+
+		  -- 預留擴充：放 SAS 新增或自訂的 token setting
+		  extra_json                            TEXT,				 -- 若要正規化可考慮 oauth2_token_setting_kv
+
+		  created_at                            TIMESTAMP        NOT NULL,
+		  updated_at                            TIMESTAMP        NOT NULL,
+
+		  CONSTRAINT PK_oauth2_token_settings PRIMARY KEY (issuer, rc_id),
+		  -- CONSTRAINT FK_oauth2_token_settings_client
+		  --   FOREIGN KEY (issuer, rc_id)
+		  --     REFERENCES oauth2_registered_client(issuer, rc_id)
+		);
+
+		TokenSettings → oauth2_token_settings
+			* accessTokenTimeToLive → access_token_ttl_iso
+			* refreshTokenTimeToLive → refresh_token_ttl_iso
+			* reuseRefreshTokens → reuse_refresh_tokens
+			* authorizationCodeTimeToLive → authorization_code_ttl_iso
+			* deviceCodeTimeToLive → device_code_ttl_iso
+			* idTokenSignatureAlgorithm → id_token_signature_alg
+			* accessTokenFormat（OAuth2TokenFormat.SELF_CONTAINED / REFERENCE） → access_token_format
+			* 其他版本新增 / 客製 → extra_json
+
+===========================================================================================
+額外
 	oauth2_client_resource_indicator
 		CREATE TABLE oauth2_client_resource_indicator (
 		  client_id VARCHAR(100) NOT NULL,
 		  resource  VARCHAR(200) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
 		  CONSTRAINT PK_oauth2_client_resource_indicator PRIMARY KEY (client_id, resource),
 		  CONSTRAINT FK_resind_client FOREIGN KEY (client_id)
 			REFERENCES oauth2_registered_client (client_id)
@@ -91,25 +213,9 @@ oauth2_registered_client
 		CREATE TABLE oauth2_client_audience (
 		  client_id VARCHAR(100) NOT NULL,
 		  aud       VARCHAR(200) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
 		  CONSTRAINT PK_oauth2_client_audience PRIMARY KEY (client_id, aud),
 		  CONSTRAINT FK_aud_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
-		);
-
--- 2) Token 設定（每 client 一筆；Duration 存字串）
-	oauth2_client_token_settings
-		CREATE TABLE oauth2_client_token_settings (
-		  client_id                 VARCHAR(100) NOT NULL,
-		  access_token_ttl          VARCHAR(40)  NOT NULL,  -- e.g. 'PT15M'
-		  refresh_token_ttl         VARCHAR(40)  NULL,      -- e.g. 'P30D'
-		  reuse_refresh_tokens      SMALLINT     NOT NULL,  -- 0/1
-		  authorization_code_ttl    VARCHAR(40)  NOT NULL,  -- e.g. 'PT5M'
-		  device_code_ttl           VARCHAR(40)  NULL,
-		  id_token_ttl              VARCHAR(40)  NULL,
-		  access_token_format       VARCHAR(20)  NOT NULL,  -- 'self-contained' / 'reference'
-		  issued_token_type         VARCHAR(50)  NULL,
-		  CONSTRAINT PK_oauth2_client_token_settings PRIMARY KEY (client_id),
-		  CONSTRAINT FK_tokenset_client FOREIGN KEY (client_id)
 			REFERENCES oauth2_registered_client (client_id)
 		);
 

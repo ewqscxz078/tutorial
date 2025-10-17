@@ -1,0 +1,28 @@
+
+1.打 webClient with jwt by clientRegistrationId
+	使用預設方式讓 WebClient不用都設定方式：
+		import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
+
+		@Bean
+		WebClient webClient(ClientRegistrationRepository repo, OAuth2AuthorizedClientManager acm) {
+			var oauth = new ServletOAuth2AuthorizedClientExchangeFilterFunction(acm);
+			oauth.setDefaultClientRegistrationId("local-as:svc-orders"); // 預設
+			return WebClient.builder().apply(oauth.oauth2Configuration()).build();
+		}
+
+	或每次呼叫時指定：
+		webClient.get()
+		  .uri("http://localhost:8082/api/orders")
+		  .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction
+			  .clientRegistrationId("local-as:svc-orders"))
+		  .retrieve()
+		  .bodyToMono(String.class);
+
+2.取得 accessToken
+	使用註解（MVC Controller）
+	@GetMapping("/demo")
+	public String demo(@RegisteredOAuth2AuthorizedClient("local-as:svc-orders")
+					   OAuth2AuthorizedClient client) {
+		// 直接拿到 access token 使用
+		return client.getAccessToken().getTokenValue();
+	}

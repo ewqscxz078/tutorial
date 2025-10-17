@@ -1,0 +1,329 @@
+ref ChatGPT
+
+常見兩種變體
+	| 型式                        | 描述                                                | 優點                    | 缺點              |
+	| -------------------------- | -------------------------------------------------- | --------------------- | --------------- |
+	| **雙段交換（C → C2P → C2PE）** | 先在雲域 AS-C2P 換 AT₂，再由 AS-C2P 對 AS-C2PE 聯邦發 AT₃ | 最常見；權責清楚；可審計每一段 | 多一次 RTT；需兩套信任關係 |
+	| **單段交換（C → C2PE）**       | AS-C 直接與 AS-C2PE 聯邦                             | 效率高                  | 跨區信任更複雜，安全域縮小   |
+
+以下針對雙段交換說明之 AS-C2P 可以直接發 AS-C2P 授權 token
+	定義
+		業務服務
+			CFA 為 client frontend a 服務
+			PBA 為 client on-prem backend a 服務
+		基礎建設服務
+			AS-C 為 auth server for cloud
+			AS-C2P 為 auth server for 雲到地之雲端邊界
+			Gateway-C2P 為 Gateway 雲到地之雲端邊界
+			Gateway-C2PE 為 Gateway 雲到地之地端邊界
+
+	跨區 Token exchange 流程 : 雙段交換
+		| 階段 | 主體                         | 動作                                 | Token             |
+		| --- | -------------------------- | ----------------------------------- | ----------------- |
+		| 1   | CFA                        | 向 AS-C 拿 access token              | **AT₁ (雲域)**      |
+		| 2   | CFA → Gateway-C2P          | 發請求帶 AT₁                           | 驗簽 AT₁            |
+		| 3   | Gateway-C2P → AS-C2P       | Token Exchange (subject_token=AT₁)   | 取得 **AT₂ (地域)**   |
+		| 4   | Gateway-C2P → Gateway-C2PE | 轉發請求，Authorization: Bearer AT₂     | -                 |
+		| 5   | Gateway-C2PE               | 驗簽 AT₂                              | 通過                |
+		| 6   | Gateway-C2PE → PBA         | 轉發給地端業務                          | PBA 驗簽或信任 gateway |
+
+	1️.各區域的 Auth Server 責任分離
+		AS-C：雲域內管理雲端資源（例如 CBA）。
+		AS-C2P：雲端邊界代理，代表雲端向地端交換授權。
+		AS-C2PE：地端邊界授權，簽發地端可用的 Access Token。
+		✅ 各自持有不同 JWKS、信任清單、審計策略。
+		✅ 任何 token 僅在自己網域有效，不跨簽名信任。
+
+	2️.Gateway 是信任邊界
+		Gateway-C2P 是唯一可以「替雲端請求者發起交換」的實體。
+		這樣可保證：
+			* 地端 Auth Server 不必暴露給外網。
+			* 上游 client 不必知道下游 Auth Server 的存在。
+
+	🛡️ 實作時的安全重點
+		| 面向                 | 建議                                                                |
+		| ------------------- | ------------------------------------------------------------------ |
+		| **Authentication**  | Gateway-C2P 向 AS-C2P 交換時必須使用 `client_secret_basic`、mTLS 或 DPoP |
+		| **Claim 傳遞**       | 使用 `act` (Actor) claim 保存原 CFA 的 sub/iss                        |
+		| **Audience**        | AT₂ 的 `aud` 應對準 Gateway-C2PE 或 地端 API 群組                       |
+		| **Key Trust**       | AS-C2PE 只信任 AS-C2P 的簽章公鑰，不信任 AS-C                             |
+		| **JWKS Cache**      | Gateway 本地快取 JWKS (短 TTL + ETag)                                 |
+		| **Traceability**    | 所有交換請求紀錄 `subject_token_jti` ↔ `exchanged_jti` 關聯              |
+
+
+階段三
+	在 Gateway-C2P 需要「在轉發前做一次 RFC 8693 的授權流程」，把上游帶來的 AT₁ 換成地端可用的 AT₂，然後把 Authorization 換掉再轉送。
+
+	1) Gateway-C2P 要準備 ClientRegistration（打AS-C2P）
+		用 yml（若版本允許自訂 grant_type）
+			spring:
+			  security:
+				oauth2:
+				  client:
+					registration:
+					  c2p-te:
+						client-id: gateway-c2p
+						client-secret: ${C2P_CLIENT_SECRET}
+						authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+						scope: []   # 通常不需要，TE 主要靠 audience/scope 參數
+						provider: c2p
+					provider:
+					  c2p:
+						token-uri: https://auth.c2p.cloud/oauth2/token
+						issuer-uri: https://auth.c2p.cloud
+
+		或用 Java 註冊（保險）
+			@Bean
+			ClientRegistrationRepository clientRegistrationRepository() {
+				var teGrant = new AuthorizationGrantType("urn:ietf:params:oauth:grant-type:token-exchange");
+				var c2p = ClientRegistration.withRegistrationId("c2p-te")
+					.clientId("gateway-c2p")
+					.clientSecret(System.getenv("C2P_CLIENT_SECRET"))
+					.authorizationGrantType(teGrant)
+					.tokenUri("https://auth.c2p.cloud/oauth2/token")
+					.issuerUri("https://auth.c2p.cloud")
+					.build();
+				return new InMemoryClientRegistrationRepository(c2p);
+			}
+
+	2) Gateway-C2P 啟用「Token Exchange」授權提供者
+		@Bean
+		OAuth2AuthorizedClientManager authorizedClientManager(
+				ClientRegistrationRepository registrations,
+				OAuth2AuthorizedClientRepository authorizedClients) {
+
+			var teProvider = new TokenExchangeOAuth2AuthorizedClientProvider();
+			teProvider.setAccessTokenResponseClient(new DefaultTokenExchangeTokenResponseClient());
+
+			var provider = new DelegatingOAuth2AuthorizedClientProvider(teProvider);
+			var manager = new DefaultOAuth2AuthorizedClientManager(registrations, authorizedClients);
+			manager.setAuthorizedClientProvider(provider);
+			return manager;
+		}
+
+	3) 在 Gateway-C2P 放一個 WebClient（或 SCG MVC 的 GlobalFilter）做「交換並換頭」
+		3.1 建一個 ExchangeFilterFunction
+			這個 Filter 會：
+				1.從上游請求讀出 AT₁（Authorization: Bearer ...）。
+				2.用 authorizedClientManager 對 AS-C2P 做 Token Exchange，帶上必要屬性（subject_token=AT₁、audience=api://pba、requested_token_type=access_token）。
+				3.拿到 AT₂ 後，把下游請求的 Authorization 改成 Bearer AT₂ 再送出。
+			@Bean
+			ExchangeFilterFunction tokenExchangeFilter(OAuth2AuthorizedClientManager manager) {
+				return (request, next) -> {
+					var authz = request.headers().firstHeader(HttpHeaders.AUTHORIZATION);
+					if (authz == null || !authz.startsWith("Bearer ")) {
+						return next.exchange(request); // 沒有上游 token 就不做 TE
+					}
+					var at1 = authz.substring("Bearer ".length());
+
+					// 這裡的 principal 可用技術帳號代表 gateway 自己
+					var principal = new UsernamePasswordAuthenticationToken("gateway-c2p", "N/A",
+							List.of(new SimpleGrantedAuthority("ROLE_GATEWAY")));
+
+					var attrs = new HashMap<String, Object>();
+					attrs.put("subject_token", at1);
+					attrs.put("subject_token_type", "urn:ietf:params:oauth:token-type:access_token");
+					attrs.put("requested_token_type", "urn:ietf:params:oauth:token-type:access_token");
+					attrs.put("audience", "api://pba"); // 或 gateway-c2pe，看你的策略
+					// 可選：attrs.put("scope", "pba.read pba.write");
+
+					var authorize = OAuth2AuthorizeRequest
+							.withClientRegistrationId("c2p-te")
+							.principal(principal)
+							.attributes(a -> a.putAll(attrs))
+							.build();
+
+					var authorized = manager.authorize(authorize);
+					if (authorized == null || authorized.getAccessToken() == null) {
+						return Mono.error(new IllegalStateException("Token Exchange failed: no access token"));
+					}
+
+					var at2 = authorized.getAccessToken().getTokenValue();
+
+					var mutated = ClientRequest.from(request)
+							.headers(h -> h.set(HttpHeaders.AUTHORIZATION, "Bearer " + at2))
+							.build();
+
+					return next.exchange(mutated);
+				};
+			}
+
+		3.2 把 Filter 掛進你用來打 Gateway-C2PE 的 WebClient
+			@Bean
+			WebClient c2peClient(ExchangeFilterFunction tokenExchangeFilter) {
+				return WebClient.builder()
+					.baseUrl("https://gw.c2pe.edge") // 你地端閘道的入口
+					.filter(tokenExchangeFilter)     // ← 關鍵：每次轉送前做 TE 並換頭
+					.build();
+			}
+
+
+	4) TE 請求必要參數（重點）
+		* grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+		* subject_token: 上游帶來的 AT₁
+		* subject_token_type: urn:ietf:params:oauth:token-type:access_token
+		* requested_token_type: urn:ietf:params:oauth:token-type:access_token
+		* audience: 請對準「下游實際驗證點」，建議用 gateway-c2pe 或一組地端 API 的資源 ID
+
+		* （選）scope: 若需要縮限或擴展，依策略填
+		* （選）Sender-constrained：若你啟用 DPoP 或 mTLS，要同時在 TE 請求與後續呼叫使用相同綁定
+
+	5) 錯誤處理與快取
+		常見錯誤碼：
+			invalid_grant（subject_token 無效/過期/不可交換）
+			invalid_target（audience 不被允許）
+			insufficient_scope（TE 後 scope 不足）
+
+		建議把 AT₂ 依 exp 做短暫快取（例如用 OAuth2AuthorizedClientRepository 預設就會保存至過期），同一條鏈路內多次下游呼叫可重用，避免每次都打 TE。
+
+	6) 小抄：你要做/配哪些東西？
+		 * AS-C2P 支援 RFC 8693（後端已實作 provider/endpoint）。
+		 * Gateway-C2P
+			 * 註冊 ClientRegistration（c2p-te）
+			 * 建立 OAuth2AuthorizedClientManager + TokenExchange...Provider
+			 * 在轉發前跑 tokenExchangeFilter，把 AT₁ → AT₂，換 Authorization
+		* Gateway-C2PE / PBA 只要照常用 JWKS 本地驗簽 AT₂ 即可。
+
+	總結
+		1.Gateway-C2P 要註冊 ClientRegistrationRepository of AS-C2P token exchange 
+		2.Gateway-C2P 啟用「Token Exchange」授權提供者 OAuth2AuthorizedClientManager 
+		3.Gateway-C2P 放一個 WebClient 做「交換並換頭 JWT」的 ExchangeFilterFunction 讓其打 Gateway-C2PE 置換
+		
+		概要流程
+			1.Gateway-C2P 先對 AS-C2P 送出 Token Exchange（TE）；
+			2.AS-C2P 依策略產出「地端可用」的 access token；
+			3.Gateway-C2P 把上游 AT₁ 換成 AT₂，再轉送到 Gateway-C2PE。
+
+			關鍵是第 2 步 AS-C2P 內部怎麼取得“地端可用” 的 token，通常有兩種落地法（擇一或並存）：
+				路徑 A：AS-C2P 直接簽出、由地端信任（前期開發最常見）
+					* AS-C2P 驗完 subject_token=AT₁（用 AS-C 的 JWKS）與政策（audience/scope/actor…）後，直接簽發 AT₂，iss = AS-C2P。
+					* 前提：地端邊界 Gateway-C2PE/PBA 必須把 AS-C2P 納入信任名單（trust its issuer & JWKS），或把 aud 設為 Gateway-C2PE 的資源 ID。
+					* 優點：AS 之間不必再呼叫；延遲最低、可用性高。
+					* 你需要做的：
+						* 在 Gateway-C2PE/PBA 配置「信任 iss = AS-C2P 的 JWKS」。
+						* 在 AS-C2P 設定地端 audience 對應與 scope 映射（aud=api://pba 或 aud=gateway-c2pe）。
+				
+				路徑 B：AS-C2P 背後再向 AS-C2PE 做「第二段交換」
+					* AS-C2P 收到 TE 後，自己成為 OAuth2 client，用它對 AS-C2PE 的憑證再做一次 TE（或 client_credentials），取得 AT₂（iss=AS-C2PE）。
+					* 前提：AS-C2P 與 AS-C2PE 之間網路可達且有 client 認證（client_secret/mTLS/DPoP）。
+					* 你需要做的：
+						* 在 AS-C2P 內部也要有一份 指向 AS-C2PE 的 ClientRegistration（給它自己後台用），例如 registration: c2pe-backchannel。
+						* 設定好第二段 TE 所需的 audience/scope 映射。
+					* 優點：地端只信任 AS-C2PE（單一信任來源）；
+					* 代價：AS 間多一次呼叫，AS-C2P 本身要具備 OAuth2 client 能力。
+
+兩種拓撲
+	方案 A：Broker（雙段交換）
+		* 誰送出 TE？：Gateway-C2P
+		* 第一跳打哪？：打 AS-C2P（雲邊界 AS）。
+		* 第二跳怎來？：AS-C2P 再「自己」跟 AS-C2PE 交握，簽出地端可用的 token（AS-C2P↔AS-C2PE 的後台聯邦，不是 Gateway-C2P 發）。
+		* 因此：Gateway-C2P 的 ClientRegistration 指向 AS-C2P（不是 AS-C2PE）
+	方案 B：Direct（單段交換）
+		誰送出 TE？：Gateway-C2P
+		第一跳打哪？：直接打 AS-C2PE（地端 AS）。
+		因此：Gateway-C2P 的 ClientRegistration 就要指向 AS-C2PE。
+
+
+所謂的兩段式 Token exchange 之雲管雲的、地管地的 token 模式 （Broker 模式）
+	🧩 簡明總覽：三張 Token 的生命週期
+		| Token 名稱 | 誰簽的 (issuer)                  | 誰使用                              | 用途／交換目的                                          |
+		| -------- | ------------------------------- | -------------------------------- | ------------------------------------------------ |
+		| **AT₁**  | 🟦 **AS-C**（雲端 Auth Server）    | CFA → Gateway-C2P                | 雲前端 CFA 呼叫雲側 API 的原始 access token（subject_token） |
+		| **AT₂**  | 🟨 **AS-C2P**（雲邊界 Auth Server） | Gateway-C2P → AS-C2PE            | 雲邊界代表 CFA 交換出的「跨區代理 token」（intermediate token）   |
+		| **AT₃**  | 🟫 **AS-C2PE**（地端 Auth Server） | Gateway-C2P → Gateway-C2PE → PBA | 真正給地端系統用的 access token（最終 token）                 |
+
+		所以是 三張 token（AT₁ → AT₂ → AT₃），對應 兩次交換：
+
+			AT1 (AS-C)
+			   │   [第一次 TE]
+			   ▼
+			AT2 (AS-C2P)
+			   │   [第二次 TE]
+			   ▼
+			AT3 (AS-C2PE)
+
+		🔍 詳細說明每一張 token
+			1) AT₁ — 「雲前端憑證」
+				| 項目                   | 說明                                   |
+				| -------------------- | -------------------------------------- |
+				| **Issuer (`iss`)**   | `https://auth.c.cloud` (AS-C)          |
+				| **Audience (`aud`)** | `gateway-c` 或 `gateway-c2p`           |
+				| **Subject (`sub`)**  | `svc-cfa`（雲前端 client）               |
+				| **用在誰身上**           | CFA → Gateway-C2P                     |
+				| **用途**               | 雲前端 CFA 呼叫雲到地 API 時的原始 token     |
+				| **下一步**             | 作為 `subject_token` 給 AS-C2P 做第一次 TE |
+
+			2) AT₂ — 「跨區代理 (intermediate) token」
+				| 項目                   | 說明                                               |
+				| -------------------- | -------------------------------------------------- |
+				| **Issuer (`iss`)**   | `https://auth.c2p.cloud` (AS-C2P)                  |
+				| **Audience (`aud`)** | `https://auth.c2pe.edge`（地端 AS）                  |
+				| **Subject (`sub`)**  | `gateway-c2p`                                      |
+				| **Actor (`act`)**    | `{"sub":"svc-cfa","iss":"https://auth.c.cloud"}`   |
+				| **用在誰身上**           | AS-C2P → AS-C2PE（第二次 TE 時）                      |
+				| **用途**               | 代表 CFA，讓 AS-C2P 可以對 AS-C2PE 要地端 access token  |
+				| **壽命**               | 很短（例如 30 秒～1 分鐘）                              |
+			
+			3️) AT₃ — 「地端 access token」
+				| 項目                   | 說明                                               |
+				| --------------------- | ------------------------------------------------- |
+				| **Issuer (`iss`)**    | `https://auth.c2pe.edge` (AS-C2PE)                |
+				| **Audience (`aud`)**  | `gateway-c2pe` 或 `api://pba`                      |
+				| **Subject (`sub`)**   | `gateway-c2p`（代表者）                              |
+				| **Actor (`act`)**     | `{"sub":"svc-cfa","iss":"https://auth.c.cloud"}`  |
+				| **用在誰身上**           | Gateway-C2P → Gateway-C2PE → PBA                  |
+				| **用途**               | 地端可驗簽、執行業務的最終 JWT                            |
+				| **壽命**               | 通常 3～5 分鐘                                        |
+				| **地端信任的 AS**        | 只信 `iss=https://auth.c2pe.edge`                  |
+
+		🧭 兩次 Token Exchange 的對應關係
+			| Exchange 次數  | 誰發起       | 誰處理    | `subject_token`    | 發出新的 token | 結果              |
+			| ------------ | ----------- | ------- | ------------------- | ------------ | --------------- |
+			| **第一次 TE**  | Gateway-C2P | AS-C2P  | AT₁                 | AT₂          | 雲到邊界代理 token   |
+			| **第二次 TE**  | AS-C2P      | AS-C2PE | AT₂ (或直接 AT₁，依策略) | AT₃          | 地端 access token |
+
+		🔐 骨幹流程（總覽）
+			sequenceDiagram
+			  participant CFA
+			  participant GW_C2P as Gateway-C2P
+			  participant AS_C2P as Auth Server C2P
+			  participant AS_C2PE as Auth Server C2PE
+			  participant GW_C2PE as Gateway-C2PE
+			  participant PBA
+
+			  CFA->>GW_C2P: API + AT₁ (iss=AS-C)
+			  GW_C2P->>AS_C2P: TE #1 (subject_token=AT₁)
+			  AS_C2P-->>GW_C2P: AT₂ (iss=AS-C2P)
+			  AS_C2P->>AS_C2PE: TE #2 (subject_token=AT₂)
+			  AS_C2PE-->>AS_C2P: AT₃ (iss=AS-C2PE)
+			  AS_C2P-->>GW_C2P: AT₃
+			  GW_C2P->>GW_C2PE: Authorization: Bearer AT₃
+			  GW_C2PE->>PBA: Forward request
+			  PBA-->>GW_C2PE: 200 OK
+			  GW_C2PE-->>CFA: Response
+
+
+		🧠 這樣分層的好處
+			| 層            | 授權責任                                    | 說明 |
+			| ------------ | ----------------------------------------- | -- |
+			| AS-C         | 雲內授權，只發雲域 token（AT₁）                  |    |
+			| AS-C2P       | 驗雲端 token，決定是否允許跨區；只發中介 token（AT₂） |    |
+			| AS-C2PE      | 地端簽發 token（AT₃），授權地端資源               |    |
+			| Gateway-C2P  | 只管轉換、快取；不簽發、不驗簽                    |    |
+			| Gateway-C2PE | 驗簽地端 token，轉給 PBA                      	|    |
+
+		✅ 這樣：
+			* 每個區只管理自己區的 token；
+			* 每個 token 的 iss 唯一歸屬；
+			* 每層信任邊界清楚；
+			* 稽核鏈完整（AT₁ ↔ AT₂ ↔ AT₃ 都有 act claim）。
+
+		✳️ 在正式的「雲管雲、地管地」兩段式 Token Exchange 架構中：
+			你會看到三張 token：
+				* AT₁（雲端 access token, AS-C）
+				* AT₂（中介 exchange token, AS-C2P）
+				* AT₃（地端 access token, AS-C2PE）
+
+			Gateway-C2P 觸發第一次交換（AT₁→AT₂），
+			AS-C2P 觸發第二次交換（AT₂→AT₃），
+			最終 AT₃ 是唯一能被地端驗簽、授權使用的 token。

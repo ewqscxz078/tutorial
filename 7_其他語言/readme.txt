@@ -22,7 +22,7 @@ ref ChatGPT
 	* MkDocs（Material 主題）：Mermaid 內建支援，直接在 Markdown 用 ```mermaid 區塊；PlantUML 可先離線轉圖再引用。
 
 簡短範例
-	Mermaid 序列圖：
+	Mermaid 序列圖： ref https://ikalas.com/app/mermaid-live-editor
 		sequenceDiagram
 		  participant C as Controller
 		  participant S as OrderService
