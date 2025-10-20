@@ -5,7 +5,7 @@ ref chatGPT
 	* 服務端算出一個字串（通常是 hash、版本號）。
 	* 回傳時放到 Response Header：
 		ETag: "abc123"
-	
+
 	* 客戶端下次請求時會帶上：
 		If-None-Match: "abc123"
 
@@ -34,10 +34,10 @@ ref chatGPT
 		* 避免代理在離線或錯誤時把過期的公鑰繼續端給下游
 
 	3.Http header : Cache-Control 之 cachePrivate
-		
+
 		* 代表只允許終端（瀏覽器）快取，CDN/反向代理不會存。
 			如果你希望 CDN 也快取 JWKS（通常是可以的，因為 JWKS 是公開資料），可改用 .cachePublic()，並視需要加 s-maxage。
-		
+
 		* 如果你很在意可用性，願意在源站短暫失效時容忍舊內容，可額外加 stale-if-error=60（或更長），但這會降低撤銷的即時性—安全面要自行取捨。
 
 

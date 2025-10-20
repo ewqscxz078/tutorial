@@ -6,12 +6,12 @@
 var 只能用在 區域變數 的情境，具體限制：
 	1.區域變數宣告
 		var list = new ArrayList<String>();  // list 被推斷為 ArrayList<String>
-	
+
 	2.for-each loop
 		for (var entry : map.entrySet()) {
 			System.out.println(entry.getKey() + "=" + entry.getValue());
 		}
-		
+
 		對比傳統 for loop
 		for (var i = 0; i < 10; i++) {
 			System.out.println(i);
@@ -32,7 +32,7 @@ var 只能用在 區域變數 的情境，具體限制：
 
 	2.提升可讀性（在泛型很長時）
 		型別資訊通常在右邊已經很清楚，左邊就不用再寫一次。
-	
+
 	3.搭配建構式/泛型推斷方便
 		var stream = list.stream().filter(x -> x > 10).map(String::valueOf);
 

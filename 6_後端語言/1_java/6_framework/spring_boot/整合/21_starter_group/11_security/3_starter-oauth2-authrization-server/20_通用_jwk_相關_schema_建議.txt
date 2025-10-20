@@ -72,10 +72,10 @@ jwk_key
 
 	  not_after     DATETIME2(3) NULL,             -- 此 key 停用時間（通常保留驗章期）
 	  activated_at  DATETIME2    NULL,
-	  
-	  grace_until   DATETIME2(3) NULL,             -- GRACE（僅驗章）到期時間	
+
+	  grace_until   DATETIME2(3) NULL,             -- GRACE（僅驗章）到期時間
 	  deactivated_at DATETIME2   NULL,
-	 
+
 	  created_at    DATETIME2    NOT NULL DEFAULT SYSUTCDATETIME()
       comment       VARCHAR(4000) NULL
 	);

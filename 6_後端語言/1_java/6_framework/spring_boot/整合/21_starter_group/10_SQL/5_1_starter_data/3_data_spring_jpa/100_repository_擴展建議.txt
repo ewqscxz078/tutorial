@@ -1,19 +1,19 @@
 ref ChatGPT
 
-Q: 一般介面 xxxRepository 宣告 @Repository 並繼承 JpaRepository 則 xxxRepository 就可以馬上使用現成常用的api 
-不然就是在 xxxRepository 自行額外擴展其他需要的 api ，但是有時候需要其他元件 與當前 xxxRepository 互動 
+Q: 一般介面 xxxRepository 宣告 @Repository 並繼承 JpaRepository 則 xxxRepository 就可以馬上使用現成常用的api
+不然就是在 xxxRepository 自行額外擴展其他需要的 api ，但是有時候需要其他元件 與當前 xxxRepository 互動
 或是 xxxRepository 自行額外擴展要再加一點點有加工，會建議寫在哪邊?
 
 A: 下面用「決策口訣 + 範例」幫你快速判斷該放哪裡。結論先講：
 	1.需要 EntityManager / 複雜查詢 / 效能調校（@QueryHints、批次、lock、EntityGraph）
 		→ 放 XxxRepositoryImpl（或 Repository Fragment）。
 
-	2.需要編排多個 Repository、呼叫其他元件（HTTP、加解密、檔案、MQ）、跨 Aggregate 的交易流程 
+	2.需要編排多個 Repository、呼叫其他元件（HTTP、加解密、檔案、MQ）、跨 Aggregate 的交易流程
 		→ 放 Service。
 
-	3.只是把同一個 Repository 的現有方法稍微包一層（無需新 bean），或做很小的組合邏輯 
+	3.只是把同一個 Repository 的現有方法稍微包一層（無需新 bean），或做很小的組合邏輯
 		→ 放 XxxRepository 介面的 default method。
-		
+
 
 	1) XxxRepositoryImpl（或自定義 Repository Fragment）
 		適合：
@@ -25,7 +25,7 @@ A: 下面用「決策口訣 + 範例」幫你快速判斷該放哪裡。結論�
 			* 保持分層清晰（infra/persistence 邏輯不外流到 service）。
 			* 可注入任何 Spring bean（EntityManager、其他 repo、工具類）。
 			* 測試容易（針對資料存取單元測）。
-		
+
 		典型寫法（Fragment 風格，推薦）：
 			public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryExt {
 				// 衍生查詢或 @Query ...
@@ -57,7 +57,7 @@ A: 下面用「決策口訣 + 範例」幫你快速判斷該放哪裡。結論�
 		優點：
 			* 讓 Repository 專心做「資料存取」，Service 承載「用例流程 + 規則」。
 			* 易於將後續的事件（domain event / outbox）放在 Service 邏輯裡發佈。
-		
+
 		寫法範例
 			@Service
 			@RequiredArgsConstructor
@@ -90,7 +90,7 @@ A: 下面用「決策口訣 + 範例」幫你快速判斷該放哪裡。結論�
 			* 不能注入 bean（介面無法 @Autowired）
 			* 若需要 EntityManager 或其他 Repository，就不適合。
 			* 複雜/長邏輯會讓介面變臃腫。
-		
+
 		寫法範例
 			public interface UserRepository extends JpaRepository<User, Long> {
 

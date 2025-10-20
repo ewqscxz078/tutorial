@@ -70,7 +70,7 @@ CREATE INDEX IX_oauth2_rc_issuer_updated
 --    通用情境下至少加個前綴搜尋可用的索引（注意 LIKE 'abc%' 有效）
 CREATE INDEX IX_oauth2_rc_issuer_clientname
   ON oauth2_registered_client (issuer, client_name);
-	
+
 
 -- 1.x) 子表（集合型欄位都做成 (issuer, rc_id) 複合鍵）
 	oauth2_client_auth_method
@@ -106,7 +106,7 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 		  -- CONSTRAINT FK_redirect_client FOREIGN KEY (issuer, rc_id)
 		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
-	
+
 	oauth2_client_post_logout_redirect_uri
 		CREATE TABLE oauth2_client_post_logout_redirect_uri ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> postLogoutRedirectUris
 		  issuer       				VARCHAR(200) NOT NULL,
@@ -208,7 +208,7 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 		  CONSTRAINT FK_resind_client FOREIGN KEY (client_id)
 			REFERENCES oauth2_registered_client (client_id)
 		);
-	
+
 	oauth2_client_audience
 		CREATE TABLE oauth2_client_audience (
 		  client_id VARCHAR(100) NOT NULL,
@@ -276,7 +276,7 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 		  enabled     SMALLINT     NOT NULL,   -- 0/1
 		  CONSTRAINT PK_oauth2_resource PRIMARY KEY (aud)
 		);
-	
+
 	oauth2_scope_resource
 		CREATE TABLE oauth2_scope_resource (
 		  scope  VARCHAR(100) NOT NULL,
@@ -383,7 +383,7 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 
 	15.DB Migrations / 索引（必備）
 		* 用 Flyway/Liquibase 管控 schema；常用查詢欄位加索引：client_id、(issuer, token_type)、(client_id, scope)、(purpose, alg, state) 等。
-	
+
 
 oauth2_registered_client 欄位對應 RegisteredClient 與用途
 	* issuer →（不直接映射到 RegisteredClient）
@@ -461,7 +461,7 @@ oauth2_registered_client 欄位對應 RegisteredClient 與用途
 		3.解析 client_settings / token_settings 的 JSON，把支援的鍵映射到 ClientSettings.Builder / TokenSettings.Builder；
 		4.client_secret_hash 直接以 雜湊前綴（如 {bcrypt}）設定到 clientSecret；
 		5.只對 enabled=1 的資料做映射與註冊。
-		
+
 M2M（client_credentials）
 	一定要的欄位
 		* issuer：多 Issuer 命名空間（用它先篩出此 issuer 的 clients）。
@@ -496,11 +496,11 @@ M2M（client_credentials）
 				* jwk_set_url：此 Client 的 JWKS URI（AS 用來驗證 client assertion）
 
 		內網服務想先快跑：選 client_secret_basic。跨邊界/高安全：建議 private_key_jwt。
-		
+
 		什麼時候選哪個？
 			* 內網、先求簡單：client_secret_basic（密碼放雜湊，TTL 規範、定期輪替）
 			* 跨邊界／高安全：private_key_jwt（Client 自管私鑰、AS 只管 JWKS；支援 Client 端平滑輪替、kid 嚴格比對）
-		
+
 	M2M 建議但可選（依治理強度）
 		* token_settings（JSON）：
 			* access_token_ttl：建議 PT10M～PT30M
@@ -513,7 +513,7 @@ M2M（client_credentials）
 
 		* client_settings.require_consent：false（M2M 無同意頁）
 		* client_settings.require_proof_key：false（PKCE 僅授權碼用）
-	
+
 	目前用不到（之後會在哪些情境用）
 		* redirect_uris：授權碼/implicit 流程才會用（瀏覽器回跳）。
 		* post_logout_redirect_uris：OIDC RP-Logout 才會用（使用者登出回跳）。
@@ -522,7 +522,7 @@ M2M（client_credentials）
 		* require_consent：有互動同意頁才會用。
 		* require_proof_key（PKCE）：授權碼強化才會用。
 		* jwksUri（client 的 JWKS）：只有你選 private_key_jwt 或你要對客戶端做 JWE 時會用（M2M 多半不用 JWE 給 client）。
-	
+
 	建議預設值（M2M）
 		* authorization_grant_types：client_credentials
 		* client_auth_methods：client_secret_basic（先求快；之後再切 private_key_jwt）

@@ -112,9 +112,9 @@ JSON Web Token（JWT）
 					/ 在 URL 路徑中是分隔符。
 
 				* = 在 URL query、某些 cookie header 也容易被誤處理，甚至被砍掉。
-			
+
 			如果把一個含有 +、/ 的 Base64 token 直接塞到 URL 或 cookie，很容易因為轉碼錯誤而壞掉。
-		
+
 		2. Base64URL 的設計
 			Base64URL 對字元集做了替換：
 				A–Z a–z 0–9 - _
@@ -125,7 +125,7 @@ JSON Web Token（JWT）
 				* 去掉 =，可以避免尾端 padding 在某些情境被截斷或誤處理。
 
 				因此 Base64URL 可以安全地放在 URL、cookie、header 中傳輸，完全不需要再 URL encode。
-		
+
 		3. 舉例比較
 			假設字串 "abc123"
 				* 標準 Base64：YWJjMTIz

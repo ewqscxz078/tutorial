@@ -1,4 +1,4 @@
-旋轉策略表：oauth2aj003 : jwk_denylist 
+旋轉策略表：oauth2aj003 : jwk_denylist
 	1. 最簡單版：只存 kid
 		CREATE TABLE jwk_denylist (
 			id          BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -26,7 +26,7 @@
 		CREATE INDEX IX_token_denylist_issuer_jti ON token_denylist(issuer, jti);
 
 		👉 這會被用在 logout / refresh token revoke 的場景。
-	
+
 	3. 混合版：同時支援 kid + jti
 		有些系統會放一起，因為有時候要封鎖某把金鑰，有時候要封鎖單一 token。
 		CREATE TABLE jwk_denylist (

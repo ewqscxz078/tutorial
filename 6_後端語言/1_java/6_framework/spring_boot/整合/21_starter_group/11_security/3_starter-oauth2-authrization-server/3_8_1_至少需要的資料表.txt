@@ -35,10 +35,10 @@ ref ChatGPT
 						oauth2_client_scope                     # 僅客戶端「宣告」可申請的範圍
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<String> scopes
 
-					其他延伸	
+					其他延伸
 						oauth2_client_resource_indicator		# （如採用 RFC 8707 resource indicators）
 						oauth2_client_audience                  # （如採用 audience 驗證）
-			
+
 			2) Token / JWT 設定（每 Client 可覆寫）
 				oauth2_client_token_settings
 				oauth2_client_jwt_settings
@@ -46,7 +46,7 @@ ref ChatGPT
 						oauth2_client_jwe_settings              # option
 
 			* 放 client 的靜態設定：client_id、client_secret（或其它認證方式）、授權模式（client_credentials）、scope、token/ID Token 的設定（存活時間、是否使用自含式 JWT、簽章演算法等）。
-		
+
 	// 3.oauth2_authorization（強烈建議）
 		* 放「已核發的存取權杖」及其狀態與附加資訊：access_token（含到期時間、claims）、refresh_token（若有）、attributes/metadata 等。
 		* 即使是 M2M，多數系統還是會保留這張表以便稽核、撤銷、疑難排除。
@@ -73,11 +73,11 @@ ref ChatGPT
 				* 什麼時候查：
 					* 決定 Access Token 的 aud 時，將請求的 resource或scope 推導的預設 audience與此白名單取交集。
 				* 誰用：AudienceService（在 OAuth2TokenCustomizer<JwtEncodingContext> 被呼叫）。
-			
+
 			oauth2_scope_resource
 				* 做什麼：把 scope 映射到預設 audience（當請求沒帶 resource 時）。
 				* 什麼時候查：計算預設 audience；同上由 AudienceService 使用。
-			
+
 			oauth2_resource
 				* 做什麼：資源伺服器主檔（aud、描述、可選 jwks_uri）。
 				* 什麼時候查：
@@ -91,13 +91,13 @@ ref ChatGPT
 					* 發 Token 前，決定要用的簽章 alg 與（間接）kid；
 					* 之後去你的 jwk_key 表挑該 alg 的 ACTIVE key。
 				* 誰用：SigningSelector（你自訂的服務），被 JWKSource / JwtEncoder 呼叫。
-			
+
 			oauth2_client_jwe_settings
 				* 做什麼：客戶端層級的加密策略（要不要加密、enc_alg/enc_enc、哪些回應要加密：id_token / userinfo / introspection…）。
 				* 什麼時候查：
 					* 你決定要把 ID Token 或其他回應做 JWE 時。SAS 預設只簽不加密，做 JWE 需自訂 encoder/回應器。
 				* 誰用：JwePolicyService（由 OAuth2TokenCustomizer 或自訂 JwtEncoder/response handler 採用）。
-			
+
 			jwt_claim_mapping
 				* 做什麼：可配置的 自訂 claims 規則（依 issuer/client/scope/grant_type/token_type…）。source/expression 可用 FIXED/USER_ATTR/SQL/HTTP/SPEL 等。
 				* 什麼時候查：

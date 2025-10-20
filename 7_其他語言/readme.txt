@@ -31,7 +31,7 @@ ref ChatGPT
 		  S->>P: POST /charge
 		  P-->>S: 200 OK
 		  S-->>C: done
-	
+
 	PlantUML 序列圖：
 		@startuml
 		actor User

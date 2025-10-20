@@ -93,7 +93,7 @@ resource server
 		外部 iss → 外部 JWKS（固定 key）。
 
 核心程式碼範例
-	resource server 
+	resource server
 		1. application.yml
 			security:
 			  jwt:
@@ -103,7 +103,7 @@ resource server
 				kong:
 				  issuer: https://kong.example.com
 				  jwk-set-uri: https://kong.example.com/jwks
-		
+
 		2. SecurityConfig.java
 			import jakarta.servlet.http.HttpServletRequest;
 			import org.springframework.context.annotation.Bean;

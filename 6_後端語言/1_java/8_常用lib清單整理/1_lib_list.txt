@@ -28,7 +28,7 @@ javax.servlet
 			<dependency><groupId>org.apache.cxf</groupId><artifactId>cxf-spring-boot-starter-jaxrs</artifactId></dependency>
 
 runtime 系列
-	驅動程式
+	JDBC 驅動程式
 		<dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
 
 

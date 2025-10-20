@@ -1,7 +1,7 @@
 ref ChatGPT
 
 屬於 JPA lifecycle callbacks，在實體透過 EntityManager 被寫入 DB 前自動觸發
-	@PrePersist 
+	@PrePersist
 		首次 insert 前呼叫，以利自動處理 Persist bean 內容
 		例如
 			@PrePersist
@@ -26,7 +26,7 @@ ref ChatGPT
 				this.updatedAt = Instant.now();
 			}
 			1.updatedAt 更新成現在時間，維持修改時間戳的一致性。
-			
+
 
 	為什麼用它們？
 		* 集中預設行為：避免每個 service/save 都要手動塞
@@ -44,17 +44,17 @@ ref ChatGPT
 
 	額外建議
 		若你有很多 entity 都要同樣邏輯，抽出 EntityListener（例如 @EntityListeners(AuditTimestampsListener.class)）集中維護 createdAt/updatedAt 規則。
-		
+
 
 決定「這個轉換要不要全專案全欄位自動套用」
 	@Converter(autoApply = true|false)
-	
+
 	autoApply = true
 		全域自動。凡是 相同 Java 型別 的欄位（含 @Embeddable 內）都會套用這個 Converter，除非你在欄位上寫 @Convert(disableConversion = true) 或用另一個 converter 覆蓋。
-	
+
 	autoApply = false
 		局部 opt-in。只有你明確在欄位上標 @Convert(converter = …) 的時候才會用。
-	
+
 	規則：欄位上的 @Convert 具有較高優先權，可覆蓋 autoApply=true 的全域設定。
 
 	什麼時候該用 autoApply = true？

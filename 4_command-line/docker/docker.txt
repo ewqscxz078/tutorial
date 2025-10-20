@@ -353,7 +353,7 @@ docker system prune
 =======================================================================
 ======================= docker 確認遠端 registry ======================
 =======================================================================
-當出現 
+當出現
  response from daemon: manifest for registry:5000/sris-main/file-mq:sit not found: manifest unknown: manifest unknown
 代表遠端的 registry 找不到存在 images tag 之類
 透過rest api

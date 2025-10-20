@@ -1,4 +1,4 @@
-jwks cache meta：oauth2aj005 : jwks_meta 
+jwks cache meta：oauth2aj005 : jwks_meta
 	CREATE TABLE jwks_meta (
 	  issuer         NVARCHAR(200) NOT NULL,
 	  purpose        VARCHAR(8)    NOT NULL,         -- 'SIG' | 'ENC'

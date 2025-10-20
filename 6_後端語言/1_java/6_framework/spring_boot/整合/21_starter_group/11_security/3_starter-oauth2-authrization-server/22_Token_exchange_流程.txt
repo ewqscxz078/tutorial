@@ -185,10 +185,10 @@ ref ChatGPT
 		* Gateway-C2PE / PBA 只要照常用 JWKS 本地驗簽 AT₂ 即可。
 
 	總結
-		1.Gateway-C2P 要註冊 ClientRegistrationRepository of AS-C2P token exchange 
-		2.Gateway-C2P 啟用「Token Exchange」授權提供者 OAuth2AuthorizedClientManager 
+		1.Gateway-C2P 要註冊 ClientRegistrationRepository of AS-C2P token exchange
+		2.Gateway-C2P 啟用「Token Exchange」授權提供者 OAuth2AuthorizedClientManager
 		3.Gateway-C2P 放一個 WebClient 做「交換並換頭 JWT」的 ExchangeFilterFunction 讓其打 Gateway-C2PE 置換
-		
+
 		概要流程
 			1.Gateway-C2P 先對 AS-C2P 送出 Token Exchange（TE）；
 			2.AS-C2P 依策略產出「地端可用」的 access token；
@@ -202,7 +202,7 @@ ref ChatGPT
 					* 你需要做的：
 						* 在 Gateway-C2PE/PBA 配置「信任 iss = AS-C2P 的 JWKS」。
 						* 在 AS-C2P 設定地端 audience 對應與 scope 映射（aud=api://pba 或 aud=gateway-c2pe）。
-				
+
 				路徑 B：AS-C2P 背後再向 AS-C2PE 做「第二段交換」
 					* AS-C2P 收到 TE 後，自己成為 OAuth2 client，用它對 AS-C2PE 的憑證再做一次 TE（或 client_credentials），取得 AT₂（iss=AS-C2PE）。
 					* 前提：AS-C2P 與 AS-C2PE 之間網路可達且有 client 認證（client_secret/mTLS/DPoP）。
@@ -263,7 +263,7 @@ ref ChatGPT
 				| **用在誰身上**           | AS-C2P → AS-C2PE（第二次 TE 時）                      |
 				| **用途**               | 代表 CFA，讓 AS-C2P 可以對 AS-C2PE 要地端 access token  |
 				| **壽命**               | 很短（例如 30 秒～1 分鐘）                              |
-			
+
 			3️) AT₃ — 「地端 access token」
 				| 項目                   | 說明                                               |
 				| --------------------- | ------------------------------------------------- |

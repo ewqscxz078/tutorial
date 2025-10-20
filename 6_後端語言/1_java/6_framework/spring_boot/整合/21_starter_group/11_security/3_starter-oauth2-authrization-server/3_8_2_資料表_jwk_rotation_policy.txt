@@ -32,7 +32,7 @@
 		  prev_active_days         INT        NOT NULL,      -- 保留上一把 ACTIVE 的天數（例：7）
 		  overlap_grace_days       INT        NOT NULL,      -- 舊 token 容忍期（資源端驗證 grace）（例：1~3）
 		  auto_rotate              BIT        NOT NULL,      -- 是否自動輪轉
-		  max_keys_retained        INT        NOT NULL,      -- 最多保留幾把歷史鑰（含非發佈）		  
+		  max_keys_retained        INT        NOT NULL,      -- 最多保留幾把歷史鑰（含非發佈）
 		  last_rotated_at          DATETIME2  NULL,
 		  next_rotate_at           DATETIME2  NULL,
 		  created_at               DATETIME2  NOT NULL DEFAULT SYSUTCDATETIME(),
@@ -45,7 +45,7 @@
 		CREATE INDEX IX_jwk_rotation_policy_next_due
 		  ON dbo.jwk_rotation_policy(next_rotate_at) WHERE auto_rotate = 1;
 
-	v3 : 
+	v3 :
 		MSSQL sample ddl
 			CREATE TABLE dbo.jwk_rotation_policy (
 			  id                     BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -93,7 +93,7 @@
 			-- 依 issuer 查詢/發佈時會用到
 			CREATE INDEX IX_jrp_issuer ON dbo.jwk_rotation_policy (issuer);
 			GO
-			
+
 			塞入資料範例
 				-- 使用預設值（因為沒指定欄位）
 				INSERT INTO dbo.jwk_rotation_policy(issuer, purpose, kty, alg)
@@ -167,4 +167,4 @@
 
 				-- 指定某欄位用 DEFAULT（其他欄位照給值）
 				INSERT INTO jwk_rotation_policy (issuer, purpose, kty, alg, rotation_interval_iso)
-				VALUES ('https://auth.example.com', 'sig', 'RSA', 'RS256', DEFAULT);		
+				VALUES ('https://auth.example.com', 'sig', 'RSA', 'RS256', DEFAULT);

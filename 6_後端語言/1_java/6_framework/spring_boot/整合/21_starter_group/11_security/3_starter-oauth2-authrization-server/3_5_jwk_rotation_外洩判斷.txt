@@ -10,7 +10,7 @@ ref ChatGPT
 		* 開發/營運人員誤操作：不小心把 private key 或 PEM/JWK 明文推到 GitHub、GitLab、SVN 等公開 repo（常見）。
 		* 配置錯誤：例如把私鑰掛在公開對外的 API 上，或是誤掛到容器鏡像（Docker image）中。
 			➡️ 這種通常透過 安全掃描 (secret scanner) 或 DevOps pipeline 檢測出來。
-	
+
 	2. 安全監控/入侵偵測
 		* 伺服器被入侵：系統被黑客入侵，攻擊者可能存取到存放金鑰的檔案系統或資料庫。
 		* 異常存取紀錄：例如 HSM/KMS/Vault API 有異常的請求量、異常來源 IP。

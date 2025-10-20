@@ -1,7 +1,7 @@
 ref ChatGPT
 
 假定狀態設定規劃定義
-	public enum JwkStatus { 
+	public enum JwkStatus {
 		ACTIVE, PREV_ACTIVE, TRANSITION, INACTIVE, COMPROMISED
 	}
 
@@ -14,25 +14,25 @@ ref ChatGPT
 		* Auth Server 在產生 JWT 時，只能用這把的 私鑰。
 		* /jwks 端點必須包含它的 公鑰，以便 Resource Server 驗證新產生的 Token。
 		* 系統設計上通常要求「只會有一把 ACTIVE」。
-	
+
 	PREV_ACTIVE
 		* 指的是「上一把曾經是 ACTIVE 的金鑰」。
 		* 用途：支援 舊 Token 還在有效期時的驗證。
 		* 這些 Token 是在舊金鑰 ACTIVE 時簽的，雖然 Auth Server 現在不再用它簽，但 Resource Server 還需要它的公鑰來驗證。
 		* /jwks 端點應該繼續發佈這把公鑰，直到舊 Token 過期 + 緩衝期過後，才可以移除。
-	
+
 	TRANSITION
 		* 「準備要成為下一個 ACTIVE 的新金鑰」。
 		* Auth Server 先產生一把新金鑰（status=TRANSITION），並把它的 公鑰發佈到 /jwks。
 		* 此時還是用舊的 ACTIVE 簽，但因為新公鑰已經在 JWKS，Resource Server 提前知道「有一把新 kid 存在」。
 		* 等你正式切換時，這把 TRANSITION 才會變成 ACTIVE。
-	
+
 	INACTIVE
 		* 「歷史紀錄，已經完全失效的金鑰」。
 		* 不會再用來簽 Token，也不再出現在 JWKS。
 		* 通常保留在資料庫只做稽核用途（例如追查一個 Token 的 kid，確認當時是哪把 key 簽的）。
 		* 可以設定 retention 週期（例如保留 6 個月）後刪掉。
-	
+
 	COMPROMISED
 		* 標記 key=COMPROMISED，立即從 JWKS 發佈集合移除該公鑰。
 		* 立刻切到健康的新 ACTIVE（若已有 TRANSITION 就升級；否則先快速產生一把）。
@@ -80,7 +80,7 @@ ref ChatGPT
 			Audience/Scope 最小化：即使外洩也降低濫用面。
 			Private key 保護：Prod 建議 HSM/KMS，即便外洩也多半是公鑰集合或備份層面，而非私鑰本體。
 			審計：記錄 kid 的生命週期與操作人、時間戳，方便稽核。
-		
+
 		本機／測試如何演練 COMPROMISED
 			用你先前的本機「模擬輪轉」樣板再加兩個管理指令即可：
 				* POST /local/jwk-ops/compromise/{kid}

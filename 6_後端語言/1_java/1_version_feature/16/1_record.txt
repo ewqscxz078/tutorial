@@ -17,7 +17,7 @@
 		* 預設欄位是 final，物件建立後無法修改。
 		* 適合用於傳遞資料、DTO (Data Transfer Object)、事件模型等。
 			public record User(String id, String name, int age) {}
-		
+
 	2.代替 JavaBean / DTO
 		* 不需要自己寫 getter、equals()、hashCode()、toString()。
 		* 編譯器自動產生。
@@ -26,7 +26,7 @@
 
 	3.值對 (Value Objects)
 		* 適合用於只需承載值、不需要邏輯的方法，例如 (x, y)、Range(min, max)。
-	
+
 	4.Pattern Matching / Switch 整合
 		* 在 Java 17+ 搭配 Pattern Matching for switch 更直覺。
 			sealed interface Shape permits Circle, Rectangle {}
@@ -39,7 +39,7 @@
 					case Rectangle r -> r.width() * r.height();
 				};
 			}
-	
+
 	5.取代部分 Lombok @Data 用例
 		* 如果只需要簡單的資料承載，record 比較乾淨，不需要額外的 annotation processor。
 
@@ -92,29 +92,29 @@ record vs Bean 差異表
 				List<UserSummary> findAllByStatus(@Param("status") Status status);
 			}
 			select new ... 只要參數順序與 record 的 canonical constructor 一致即可。
-		
+
 		或：方法回傳型別直接是 record（部分情境）
 			public record UserNameOnly(String name) {}
 
 			List<UserNameOnly> findByAgeGreaterThan(int age);
-			
+
 			Spring Data 會嘗試用投影建立結果；若命名推斷不夠，用 @Query 最穩。
-	
+
 	2) REST DTO / API 邊界物件
 		// Request DTO
 		public record CreateUserCmd(String name, int age) {}
 
 		// Response DTO
 		public record UserView(Long id, String name, int age) {}
-		
+
 		* Jackson 2.12+ 原生支援 record，Spring Boot 2.6+ 幾乎開箱即用。
 
 		* 優點：不可變、可讀性高、無樣板程式碼。
-	
+
 	3) Domain Event / Message Payload
 		public record UserCreatedEvent(Long id, String name, Instant occurredAt) {}
 		* 串 Kafka / RabbitMQ 當 payload 很適合（穩定不可變）。
-	
+
 	4) 查詢模型（CQRS 讀側）
 		* 寫入側用 Entity；讀側用 record 搭配投影查詢，避免把整個 Entity 拉出來（尤其關聯很深時）。
 
@@ -135,7 +135,7 @@ record vs Bean 差異表
 
 缺點
 	record 在欄位很多時，呼叫建構子會變得又長又醜；但有幾個實務招可以把「長參數列」的痛點降到很低：
-	
+
 	1) 一行一參數，讓可讀性回來
 		IDE 設定自動換行，呼叫端這樣寫可讀性其實不差：
 		var user = new User(
@@ -147,7 +147,7 @@ record vs Bean 差異表
 			Instant.parse("2025-09-10T06:00:00Z")
 		);
 		每個參數都能清楚對齊與對應型別，PR review 也容易。
-	
+
 	2) 把欄位分群成更小的 Value Objects
 		過長通常代表概念混在一起。把相關欄位打包成小型 value object/子 record，讓頂層變短、語意更清楚：
 			public record Name(String first, String last) {}
@@ -174,9 +174,9 @@ record vs Bean 差異表
 			  where u.status = :status
 			""")
 			List<UserView> findViewsByStatus(Status status);
-		
+
 		呼叫端拿到 UserView，完全沒有手動 new UserView(...) 的長串參數問題。
-	
+
 	4) 需要「具名參數」感覺？在外面包一層 Builder/Command，再轉成 record
 		record 天生沒有 builder，但你可以在邊界層（接收表單/JSON 的地方）用可變的 command/builder，
 		最後一次性轉為不可變 record：
@@ -209,19 +209,19 @@ record vs Bean 差異表
 			  );
 			}
 		這樣呼叫端用「具名欄位」填資料，核心模型仍維持 record 的乾淨不可變。
-	
+
 	5) 靠 JSON / YAML 綁定來「避開手寫長建構子」
 		在 Spring 裡，record 跟 Jackson 很合：
 			* Controller 的 @RequestBody 直接綁到 record，你不用自己寫 new Xxx(...)。
 			* Spring Boot 的設定綁定（@ConfigurationProperties）也很適合用 record（Java 16+），照樣自動注入。
-	
+
 	6) 提供「複製 with 方法」讓改一兩個欄位時不必重列所有參數
 		record 沒內建 wither，但你可以自己加複製工廠，針對變動常見的欄位做輕量修改：
 			public record User(String id, String name, int age) {
 			  public User withAge(int newAge) { return new User(id, name, newAge); }
 			}
 		使用時簡短安全：user = user.withAge(31);
-		
+
 	7) 若很多欄位都「可選/選填」→ 考慮改回 Class + @Builder
 		當一個型別充滿 optional 欄位或組合爆炸，record 未必是最佳解。
 		這時候傳統 class + Lombok @Builder（或 Immutables/AutoValue 類似工具）會更舒服：

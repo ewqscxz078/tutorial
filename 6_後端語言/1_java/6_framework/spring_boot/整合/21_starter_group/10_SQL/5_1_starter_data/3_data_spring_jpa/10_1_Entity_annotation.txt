@@ -4,7 +4,7 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 	被視為一個可持久化的實體，它的實例可以被存儲到數據庫中，並且可以通過JPA進行管理
 @Table
 	可以指定表名(name)、索引(indexes)、唯一約束(uniqueConstraints)等
-	
+
 	uniqueConstraints
 		1.告訴 JPA Provider（例如 Hibernate）這個表在 資料庫層 需要一個複合唯一鍵
 		2.若你啟用 Hibernate 的 DDL 產生（例如 spring.jpa.hibernate.ddl-auto=create|update），它會幫你在 DB 上 建立 這個 unique constraint。
@@ -74,10 +74,10 @@ https://ithelp.ithome.com.tw/articles/10318566?sc=rss.qu
 				* 告訴 JPA 這個欄位是大型物件（binary LOB）。
 				* 在 Hibernate + MSSQL 上，會把 byte[] → VARBINARY(MAX) 對應正確。
 				* 如果你沒加 @Lob，單純的 byte[] 預設會變成 VARBINARY(255)（長度有限制）。
-			
+
 			如果你完全不想依賴 @Lob，也可以直接指定：
 				@Column(name = "private_pkcs8", columnDefinition = "VARBINARY(MAX)")
-				private byte[] privatePkcs8;			
+				private byte[] privatePkcs8;
 
 @Transient
 	指定某 entity 欄位不轉換到資料庫
