@@ -1,4 +1,76 @@
-https://www.baeldung.com/spring-boot-console-app
-Console Application
-	implements Spring's CommandLineRunner interface
-		會自動執行有實作 CommandLineRunner 所有的 run method，通常會設定 spring.main.web-application-type=NONE，代表非 web 應用程式
+ref https://www.baeldung.com/spring-boot-console-app
+	https://ithelp.ithome.com.tw/m/articles/10333018
+
+服務啟動後執行動作
+
+	Console Application
+		implements Spring's CommandLineRunner interface
+			會自動執行有實作 CommandLineRunner 所有的 run method，通常會設定 spring.main.web-application-type=NONE，代表非 web 應用程式
+
+	一、建立 CommandLineRunner
+		由於是在 Spring Boot 啟動完成後，才會執行這個 runner，因此我們自己開發的其它元件（bean），都可注入進來使用。
+			範例
+				@Component
+				public class MyRunner implements CommandLineRunner {
+					private final Logger logger = LoggerFactory.getLogger(getClass());
+
+					@Override
+					public void run(String... args) throws Exception {
+						logger.info("{} works!", getClass().getSimpleName());
+					}
+				}
+				
+			關於 run 方法的參數 args，指的是啟動 JAR 檔所附加的參數選項。例如：
+				java -jar XXX.jar --spring.config.name=application --spring.config.location=./
+
+	二、例外處理
+		使用 CommandLineRunner 時要注意，如果中途發生了 exception，卻沒有做例外處理，那麼 Spring Boot 就會啟動失敗，程式中止。
+	
+	三、安排執行順序
+		基於不同的目的，實作出多個 CommandLineRunner。若想要求這些 runner 按照指定的順序去執行，則可使用 @Order 標記
+			@Component
+			@Order(2)
+			public class MyRunnerA implements CommandLineRunner {
+				// ...
+			}
+
+			@Component
+			@Order(1)
+			public class MyRunnerB implements CommandLineRunner {
+				// ...
+			}
+			
+			Spring Boot 會讓數字小的先執行
+
+	四、ApplicationRunner
+		達到與 CommandLineRunner 一樣的效果。程式的實作方式也雷同。
+
+		啟動 JAR 檔時可以附加一些參數選項。CommandLineRunner 與 ApplicationRunner 的差別，就是 run 方法包裝這些參數選項的方式不同罷了。
+			@Component
+			public class MyRunnerC implements ApplicationRunner {
+				private final Logger logger = LoggerFactory.getLogger(getClass());
+
+				@Override
+				public void run(ApplicationArguments args) throws Exception {
+					logger.info("--- Non option args ---");
+					args.getNonOptionArgs().forEach(logger::info);
+
+					logger.info("--- Option values ---");
+					args.getOptionNames().forEach(name -> {
+						List<String> values = args.getOptionValues(name);
+						logger.info("{}: {}", name, String.join(",", values));
+					});
+				}
+			}
+			
+			CommandLineRunner 是以 String 陣列包裝參數；而 ApplicationRunner 則是 ApplicationArguments。前者比較 raw data，而後者能夠有系統地取出裡面的資料。
+
+			假設啟動 JAR 檔的指令如下。
+				java -jar XXX.jar --name=Vincent --msg=hello --msg=world ithome ironman
+				
+				就可以依據cli 輸入name，取得對應值
+				
+	五、可以使用的場合
+		（一）Server 啟動通知
+		（二）將資料放到全文檢索引擎
+		（三）初始化資料
