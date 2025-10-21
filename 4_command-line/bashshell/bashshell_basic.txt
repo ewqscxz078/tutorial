@@ -47,8 +47,14 @@ type [-tpa] name
 $ cp /var/spool/mail/root /etc/crontab \
 > /etc/fstab /root
 
+
+ref https://blog.csdn.net/qq_43277404/article/details/104741415 簡體說明
+	https://www.ostechnix.com/list-useful-bash-keyboard-shortcuts 參考出處
 [ctrl]+u/[ctrl]+k	分別是從游標處向前刪除指令串 ([ctrl]+u) 及向後刪除指令串 ([ctrl]+k)。
 [ctrl]+a/[ctrl]+e	分別是讓游標移動到整個指令串的最前面 ([ctrl]+a) 或最後面 ([ctrl]+e)。
+
+[ctrl]+w 游標處向前刪除一串單字 
+[alt]+d 游標處向後刪除一串單字 
 
 ===================================================================
 ============================ 變數處理 =============================
