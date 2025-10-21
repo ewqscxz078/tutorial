@@ -19,8 +19,9 @@ ref ChatGPT
 	2.oauth2_Registered_Client 相關（必要）
 		客戶註冊資訊
 			1) Registered Client（客戶註冊資訊），ref RegisteredClient
-				oauth2_registered_client_secret_policy		   	# 主表 policy of client_secret
-				oauth2_registered_client_secret_rotation 		# client_secret 紀錄表 : 旋轉 client_secret 用
+			   需搭配使用 vault/KMS/HSM 之類第三方服務，讓 client 配合旋轉才有意義，不然 auth server 端旋轉，client 沒法配合旋轉
+					   oauth2_registered_client_secret_policy                  # 主表 policy of client_secret
+					   oauth2_registered_client_secret_rotation                # client_secret 紀錄表 : 旋轉 client_secret 用
 
 				oauth2_registered_client : 主表
 					子表
@@ -35,15 +36,17 @@ ref ChatGPT
 						oauth2_client_scope                     # 僅客戶端「宣告」可申請的範圍
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<String> scopes
 
-					其他延伸
-						oauth2_client_resource_indicator		# （如採用 RFC 8707 resource indicators）
-						oauth2_client_audience                  # （如採用 audience 驗證）
 
 			2) Token / JWT 設定（每 Client 可覆寫）
 				oauth2_client_token_settings
 				oauth2_client_jwt_settings
 					子表
 						oauth2_client_jwe_settings              # option
+
+			3) 其他延伸
+				oauth2_client_resource_indicator		# （如採用 RFC 8707 resource indicators）
+				oauth2_client_audience                  # （如採用 audience 驗證）
+
 
 			* 放 client 的靜態設定：client_id、client_secret（或其它認證方式）、授權模式（client_credentials）、scope、token/ID Token 的設定（存活時間、是否使用自含式 JWT、簽章演算法等）。
 
