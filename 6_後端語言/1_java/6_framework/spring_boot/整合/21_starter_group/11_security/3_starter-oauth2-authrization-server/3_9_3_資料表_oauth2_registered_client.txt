@@ -141,7 +141,7 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 		  x509_certificate_subject_dn			VARCHAR(400),                      -- = ClientSettings.x509CertificateSubjectDn
 
 		  -- 預留擴充：放 SAS 新增或自訂的 client setting
-		  extra_json                            TEXT,                           -- JSON字串（可選），若要正規化可考慮 oauth2_client_setting_kv
+		  extra_json                            TEXT,                           -- JSON字串（可選），若要正規化可考慮 oauth2_client_setting_kv (合放「罕用、供應商特有、不需查詢/比對/唯一約束」的設定。例如 UI 類提示、相容性旗標、你自家 Starter 想透傳給下游但不影響安全決策的東西)
 
 		  created_at                            TIMESTAMP        NOT NULL,
 		  updated_at                            TIMESTAMP        NOT NULL,

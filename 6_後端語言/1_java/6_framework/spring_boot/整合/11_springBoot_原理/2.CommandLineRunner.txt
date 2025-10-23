@@ -4,9 +4,16 @@ ref https://www.baeldung.com/spring-boot-console-app
 服務啟動後執行動作
 
 	Console Application
-		implements Spring's CommandLineRunner interface
+		implements Spring's CommandLineRunner/ApplicationRunner interface
 			會自動執行有實作 CommandLineRunner 所有的 run method，通常會設定 spring.main.web-application-type=NONE，代表非 web 應用程式
-
+			代表「沒有 Web 伺服器」與其背後那串非 daemon 的 I/O 執行緒。若你的應用只做了啟動邏輯（CommandLineRunner / ApplicationRunner）就結束，JVM 沒有任何非 daemon 線程在跑，主執行緒返回後自然就退出。
+		什麼情況會「不會馬上退出」？
+			* 你有長駐的元件會產生非 daemon執行緒，例如：
+			* @Scheduled 排程（有開 @EnableScheduling）
+			* Kafka / RabbitMQ Listener
+			* Spring Integration / Netty 伺服器（雖然 NONE 但你自己建的 I/O loop）
+			* Quartz、長時間背景工作執行緒
+			
 	一、建立 CommandLineRunner
 		由於是在 Spring Boot 啟動完成後，才會執行這個 runner，因此我們自己開發的其它元件（bean），都可注入進來使用。
 			範例

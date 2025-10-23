@@ -1,5 +1,13 @@
 ref ChatGPT
 
+grant_type 與 access token
+	| 你常見的流程                     | 對應 grant_type       | 結果          |
+	| ---------------------------- | -------------------- | ------------ |
+	| client id + secret 拿 token   | `client_credentials` | access token |
+	| 有 refresh token 重新拿 token   | `refresh_token`      | access token |
+	| 用 subject token（AT₁）換 token | `token_exchange`     | access token |
+
+
 常見兩種變體
 	| 型式                        | 描述                                                | 優點                    | 缺點              |
 	| -------------------------- | -------------------------------------------------- | --------------------- | --------------- |

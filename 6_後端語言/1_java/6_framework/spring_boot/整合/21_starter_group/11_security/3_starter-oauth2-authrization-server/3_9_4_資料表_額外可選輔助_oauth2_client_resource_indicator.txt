@@ -1,12 +1,13 @@
 額外輔助
 	oauth2_client_resource_indicator
 		CREATE TABLE oauth2_client_resource_indicator (
-		  client_id VARCHAR(100) NOT NULL,
-		  resource  VARCHAR(200) NOT NULL,
+		  issuer   VARCHAR(200) NOT NULL,
+		  rc_id    VARCHAR(100) NOT NULL,
+		  uri      VARCHAR(400) NOT NULL,               -- 拿 Token 來打的那個資源的識別子
 		  created_at	IMESTAMP     NOT NULL,     		-- UTC
-		  CONSTRAINT PK_oauth2_client_resource_indicator PRIMARY KEY (client_id, resource),
-		  -- CONSTRAINT FK_resind_client FOREIGN KEY (client_id)
-		  --	REFERENCES oauth2_registered_client (client_id)
+		  CONSTRAINT PK_oauth2_client_resource_indicator PRIMARY KEY (issuer, rc_id, uri),
+		  -- CONSTRAINT FK_resind_client FOREIGN KEY (issuer, rc_id)
+		  --	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
 		
 

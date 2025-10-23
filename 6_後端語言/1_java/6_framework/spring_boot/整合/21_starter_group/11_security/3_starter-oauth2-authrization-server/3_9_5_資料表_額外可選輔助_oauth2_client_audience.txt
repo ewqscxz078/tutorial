@@ -1,12 +1,13 @@
 額外輔助
 	oauth2_client_audience
 		CREATE TABLE oauth2_client_audience (
-		  client_id VARCHAR(100) NOT NULL,
-		  aud       VARCHAR(200) NOT NULL,
+		  issuer   VARCHAR(200) NOT NULL,
+		  rc_id    VARCHAR(100) NOT NULL,
+		  aud      VARCHAR(200) NOT NULL,
 		  created_at	IMESTAMP     NOT NULL,     		-- UTC
-		  CONSTRAINT PK_oauth2_client_audience PRIMARY KEY (client_id, aud),
-		  CONSTRAINT FK_aud_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
+		  CONSTRAINT PK_oauth2_client_audience PRIMARY KEY (issuer, rc_id, aud),
+		  -- CONSTRAINT FK_aud_client FOREIGN KEY (issuer, rc_id)
+		  --	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
 
 
