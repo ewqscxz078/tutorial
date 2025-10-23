@@ -198,26 +198,6 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 			* 其他版本新增 / 客製 → extra_json
 
 ===========================================================================================
-額外
-	oauth2_client_resource_indicator
-		CREATE TABLE oauth2_client_resource_indicator (
-		  client_id VARCHAR(100) NOT NULL,
-		  resource  VARCHAR(200) NOT NULL,
-		  created_at	IMESTAMP     NOT NULL,     		-- UTC
-		  CONSTRAINT PK_oauth2_client_resource_indicator PRIMARY KEY (client_id, resource),
-		  CONSTRAINT FK_resind_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
-		);
-
-	oauth2_client_audience
-		CREATE TABLE oauth2_client_audience (
-		  client_id VARCHAR(100) NOT NULL,
-		  aud       VARCHAR(200) NOT NULL,
-		  created_at	IMESTAMP     NOT NULL,     		-- UTC
-		  CONSTRAINT PK_oauth2_client_audience PRIMARY KEY (client_id, aud),
-		  CONSTRAINT FK_aud_client FOREIGN KEY (client_id)
-			REFERENCES oauth2_registered_client (client_id)
-		);
 
 -- 3) JWT（簽章）設定（每 client 一筆）
 	oauth2_client_jwt_settings

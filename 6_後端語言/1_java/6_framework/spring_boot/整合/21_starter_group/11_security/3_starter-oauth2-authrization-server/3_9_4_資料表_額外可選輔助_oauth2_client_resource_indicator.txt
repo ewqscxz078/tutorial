@@ -1,0 +1,39 @@
+額外輔助
+	oauth2_client_resource_indicator
+		CREATE TABLE oauth2_client_resource_indicator (
+		  client_id VARCHAR(100) NOT NULL,
+		  resource  VARCHAR(200) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_resource_indicator PRIMARY KEY (client_id, resource),
+		  -- CONSTRAINT FK_resind_client FOREIGN KEY (client_id)
+		  --	REFERENCES oauth2_registered_client (client_id)
+		);
+		
+
+用途
+	為了協同降低配錯目標 :  申請階段（給誰、去哪） 鎖緊
+		指定具體目標資源 URI，讓 "Client/Gateway" 申請 token（或做交換）時明示用途，並搭配 Auth Server 的 allowedResources 防呆 （避免 gateway route 設錯口）。
+
+	Resource Indicator (RFC 8707) — 「我要連到哪個 URI」
+		* 請求參數/宣告：resource（token/authorization request 中的參數），也可被 AS 放進 AT 的 resource claim（可選，視 AS 實作）。
+
+		* 語意：一個（或多個）具體可尋址的資源位置（通常是 HTTPS URI）。
+			例：https://gw-c2pe.example.com/pba/orders 或 https://api.internal/pba
+
+		* 用途：
+			1.要求 AS 核發一張只能用於該資源的存取權杖（AS 依 policy 決定是否接受）。
+			2.讓 Gateway 的 route→RegId 在送「代發/交換」請求時，明確聲明目標資源，避免轉錯口。
+
+		* 防呆效果：就算 route 配錯，只要 AS 對該 client 沒授權那個 resource，就不會發 token（或發不同 scope/aud）。
+
+		具體 URI（fine-grained），幫 Client/Auth Server 縮小 token 的使用範圍（intent sealing）。
+	
+	
+在那裡用
+	Auth server 註冊 registered_client 時，將其塞到 clientSetting 裡的自訂一部分
+	並且在種子初始化時生成 client-catalog.yml（供 Gateway/Client 用）在其一部分，代表 client 端可使用那些註冊的 registered_client
+
+
+命名與映射建議
+	resource 維持 實體路徑（可變，但盡量以 gateway 邊界為單位，如 https://gw-*.example.com/<system>）
+	一對多：同一 aud 可能對應多個 resource（多環境/多入口），AS policy 要能列多值；Client/Gateway 端選其一。

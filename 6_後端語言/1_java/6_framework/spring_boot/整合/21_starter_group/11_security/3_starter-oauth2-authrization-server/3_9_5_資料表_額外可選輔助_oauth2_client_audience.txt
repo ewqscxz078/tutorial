@@ -1,0 +1,42 @@
+額外輔助
+	oauth2_client_audience
+		CREATE TABLE oauth2_client_audience (
+		  client_id VARCHAR(100) NOT NULL,
+		  aud       VARCHAR(200) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_audience PRIMARY KEY (client_id, aud),
+		  CONSTRAINT FK_aud_client FOREIGN KEY (client_id)
+			REFERENCES oauth2_registered_client (client_id)
+		);
+
+
+用途
+	為了協同降低配錯目標 :  驗收階段（誰可用、用在誰） 鎖緊
+		指定受眾代號，讓 "Resource Server" 能用 aud 判斷 token 是否屬於自己 （避免拿錯 token 打錯服務或橫向濫用）。
+
+	
+	Audience (aud) — 「這張 token 是給哪個 受眾」
+		* AT 內的註冊宣告：aud（在 access token/JWT 的 claims 內）。
+
+		* 語意：受眾識別子（coarse-grained）。常見自訂格式：api://{domain}.{service} 或 api://{team}-{system}。
+			例：api://pba.orders、api://erp.core
+
+		* 用途：
+			1.Resource Server 驗證「來的 token 是否 本服務 的」。RS 檢查 aud 是否包含自己接受的集合之一。
+			2.Token Exchange 時用 audience（或某些庫用 audiences）明示交換後 token 的受眾。
+
+		* 防呆效果：攻擊者就算拿到別處的 token（aud=api://erp.core），丟給 pba.orders，RS 會因 aud 不匹配而拒絕。
+		
+		真正的風險是申請時就要了錯的 aud/resource；解法是 Auth Server 端設定 allow-list（每個 registered client 可申請的 aud/resource 白名單），以及 Gateway 的 route→RegId 綁定。
+		
+		受眾代號（coarse-grained），讓 Resource Server 能快速判斷「是不是發給我」。
+
+
+在那裡用
+	Auth server 註冊 registered_client 時，將其塞到 clientSetting 裡的自訂一部分
+	並且在種子初始化時生成 client-catalog.yml（供 Gateway/Client 用）在其一部分，代表 client 端可使用那些註冊的 registered_client
+
+
+命名與映射建議
+	aud 採 穩定、不可變 的邏輯名稱：api://<domain>.<service>、api://<org>-<boundedContext>
+	一對多：同一 aud 可能對應多個 resource（多環境/多入口），AS policy 要能列多值；Client/Gateway 端選其一。
