@@ -9,7 +9,7 @@ oauth2_registered_client
 	  issuer                    VARCHAR(200) NOT NULL,      -- 由於環境架構跨區多一個 issuer，需要區別用
 	  rc_id                     VARCHAR(100) NOT NULL,      -- spring-security-oauth2-authorization-server.RegisteredClient.id，UUID 字串
 
-	  client_id                 VARCHAR(100)  NOT NULL,     -- 對應 spring-security-oauth2-authorization-server.RegisteredClient.clientId
+	  client_id                 VARCHAR(100)  NOT NULL,     -- 對應 spring-security-oauth2-authorization-server.RegisteredClient.clientId，一律代表申請 token 的那一方（A 或 Gateway，如果是 Gateway 發起的交換）
 	  client_id_issued_at       TIMESTAMP     NOT NULL,     -- spring-security-oauth2-authorization-server.RegisteredClient.clientIdIssuedAt，UTC
 	  client_secret_hash        VARCHAR(200)  NULL,         -- spring-security-oauth2-authorization-server.RegisteredClient.clientSecret
 	  client_secret_expires_at  TIMESTAMP     NULL,         -- spring-security-oauth2-authorization-server.RegisteredClient.clientSecretExpiresAt，UTC

@@ -1,0 +1,51 @@
+ref ChatGPT
+
+auth server registrationClient.clientId 理解
+
+假設情境
+	A1 + jwt 經 gateway 驗證 轉發到 B
+	A2 + jwt 經 gateway 驗證 轉發到 B
+	A3 + jwt 經 gateway 驗證 轉發到 B
+		則 這三個案例用的 clientId 都不同
+		所以用的 token 也不同，雖然最後都是到 B
+
+	| 呼叫方   | 誰去 AS 取 token | JWT 裡的 `client_id` | JWT 的 `aud`（資源） | Gateway 驗證結果 | 備註               |
+	| ------ | -------------- | ------------------- | ----------------- | -------------- | ---------------- |
+	| A1 → B | A1             | `a1-client`         | `api://b`         | 通過 (valid)    | A1 token 只能代表 A1 |
+	| A2 → B | A2             | `a2-client`         | `api://b`         | 通過 (valid)    | A2 token 只能代表 A2 |
+	| A3 → B | A3             | `a3-client`         | `api://b`         | 通過 (valid)    | A3 token 只能代表 A3 |
+
+因此：
+	* 每個 client（A1/A2/A3） 都要在 Auth Server 註冊自己的 RegisteredClient。
+	* 各自取得的 Access Token 雖然都能打到同一個資源系統 B（因為 aud 一樣），但彼此的 token 不能混用。
+	* Gateway 只負責驗簽、檢查 aud 是否符合「要轉發的目的 B」，再轉發請求。
+
+🔍 延伸補充 — Token Exchange (如果你 Gateway 要代換 token)
+	若 Gateway 不只是驗證，而是「幫 A1/A2/A3 各自代換一顆 token 給 B」：
+		| 呼叫方 | A1→GW→AS(Token Exchange) | 新 token 的 `client_id` | 新 token 的 `act` (或 `azp`) | `aud`     |
+		| --- | ------------------------ | --------------------- | ------------------------- | --------- |
+		| A1  | GW 代換                    | `gw-c2p-te`           | `a1-client`               | `api://b` |
+		| A2  | GW 代換                    | `gw-c2p-te`           | `a2-client`               | `api://b` |
+		| A3  | GW 代換                    | `gw-c2p-te`           | `a3-client`               | `api://b` |
+
+	這樣：
+		* Gateway 自己只有一個 client_id = gw-c2p-te。
+		* Token 裡的 act.client_id 或 azp 標記原呼叫者（A1/A2/A3）。
+		* B 端若想知道是哪個上游系統，可從 act 解析出來。
+
+結論：
+	* 若只是「Gateway 驗簽後轉發」→ 各 A 自取各的 token (client_id=Aₙ)。
+	* 若「Gateway 代換 Token Exchange」→ Gateway 有自己的 client (client_id=gw)，Aₙ 被記錄在 act 或 azp。
+
+
+clientId 建議命名模板
+	<zone>-svc-<caller>-to-<audAlias>
+		* zone：c（cloud）、p（prem）、pe（prem-edge）…
+		* svc：角色（服務/批次/人機…），常見可用 svc、batch、ui。
+		* caller：呼叫方系統代號（a1 / a2 / a3）。
+		* audAlias：資源 B 的別名（b / orders / billing …），不是完整 URI。
+
+	對應上面三個例子
+		* c-svc-a1-to-b
+		* c-svc-a2-to-b
+		* c-svc-a3-to-b

@@ -1,0 +1,10 @@
+小結：你要補什麼？
+	* Client 端：在 OAuth2AuthorizeRequest.attributes 裡塞
+		* RESOURCE: Set<String>（RFC 8707 標準）
+		* audience: String / Set<String>（自訂，AS 要支援）
+
+	* AS 端：TokenCustomizer／TE Handler
+		* 將 請求的 resource/audience 與 註冊的 取交集→寫入 jwt.aud；或缺省時用註冊預設值。
+
+	* Resource Server / Gateway：
+		* 對齊各服務（或各 route）期望的 aud 進行驗證，不符就拒絕。
