@@ -1,0 +1,143 @@
+1.clientID 
+
+
+Auth Server 專用的大種子檔（auth-seed.yml）
+	# seed/auth-seed.yml
+		version: 1
+		issuers:
+		  - alias: c2p
+			issuerUri: https://as-c2p.example.com
+		registeredClients:
+		  - issuer: c2p
+			rcId: rc-erp
+			clientId: svc-erp
+			grants: [client_credentials]
+			defaultScopes: [erp.read]
+			# 存 hash，給 AS 用（客戶端只拿到明碼在另一檔）
+			clientSecrets:
+			  - hash: "{bcrypt}$2a$12$abc..."
+				createdAt: "2025-10-01T00:00:00Z"
+				expiresAt: "2026-01-01T00:00:00Z"
+			te:
+			  audience: ["api://pba.orders"]
+			  resource: ["https://gw-c2pe.example.com"]
+		  - issuer: c2p
+			rcId: rc-pba
+			clientId: svc-pba
+			grants: [token_exchange]
+			defaultScopes: ["as.broker.exchange"]
+
+發佈矩陣（distribution.yml）— 放在「配置庫／配置 DB」
+	# dist/distribution.yml
+	version: 1
+	services:
+	  orders-svc:
+		registrations:
+		  - rc-erp        # 只給 orders-svc
+	  gateway-c2p:
+		registrations:
+		  - rc-pba
+		  - rc-erp
+
+
+敏感明碼來源（secrets-vault.yml 或實際 Vault）
+	# secrets/secrets-vault.yml   （本機測試用；正式建議 Vault）
+	secrets:
+	  - rcId: rc-erp
+		version: v20251001
+		plain: "s3cr3t-ERP-20251001"
+	  - rcId: rc-pba
+		version: v20251001
+		plain: "s3cr3t-PBA-20251001"
+
+
+產出目標（每個 client 只拿到兩個最小檔）
+
+	client-catalog.yml（不含明碼、可放容器鏡像或 ConfigMap）
+		=> 建議使用原生 spring.security.oauth2讓其自動綁訂到 clientRegistration + option token-exchange.regId.audience、resource
+		client:
+		  catalog:
+			targets:          # ← 中性命名，不綁 TE
+			  rc-pba:
+				default:
+				  audience: [ "api://pba.orders" ]
+				  resource: [ "https://gw-c2pe.example.com" ]
+				overrides:
+				  token_exchange:
+					audience: [ "api://pba.orders" ]
+					resource: [ "https://gw-c2pe.example.com" ]
+				  client_credentials:
+					resource: [ "https://gw-c2pe.example.com" ]   # 某些 AS 僅吃 resource
+
+		在你的 catalog 裡清楚維護：
+			registrationId → clientId（誰申請）
+			registrationId → audience/resource（要打誰）
+			Gateway 若會 TE，再加：registrationId → act/azp 策略（如何保留 A）
+
+	client-secret.yml（只含該服務需要的明碼；建議注入環境變數或掛載機密檔）
+	
+	
+
+	@Bean
+	@ConfigurationProperties(prefix = "client.catalog.token-exchange")
+	TokenExchangeProps tokenExchangeProps() { return new TokenExchangeProps(); }
+
+	// 客製：在 client_credentials 時把 audience/resource 也送出去
+	@Bean
+	OAuth2AuthorizedClientManager ccEnabledManager(
+		ClientRegistrationRepository registrations,
+		OAuth2AuthorizedClientRepository authorizedClients,
+		TargetsProps targets // 綁定 client.catalog.targets
+	) {
+		// 1) client_credentials provider
+		var ccProvider = new ClientCredentialsOAuth2AuthorizedClientProvider();
+
+		// 1a) 換掉預設的 RequestEntityConverter，加上 audience/resource
+		var ccClient = new DefaultClientCredentialsTokenResponseClient();
+		ccClient.setRequestEntityConverter(request -> {
+			var entity = new OAuth2ClientCredentialsGrantRequestEntityConverter().convert(request);
+			var grant = AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(); // "client_credentials"
+			var regId = request.getClientRegistration().getRegistrationId();
+
+			var target = targets.pick(regId, grant); // 依上面 YAML 規則挑 audience/resource
+			if (target != null) {
+				var form = new LinkedMultiValueMap<String, String>(entity.getBody());
+				target.audience().forEach(a -> form.add("audience", a)); // 多值可重複 key
+				target.resource().forEach(r -> form.add("resource", r));
+				return new RequestEntity<>(form, entity.getHeaders(),
+						entity.getMethod(), entity.getUrl());
+			}
+			return entity;
+		});
+		ccProvider.setAccessTokenResponseClient(ccClient);
+
+		// 2) Token Exchange provider（你既有）
+		var teProvider = new TokenExchangeOAuth2AuthorizedClientProvider();
+		teProvider.setAccessTokenResponseClient(new DefaultTokenExchangeTokenResponseClient());
+
+		// 3) Manager + attributes mapper（供 TE 使用；CC 用上面的 converter）
+		var mgr = new DefaultOAuth2AuthorizedClientManager(registrations, authorizedClients);
+		mgr.setAuthorizedClientProvider(new DelegatingOAuth2AuthorizedClientProvider(teProvider, ccProvider));
+		mgr.setContextAttributesMapper(ctx -> {
+			var regId = ctx.getClientRegistrationId();
+			var grant = ctx.getClientRegistration().getAuthorizationGrantType().getValue();
+			var map = new HashMap<String, Object>();
+
+			// TE 會吃 audience/resource/requested_token_type
+			var target = targets.pick(regId, grant);
+			if (target != null) {
+				map.put("audience", target.audience());
+				map.put("resource", target.resource());
+			}
+			map.put("requested_token_type", "urn:ietf:params:oauth:token-type:access_token");
+			return map;
+		});
+		return mgr;
+	}
+	// 同理，如果你要在 refresh_token 流程也帶 resource，就對 RefreshTokenOAuth2AuthorizedClientProvider 做類似的 AccessTokenResponseClient 覆蓋。
+
+	@Bean
+	WebClient webClient(OAuth2AuthorizedClientManager manager) {
+		var oauth2 = new ServletOAuth2AuthorizedClientExchangeFilterFunction(manager);
+		return WebClient.builder().filter(oauth2).build();
+	}
