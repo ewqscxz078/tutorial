@@ -1,0 +1,134 @@
+
+client 端 yml provider 設定指南
+	spring.security.oauth2.client.provider.${providerId}: # ref OAuth2ClientProperties
+		authorizationUri # 僅輸入 issuerUri 後會自動補齊設定
+		tokenUri    # 僅適合 m2m/te 設定使用
+		userInfoUri # 僅輸入 issuerUri 後會自動補齊設定
+		jwkSetUri   # 僅輸入 issuerUri 後會自動補齊設定
+		issuerUri   # 僅適合 OIDC Login / Authorization Code
+
+
+	* 只做 M2M（client_credentials / token_exchange）→ 用 token-uri 就好
+		不要設 issuer-uri，可避免啟動時去抓 discovery（.well-known/openid-configuration）造成啟動卡網路或 AS 尚未就緒時失敗。
+
+	* 做 OIDC Login / Authorization Code（需要 authorization-uri、jwks_uri、userinfo_endpoint 等）→ 用 issuer-uri
+		讓 Spring 自動用 discovery 補齊各 endpoint，減少你手動維護。
+	
+	* 兩種都要（既有登入又有 M2M）→ 拆兩個 provider：登入那組用 issuer-uri；M2M 那組用 token-uri。
+		不要在同一個 provider 同時設兩者，避免誰優先生效的混淆。
+
+為什麼會這樣？
+	設 issuer-uri：Spring Boot/Security 會在啟動時做 OIDC Discovery，
+		去打 /.well-known/openid-configuration 取得 authorization_endpoint、token_endpoint、jwks_uri、userinfo_endpoint…，
+		所以你看到它會去請求 http://${as-host}:${as-port}/auth-server/.well-known/openid-configuration。
+	設 token-uri：你已經「直接指定」了要用哪個 Token Endpoint，Spring 就不需要 discovery，因此啟動時不會打 .well-known。
+
+
+什麼時候選哪個？
+	| 需求                                 | 建議                                              | 理由                                       |
+	| ------------------------------------ | ------------------------------------------------- | ---------------------------------------- |
+	| M2M（client_credentials）只要拿 AT   | **token-uri**                                     | 減少外部依賴、啟動更快；不需要其它 OIDC 端點                |
+	| Token Exchange（RFC 8693）           | **token-uri**                                     | 直接指向支援 TE 的 token endpoint；discovery 非必要 |
+	| OIDC Login / Authorization Code      | **issuer-uri**                                    | 需要多個端點與 `jwks_uri`，discovery 省設定、避免寫錯    |
+	| 多環境/多 AS，端點常改               | **issuer-uri**（給人用的登入）、**token-uri**（給機器用的 M2M）分開 | 各取所長；也方便權限與流量隔離                          |
+	| 啟動一定不能被外網/跨區依賴卡住      | **token-uri**                                     | 避免啟動時外呼                                  |
+
+實務 YAML 範例
+	1) 只有 M2M（client_credentials）
+		spring:
+		  security:
+			oauth2:
+			  client:
+				provider:
+				  as-c2p:
+					token-uri: https://as-c2p.example.com/auth-server/oauth2/token
+				registration:
+				  c2p-orders-cc:
+					provider: as-c2p
+					client-id: c2p-orders
+					client-secret: ${C2P_ORDERS_SECRET}
+					authorization-grant-type: client_credentials
+					scope: [ "orders.read" ]
+
+	2) 只有 OIDC Login
+		spring:
+		  security:
+			oauth2:
+			  client:
+				provider:
+				  corp-login:
+					issuer-uri: https://as-id.example.com/auth-server
+				registration:
+				  web-login:
+					provider: corp-login
+					client-id: web-portal
+					client-secret: ${WEB_PORTAL_SECRET}
+					authorization-grant-type: authorization_code
+					redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+					scope: [ "openid", "profile", "email" ]
+
+	3) 同時要登入 + M2M（拆兩個 provider）
+		spring:
+		  security:
+			oauth2:
+			  client:
+				provider:
+				  corp-login:                # 給「人」登入
+					issuer-uri: https://as-id.example.com/auth-server
+				  as-c2p:                    # 給「機器」拿 token
+					token-uri: https://as-c2p.example.com/auth-server/oauth2/token
+
+				registration:
+				  web-login:
+					provider: corp-login
+					client-id: web-portal
+					client-secret: ${WEB_PORTAL_SECRET}
+					authorization-grant-type: authorization_code
+					redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+					scope: [ "openid", "profile" ]
+
+				  c2p-orders-cc:
+					provider: as-c2p
+					client-id: c2p-orders
+					client-secret: ${C2P_ORDERS_SECRET}
+					authorization-grant-type: client_credentials
+					scope: [ "orders.read" ]
+
+	4) Token Exchange（client → AS 換 token）
+		spring:
+		  security:
+			oauth2:
+			  client:
+				provider:
+				  as-te:
+					token-uri: https://as-broker.example.com/auth-server/oauth2/token  # 支援 RFC 8693 的端點
+				registration:
+				  te-to-pba:
+					provider: as-te
+					client-id: c2p-te-gw
+					client-secret: ${C2P_TE_GW_SECRET}
+					authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+					# 若你用的是 Spring Security 6.5.x，audience/resource 請用自訂 converter/mgr 上的 attributes 傳入
+
+最後給個簡單判斷口訣
+	「要不要 discovery？」→ 要，就 issuer-uri；不要/不能依賴，就 token-uri。
+
+	「同時有登入與 M2M？」→ 拆兩個 provider，各用其長。
+
+	「能少設定就少設定？」→ OIDC Login 用 issuer-uri；M2M/TE 用 token-uri。
+
+額外說明
+	設 issuer-uri 時：Spring 會做 OIDC Discovery，把 authorizationUri、tokenUri、jwkSetUri、userInfoUri 等都自動補齊，
+	所以通常不需要再手動填這些 endpoint。
+
+
+一些實務備註：
+	1.手動值會覆蓋 discovery
+		* 若同一個 provider 同時有 issuer-uri（會做 discovery）又手動填了 token-uri/authorization-uri 等，
+		  手動值會優先生效。避免混亂，建議要嘛全靠 discovery（只填 issuer-uri），要嘛全手動（填 token-uri 等）。
+	2.何時需要手動填？
+		* 你的 AS 不是完整 OIDC 或 .well-known/openid-configuration 缺欄位／路徑客製奇怪。
+
+		* 你要指向不同的 token 端點（例如 broker/TE 專用）而 discovery 給的是一般 token 端點。
+
+		* 啟動期不能外呼（跨區/離線），你就只保留 token-uri

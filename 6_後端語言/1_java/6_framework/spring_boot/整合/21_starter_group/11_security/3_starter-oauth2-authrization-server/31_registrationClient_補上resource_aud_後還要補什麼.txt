@@ -1,6 +1,6 @@
 小結：你要補什麼？
 	* Client 端：在 OAuth2AuthorizeRequest.attributes 裡塞
-		* RESOURCE: Set<String>（RFC 8707 標準）
+		* resource: Set<String>（RFC 8707 標準）
 		* audience: String / Set<String>（自訂，AS 要支援）
 
 	* AS 端：TokenCustomizer／TE Handler

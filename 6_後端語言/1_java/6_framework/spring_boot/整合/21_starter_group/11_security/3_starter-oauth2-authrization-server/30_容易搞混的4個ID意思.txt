@@ -1,19 +1,19 @@
 容易搞混的 4 個 ID
 
-	| 名稱                      | 出現位置                                                                                                            | 用途                                                                                                   | 是否要跟別的相等                                                         |
+	| 名稱                     | 出現位置                                                                                                            | 用途                                                                                                   | 是否要跟別的相等                                                         |
 	| ----------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-	| **registrationId**      | 客戶端應用（`spring.security.oauth2.client.registration.<key>` 的 `<key>`；`ClientRegistration.getRegistrationId()`） | **你在客戶端本地自取的「別名」**，WebClient / `OAuth2AuthorizedClientManager` 用它來指定要用哪一組設定 | **不必**等於 `client_id`，也**不必**等於 AS 內部的 `RegisteredClient.id` |
+	| **clientRegistrationId**| 客戶端應用（`spring.security.oauth2.client.registration.<key>` 的 `<key>`；`ClientRegistration.getRegistrationId()`） | **你在客戶端本地自取的「別名」**，WebClient / `OAuth2AuthorizedClientManager` 用它來指定要用哪一組設定 | **不必**等於 `client_id`，也**不必**等於 AS 內部的 `RegisteredClient.id` |
 	| **client_id**           | OAuth 2.0 規格；Auth Server 註冊的 `RegisteredClient.clientId`；客戶端 yml 的 `client-id`                             | 對 Auth Server 認證的**公開識別**                                                                      | 必須與 Auth Server 所註冊那一筆的 `clientId` **一致**                    |
 	| **RegisteredClient.id** | Auth Server 內部（通常是個 UUID）                                                                                     | 內部主鍵，對外不會用到                                                                                 | 跟上面兩個**沒有必然關係**                                               |
 	| **client-secret**       | 規格中的機密                                                                                                          | 搭配 `client_id` 驗證客戶端                                                                            | 與誰相等無關，重點是與 AS 端存的 hash 匹配                               |
 
 關係圖一句話版
 
-	* 你的客戶端程式碼會用 registrationId 來挑選一組設定。
+	* 你的客戶端程式碼會用 clientRegistrationId 來挑選一組設定。
 
 	* 這組設定裡面含有真正的 client-id（= 送到 Auth Server 的那個）。
 
-	* Auth Server 端的 RegisteredClient.clientId 必須與這個 client-id 一致；但它和 registrationId 可以不同。
+	* Auth Server 端的 RegisteredClient.clientId 必須與這個 client-id 一致；但它和 clientRegistrationId 可以不同。
 	
 
 範例
@@ -44,8 +44,27 @@
 			var authorized = authorizedClientManager.authorize(request);
 			// 真正送到 AS 的會是 ClientRegistration 裡的 client-id=as-c2p-te
 
-registrationId 命名建議
-	* 單一 Issuer、單一用途 → registrationId == client-id（最簡單）
+clientRegistrationId 命名建議
+	* 單一 Issuer、單一用途 → clientRegistrationId == client-id（最簡單）
 	
-	* 多 Issuer / 多用途 / 需輪替 → registrationId 當穩定別名，不等於 client-id (可變動、需與 AS 對齊)
+	* 多 Issuer / 多用途 / 需輪替 → clientRegistrationId 當穩定別名，不等於 client-id (可變動、需與 AS 對齊)
 		建議命名：<zone|issuerAlias>-<system>-<purpose>（如 c2p-orders-te）
+
+clientId 命名建議
+	用 <zone>-<role>-<name>
+
+建議
+	* 大多數情況：clientId == clientRegistrationId。
+		這樣最直觀、好追。你有一個註冊就用同一個字串。
+
+	* 需要分身/別名時才讓它們不同（多 issuer、多組憑證/授權型別、藍綠/金絲雀、同一服務對多目標 TE 等）。
+		這時保留 clientId 穩定不變，在客戶端 clientRegistrationId 使用「別名」。
+		
+		1.多 Issuer：同一 clientId 會在不同 issuer 註冊
+			例：c2p@c2p-te-gw, c2pe@c2p-te-gw
+		2.同 Issuer、不同 grant/用途：
+			例：c2p-te-gw#te-pba, c2p-te-gw#te-erp
+		3.藍綠/金絲雀：
+			例:"<clientId>#blue"、"<clientId>#green" 或加版本 #v2
+		4.同一服務多目標 TE
+			例:c2p-te-gw#pba.orders, c2p-te-gw#erp.scm

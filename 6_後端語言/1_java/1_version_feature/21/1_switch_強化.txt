@@ -1,0 +1,75 @@
+ref chatGPT
+	https://www.baeldung.com/java-yield-switch
+
+什麼時候需要 yield
+	* switch 表達式（會產生值）：var r = switch (x) { ... };
+
+		* 分支用 -> 且是單一表達式：不用 yield
+
+		* 分支用 -> { ... } 有區塊：要 yield 值;
+
+		* 老式 case L: 語法也可以用在表達式裡，但每個分支最後也要 yield 值;
+	
+	* switch 敘述（不產生值）：switch (x) { ... }
+		* 這種是傳統控制流程，不能用 yield，照舊用 break（或用 -> 箭頭分支就不需要 break）。
+
+
+範例
+	1) 表達式 + 箭頭（無大括號）：不用 yield
+		int len = switch (s) {
+		  case null        -> 0;
+		  case ""          -> 0;
+		  default          -> s.length();
+		};
+
+	2) 表達式 + 箭頭（有大括號）：要 yield
+		int score = switch (grade) {
+		  case "A" -> {
+			log("great");
+			yield 90;
+		  }
+		  case "B" -> {
+			doSomething();
+			yield 80;
+		  }
+		  default -> 60;
+		};
+
+	3) 表達式 + 傳統冒號風格：要 yield
+		int v = switch (n) {
+		  case 1, 2:
+			doWork();
+			yield 10;
+		  case 3:
+			yield 20;
+		  default:
+			yield 0;
+		};
+
+	4) 傳統敘述式 switch：不用 yield（用 break 或箭頭）
+		switch (cmd) {
+		  case "start" -> start();
+		  case "stop"  -> stop();
+		  default      -> help();
+		}
+		或
+		switch (cmd) {
+		  case "start":
+			start();
+			break;
+		  case "stop":
+			stop();
+			break;
+		  default:
+			help();
+		}
+
+
+Java 21 小補充（樣式匹配）
+	switch 可直接做型別與守衛條件：
+		String desc = switch (obj) {
+		  case null               -> "null";
+		  case String s && !s.isBlank() -> "str:" + s.trim();
+		  case Number n && n.intValue() > 0 -> "pos:" + n;
+		  default                 -> "other";
+		};

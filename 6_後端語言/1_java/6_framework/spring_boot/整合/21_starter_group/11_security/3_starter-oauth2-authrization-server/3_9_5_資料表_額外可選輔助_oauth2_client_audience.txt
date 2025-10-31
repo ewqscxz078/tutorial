@@ -16,7 +16,7 @@
 		指定受眾代號，讓 "Resource Server" 能用 aud 判斷 token 是否屬於自己 （避免拿錯 token 打錯服務或橫向濫用）。
 
 	
-	Audience (aud) — 「這張 token 是給哪個 受眾」
+	Audience (aud) (RFC 8693) — 「這張 token 是給哪個 受眾」
 		* AT 內的註冊宣告：aud（在 access token/JWT 的 claims 內）。
 
 		* 語意：受眾識別子（coarse-grained）。常見自訂格式：api://{domain}.{service} 或 api://{team}-{system}。
