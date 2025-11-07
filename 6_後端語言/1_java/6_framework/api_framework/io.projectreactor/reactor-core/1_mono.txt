@@ -1,0 +1,165 @@
+ref ChatGPT
+
+1. Mono<T> 是什麼？
+	Mono<T> = 非阻塞 + 可組合 + 0 或 1 個元素的「流程」描述
+	
+	可以類比：
+		* 像 Optional<T>：要嘛有值，要嘛沒有值（empty）。
+		* 又有點像 CompletableFuture<T>：代表未來才會出現結果（非同步）。
+		* 又是 Reactive Streams 的一份子：支援背壓、訂閱等概念。
+	
+	只是 Mono<T> 本身不是結果，而是「如何得到結果」的一條 pipeline :
+		Mono<String> mono = Mono.just("hello"); // 只是一個描述，不是當下就跑完的流程
+
+2. Mono 的「三種訊號」與生命週期
+	每一個 Mono<T> 最多只會發生一次這三種事件中的一種結束形式：
+		1.onNext(T value) + onComplete()
+			→ 有一個值成功送出，然後完成。
+
+		2.直接 onComplete()
+			→ 沒有值（Mono.empty()）。
+		
+		3.onError(Throwable error)
+			→ 發生錯誤，流程失敗。
+		可以把整條 Mono pipeline 想成是要發出這三種訊號之一的「流程」。
+
+3. 最關鍵：懶執行 (lazy) + 需要 subscribe 才會動
+	Mono<String> m = Mono.fromCallable(() -> {
+		System.out.println("DO WORK");
+		return "OK";
+	});
+
+	// 到這裡，沒有任何「DO WORK」發生
+
+	m.subscribe(System.out::println); // 這裡才會真的執行 callable
+
+	* 建立 Mono pipeline 的時候，只是在「宣告流程」。
+
+	* 直到有人 subscribe()，流程才會真的執行。
+
+	在 Spring WebFlux / Spring Security / Spring Cloud Gateway 裡：
+
+		通常是框架幫你呼叫 subscribe()（例如 HTTP request 進來後）。
+
+		所以你在 controller/service 裡只要 return Mono<T> 就好，不需要自己 subscribe。
+
+4. 常見建立方式
+	Mono.just(value)         // 已經有一個值
+	Mono.empty()             // 明確表示「沒有值」
+	Mono.error(ex)           // 明確表示「失敗」
+	Mono.fromCallable(...)   // 包裝一個可能會丟錯的同步計算
+	Mono.defer(...)          // 延遲建立 Mono，用於每次訂閱要重新計算
+
+	範例：包裝一個同步呼叫（不建議在 IO 內部阻塞，但方便說明）
+		Mono<User> userMono = Mono.fromCallable(() -> userRepository.findById(id));
+
+5. 常用操作：組裝 pipeline
+	5.1 map：同步、一對一轉換
+		Mono<String> nameMono = userMono.map(User::getName);
+
+			* 如果 userMono 有值 → call getName() → 發出名稱。
+
+			* 如果 userMono 是空/錯誤 → map 不會被呼叫，空或錯誤往下傳。
+	
+	5.2 flatMap：展開一層 Mono，串非同步流程
+		Mono<Order> orderMono =
+			userMono.flatMap(user -> findOrderByUserId(user.getId()));
+			// findOrderByUserId 回傳 Mono<Order>
+			* 適合「先查 A，再用 A 查 B」這種串接，而且 B 也是 Mono。
+
+			* 如果上游是 Mono.empty() → 不會呼叫 lambda → 直接傳空往下。
+	
+	5.3 filter：過濾，不符合就變 Mono.empty()
+		Mono<User> adultUser = userMono.filter(user -> user.getAge() >= 18);
+			* 不符合條件 → Mono.empty()。
+
+			* 配合 switchIfEmpty 很常用。
+
+	5.4 then / thenReturn：忽略前一個值，只關心完成之後做什麼
+		Mono<Void> saveLog();
+		Mono<User> userMono;
+
+		Mono<User> result =
+			saveLog().then(userMono);          // 等 log 寫完再接 userMono
+		Mono<String> result2 =
+			saveLog().thenReturn("OK");        // 等 log 寫完，給一個固定字串
+
+6. 「空」的處理：defaultIfEmpty / switchIfEmpty
+	defaultIfEmpty : 變成「有一個預設值」
+		Mono<String> m =
+			findNameById(id)          // Mono<String>
+				.defaultIfEmpty("匿名使用者");
+	
+	switchIfEmpty : 改接「另一條 pipeline」
+		Mono<User> userMono =
+			findFromCache(id)                // 可能 empty
+				.switchIfEmpty(findFromDb(id)); // 空才會走 DB
+
+7. 錯誤處理：onErrorXXX
+	7.1 onErrorReturn : 發生錯誤時，給預設值
+		Mono<String> m =
+			callRemote()
+				.onErrorReturn("fallback");
+	
+	7.2 onErrorResume : 錯誤時切換到另一條 Mono
+		Mono<String> m =
+			callRemote()
+				.onErrorResume(ex -> {
+					if (ex instanceof TimeoutException) {
+						return fallbackFromCache();
+					}
+					return Mono.error(ex);
+				});
+
+8. 與「阻塞世界」互動：block()、subscribeOn
+	理想情境下，整個 stack 都是 reactive，就不需要 block。
+	但有時你在 legacy code 或單元測試會這樣：
+		String value = mono.block(); // 阻塞，直到有結果或錯誤
+	
+	⚠️ 實務建議：
+		* 在 WebFlux controller / reactive chain 裡不要用 block()，會卡死 event loop。
+		* 若你要在 reactive pipeline 裡面調用 blocking API（JDBC、RestTemplate 等），要：
+			* 用 fromCallable 包起來
+			* 搭配 .subscribeOn(Schedulers.boundedElastic())
+
+9. 在 Spring Boot / WebFlux 中的使用觀念
+	9.1 Controller 回傳 Mono/Flux，讓框架管理「什麼時候 subscribe」
+		@GetMapping("/user/{id}")
+		public Mono<ResponseEntity<UserDto>> getUser(@PathVariable String id) {
+			return userService.findUser(id)
+					.map(user -> ResponseEntity.ok(toDto(user)))
+					.defaultIfEmpty(ResponseEntity.notFound().build());
+		}
+		這裡你只是在組裝「怎麼查 user、查不到怎麼回應」的一條 pipeline：
+			* 有值 → 200 + body
+			* empty → 404
+			* error → 交給 Spring 的 ExceptionHandler / 全域 error handler
+	
+	9.2 Service 層也回傳 Mono
+		public Mono<User> findUser(String id) {
+			return userRepository.findById(id); // Reactive Repository 回 Mono<User>
+		}
+		整層都是非阻塞，沒有任何一處需要自行 subscribe()。
+
+10. 心法：怎麼「用觀念」看 Mono？
+	可以用一句話總結：
+		「我不是在拿一個值，而是在描述一條非同步流程：可能成功、有值，可能成功但沒值，或者失敗。」
+
+	寫法會從：
+		// 傳統同步世界
+		User user = repo.findById(id);
+		if (user == null) {
+			return defaultUser;
+		}
+		String name = user.getName();
+		return name.toUpperCase();
+	變成
+		Mono<String> upperName =
+			repo.findById(id)                // Mono<User>
+				.switchIfEmpty(defaultUser())// Mono<User>
+				.map(User::getName)          // Mono<String>
+				.map(String::toUpperCase);   // Mono<String>
+	
+	差別在：
+		* 同步世界：每一行都「立刻」執行。
+		* Reactive 世界：每一行都是在「宣告 pipeline」，實際執行是等 framework subscribe() 的那一刻。

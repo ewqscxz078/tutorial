@@ -1,0 +1,40 @@
+ref ChatGPT
+
+JwtDecoder 跟 JwtEncoder 是用來幹嘛的?
+
+	* JwtEncoder = 做 JWT 的「發行與簽名」，也就是發 token 要經過此元件產生jwt
+		* 產生 token 的那一邊用
+			1.你會給它一份 JwtClaimsSet（內容：sub、iss、aud、exp、自訂的 claims…）
+			2.它會幫你：
+				* 自動組出 JWT header（kid、alg…）
+				* 把 header + claims 做簽名（用你提供的私鑰 / 金鑰）
+				* 回傳一個 Jwt 物件，裡面有 getTokenValue() = 那串字串 token
+
+	* JwtDecoder = 做 JWT 的「驗證與解碼」，也就是要驗 token 要經過此元件驗證
+		* 拿到 token 要驗 & 看內容時用
+			1.確認它沒被亂改（簽章 OK）
+			2.沒過期（exp、nbf）
+			3.iss、aud 等符合預期
+			4.然後想讀裡面的 sub、scope、你自己放的 claims
+		
+通常 JwtEncoder 用法
+	Instant now = Instant.now();
+	JwtClaimsSet claims = JwtClaimsSet.builder()
+		.issuer("https://${auth-server.domain}")
+		.subject("user-123")
+		.issuedAt(now)
+		.expiresAt(now.plusSeconds(300))
+		.claim("scope", "orders.read")
+		.build();
+
+	Jwt jwt = jwtEncoder.encode(JwtEncoderParameters.from(claims));
+	String tokenValue = jwt.getTokenValue(); // 這就是 access_token 的字串，然後通常最會會被放到 request header 裡
+
+通常 JwtDecoder 用法
+	Jwt jwt = jwtDecoder.decode(tokenValue);
+
+	String subject = jwt.getSubject();
+	List<String> scopes = jwt.getClaimAsStringList("scope");
+	String issuer = jwt.getIssuer().toString();
+
+	* JwtDecoder 裡面會用 對應的公鑰 / JWKSource / secret 來驗簽章，順便驗 exp / nbf，驗不過就丟 JwtException

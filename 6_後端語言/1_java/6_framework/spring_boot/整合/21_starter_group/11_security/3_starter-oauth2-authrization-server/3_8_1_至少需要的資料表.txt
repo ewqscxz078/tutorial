@@ -55,7 +55,7 @@ ref ChatGPT
 
 			* 放 client 的靜態設定：client_id、client_secret（或其它認證方式）、授權模式（client_credentials）、scope、token/ID Token 的設定（存活時間、是否使用自含式 JWT、簽章演算法等）。
 
-	// 3.oauth2_authorization（強烈建議）
+	3.oauth2_authorization（強烈建議）
 		* 放「已核發的存取權杖」及其狀態與附加資訊：access_token（含到期時間、claims）、refresh_token（若有）、attributes/metadata 等。
 		* 即使是 M2M，多數系統還是會保留這張表以便稽核、撤銷、疑難排除。
 

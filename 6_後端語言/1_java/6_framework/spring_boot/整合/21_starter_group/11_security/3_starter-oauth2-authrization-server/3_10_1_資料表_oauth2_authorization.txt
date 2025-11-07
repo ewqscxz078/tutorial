@@ -1,0 +1,517 @@
+-- 1) Registered Client 主表（以 client_id 當 PK，便於子表引用）
+oauth2_registered_client
+	CREATE TABLE oauth2_registered_client (
+		-- 主鍵：(issuer, rc_id)
+		-- 唯一鍵：(issuer, client_id)
+		-- （可選）全域唯一：對 rc_id 加一個 UNIQUE（若你保證 rc_id 以 UUID 產生且希望全域唯一）
+		-- 索引：針對常見過濾與維運工單設置覆蓋索引
+
+	  issuer                    VARCHAR(200) NOT NULL,      -- 由於環境架構跨區多一個 issuer，需要區別用
+	  rc_id                     VARCHAR(100) NOT NULL,      -- spring-security-oauth2-authorization-server.RegisteredClient.id，UUID 字串
+
+	  client_id                 VARCHAR(100)  NOT NULL,     -- 對應 spring-security-oauth2-authorization-server.RegisteredClient.clientId，一律代表申請 token 的那一方（A 或 Gateway，如果是 Gateway 發起的交換）
+	  client_id_issued_at       TIMESTAMP     NOT NULL,     -- spring-security-oauth2-authorization-server.RegisteredClient.clientIdIssuedAt，UTC
+	  client_secret_hash        VARCHAR(200)  NULL,         -- spring-security-oauth2-authorization-server.RegisteredClient.clientSecret
+	  client_secret_expires_at  TIMESTAMP     NULL,         -- spring-security-oauth2-authorization-server.RegisteredClient.clientSecretExpiresAt，UTC
+	  client_name               VARCHAR(200)  NOT NULL,     -- spring-security-oauth2-authorization-server.RegisteredClient.clientName
+
+	  created_at                TIMESTAMP     NOT NULL,     -- UTC
+	  updated_at                TIMESTAMP     NOT NULL,     -- UTC
+	  enabled                   SMALLINT      NOT NULL,     -- 0/1
+	  client_notes              TEXT          NULL,
+
+	  -- 主鍵：多 issuer 模式更好對齊下游外鍵
+	  CONSTRAINT PK_oauth2_rc PRIMARY KEY (issuer, rc_id),
+
+	  -- 同 issuer 下 client_id 必須唯一（查詢也靠它）
+	  CONSTRAINT UX_oauth2_rc_issuer_clientid UNIQUE (issuer, client_id),
+
+	  -- 可選：若你想強制 rc_id 全域唯一（跨 issuer 也唯一），再加一條 Unique
+	  CONSTRAINT UX_oauth2_rc_rcid UNIQUE (rc_id),
+
+	  -- 資料品質約束 :
+	  CONSTRAINT CK_oauth2_rc_enabled CHECK (enabled IN (0, 1)),
+
+	  -- 資料品質約束 : 若沒有 secret，則不應該有 expires_at（避免孤兒值）
+	  CONSTRAINT CK_oauth2_rc_secret_exp
+		CHECK (client_secret_hash IS NOT NULL OR client_secret_expires_at IS NULL),
+
+	  -- 資料品質約束 : updated_at 不得早於 created_at（通用寫法）
+	  CONSTRAINT CK_oauth2_rc_time_order CHECK (updated_at >= created_at)
+
+	);
+	  -- require_proof_key         SMALLINT      NOT NULL,     -- 0/1 若要正規化則不建議放在 oauth2_registered_client
+	  -- require_user_consent      SMALLINT      NOT NULL,     -- 0/1 若要正規化則不建議放在 oauth2_registered_client
+	  -- token_endpoint_auth_method      VARCHAR(50)  NOT NULL, -- 若要正規化則不建議放在 oauth2_registered_client
+	  -- token_endpoint_auth_signing_alg  VARCHAR(20)  NULL,	-- 若要正規化則不建議放在 oauth2_registered_client
+	  -- jwks_uri                  VARCHAR(500)  NULL,			-- 若要正規化則不建議放在 oauth2_registered_client
+	  -- client_jwks_trust_kid     SMALLINT      NOT NULL,     -- 0/1 若要正規化則不建議放在 oauth2_registered_client
+
+-- 常用查詢/維運用索引（通用 btree）
+-- 1) 發卡與驗證流程：依 issuer+client_id 裝載 RegisteredClient
+--    已有 UNIQUE(issuer, client_id) 可覆蓋此需求，無需再建索引
+
+-- 2) 後台清單/查詢（分頁）
+CREATE INDEX IX_oauth2_rc_issuer_enabled_updated
+  ON oauth2_registered_client (issuer, enabled, updated_at);
+
+-- 3) 維運：找即將過期或已過期的 secret
+--    注意：若資料庫支援「僅非 NULL 的部分索引」可改為部分索引，這裡用通用做法
+CREATE INDEX IX_oauth2_rc_secret_exp
+  ON oauth2_registered_client (client_secret_expires_at);
+
+-- 4) 依建立時間或更新時間做報表/清單
+CREATE INDEX IX_oauth2_rc_issuer_created
+  ON oauth2_registered_client (issuer, created_at);
+CREATE INDEX IX_oauth2_rc_issuer_updated
+  ON oauth2_registered_client (issuer, updated_at);
+
+-- 5) 若你常用 client_name 關鍵字搜尋，視資料庫能力再補全文索引；
+--    通用情境下至少加個前綴搜尋可用的索引（注意 LIKE 'abc%' 有效）
+CREATE INDEX IX_oauth2_rc_issuer_clientname
+  ON oauth2_registered_client (issuer, client_name);
+
+
+-- 1.x) 子表（集合型欄位都做成 (issuer, rc_id) 複合鍵）
+	oauth2_client_auth_method
+		-- 端點認證方法（集合）
+		CREATE TABLE oauth2_client_auth_method ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<ClientAuthenticationMethod> clientAuthenticationMethods
+		  issuer    	VARCHAR(200) NOT NULL,
+		  rc_id 		VARCHAR(100) NOT NULL,
+		  auth_method	VARCHAR(64)  NOT NULL,          -- client_secret_basic / private_key_jwt / ...
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_auth_method PRIMARY KEY (issuer, rc_id, auth_method),
+		  -- CONSTRAINT FK_cam_client FOREIGN KEY (issuer, rc_id)
+		  --   REFERENCES oauth2_registered_client (issuer, rc_id)
+		);
+
+	oauth2_client_grant_type
+		CREATE TABLE oauth2_client_grant_type ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<AuthorizationGrantType> authorizationGrantTypes
+		  issuer      	VARCHAR(200) NOT NULL,
+		  rc_id   		VARCHAR(100) NOT NULL,
+		  grant_type  	VARCHAR(50)  NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_grant_type PRIMARY KEY (issuer, rc_id, grant_type),
+		  -- CONSTRAINT FK_grant_type_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
+		);
+
+	oauth2_client_redirect_uri
+		CREATE TABLE oauth2_client_redirect_uri ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> redirectUris
+		  issuer       	VARCHAR(200) NOT NULL,
+		  rc_id    		VARCHAR(100) NOT NULL,
+		  redirect_uri 	VARCHAR(500) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_redirect_uri PRIMARY KEY (issuer, rc_id, redirect_uri),
+		  -- CONSTRAINT FK_redirect_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
+		);
+
+	oauth2_client_post_logout_redirect_uri
+		CREATE TABLE oauth2_client_post_logout_redirect_uri ( -- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> postLogoutRedirectUris
+		  issuer       				VARCHAR(200) NOT NULL,
+		  rc_id                 VARCHAR(100) NOT NULL,
+		  post_logout_redirect_uri  VARCHAR(500) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_post_logout_redirect_uri PRIMARY KEY (issuer, rc_id, post_logout_redirect_uri),
+		  -- CONSTRAINT FK_plru_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
+		);
+
+	oauth2_client_scope
+		CREATE TABLE oauth2_client_scope (						-- spring-security-oauth2-authorization-server.RegisteredClient.Set<String> scopes
+		  issuer    VARCHAR(200) NOT NULL,
+		  rc_id VARCHAR(100) NOT NULL,
+		  scope     VARCHAR(100) NOT NULL,
+		  created_at	IMESTAMP     NOT NULL,     		-- UTC
+		  CONSTRAINT PK_oauth2_client_scope PRIMARY KEY (issuer, rc_id, scope),
+		  -- CONSTRAINT FK_scope_client FOREIGN KEY (issuer, rc_id)
+		  -- 	REFERENCES oauth2_registered_client (issuer, rc_id)
+		);
+
+	-- ClientSettings（每個 RegisteredClient 一筆）
+		CREATE TABLE oauth2_client_settings (
+		  issuer                               VARCHAR(200)  NOT NULL,
+		  rc_id                                 VARCHAR(100)  NOT NULL,  -- FK -> oauth2_registered_client(issuer, rc_id)
+
+		  require_pkce                          SMALLINT      NOT NULL DEFAULT 0,   -- = ClientSettings.requireProofKey
+		  require_consent                       SMALLINT      NOT NULL DEFAULT 1,   -- = ClientSettings.requireAuthorizationConsent
+		  jwk_set_url                           VARCHAR(400),                      -- = ClientSettings.jwkSetUrl
+		  token_endpoint_auth_sign_alg          VARCHAR(50),                       -- = ClientSettings.tokenEndpointAuthenticationSigningAlgorithm
+		  x509_certificate_subject_dn			VARCHAR(400),                      -- = ClientSettings.x509CertificateSubjectDn
+
+		  -- 預留擴充：放 SAS 新增或自訂的 client setting
+		  extra_json                            TEXT,                           -- JSON字串（可選），若要正規化可考慮 oauth2_client_setting_kv (合放「罕用、供應商特有、不需查詢/比對/唯一約束」的設定。例如 UI 類提示、相容性旗標、你自家 Starter 想透傳給下游但不影響安全決策的東西)
+
+		  created_at                            TIMESTAMP        NOT NULL,
+		  updated_at                            TIMESTAMP        NOT NULL,
+
+		  CONSTRAINT PK_oauth2_client_settings PRIMARY KEY (issuer, rc_id),
+		  -- CONSTRAINT FK_oauth2_client_settings_client
+		  -- 	FOREIGN KEY (issuer, rc_id)
+		  --   REFERENCES oauth2_registered_client(issuer, rc_id)
+		);
+
+		ClientSettings → oauth2_client_settings
+			* requireProofKey → require_pkce
+			* requireAuthorizationConsent → require_consent
+			* jwkSetUrl → jwk_set_url
+			* tokenEndpointAuthenticationSigningAlgorithm → token_endpoint_auth_sign_alg
+			* x509CertificateBoundAccessTokens（若版本有用到）→ x509_cert_bound_access_tokens
+			* 其他版本新增 / 客製 → extra_json
+
+	-- TokenSettings（每個 RegisteredClient 一筆）
+		CREATE TABLE oauth2_token_settings (
+		  issuer                               VARCHAR(200)  NOT NULL,
+		  rc_id                                 VARCHAR(100)  NOT NULL,   -- FK -> oauth2_registered_client(issuer, rc_id)
+
+		  access_token_ttl_iso                  VARCHAR(40),             -- = TokenSettings.accessTokenTimeToLive
+		  refresh_token_ttl_iso                 VARCHAR(40),             -- = TokenSettings.refreshTokenTimeToLive
+		  reuse_refresh_tokens                  SMALLINT,                -- = TokenSettings.reuseRefreshTokens
+		  authorization_code_ttl_iso            VARCHAR(40),             -- = TokenSettings.authorizationCodeTimeToLive
+		  device_code_ttl_iso                   VARCHAR(40),             -- = TokenSettings.deviceCodeTimeToLive
+		  id_token_signature_alg                VARCHAR(50),             -- = TokenSettings.idTokenSignatureAlgorithm（例如 RS256, ES256）
+		  access_token_format                   VARCHAR(50),             -- = TokenSettings.accessTokenFormat（例如 self-contained / reference）
+
+		  x509_cert_bound_access_tokens         SMALLINT      NOT NULL DEFAULT 0,   -- = TokenSettings.x509CertificateBoundAccessTokens（若用得到）
+
+		  -- 預留擴充：放 SAS 新增或自訂的 token setting
+		  extra_json                            TEXT,				 -- 若要正規化可考慮 oauth2_token_setting_kv
+
+		  created_at                            TIMESTAMP        NOT NULL,
+		  updated_at                            TIMESTAMP        NOT NULL,
+
+		  CONSTRAINT PK_oauth2_token_settings PRIMARY KEY (issuer, rc_id),
+		  -- CONSTRAINT FK_oauth2_token_settings_client
+		  --   FOREIGN KEY (issuer, rc_id)
+		  --     REFERENCES oauth2_registered_client(issuer, rc_id)
+		);
+
+		TokenSettings → oauth2_token_settings
+			* accessTokenTimeToLive → access_token_ttl_iso
+			* refreshTokenTimeToLive → refresh_token_ttl_iso
+			* reuseRefreshTokens → reuse_refresh_tokens
+			* authorizationCodeTimeToLive → authorization_code_ttl_iso
+			* deviceCodeTimeToLive → device_code_ttl_iso
+			* idTokenSignatureAlgorithm → id_token_signature_alg
+			* accessTokenFormat（OAuth2TokenFormat.SELF_CONTAINED / REFERENCE） → access_token_format
+			* 其他版本新增 / 客製 → extra_json
+
+===========================================================================================
+
+-- 3) JWT（簽章）設定（每 client 一筆）
+	oauth2_client_jwt_settings
+		CREATE TABLE oauth2_client_jwt_settings (
+		  client_id            VARCHAR(100) NOT NULL,
+		  signing_alg          VARCHAR(20)  NULL,     -- e.g. RS256/PS256/ES256/EdDSA
+		  signing_kid_policy   VARCHAR(20)  NULL,     -- e.g. LATEST_ACTIVE / PINNED / BY_ALG
+		  signed_token_type    VARCHAR(30)  NULL,     -- access_token / id_token / both
+		  compress             VARCHAR(20)  NULL,     -- DEF/NONE
+		  include_cnf          SMALLINT     NOT NULL, -- 0/1
+		  jti_required         SMALLINT     NOT NULL, -- 0/1
+		  typ_header           VARCHAR(30)  NULL,     -- e.g. 'at+jwt'
+		  extra_headers        TEXT         NULL,     -- JSON 字串
+		  CONSTRAINT PK_oauth2_client_jwt_settings PRIMARY KEY (client_id),
+		  CONSTRAINT FK_jwtset_client FOREIGN KEY (client_id)
+			REFERENCES oauth2_registered_client (client_id)
+		);
+
+-- 4) JWE（加密）設定（選配；每 client 一筆）
+	oauth2_client_jwe_settings
+		CREATE TABLE oauth2_client_jwe_settings (
+		  client_id        VARCHAR(100) NOT NULL,
+		  enc_enabled      SMALLINT     NOT NULL, -- 0/1
+		  enc_alg          VARCHAR(20)  NULL,     -- e.g. RSA-OAEP-256 / ECDH-ES
+		  enc_enc          VARCHAR(20)  NULL,     -- e.g. A256GCM
+		  enc_kid_policy   VARCHAR(20)  NULL,
+		  encrypt_id_token       SMALLINT NOT NULL,  -- 0/1
+		  encrypt_userinfo       SMALLINT NOT NULL,  -- 0/1
+		  encrypt_introspection  SMALLINT NOT NULL,  -- 0/1
+		  CONSTRAINT PK_oauth2_client_jwe_settings PRIMARY KEY (client_id),
+		  CONSTRAINT FK_jweset_client FOREIGN KEY (client_id)
+			REFERENCES oauth2_registered_client (client_id)
+		);
+
+-- 5) Token 簽章「選擇策略」（issuer/alg/purpose/範圍）
+	token_signing_selection
+		CREATE TABLE token_signing_selection (
+		  issuer      VARCHAR(200) NOT NULL,
+		  token_type  VARCHAR(30)  NOT NULL, -- access_token / id_token / userinfo / introspection
+		  purpose     VARCHAR(8)   NOT NULL, -- 一般填 'sig'
+		  alg         VARCHAR(20)  NOT NULL,
+		  applies_to  VARCHAR(20)  NOT NULL, -- GLOBAL / CLIENT
+		  client_id   VARCHAR(100) NULL,
+		  priority    INTEGER      NOT NULL,
+		  enabled     SMALLINT     NOT NULL, -- 0/1
+		  CONSTRAINT PK_token_signing_selection PRIMARY KEY
+			(issuer, token_type, applies_to, COALESCE(client_id, ''), priority)
+		);
+
+-- 6) 資源與 Scope → Audience 對映（選配）
+	oauth2_resource
+		CREATE TABLE oauth2_resource (
+		  aud         VARCHAR(200) NOT NULL,
+		  description VARCHAR(200) NULL,
+		  jwks_uri    VARCHAR(500) NULL,
+		  enabled     SMALLINT     NOT NULL,   -- 0/1
+		  CONSTRAINT PK_oauth2_resource PRIMARY KEY (aud)
+		);
+
+	oauth2_scope_resource
+		CREATE TABLE oauth2_scope_resource (
+		  scope  VARCHAR(100) NOT NULL,
+		  aud    VARCHAR(200) NOT NULL,
+		  CONSTRAINT PK_oauth2_scope_resource PRIMARY KEY (scope, aud),
+		  CONSTRAINT FK_scoperes_aud FOREIGN KEY (aud)
+			REFERENCES oauth2_resource (aud)
+		);
+
+-- 7) 可配置的 Claim 對映規則（選配）
+	jwt_claim_mapping
+		CREATE TABLE jwt_claim_mapping (
+		  issuer       VARCHAR(200) NOT NULL,
+		  applies_to   VARCHAR(20)  NOT NULL, -- GLOBAL / CLIENT
+		  client_id    VARCHAR(100) NULL,
+		  claim        VARCHAR(50)  NOT NULL,
+		  source       VARCHAR(30)  NOT NULL, -- FIXED / USER_ATTR / SQL / HTTP / SPRING_EL
+		  expression   TEXT         NOT NULL, -- 規則內容
+		  "when"       VARCHAR(50)  NOT NULL, -- ALWAYS / HAS_SCOPE:x / GRANT_TYPE:y...
+		  token_type   VARCHAR(30)  NOT NULL, -- access_token / id_token / ...
+		  priority     INTEGER      NOT NULL,
+		  enabled      SMALLINT     NOT NULL, -- 0/1
+		  CONSTRAINT PK_jwt_claim_mapping PRIMARY KEY
+			(issuer, applies_to, COALESCE(client_id, ''), token_type, claim, priority)
+		);
+
+	-- 建議索引（跨庫安全的單欄或簡單複合索引）
+	CREATE INDEX IX_rc_enabled ON oauth2_registered_client (enabled);
+	CREATE INDEX IX_tss_lookup ON token_signing_selection (issuer, token_type, enabled);
+	CREATE INDEX IX_jcm_lookup ON jwt_claim_mapping (issuer, token_type, enabled);
+
+
+
+8) 初始化與 Seed 作法（啟動時把設定「寫進資料庫」）
+	1.Issuer 與 JWT 預設
+		* 設一筆 token_signing_selection：issuer=https://auth.example.com, token_type in ('access_token','id_token'), alg='RS256', applies_to='GLOBAL'
+		* 你的 JWK 旋轉表負責產出 ACTIVE key；發 Token 時依上表 + oauth2_client_jwt_settings 共同決策 alg 與 kid。
+
+	2.System Clients
+		* 寫入 oauth2_registered_client 與各子表（grant、scopes、redirect_uris…）
+		* 寫入 oauth2_client_token_settings、oauth2_client_jwt_settings（如需覆寫壽期或 alg）
+
+	3.（如用）Audience/Resource
+		設定 oauth2_resource 與 oauth2_scope_resource
+
+	Spring 啟動時跑一個 @Component + @Transactional 的 DataInitializer，檢查「不存在才建立」即可。別把這些塞在 data.sql（跨 DB 容易踩雷）。
+
+
+啟動時要完成的初始化／注意事項（實務清單）
+
+	1.RegisteredClientRepository（必備）
+		* 從你的正規化表（client + grants + redirect_uris + scopes + token/jwt 設定）組裝 RegisteredClient。
+		* 客端密碼請存「雜湊」；建議 Bcrypt/Argon2，並設定過期日策略。
+
+	2.Authorization Server Settings / Issuer（必備）
+		* AuthorizationServerSettings.builder().issuer("https://auth.example.com")
+		* 確認 behind proxy 時 X-Forwarded-* 正確，否則 metadata/issuer 會跑掉。
+
+	3.JWKSource / JWT Encoder（必備）
+		* 你的金鑰來自 jwk_key + 旋轉策略；提供 JWKSource<SecurityContext> 與 NimbusJwtEncoder。
+		* 定義「選鍵策略」：alg 由 token_signing_selection + client_jwt_settings 決定、kid 取該 alg 的 ACTIVE key。
+
+	4.OAuth2AuthorizationService / OAuth2AuthorizationConsentService（必備）
+		* 若沿用 SAS JDBC 兩張表，直接用官方 JdbcOAuth2AuthorizationService / JdbcOAuth2AuthorizationConsentService。
+		* 若你要強化稽核，可另寫 issued-token log（唯讀鏡像）。
+
+	5.PasswordEncoder（必備）
+		* 提供 PasswordEncoder；密碼/客戶端密鑰用同策略（或分別設定）。
+
+	6.TokenSettings / ClientSettings（必備）
+		* 以你的 oauth2_client_token_settings、oauth2_client_jwt_settings 轉成 SAS 的 TokenSettings / ClientSettings；
+		* TTL 用 ISO-8601 Duration 存表，轉 Duration 帶入。
+
+	7.OIDC / Provider Metadata（建議）
+		* 若開 OIDC：ID Token claim、UserInfo、(可選) JWE 加密設定。
+		* 檢查 /.well-known/openid-configuration 是否正確（issuer、jwks_uri、端點）。
+
+	8.CORS / CSRF / Session 策略（實務）
+		* Token 端點多為 stateless；管理介面/同意頁則可能需要 session。
+		* SecurityFilterChain 區分路徑：/oauth2/**、/.well-known/**、/jwks/**、管理 API…
+		* CORS 規則白名單化 redirect/callback 網域。
+
+	9.Scope/Audience/Claims 映射（實務）
+		* 有需要就把「scope→audience」與自訂 claims（roles/tenant 等）參數化；
+		* 在 OAuth2TokenCustomizer<JwtEncodingContext> 注入，從 DB 規則計算 claims。
+
+	10.JWK Rotation 排程（實務）
+		* 你的 rotate/demote/cleanup 三 Job：加 shedlock/分散鎖；
+		* Rotation 後 bump jwks_meta，短 TTL 窗口發布 JWKS（ETag/Cache-Control）。
+
+	11.Deny/Blacklist（實務）
+		* 你已有 jwk_denylist；若要 token 黑名單（reference token 或 revoke flow），加 token_blacklist。
+
+	12.mTLS / private_key_jwt（選配）
+		* 開 private_key_jwt 的 client 記得初始化 jwks_uri/信任策略（嚴格比對 kid）。
+		* 若有 mTLS/DPoP，設定 cnf claim 支援。
+
+	13.PAR/JAR/Device Code/Logout（選配）
+		* 若導入 PAR（pushed authorization requests）、JAR、Device Code、OIDC Front/Back-Channel Logout，預先決定端點與資料表/快取需求。
+
+	14.觀測性與稽核（建議）
+		* 針對 token 簽出、錯誤碼、grant_type 分佈、issuer/purpose/alg 標籤打 Observation/Log；
+		* 對旋轉事件、異常（找不到 ACTIVE key、kid mismatch）記審核軌跡。
+
+	15.DB Migrations / 索引（必備）
+		* 用 Flyway/Liquibase 管控 schema；常用查詢欄位加索引：client_id、(issuer, token_type)、(client_id, scope)、(purpose, alg, state) 等。
+
+
+oauth2_registered_client 欄位對應 RegisteredClient 與用途
+	* issuer →（不直接映射到 RegisteredClient）
+		* 用途：你的命名空間/多 Issuer 分桶鍵。查詢 RegisteredClient 時先以 issuer 過濾，再把該 issuer 下的 client 轉成 RegisteredClient。
+		* 提醒：和 clientSettings.jwkSetUrl（客戶端自己的 JWKS）是不同概念。
+
+	* client_id → RegisteredClient.clientId
+		* 用途：OAuth2 規範中的客戶端識別子。OIDC 的 ID Token aud 一定會含它。
+
+	* rc_id（UUID） → RegisteredClient.id
+		* 用途：儲存層內部 ID。SAS 內部/授權碼記錄可能用到，對外不公開。
+
+	* client_id_issued_at → RegisteredClient.clientIdIssuedAt
+		* 用途：client_id 的建立時間（稽核/治理、可做密鑰輪替與到期策略的依據）。
+
+	* client_secret_hash → RegisteredClient.clientSecret
+		* 用途：雜湊後的 client secret。建議直接存 Bcrypt/Argon2 雜湊；Mapper 設成 "{bcrypt}"+hash。
+		* 若你支持 private_key_jwt 或 none，此欄可為空。
+
+	* client_secret_expires_at →（SAS 有欄位）RegisteredClient.clientSecretExpiresAt
+		* 用途：secret 到期日（強制輪替/停用）。
+
+	* client_name → RegisteredClient.clientName
+		* 用途：顯示用途（例如同意頁、後台管理）。
+
+	* client_auth_methods（CSV） → RegisteredClient.clientAuthenticationMethods
+		* 用途：token 端點的客戶端認證方式集合：
+		* 常見值：client_secret_basic、client_secret_post、private_key_jwt、none …
+		* 影響：當設為 private_key_jwt 時，你還需在 ClientSettings 指定其簽章演算法與（如有）客戶端 JWKS URL。
+
+	* authorization_grant_types（CSV） → RegisteredClient.authorizationGrantTypes
+		* 用途：允許的 Grant Type 集合：
+		* 例：authorization_code、refresh_token、client_credentials、device_code …
+
+	* redirect_uris（CSV） → RegisteredClient.redirectUris
+		* 用途：授權碼/implicit 流程允許的回調 URL 白名單。
+
+	* post_logout_redirect_uris（CSV） → RegisteredClient.postLogoutRedirectUris
+		* 用途：OIDC RP-Logout 後的回調白名單。
+
+	* scopes（CSV） → RegisteredClient.scopes
+		* 用途：此 Client 最多可請求的 scopes 列表（實際核發時還會受同意頁或伺服器策略限制）。
+
+	* client_settings（TEXT/JSON） → RegisteredClient.clientSettings
+		* 用途：和客戶端互動行為有關的設定（由你的 Mapper 解析並丟入 ClientSettings.Builder），常見鍵：
+			* require_proof_key（PKCE，授權碼流程建議開） → ClientSettings.requireProofKey(true/false)
+			* require_consent（是否顯示同意頁） → ClientSettings.requireAuthorizationConsent(true/false)
+			* jwk_set_url（客戶端自己的 JWKS） → ClientSettings.jwkSetUrl(...)
+				（供 private_key_jwt 或 JWE 取客戶端公鑰）
+			* token_endpoint_auth_signing_alg（客戶端用 private_key_jwt 時簽章 alg，如 RS256/PS256/ES256/...）
+				→ ClientSettings.tokenEndpointAuthenticationSigningAlgorithm(...)
+			* 其他你自訂的旗標亦可在自製 Mapper 中轉成對應設定。
+		* 說明：ClientSettings 是一個 key-value 風格設定集合，實際支援鍵會因 SAS 版本 而略有不同；你採 JSON→Builder 的 Mapper 即可解耦。
+
+	* token_settings（TEXT/JSON） → RegisteredClient.tokenSettings
+		* 用途：Token 的發行行為（由你的 Mapper 解析並丟入 TokenSettings.Builder），常見鍵：
+			* access_token_ttl（ISO-8601，如 PT15M）→ accessTokenTimeToLive(...)
+			* refresh_token_ttl（如 P30D）→ refreshTokenTimeToLive(...)
+			* reuse_refresh_tokens（是否重用 RT）→ reuseRefreshTokens(...)
+			* authorization_code_ttl → authorizationCodeTimeToLive(...)
+			* device_code_ttl → deviceCodeTimeToLive(...)
+			* access_token_format（self-contained=JWT / reference）→ accessTokenFormat(...)
+			* （視版本）id_token_signature_alg 等其他鍵 → 對應 Builder 可用的屬性
+		* 說明：把 你約定的 JSON 鍵 轉成 TokenSettings 支援的屬性即可；多出的自訂鍵可由你的 OAuth2TokenCustomizer 消化。
+
+	* created_at / updated_at →（不映射到 RegisteredClient）
+		* 用途：資料列的建立/更新時間，供稽核、看版與管理用。
+
+	* enabled（0/1） →（不直接映射）
+		* 用途：啟用開關。你在 Repository 查詢時要加上 enabled = 1 過濾；停用的 client 不應可被載入。
+
+	小結：轉換時你要做的事
+		1.以 (issuer, client_id) 查出該 issuer 下的 client 設定；
+		2.把 CSV 欄位拆成 Set，逐一塞入 RegisteredClient.Builder；
+		3.解析 client_settings / token_settings 的 JSON，把支援的鍵映射到 ClientSettings.Builder / TokenSettings.Builder；
+		4.client_secret_hash 直接以 雜湊前綴（如 {bcrypt}）設定到 clientSecret；
+		5.只對 enabled=1 的資料做映射與註冊。
+
+M2M（client_credentials）
+	一定要的欄位
+		* issuer：多 Issuer 命名空間（用它先篩出此 issuer 的 clients）。
+		* client_id：客戶端 ID（全域或在 issuer 內唯一）。
+		* rc_id：內部 UUID（對應 RegisteredClient.id）。
+		* client_id_issued_at：建立時間（稽核）。
+		* client_name：顯示用途（管理介面用）。
+		* authorization_grant_types：只放 client_credentials。
+		* scopes：M2M 要拿的 API scope 清單（如 api.read,api.write）。
+		* enabled：1（啟用）。
+
+	擇一其一（端點認證方式） : 對稱 vs 非對稱
+		指 Client 對 AS（授權伺服器）如何證明自己的身份
+			Shared secret（client_secret_basic/client_secret_post）
+				* 對象：Client ↔ AS 之間的對稱密碼
+				* AS 端需要保存這個 Client 的密碼雜湊，收到請求時做常數時間比對。
+				* 和你的 JWK 旋轉無關；不需要 HSM。
+			private_key_jwt（非對稱）
+				* 對象：Client 自己持有私鑰，發 client_assertion（JWT）簽名給 AS；
+				* AS 只需要 Client 的公鑰（通常透過 jwks_uri 取），不存 Client 的私鑰；
+				* 一樣跟 AS 自己簽 Token 的伺服器 JWK 分離；AS 的私鑰是否放 HSM、DB、Vault 是另一個議題。
+				* 注意 private_key_jwt 僅接受 非對稱 JWK（kty=RSA/EC/OKP），不是 kty=oct。
+
+		* 用 shared secret：
+			* client_auth_methods：client_secret_basic（或 client_secret_post）。
+			* client_secret_hash：BCrypt/Argon2 雜湊（不要明文）。
+			* client_secret_expires_at：可空；若有「定期換密碼」政策再填。
+		* 用 private_key_jwt：
+			* client_auth_methods：private_key_jwt
+			* client_settings 內要有：
+				* token_endpoint_auth_signing_alg：如 RS256/PS256/ES256/EdDSA
+				* jwk_set_url：此 Client 的 JWKS URI（AS 用來驗證 client assertion）
+
+		內網服務想先快跑：選 client_secret_basic。跨邊界/高安全：建議 private_key_jwt。
+
+		什麼時候選哪個？
+			* 內網、先求簡單：client_secret_basic（密碼放雜湊，TTL 規範、定期輪替）
+			* 跨邊界／高安全：private_key_jwt（Client 自管私鑰、AS 只管 JWKS；支援 Client 端平滑輪替、kid 嚴格比對）
+
+	M2M 建議但可選（依治理強度）
+		* token_settings（JSON）：
+			* access_token_ttl：建議 PT10M～PT30M
+			* access_token_format：self-contained（JWT）
+			* （通常不要發 RT）→ 不要在 grants 加 refresh_token，也不需設定 refresh_token_ttl
+
+		* （若你要嚴格 audience）
+			* oauth2_client_audience 子表：白名單此 client 可請的 audience
+			* oauth2_scope_resource 子表：scope → audience 對映（沒帶 resource 時用）
+
+		* client_settings.require_consent：false（M2M 無同意頁）
+		* client_settings.require_proof_key：false（PKCE 僅授權碼用）
+
+	目前用不到（之後會在哪些情境用）
+		* redirect_uris：授權碼/implicit 流程才會用（瀏覽器回跳）。
+		* post_logout_redirect_uris：OIDC RP-Logout 才會用（使用者登出回跳）。
+		* device_code_ttl：Device Code 流程才會用。
+		* id_token 相關：只在 OIDC（有使用者）才會發。
+		* require_consent：有互動同意頁才會用。
+		* require_proof_key（PKCE）：授權碼強化才會用。
+		* jwksUri（client 的 JWKS）：只有你選 private_key_jwt 或你要對客戶端做 JWE 時會用（M2M 多半不用 JWE 給 client）。
+
+	建議預設值（M2M）
+		* authorization_grant_types：client_credentials
+		* client_auth_methods：client_secret_basic（先求快；之後再切 private_key_jwt）
+		* scopes：只放此 client 需要的最小集合（例：api.read）
+		* client_settings（JSON）：
+			* require_consent: false
+			* require_proof_key: false
+			* （若 private_key_jwt）補 token_endpoint_auth_signing_alg 與 jwk_set_url
+		* token_settings（JSON）：
+			* access_token_ttl: "PT15M"
+			* access_token_format: "self-contained"
+			* 不要設定 refresh 的東西（也別開 refresh_token grant）
