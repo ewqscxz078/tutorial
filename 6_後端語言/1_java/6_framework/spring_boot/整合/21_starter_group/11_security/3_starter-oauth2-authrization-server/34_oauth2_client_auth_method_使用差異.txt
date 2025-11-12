@@ -1,0 +1,136 @@
+auth_method
+
+private_key_jwt
+	差異
+		client_secret 與  private_key_jwt 模式的本質差異
+			| 項目       | `client_secret_basic`               | `private_key_jwt`                                                    |
+			| ---------- | ----------------------------------- | -------------------------------------------------------------------- |
+			| 祕密產生方 | Auth Server                         | Client（自己產，但通常Auth server 種子初始化代為產出放在client端）   |
+			| 儲存位置   | Auth Server + Client 都需知道同一值 | 只有 Client 知道私鑰；Auth Server 只持公鑰                           |
+			| 傳輸跨區   | ✅ 要同步（很麻煩）                 | ❌ 不用同步（只公開公鑰）                                            |
+			| 輪替方式   | 雙方都要同時換 secret               | Client 自己換新 key，先上傳新公鑰即可                                |
+			| 可驗簽原理 | 對稱                                | 非對稱                                                               |
+
+	責任
+		private_key_jwt 的正確責任分工，以跨區來說
+			| 步驟  | 責任方           | 動作                                                                                                                                              | 備註                                                    |
+			| ----- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+			| 1     | **雲端 AS-C2P**  | **自己產生一組私鑰/公鑰對**（例如 RSA 2048）                                                                                                      | 就像產 service-account 金鑰。這是 *client* 的認證金鑰。 |
+			| 2     | **雲端 AS-C2P**  | 把「公鑰部分」發布成一份 JWKS（例如 `https://as-c2p.example.com/jwks/broker.json`）                                                               | 這個網址對地端 AS-C2PE 可公開取用。                     |
+			| 3     | **地端 AS-C2PE** | 在註冊 `RegisteredClient` 時，設定：<br>`client_authentication_method=private_key_jwt`<br>`jwkSetUrl=https://as-c2p.example.com/jwks/broker.json` | AS-C2PE 只需能讀到「公鑰」，不拿私鑰。                  |
+			| 4     | **雲端 AS-C2P**  | 在送 Token Request 時，用 **自己的私鑰簽 `client_assertion`**                                                                                     | 私鑰只存在雲端，從沒離開過。                            |
+			| 5     | **地端 AS-C2PE** | 收到請求後，用 `jwkSetUrl` 裡的公鑰驗簽                                                                                                           | 驗證成功即代表「這真的是 AS-C2P」                       |
+
+	用途定位
+		private_key_jwt 用途定位
+
+			✅ 最適合：機器對機器（Confidential client），像你「AS-C2P ⇄ AS-C2PE 的 Token Exchange」或 Gateway/BFF/後端服務去打 AS 這類情境。
+
+			❌ 不適合：純前端（Public client），例如 SPA、行動 App、或只在瀏覽器裡跑的頁面。因為「私鑰」無法安全地放在使用者端。
+
+	「JSP 前端」要分兩種
+
+		* JSP 只是伺服器端渲染的 UI（有後端進程）
+			這其實是「後端服務」，屬於 Confidential client。
+			→ 可以用 private_key_jwt，私鑰放在伺服器（檔案/KMS/環境變數），不用一定要有資料庫。
+			（你說「雲前端不方便存取 DB」沒關係，私鑰不必放 DB。）
+
+		* 純靜態前端（沒有自己的後端進程）
+			→ 這是 Public client，不能用 private_key_jwt。
+			正確做法：Authorization Code + PKCE，無 client 認證。
+
+	快速情境決策表
+		| 情境                                       | Client 類型  | 建議認證法                                                                |
+		| ------------------------------------------ | ------------ | ------------------------------------------------------------------------- |
+		| SPA / 行動 App / 純靜態網站                | Public       | Authorization Code **+ PKCE**（無 client 認證）                           |
+		| JSP/Thymeleaf 等伺服器端 Web（有後端進程） | Confidential | **`private_key_jwt`**（私鑰放檔案/KMS），或過渡期用 `client_secret_basic` |
+		| Gateway / BFF / 後端微服務                 | Confidential | **`private_key_jwt`**（首選）、或 mTLS                                    |
+		| AS-to-AS Token Exchange（跨區）            | Confidential | **`private_key_jwt`**（首選；只發佈公鑰給對端）                           |
+
+			跨區、跨組織、要避免同步「對稱祕密」？→ private_key_jwt（首選）
+
+			有既有企業 PKI、內網嚴控、可全鏈路上 mTLS？→ mTLS
+
+			只能用對稱祕密、暫時過渡？→ client_secret_jwt > client_secret_basic/post
+
+			前端 App（無法保密）？→ Public Client + PKCE（無客戶端認證）
+
+
+	使用 private_key_jwt 要做的事（總表）
+
+		1. 產生一組非對稱金鑰（RSA/ECDSA/EdDSA），在客戶端保存私鑰，在AS只保存公鑰（或配置 jwks_uri 指向你的公鑰）。
+
+		2. AS 端（被呼叫者）把該 client_id 的 token_endpoint_auth_method 設為 private_key_jwt，並宣告可接受的簽章演算法（例如 RS256），以及如何取得公鑰（jwkSetUrl 或內嵌 jwks）。
+
+		3. **客戶端（呼叫者）**在送 token 請求時，用私鑰產 client_assertion（JWT），帶 client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer。
+
+		4. 確認 aud=對方的 token endpoint 完整 URL、iss=sub=你的 client_id、JWT 有合理 exp（一般 60～120 秒）、帶上 kid。
+
+		5. 如同你原本流程：client-credentials、token-exchange 都要能附上這個 client_assertion（兩種 grant 都是一樣的簽法，只是請求參數不同）。
+		
+		業務面提醒
+			1.不要把私鑰放進 yml 或 Git：以外部 Secret（KMS/HSM/Secrets Manager 或掛載檔案）注入。
+
+			2.金鑰輪替：先上新公鑰（新 kid）→ 客戶端改用新私鑰 → 覆蓋期後移除舊鑰。
+
+			3.端點一致性：若你也用到 Introspection 或 Revocation，該 client 的端點認證方式一樣是 private_key_jwt，需同樣配置。
+
+
+	private_key_jwt 與 JWK 兩者是什麼
+		| 名稱                         | 出現位置                          | 功能                             | 用途                                                                 |
+		| ---------------------------- | --------------------------------- | -------------------------------- | -------------------------------------------------------------------- |
+		| **`private_key_jwt` 的私鑰** | Client 端持有                     | 用來簽發「client_assertion JWT」 | 驗證 **client 身份**（Auth Server 驗簽）                             |
+		| **JWK / JWKS**               | 通常在 Auth Server 或 Client 發佈 | 存放金鑰（公鑰/私鑰）            | 驗證 **JWT 簽章**（可用於 ID Token、Access Token、client_assertion） |
+
+
+	private_key_jwt 在 Spring Authorization Server 的關聯
+		在 SAS 1.5.x：
+			* 當 RegisteredClient.clientAuthenticationMethod = PRIVATE_KEY_JWT 時：
+
+				* SAS 會在驗 client assertion 時去找對應 client 的公鑰：
+
+					* 來源是 RegisteredClient.getClientSettings().getJwkSetUrl() 或
+
+					* 你自訂的 OAuth2ClientAuthenticationProvider 查出的 jwks
+
+				* 用公鑰驗 client_assertion 的簽章
+
+			* 也就是說：
+				client 用的私鑰 ↔ AS 驗的公鑰
+				是同一對 RSA/EC/EdDSA keypair。
+				
+
+	三種金鑰供應模式
+		A) Client 擁有金鑰（BYOK，最符合本質，建議）
+
+			* 誰產生？ Client（或 Client 的 CI/CD）。
+
+			* AS 取得公鑰方式：
+
+				1.Client 把 public JWK 交給 AS 的種子倉（PR / artifact），或
+
+				2.Client 對外提供 JWKS URL，AS 在 RegisteredClient.clientSettings.jwkSetUrl 指向它，或
+
+				3.走 Dynamic Client Registration（若你之後要開）。
+
+			* 優點：完全符合「client 自持私鑰」、法規/審計也較容易交代。
+
+			* 缺點：需要每個 Client 都會做 keygen / 加密保存與輪替腳本。
+
+		B) AS 協助產生，再安全交付（集中治理、好操作，但較不純）
+
+			* 誰產生？ AS 端的種子/平台腳本產生後「拆分」：公鑰入 AS DB，私鑰被安全加密後送到 Client（例如寫入該 Client 的 client-secrets.yml.enc 或掛載檔）。
+
+			* 優點：演算法/命名/輪替都能被平台統一控管；快速落地。
+
+			* 缺點：嚴格來說不符合「client 自產」的原則，需高信任與嚴格權限管控。
+
+		C) KMS/HSM 託管（最高規格）
+
+			* 誰產生？ Client 在 KMS/HSM（或雲 KMS）內產生，私鑰不落地。
+
+			* AS 取得公鑰方式：Client 發佈 JWKS URL（或透過安全通道給 AS）。
+
+			* 優點：密鑰從不離開硬體/服務；安全最佳實踐。
+
+			* 缺點：導入成本、運維複雜度較高。

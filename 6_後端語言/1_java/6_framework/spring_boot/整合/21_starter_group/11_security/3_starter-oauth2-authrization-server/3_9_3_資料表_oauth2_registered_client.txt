@@ -152,7 +152,7 @@ CREATE INDEX IX_oauth2_rc_issuer_clientname
 		  --   REFERENCES oauth2_registered_client(issuer, rc_id)
 		);
 
-		ClientSettings → oauth2_client_settings
+		java ClientSettings → table oauth2_client_settings
 			* requireProofKey → require_pkce
 			* requireAuthorizationConsent → require_consent
 			* jwkSetUrl → jwk_set_url
