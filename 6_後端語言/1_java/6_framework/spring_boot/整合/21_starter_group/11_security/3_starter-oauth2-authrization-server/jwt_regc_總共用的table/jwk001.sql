@@ -1,5 +1,5 @@
 -- jwk_key 當前 jwk 使用狀況
-CREATE TABLE IF NOT EXISTS jwk001 (
+CREATE TABLE jwk001 (
   id                BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT df_jwk001_id PRIMARY KEY,
   kid               VARCHAR(128) NOT NULL,         -- 對外唯一 Key ID
   issuer            VARCHAR(200) NOT NULL,         -- e.g. https://auth.example.com

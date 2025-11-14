@@ -1,7 +1,8 @@
-CREATE TABLE IF NOT EXISTS jwkp01 (
+-- jwk_rotation_policy
+CREATE TABLE jwkp01 (
   id                      BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT df_jwkp01_id PRIMARY KEY,
   issuer                  VARCHAR(200) NOT NULL,        -- e.g. https://auth.example.com
-  purpose                 VARCHAR(8)   NOT NULL,        -- 'sig' | 'enc'
+  purpose                 VARCHAR(8)   NOT NULL,        -- 'sig' | 'enc' | 'auth'
   alg                     VARCHAR(32)  NOT NULL,        -- 'RS256' | 'ES256' | 'EdDSA' ...
   kty                     VARCHAR(16)  NOT NULL,        -- 'RSA' | 'EC' | 'OKP' ...
 

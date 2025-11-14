@@ -1,5 +1,5 @@
 -- oauth2_registered_client
-CREATE TABLE IF NOT EXISTS regc001 (
+CREATE TABLE regc001 (
   issuer                    VARCHAR(200) NOT NULL,      -- 由於環境架構跨區多一個 issuer，需要區別用
   rc_id                     VARCHAR(100) NOT NULL,      -- spring-security-oauth2-authorization-server.RegisteredClient.id，UUID 字串
 

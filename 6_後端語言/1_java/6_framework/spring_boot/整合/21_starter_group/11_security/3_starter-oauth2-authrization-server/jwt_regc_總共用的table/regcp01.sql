@@ -1,5 +1,5 @@
 -- oauth2_registered_client_policy
-CREATE TABLE IF NOT EXISTS regcp01 (
+CREATE TABLE regcp01 (
   issuer                   VARCHAR(200) NOT NULL,
   rc_id                    VARCHAR(100) NOT NULL,   -- FK → registered_client
   auto_rotate              SMALLINT     NOT NULL,   -- 0/1

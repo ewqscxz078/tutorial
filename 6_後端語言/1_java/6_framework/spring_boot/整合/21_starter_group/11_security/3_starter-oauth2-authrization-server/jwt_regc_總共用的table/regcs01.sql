@@ -1,5 +1,5 @@
---  oauth2_registered_client 之 client secret 歷史紀錄
-CREATE TABLE IF NOT EXISTS regcs01 (
+--  oauth2_registered_client 之 client secret 歷史紀錄 oauth2_registered_client_secret
+CREATE TABLE regcs01 (
   issuer          VARCHAR(200) NOT NULL,
   rc_id           VARCHAR(100) NOT NULL,
   ver             INTEGER      NOT NULL,          -- 1,2,3…（版本序號）
