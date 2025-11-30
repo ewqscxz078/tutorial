@@ -9,7 +9,7 @@ ref chatGPT
 		* 分支用 -> { ... } 有區塊：要 yield 值;
 
 		* 老式 case L: 語法也可以用在表達式裡，但每個分支最後也要 yield 值;
-	
+
 	* switch 敘述（不產生值）：switch (x) { ... }
 		* 這種是傳統控制流程，不能用 yield，照舊用 break（或用 -> 箭頭分支就不需要 break）。
 

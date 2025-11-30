@@ -1,4 +1,4 @@
-1.clientID 
+1.clientID
 
 
 Auth Server 專用的大種子檔（auth-seed.yml）
@@ -75,8 +75,8 @@ Auth Server 專用的大種子檔（auth-seed.yml）
 			Gateway 若會 TE，再加：registrationId → act/azp 策略（如何保留 A）
 
 	client-secret.yml（只含該服務需要的明碼；建議注入環境變數或掛載機密檔）
-	
-	
+
+
 
 	@Bean
 	@ConfigurationProperties(prefix = "client.catalog.token-exchange")

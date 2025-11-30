@@ -14,10 +14,10 @@
 	* 這組設定裡面含有真正的 client-id（= 送到 Auth Server 的那個）。
 
 	* Auth Server 端的 RegisteredClient.clientId 必須與這個 client-id 一致；但它和 clientRegistrationId 可以不同。
-	
+
 
 範例
-	客戶端 
+	客戶端
 		yml
 			spring:
 			  security:
@@ -34,7 +34,7 @@
 						client-secret: ${AS_C2P_TE_SECRET}
 						authorization-grant-type: client_credentials
 						scope: [ as.broker.exchange ]
-		
+
 		使用 WebClient / AuthorizedClientManager
 			var request = OAuth2AuthorizeRequest
 				.withClientRegistrationId("c2p-te") // 用本地別名
@@ -46,7 +46,7 @@
 
 clientRegistrationId 命名建議
 	* 單一 Issuer、單一用途 → clientRegistrationId == client-id（最簡單）
-	
+
 	* 多 Issuer / 多用途 / 需輪替 → clientRegistrationId 當穩定別名，不等於 client-id (可變動、需與 AS 對齊)
 		建議命名：<zone|issuerAlias>-<system>-<purpose>（如 c2p-orders-te）
 
@@ -59,7 +59,7 @@ clientId 命名建議
 
 	* 需要分身/別名時才讓它們不同（多 issuer、多組憑證/授權型別、藍綠/金絲雀、同一服務對多目標 TE 等）。
 		這時保留 clientId 穩定不變，在客戶端 clientRegistrationId 使用「別名」。
-		
+
 		1.多 Issuer：同一 clientId 會在不同 issuer 註冊
 			例：c2p@c2p-te-gw, c2pe@c2p-te-gw
 		2.同 Issuer、不同 grant/用途：

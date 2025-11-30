@@ -13,7 +13,7 @@ ref https://www.baeldung.com/spring-boot-console-app
 			* Kafka / RabbitMQ Listener
 			* Spring Integration / Netty 伺服器（雖然 NONE 但你自己建的 I/O loop）
 			* Quartz、長時間背景工作執行緒
-			
+
 	一、建立 CommandLineRunner
 		由於是在 Spring Boot 啟動完成後，才會執行這個 runner，因此我們自己開發的其它元件（bean），都可注入進來使用。
 			範例
@@ -26,13 +26,13 @@ ref https://www.baeldung.com/spring-boot-console-app
 						logger.info("{} works!", getClass().getSimpleName());
 					}
 				}
-				
+
 			關於 run 方法的參數 args，指的是啟動 JAR 檔所附加的參數選項。例如：
 				java -jar XXX.jar --spring.config.name=application --spring.config.location=./
 
 	二、例外處理
 		使用 CommandLineRunner 時要注意，如果中途發生了 exception，卻沒有做例外處理，那麼 Spring Boot 就會啟動失敗，程式中止。
-	
+
 	三、安排執行順序
 		基於不同的目的，實作出多個 CommandLineRunner。若想要求這些 runner 按照指定的順序去執行，則可使用 @Order 標記
 			@Component
@@ -46,7 +46,7 @@ ref https://www.baeldung.com/spring-boot-console-app
 			public class MyRunnerB implements CommandLineRunner {
 				// ...
 			}
-			
+
 			Spring Boot 會讓數字小的先執行
 
 	四、ApplicationRunner
@@ -69,14 +69,14 @@ ref https://www.baeldung.com/spring-boot-console-app
 					});
 				}
 			}
-			
+
 			CommandLineRunner 是以 String 陣列包裝參數；而 ApplicationRunner 則是 ApplicationArguments。前者比較 raw data，而後者能夠有系統地取出裡面的資料。
 
 			假設啟動 JAR 檔的指令如下。
 				java -jar XXX.jar --name=Vincent --msg=hello --msg=world ithome ironman
-				
+
 				就可以依據cli 輸入name，取得對應值
-				
+
 	五、可以使用的場合
 		（一）Server 啟動通知
 		（二）將資料放到全文檢索引擎

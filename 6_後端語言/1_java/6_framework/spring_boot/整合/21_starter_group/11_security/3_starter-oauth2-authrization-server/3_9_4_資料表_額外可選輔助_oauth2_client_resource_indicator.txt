@@ -9,7 +9,7 @@
 		  -- CONSTRAINT FK_resind_client FOREIGN KEY (issuer, rc_id)
 		  --	REFERENCES oauth2_registered_client (issuer, rc_id)
 		);
-		
+
 
 用途
 	為了協同降低配錯目標 :  申請階段（給誰、去哪） 鎖緊
@@ -28,8 +28,8 @@
 		* 防呆效果：就算 route 配錯，只要 AS 對該 client 沒授權那個 resource，就不會發 token（或發不同 scope/aud）。
 
 		具體 URI（fine-grained），幫 Client/Auth Server 縮小 token 的使用範圍（intent sealing）。
-	
-	
+
+
 在那裡用
 	Auth server 註冊 registered_client 時，將其塞到 clientSetting 裡的自訂一部分
 	並且在種子初始化時生成 client-catalog.yml（供 Gateway/Client 用）在其一部分，代表 client 端可使用那些註冊的 registered_client

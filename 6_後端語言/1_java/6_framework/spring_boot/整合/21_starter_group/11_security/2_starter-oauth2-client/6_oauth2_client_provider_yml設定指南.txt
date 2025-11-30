@@ -13,7 +13,7 @@ client 端 yml provider 設定指南
 
 	* 做 OIDC Login / Authorization Code（需要 authorization-uri、jwks_uri、userinfo_endpoint 等）→ 用 issuer-uri
 		讓 Spring 自動用 discovery 補齊各 endpoint，減少你手動維護。
-	
+
 	* 兩種都要（既有登入又有 M2M）→ 拆兩個 provider：登入那組用 issuer-uri；M2M 那組用 token-uri。
 		不要在同一個 provider 同時設兩者，避免誰優先生效的混淆。
 

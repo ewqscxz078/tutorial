@@ -15,7 +15,7 @@
 	為了協同降低配錯目標 :  驗收階段（誰可用、用在誰） 鎖緊
 		指定受眾代號，讓 "Resource Server" 能用 aud 判斷 token 是否屬於自己 （避免拿錯 token 打錯服務或橫向濫用）。
 
-	
+
 	Audience (aud) (RFC 8693) — 「這張 token 是給哪個 受眾」
 		* AT 內的註冊宣告：aud（在 access token/JWT 的 claims 內）。
 
@@ -27,9 +27,9 @@
 			2.Token Exchange 時用 audience（或某些庫用 audiences）明示交換後 token 的受眾。
 
 		* 防呆效果：攻擊者就算拿到別處的 token（aud=api://erp.core），丟給 pba.orders，RS 會因 aud 不匹配而拒絕。
-		
+
 		真正的風險是申請時就要了錯的 aud/resource；解法是 Auth Server 端設定 allow-list（每個 registered client 可申請的 aud/resource 白名單），以及 Gateway 的 route→RegId 綁定。
-		
+
 		受眾代號（coarse-grained），讓 Resource Server 能快速判斷「是不是發給我」。
 
 

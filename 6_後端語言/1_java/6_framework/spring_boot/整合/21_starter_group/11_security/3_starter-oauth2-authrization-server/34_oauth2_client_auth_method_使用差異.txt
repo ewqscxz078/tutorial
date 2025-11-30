@@ -67,7 +67,7 @@ private_key_jwt
 		4. 確認 aud=對方的 token endpoint 完整 URL、iss=sub=你的 client_id、JWT 有合理 exp（一般 60～120 秒）、帶上 kid。
 
 		5. 如同你原本流程：client-credentials、token-exchange 都要能附上這個 client_assertion（兩種 grant 都是一樣的簽法，只是請求參數不同）。
-		
+
 		業務面提醒
 			1.不要把私鑰放進 yml 或 Git：以外部 Secret（KMS/HSM/Secrets Manager 或掛載檔案）注入。
 
@@ -98,7 +98,7 @@ private_key_jwt
 			* 也就是說：
 				client 用的私鑰 ↔ AS 驗的公鑰
 				是同一對 RSA/EC/EdDSA keypair。
-				
+
 
 	三種金鑰供應模式
 		A) Client 擁有金鑰（BYOK，最符合本質，建議）

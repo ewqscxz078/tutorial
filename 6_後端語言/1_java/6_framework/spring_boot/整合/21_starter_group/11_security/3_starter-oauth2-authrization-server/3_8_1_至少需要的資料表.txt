@@ -35,7 +35,7 @@ ref ChatGPT
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<String> postLogoutRedirectUris
 						oauth2_client_scope                     # 僅客戶端「宣告」可申請的範圍
 							對應 spring-security-oauth2-authorization-server.RegisteredClient.Set<String> scopes
-					
+
 					ClientSettings（每個 RegisteredClient 一筆 : 把它看針對 ClientSettings 的額外欄位）
 						oauth2_client_settings
 					TokenSettings（每個 RegisteredClient 一筆: 把它看針對 TokenSettings 的額外欄位）
@@ -47,7 +47,7 @@ ref ChatGPT
 					子表
 						oauth2_client_jwe_settings              # option
 
-			3) 其他可選延伸 
+			3) 其他可選延伸
 				ClientSettings 延伸
 					oauth2_client_resource_indicator		# （如採用 RFC 8707 resource indicators），讓 client 端申請 token（或做交換）時明示用途，並搭配 Auth Server 的 allowedResources 防呆 （避免 gateway route 設錯口）。
 					oauth2_client_audience                  # （如採用 audience 驗證），讓 "Resource Server" 能用 aud 判斷 token 是否屬於自己 （避免拿錯 token 打錯服務或橫向濫用）。

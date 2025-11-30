@@ -2,12 +2,12 @@ ref ChatGPT
 
 1. Mono<T> 是什麼？
 	Mono<T> = 非阻塞 + 可組合 + 0 或 1 個元素的「流程」描述
-	
+
 	可以類比：
 		* 像 Optional<T>：要嘛有值，要嘛沒有值（empty）。
 		* 又有點像 CompletableFuture<T>：代表未來才會出現結果（非同步）。
 		* 又是 Reactive Streams 的一份子：支援背壓、訂閱等概念。
-	
+
 	只是 Mono<T> 本身不是結果，而是「如何得到結果」的一條 pipeline :
 		Mono<String> mono = Mono.just("hello"); // 只是一個描述，不是當下就跑完的流程
 
@@ -18,7 +18,7 @@ ref ChatGPT
 
 		2.直接 onComplete()
 			→ 沒有值（Mono.empty()）。
-		
+
 		3.onError(Throwable error)
 			→ 發生錯誤，流程失敗。
 		可以把整條 Mono pipeline 想成是要發出這三種訊號之一的「流程」。
@@ -60,7 +60,7 @@ ref ChatGPT
 			* 如果 userMono 有值 → call getName() → 發出名稱。
 
 			* 如果 userMono 是空/錯誤 → map 不會被呼叫，空或錯誤往下傳。
-	
+
 	5.2 flatMap：展開一層 Mono，串非同步流程
 		Mono<Order> orderMono =
 			userMono.flatMap(user -> findOrderByUserId(user.getId()));
@@ -68,7 +68,7 @@ ref ChatGPT
 			* 適合「先查 A，再用 A 查 B」這種串接，而且 B 也是 Mono。
 
 			* 如果上游是 Mono.empty() → 不會呼叫 lambda → 直接傳空往下。
-	
+
 	5.3 filter：過濾，不符合就變 Mono.empty()
 		Mono<User> adultUser = userMono.filter(user -> user.getAge() >= 18);
 			* 不符合條件 → Mono.empty()。
@@ -89,7 +89,7 @@ ref ChatGPT
 		Mono<String> m =
 			findNameById(id)          // Mono<String>
 				.defaultIfEmpty("匿名使用者");
-	
+
 	switchIfEmpty : 改接「另一條 pipeline」
 		Mono<User> userMono =
 			findFromCache(id)                // 可能 empty
@@ -100,7 +100,7 @@ ref ChatGPT
 		Mono<String> m =
 			callRemote()
 				.onErrorReturn("fallback");
-	
+
 	7.2 onErrorResume : 錯誤時切換到另一條 Mono
 		Mono<String> m =
 			callRemote()
@@ -115,7 +115,7 @@ ref ChatGPT
 	理想情境下，整個 stack 都是 reactive，就不需要 block。
 	但有時你在 legacy code 或單元測試會這樣：
 		String value = mono.block(); // 阻塞，直到有結果或錯誤
-	
+
 	⚠️ 實務建議：
 		* 在 WebFlux controller / reactive chain 裡不要用 block()，會卡死 event loop。
 		* 若你要在 reactive pipeline 裡面調用 blocking API（JDBC、RestTemplate 等），要：
@@ -134,7 +134,7 @@ ref ChatGPT
 			* 有值 → 200 + body
 			* empty → 404
 			* error → 交給 Spring 的 ExceptionHandler / 全域 error handler
-	
+
 	9.2 Service 層也回傳 Mono
 		public Mono<User> findUser(String id) {
 			return userRepository.findById(id); // Reactive Repository 回 Mono<User>
@@ -159,7 +159,7 @@ ref ChatGPT
 				.switchIfEmpty(defaultUser())// Mono<User>
 				.map(User::getName)          // Mono<String>
 				.map(String::toUpperCase);   // Mono<String>
-	
+
 	差別在：
 		* 同步世界：每一行都「立刻」執行。
 		* Reactive 世界：每一行都是在「宣告 pipeline」，實際執行是等 framework subscribe() 的那一刻。

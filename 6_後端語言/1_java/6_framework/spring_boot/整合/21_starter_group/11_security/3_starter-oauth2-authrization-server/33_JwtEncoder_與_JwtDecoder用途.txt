@@ -16,7 +16,7 @@ JwtDecoder 跟 JwtEncoder 是用來幹嘛的?
 			2.沒過期（exp、nbf）
 			3.iss、aud 等符合預期
 			4.然後想讀裡面的 sub、scope、你自己放的 claims
-		
+
 通常 JwtEncoder 用法
 	Instant now = Instant.now();
 	JwtClaimsSet claims = JwtClaimsSet.builder()

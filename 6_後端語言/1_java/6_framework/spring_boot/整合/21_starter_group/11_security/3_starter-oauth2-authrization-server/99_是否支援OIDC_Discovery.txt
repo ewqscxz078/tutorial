@@ -3,7 +3,7 @@ ref chatGPT
 一、如何判斷 AS 是否完整支援 OIDC Discovery
 	一個完整支援的 Authorization Server 應該在：
 		{issuerUri}/.well-known/openid-configuration
-	
+
 	上能回出 JSON，裡面至少有：
 		{
 		  "issuer": "https://as.example.com",
@@ -99,7 +99,7 @@ ref chatGPT
 		→ 所以就算 Auth Server 支援 Discovery，
 			也有可能下游 client 在該 zone 打不到 .well-known/openid-configuration。
 			這時 seed 檔顯式列出 tokenEndpoint / jwksUri 就變成一種「zone 級別的 cache」。
-	
+
 	② 某些安全性設定會關閉或遮蔽 Discovery
 		例子：
 			* 你若在 SecurityFilterChain 調整過 /oauth2/** 的權限，意外把 .well-known/openid-configuration 也納入 security filter → 403。
@@ -108,13 +108,13 @@ ref chatGPT
 			* 或者某些企業防火牆會擋 .well-known。
 
 		所以我建議 seed 允許覆蓋，但不是必填。
-	
+
 	③ 有時需要指定「替代端點」（mTLS / edge / CDN）
 		例如：
 			* token_endpoint 走 mTLS → https://mtls.auth.local/oauth2/token
 			* jwks_uri 放 CDN → https://cdn.example.com/.well-known/jwks.json
 		這兩個都不在同一個 issuer 網域下，所以不能完全依賴 Discovery。
-	
+
 	④ 災難回復或版本切換時的「固定化」
 		當你要做：
 			* 灰度部署新 Auth Server（新版本或新 cluster）；

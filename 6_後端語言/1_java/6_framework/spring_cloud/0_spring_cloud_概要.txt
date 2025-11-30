@@ -16,43 +16,177 @@ https://spring.io/projects/spring-cloud
 		Edgware						1.5.x
 		Dalston						1.5.x
 
-1.Spring Cloud Config
+
+1. 設定中心：Spring Cloud Config
+	| Starter / 模組                                           | 功能                                                                                                                      | 什麼時候用                                                                                         |
+	| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+	| `spring-cloud-starter-config`                            | **Config Client**：啟用 Spring Cloud Config 客戶端，開機時會去 Config Server 拉設定（透過 Config Data 機制）。([Home][1]) | 多個微服務要共用同一組設定（git / S3 / filesystem），希望「改一次 config repo → 各服務拉新設定」。 |
+	| `spring-cloud-config-server`（不是 starter，但常一起提） | 把你的 Spring Boot app 變成 **Config Server**，對外提供 `/application-profile.yml` 之類的設定 API。([Home][2])            | 你要一個集中式設定中心：property 放在 git / svn / vault，而不是散在每個 app 的 `application.yml`。 |
+
+	[1]: https://docs.spring.io/spring-cloud-config/reference/index.html?utm_source=chatgpt.com "Spring Cloud Config"
+	[2]: https://spring.io/projects/spring-cloud-config?utm_source=chatgpt.com "Spring Cloud Config"
+	典型組合：
+		* Config Server：spring-cloud-config-server
+
+		* 每個微服務：spring-cloud-starter-config + 自己的 web / batch starter
+
+		* 額外再搭配 Spring Cloud Bus（後面會提）做 動態 refresh。
+
 	分散式系統設定檔集中化串接方式
 		當 client 設定多的時候，於 config server 取得
 		因此會有1個 Spring Cloud Config server 服務 + n個 Spring Cloud Config client 服務的設定
 
 
-2.Spring Cloud Sleuth =>
-	實現分散式追蹤
-		https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
-		https://www.tpisoftware.com/tpu/articleDetails/2682
-		https://www.baeldung.com/spring-cloud-sleuth-single-application
+// 2. 服務註冊與發現：Eureka / 服務治理 （Netflix 系列現在比較「維護模式」，但在 on-prem 環境還是很多人在用）
+	| Starter                                      | 功能                                                                                                                           | 什麼時候用                                                                             |
+	| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+	| `spring-cloud-starter-netflix-eureka-server` | 把 app 變成 **Eureka Server**（服務註冊中心）。([mvnrepository.com][1])                                                        | 微服務很多、IP 常變（k8s / docker swarm 甚至裸機），你想用「服務名字」而不是 IP 呼叫。 |
+	| `spring-cloud-starter-netflix-eureka-client` | 讓 app 成為 **Eureka Client**：啟動時自動註冊到 server、並用 `DiscoveryClient` or 負載平衡呼叫其他服務。([cloud.spring.io][2]) | 後端服務彼此呼叫時，用 Eureka 解決「服務在哪裡」問題。                                 |
 
-		第三方 lib 或自行實作比較
-		https://cloud.tencent.com/developer/article/1798224
-
-		概念圖
-		https://developer.okta.com/blog/2021/07/26/spring-cloud-sleuth
-
-3.Spring Cloud Vault
-	敏感資料的存放位置(避難所)
-
-4.Spring cloud task
-	Spring cloud data flow
-
-5.Spring Cloud Stream	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
-	https://www.tpisoftware.com/tpu/articleDetails/1390
-		訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
-
-6.Spring Cloud api gateway
-
-99.optional(與 k8s 部分元件交集)
-	Spring Cloud Eureka 服務發現
+	[1]: https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-netflix-eureka-server?utm_source=chatgpt.com "Spring Cloud Starter Netflix Eureka Server"
+	[2]: https://cloud.spring.io/spring-cloud-netflix/?utm_source=chatgpt.com "Spring Cloud Netflix"
+	ref
 		https://www.tpisoftware.com/tpu/articleDetails/2434
-	Spring Cloud Circuit Breaker
+	如果你跑在 Kubernetes 上，通常會用 Spring Cloud Kubernetes（spring-cloud-starter-kubernetes-* 系列）取代 Eureka，這裡就不展開了。
+
+
+3. Gateway / API 路由：Spring Cloud Gateway
+	3-1. Reactive / WebFlux 版本
+		| Starter                                                                         | 功能                                                                                                                                                 | 什麼時候用                                                                            |
+		| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+		| `spring-cloud-starter-gateway` 或 `spring-cloud-starter-gateway-server-webflux` | **Reactive API Gateway**，用 WebFlux + Reactor；支援 filter chain、route predicate、rate limit、circuit breaker、DiscoveryClient 整合等。([Home][1]) | 高併發、需要非同步 I/O、要整合 reactive stack（WebFlux / R2DBC / Reactor Kafka 等）。 |
+
+		[1]: https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/?utm_source=chatgpt.com "Spring Cloud Gateway"
+
+	3-2. Servlet / WebMVC 版本
+		| Starter                                      | 功能                                                                                                                | 什麼時候用                                                                                                              |
+		| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+		| `spring-cloud-starter-gateway-server-webmvc` | **Servlet + WebMvc.fn 的 Gateway**，跑在 Tomcat / Jetty。程式風格跟 WebFlux 那個類似，但底層是 Servlet。([Home][1]) | 企業既有大量 Servlet / Thread-per-request stack，或你已經有一堆 Servlet Filter、生態都是 MVC，想要 Gateway 能平順整合。 |
+
+		[1]: https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webmvc/starter.html?utm_source=chatgpt.com "How to Include Spring Cloud Gateway Server Web MVC"
+
+	什麼時候該選 Gateway？
+		所有流量先進 Gateway（安全、CORS、rate limiting、token exchange…），再轉給後端微服務。
+		要跨區段（像 C ↔ P）做 JWT 驗證 / token exchange、header 改寫、路由動態調整，Gateway 幾乎是必配。
+
+4. 客戶端呼叫：OpenFeign & LoadBalancer
+	4-1. OpenFeign
+		| Starter                          | 功能                                                                                                                       | 什麼時候用                                                                                                                                      |
+		| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+		| `spring-cloud-starter-openfeign` | 啟用 **OpenFeign 宣告式 HTTP client**，支援和 Spring MVC 相容的介面註解，整合 LoadBalancer、Eureka、OAuth2 等。([Home][1]) | 服務對服務呼叫很多、你不想一直手寫 `WebClient` / `RestTemplate`，又希望有 interface-based client，像 `@FeignClient(name="user-service")` 那種。 |
+
+		[1]: https://docs.spring.io/spring-cloud-openfeign/docs/current/reference/html/?utm_source=chatgpt.com "Spring Cloud OpenFeign"
+
+	4-2. LoadBalancer
+		| Starter                             | 功能                                                                                                                              | 什麼時候用                                                                                                                                  |
+		| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+		| `spring-cloud-starter-loadbalancer` | 提供新的 **Spring Cloud LoadBalancer**，取代舊的 Ribbon。搭配 WebClient / RestTemplate / OpenFeign 做 client-side LB。([Home][1]) | 你有多個 instance，要用 `lb://service-name` 或 `@LoadBalanced WebClient` 做分散呼叫。特別搭配 Eureka / Consul / Kubernetes Service 一起用。 |
+
+		[1]: https://spring.io/projects/spring-cloud?utm_source=chatgpt.com "Spring Cloud"
+
+5. Resilience / Circuit Breaker （新版集中在 Spring Cloud CircuitBreaker 專案）
+	| Starter                                                    | 功能                                                                     | 什麼時候用                                                                       |
+	| ---------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+	| `spring-cloud-starter-circuitbreaker-resilience4j`         | 非 reactive app 的 **Resilience4j circuit breaker** starter。([Home][1]) | 傳統 MVC 專案、或你的業務呼叫多個外部系統，需要熔斷、retry、fallback。           |
+	| `spring-cloud-starter-circuitbreaker-reactor-resilience4j` | Reactive 用的 Resilience4j 版本。                                        | Gateway / WebFlux / Reactor 生態，需要在 reactive pipeline 裡做熔斷 / bulkhead。 |
+	| `spring-cloud-starter-circuitbreaker-spring-retry`         | 用 Spring Retry 實作簡單 circuit breaker + retry。                       | 需求比較簡單、你已經有大量 Spring Retry 設定。                                   |
+
+	[1]: https://docs.spring.io/spring-cloud-circuitbreaker/docs/current/reference/html/?utm_source=chatgpt.com "Spring Cloud Circuit Breaker"
+	ref
 		Hystrix 服務降級(Service端)
 			https://www.tpisoftware.com/tpu/articleDetails/2621
 		Hystrix 服務降級(Client端)
 			https://www.tpisoftware.com/tpu/articleDetails/2622
 		Hystrix 服務熔斷，當服務正常時自動恢復
 			https://www.tpisoftware.com/tpu/articleDetails/2781
+
+	搭配情境：
+		* Gateway + CircuitBreaker：保護後端服務掛掉時不要把整個前端炸掉。
+		* OpenFeign + CircuitBreaker：某些下游 API 常 timeout，要走 fallback。
+
+6. 訊息 / Event 驅動：Spring Cloud Stream
+	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
+		https://www.tpisoftware.com/tpu/articleDetails/1390
+			訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
+	是「在 Kafka / RabbitMQ 上建 event-driven microservice」的一組 abstraction。
+	常見 starter（artifactId 類型而非單一一個）：
+
+	| Starter 範例                         | 功能                                    | 什麼時候用                                                       |
+	| ------------------------------------ | --------------------------------------- | ---------------------------------------------------------------- |
+	| `spring-cloud-starter-stream-kafka`  | Spring Cloud Stream + Kafka binder。    | 你想用 Kafka 做 event bus，例如訂單事件、交易事件、Log event 等。|
+	| `spring-cloud-starter-stream-rabbit` | Spring Cloud Stream + RabbitMQ binder。 | 你公司已經大量使用 RabbitMQ，想用 Spring Cloud Stream 統一抽象。 |
+
+	還有一個世界叫 Spring Cloud Stream App Starters（spring-cloud-starter-stream-xxx / spring-cloud-stream-app-starters），是官方預先做好的 source/processor/sink app，你可以直接拿來跑或擴充。
+
+7. 短生命週期 Task：Spring Cloud Task
+	| Starter / 模組                                                           | 功能                                                                                                               | 什麼時候用                                                                                                                  |
+	| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+	| Spring Cloud Task Starters（例如 `spring-cloud-starter-task-timestamp`） | 針對 **一次性 / 批次任務** 的 starter，方便在 Data Flow 或獨立模式下跑短命 Task（例如資料 migration）。([Home][1]) | 你的服務不是常駐型，而是「跑一次就結束」的 job（批次、ETL、migration），又想用 Spring Cloud 生態整合監控、重試、Data Flow。 |
+
+	[1]: https://docs.spring.io/spring-cloud-task-app-starters/docs/Elston.SR3/reference/html/overview.html?utm_source=chatgpt.com "1. Spring Cloud Task Starters"
+
+
+8. Config Bus / 分散式 Refresh：Spring Cloud Bus
+	| Starter 範例                     | 功能                                       | 什麼時候用                                                                                               |
+	| -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+	| `spring-cloud-starter-bus-amqp`  | 用 RabbitMQ 當 Bus，廣播 config 變更事件。 | 你用 Config Server 管設定，改了 git 後不想一台台 `/actuator/refresh`，希望自動广播「重新載入設定」事件。 |
+	| `spring-cloud-starter-bus-kafka` | 用 Kafka 當 Bus。                          | 同上，只是底層是 Kafka。                                                                                 |
+
+
+9. 雲平台整合：AWS / GCP / Consul / Zookeeper / Kubernetes
+	這一塊 starter 很多，就點幾個代表：
+		9-1. Spring Cloud GCP
+			spring-cloud-gcp-starter-pubsub
+			spring-cloud-gcp-starter-sql-mysql
+			適用情境：
+				你跑在 GCP，要直接操作 Pub/Sub、Spanner、Datastore、Firestore、Cloud SQL、Cloud Storage 等，想省掉自己寫底層 client 的麻煩。
+
+		9-2. Spring Cloud Consul / Zookeeper / Kubernetes
+			* spring-cloud-starter-consul-discovery
+			* spring-cloud-starter-zookeeper-discovery
+			* spring-cloud-starter-kubernetes-*
+		適用情境：
+			你在 非 Eureka 的世界：公司已經有 Consul / Zookeeper，或全部跑在 Kubernetes，透過 Service / ConfigMap / Secrets 做 service discovery / config 管理，希望用 Spring Cloud 封裝一層
+
+
+10. 觀測性 / Tracing
+	舊時代有：
+		spring-cloud-starter-sleuth：分散式追蹤、把 traceId / spanId 串起來（現在多數整合進 Micrometer Tracing / Spring Observability，不再是主角）
+		適用情境：
+			你有一堆微服務，要串分散式 trace（搭 APM / Zipkin / Jaeger），希望 Spring 自動幫你 propagate traceId / spanId 到 log 和 HTTP header。
+		ref 實現分散式追蹤
+			https://docs.spring.io/spring-cloud-sleuth/docs/current/reference/htmlsingle/spring-cloud-sleuth.html
+			https://www.tpisoftware.com/tpu/articleDetails/2682
+			https://www.baeldung.com/spring-cloud-sleuth-single-application
+
+			第三方 lib 或自行實作比較
+			https://cloud.tencent.com/developer/article/1798224
+
+			概念圖
+			https://developer.okta.com/blog/2021/07/26/spring-cloud-sleuth
+
+	新版本 : Spring Boot 3 / Spring Cloud 2025.x
+		Micrometer Tracing + Spring Cloud Observability 的做法，而不是 Sleuth 本身
+		Micrometer Tracing + Spring Boot 觀測性（不一定用 Cloud starter）
+
+
+11. 保密服務 : Spring Cloud Vault
+	敏感資料的存放位置(避難所)，基於 HashiCorp Vault 的 Spring Cloud 整合套件
+		* 安全的機密儲存（password、token、client secret）
+		* 加密/解密（transit engine）
+		* 動態憑證（DB user / TLS cert 動態生成）
+		* Vault secret → 自動加載到 Spring Environment（自動放進 Environment 與 PropertySource）
+
+		適用於需要安全地管理大量 Secrets 的分散式架構
+	| Starter                                            | 功能                                             | 適用情境                                                                        |
+	| -------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
+	| **`spring-cloud-starter-vault-config`**            | 主要整合：把 Vault 資料掛到 Spring `Environment` | 微服務啟動時，從 Vault 讀取設定，如 DB 密碼、JWT 簽署金鑰、OAuth2 client secret |
+	| **`spring-cloud-starter-vault-config-consul`**     | 撐起 Vault + Consul 整合                         | 若你架構使用 Consul 做 Service Discovery 並想要透過 Vault 管他                  |
+	| **`spring-cloud-starter-vault-config-databases`**  | Vault Dynamic DB Credentials                     | 服務要用「一次性短生命週期」DB 帳號，而不是固定帳密                             |
+	| **`spring-cloud-starter-vault-config-rabbitmq`**   | Vault 動態 RabbitMQ user                         | 適用於大量微服務分散事件時，用短生命週期帳號更安全                              |
+	| **`spring-cloud-starter-vault-config-redis`**      | Vault 動態 Redis credential                      | 適用於 Redis 授權管理                                                           |
+	| **`spring-cloud-starter-vault-config-kubernetes`** | Vault Agent + Kubernetes Auth                    | 跑在 K8S 上，以 ServiceAccount Token 自動登入 Vault                             |
+
+	通常你只需要：
+		👉 spring-cloud-starter-vault-config
+	其他是擴充。
