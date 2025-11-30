@@ -1,0 +1,209 @@
+0. 什麼是 Starter？為什麼要用？
+	Starter = 一組預先幫你挑好的依賴 + 預設設定
+	用途：
+		* 幫你 快速引入某個技術棧（Web / JPA / Security…）
+		* 自動帶入相容的版本，不用自己一個一個加 spring-web、spring-orm…
+		* 配合 Spring Boot 自動化配置（@EnableAutoConfiguration）
+
+	典型引用方式（Maven）：
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+	命名規則大致上：
+
+		spring-boot-starter-xxx：官方 Starter
+
+		xxx-spring-boot-starter：第三方或你自己寫的 Starter
+
+
+1. 核心 / 基礎類 Starter
+	1.1 spring-boot-starter
+		用途：
+			最基本的 Starter，包含 Spring Core、Logging（Logback）等。
+		適用情境：
+			* 純後台程式、排程、CLI 工具
+			* 不需要 Web / JPA，只要 Spring 的 DI + Logging
+
+	1.2 spring-boot-starter-logging（通常隱含）
+		用途：
+			預設 Logging：Logback + SLF4J。
+		適用情境：
+			* 多數情況不用特別寫，會被其他 starter transitively 帶進來
+			* 如果你要用 Log4j2，會排除它改用 spring-boot-starter-log4j2
+
+2. Web 相關 Starter
+	2.1 spring-boot-starter-web
+		用途：
+			* 傳統 Servlet Web：Spring MVC + Tomcat（預設內嵌）。
+		適用情境：
+			* 傳統 REST API / MVC 專案
+			* 大多數企業內 Spring Boot API 都是這個
+			* 有 Filter / Servlet / JSP（如果再加 JSP 相關設定）
+
+	2.2 spring-boot-starter-webflux
+		用途：
+			* Reactive Web：基於 Reactor 的非阻塞 Web Framework。
+		適用情境：
+			* 高併發 I/O 型服務、需要 reactive stream
+			* 要搭配 WebClient、Flux/Mono 做非同步流程
+			* Gateway / Proxy / streaming API 很常用
+			注意：web 跟 webflux 同一個專案不要混用，選一個就好。
+
+	2.3 spring-boot-starter-thymeleaf
+		用途：
+			* 使用 Thymeleaf 模板引擎產 HTML。
+		適用情境：
+			* Server-side Render HTML 的 Web App
+			* 傳統 MVC 畫面、後台管理系統
+
+3. 資料存取 / DB 相關 Starter
+	3.1 spring-boot-starter-jdbc
+		用途：
+			* 最基本 JDBC + DataSource 自動配置。
+		適用情境：
+			* 自己寫 SQL + JdbcTemplate
+			* 不想用 ORM，只想輕量直接打資料庫
+
+	3.2 spring-boot-starter-data-jpa
+		用途：
+			* Spring Data JPA + Hibernate。
+		適用情境：
+			* 傳統 RDB + ORM 開發
+			* 要用 Entity / Repository 方式操作 DB
+			* 企業內 CRUD 型系統
+
+	3.3 spring-boot-starter-data-redis
+		用途：
+			* Spring Data Redis。
+		適用情境：
+			* 使用 Redis 做 cache / session / message queue（簡單情境）
+			* 需要 StringRedisTemplate / RedisTemplate
+
+	3.4 spring-boot-starter-data-mongodb 等 NoSQL
+		用途：
+			* Spring Data for MongoDB / Elasticsearch…
+		適用情境：
+			* NoSQL 存取（Log、文件、搜尋、Event store）
+
+4. 安全 / OAuth2 相關 Starter
+	4.1 spring-boot-starter-security
+		用途：
+			* 核心 Spring Security。
+		適用情境：
+			* 任何需要認證 / 授權的 Web / API
+			* 只加這個就會有預設登入頁（HTTP Basic + form login）
+
+	4.2 spring-boot-starter-oauth2-client
+		用途：
+			* OAuth2 / OIDC Client 能力。
+		適用情境：
+			* 系統要當「OAuth2 client」去叫別人的 token endpoint
+			* 使用 ClientRegistrationRepository、OAuth2AuthorizedClientManager
+			* 做 SSO login（Google, GitHub 登入）或 M2M client_credentials
+
+	4.3 spring-boot-starter-oauth2-resource-server
+		用途：
+			* 讓你的服務當 OAuth2 Resource Server，驗證 JWT / opaque token。
+		適用情境：
+			* 後端 API，要驗證別人發的 Access Token（JWT / introspection）
+			* 搭配 spring.security.oauth2.resourceserver.jwt.jwk-set-uri=...
+
+	4.4 （較新）spring-boot-starter-oauth2-authorization-server
+		用途：
+			* Spring Authorization Server 的 Boot Starter。
+		適用情境：
+			* 你自己要實作一套 OAuth2 / OIDC Authorization Server
+			* 提供 /oauth2/authorize, /oauth2/token, /oauth2/jwks… 等端點
+
+5. Cache / Message / Integration 類 Starter
+	5.1 spring-boot-starter-cache
+		用途：
+			* 啟用 Spring Cache 抽象（@EnableCaching + CacheManager autoconfig）。
+		適用情境：
+			* 要用 @Cacheable / @CacheEvict，搭配 Caffeine、Ehcache、Redis…
+
+	5.2 spring-boot-starter-amqp
+		用途：
+			* Spring AMQP (RabbitMQ)。
+		適用情境：
+			* 透過 RabbitMQ 做非同步訊息、事件、工作佇列
+
+	5.3 spring-boot-starter-integration
+		用途：
+			* Spring Integration 核心。
+		適用情境：
+			* 要用各種 message channel / flow / adapter（FTP、mail、JMS…）
+			* 比較「企業整合」風格的架構
+
+	5.4 spring-boot-starter-batch
+		用途：
+			* Spring Batch。
+		適用情境：
+			* 大量批次處理：ETL、排程匯入匯出、夜間批次作業
+			* 有 Job / Step / Chunk / Reader / Writer 概念
+
+6. 視圖 / 前端 / Template 類
+	常見幾個：
+		* spring-boot-starter-thymeleaf：HTML 模板
+		* spring-boot-starter-mustache：Mustache 模板
+		* （若要 JSP 通常是自己手動加依賴 + 容器設定，不是用專門 starter）
+	適用情境：
+		* 需要 server-side render 的前端頁面。
+
+7. 監控 / 運維 / 測試 Starter
+	7.1 spring-boot-starter-actuator
+		用途：
+			* Actuator 監控端點：/actuator/health、/actuator/metrics…
+		適用情境：
+			* 想要健康檢查、metrics、log level 調整、env 查看…
+			* 搭配 Prometheus / Grafana、Kubernetes liveness/readiness probe
+
+	7.2 spring-boot-starter-test
+		用途：
+			* 單元測試 & 整合測試的一包：JUnit, Spring Test, AssertJ, Mockito 等。
+		適用情境：
+			* 幾乎所有 Spring Boot 專案都會加
+			* 自動提供 @SpringBootTest 等測試工具
+
+8. 其他常見 Starter
+	8.1 spring-boot-starter-validation
+		用途：
+			Hibernate Validator（Bean Validation）
+		適用情境：
+			使用 @NotNull, @Size, @Email 等註解在 DTO / Entity 上
+			REST Controller 用 @Valid 驗證輸入參數
+
+	8.2 spring-boot-starter-mail
+		用途：
+			寄送 Email 的支援。
+		適用情境：
+			寄驗證信、通知信、重置密碼信件
+
+	8.3 spring-boot-starter-json（通常隱含）
+		用途：
+			* Jackson JSON 支援。
+		適用情境：
+			* Web API 回傳 JSON，或 WebFlux exchange JSON
+			* 通常被 web / webflux starter 自動帶進來，不用自己加
+
+
+9. 小結：怎麼選 Starter？
+	可以用三個問題來決定要加哪些：
+
+	1.這個專案主要是什麼型態？
+		* API / MVC 頁面 → web 或 webflux
+		* 批次 → batch
+		* 純後台程式 → 只用 core starter
+
+	2.跟哪些外部系統互動？
+		* DB → data-jpa / jdbc / data-redis / data-mongodb …
+		* MQ → amqp / kafka
+		* OAuth2 / JWT → security + oauth2-xxx
+
+	3.非功能性需求？
+		* 監控 → actuator
+		* cache → cache (+ 具體 cache 實作依賴)
+		* 驗證輸入 → validation
+		* 測試 → test

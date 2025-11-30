@@ -1,0 +1,242 @@
+Spring Batch 跟 Spring Scheduling 不是互斥，而是分工：
+	* Scheduling 管的是「什麼時候跑」
+	* Batch 管的是「怎麼跑一個複雜的大工作」（大量資料、分段、重跑…）
+
+在 分散式架構 下，
+	* 「排程的決策」通常會收斂到少數幾個服務（甚至一個 Scheduler / Batch Service）。
+	* 「實際執行業務邏輯」則盡量留在各自的 bounded context（避免一個 batch 把全系統 DB 都看光光）。
+
+
+1. spring-boot-starter-batch vs 內建 Scheduling，怎麼選？
+	1.1 Spring Scheduling（@EnableScheduling + @Scheduled）
+		做什麼：
+			* Trigger：在某個時間點 / 週期呼叫一個方法
+			* 類似「Java 版 cron」，只解決「什麼時候呼叫 method」這件事
+
+		特色：
+			* 實作簡單，幾行就能跑：
+				@Scheduled(cron = "0 0 * * * ?")
+				public void cleanTempData() { ... }
+			* 不自帶「執行紀錄」、「重跑」、「分段(chunk)」、「step / job 概念」
+			* 多節點時：每個節點都會跑一遍，除非你自己加鎖（像 ShedLock / DB lock / leader election）
+
+		適合用在：
+			* 少量資料 / 輕量工作（例如：定期 ping、清小表、寄幾封信）
+			* 不需要很嚴謹的「批次控制」：不用 job instance、不用 restart、失敗就重跑一次整個 method 也沒差
+			* Dev / PoC / 單機服務
+
+	1.2 Spring Batch（spring-boot-starter-batch）
+		做什麼：
+			* 專門處理 大型批次工作 的框架：
+				* Job / Step / Chunk / Reader / Processor / Writer
+				* JobRepository 記錄每次執行狀態（成功、失敗、哪個 step 掛掉）
+				* restart / skip / retry / transaction boundary
+
+		通常會配合：
+			* 固定排程（內建 @Scheduled 或 Quartz 或 K8s CronJob）去 trigger JobLauncher.run(job, params)
+
+			* 或由 API / message queue 觸發一個 Batch Job
+		適合用在：
+			* 大量資料：每次幾萬、幾十萬筆跑 ETL、統計、報表、匯出檔案
+
+		希望：
+			* 可觀察（有 log / DB 記錄）
+			* 可重跑（例如失敗後只從某 step / 某 chunk 繼續）
+			* 有明確 job 版本、執行 id
+			* 需要 分散式 或 多 instance 一起跑，但又要控制重複執行 / shard
+
+	1.3 兩者關係：不是「二選一」，是「搭配」
+		實務上常見組合：
+			* 「Spring Scheduling + Spring Batch」
+				* Scheduling 決定「這個 Job 何時啟動」
+				* Batch 決定「這個 Job 怎麼把 100 萬筆資料安全跑完」
+		也可以是：
+			* 「Spring Web + Spring Batch」
+				* API 收到請求 → 呼叫 JobLauncher 啟動某個 job → job 在背景跑 → 使用者之後查詢 job 狀態 / 收通知
+
+		所以不是「我要用 Batch 還是 Scheduling」，而是問：
+			* 這個需求是「只要固定時間 call 一個 method」就好？
+			* 還是「需要完整批次處理生命週期（job/step/chunk/重跑/監控）」？
+
+2.在分散式架構下要怎麼設計？
+	1. API 執行 → 中間一段會觸發「動態背景排程」，最後通知使用者結果
+	2. 固定時間的排程（系統自己決定的 Cron）
+	3. 使用者可以設定「動/靜態排程」（自訂 Cron / 週期）
+
+	再加上「分散式架構」跟「要不要獨立批次服務 / 可不可以共用」
+
+		2.1 第一層：誰負責「排程/觸發」？
+			1. 每個服務自己 @Scheduled
+				* 優點：簡單
+				* 缺點：多 instance 時會重複執行 → 需要鎖（DB lock / ShedLock）
+				* 適合：小系統、單 instance，或「即使重複跑一次也無妨」的 job
+			2. 專門的 Scheduler / Batch Service
+				* 只有這個服務有 @Scheduled 或 Quartz。
+
+				* 它負責：
+					* 讀 DB 中「固定排程設定」、「使用者自訂排程」
+					* 判斷哪些 job 到執行時間
+					* 發出「執行指令」給真正的 Work Service（例如丟 MQ message 或 call 其它 service API）
+
+				* 多 instance 時只要搭配：
+					* Quartz cluster mode
+					* 或 ShedLock + 單 DB，就可以確保「每個 Job 一次只由一個 instance 觸發」
+
+			3.外部排程系統
+				* 例如：Kubernetes CronJob / Airflow / Control-M …
+				* Spring Boot 這邊只負責「接到執行指令時要做什麼」，不自己算時間
+
+			對你這種微服務 + 跨區架構，我會傾向：
+			把「排程決策」收斂到「少數幾個 Scheduler / Batch 服務」，甚至一個。
+
+		2.2 第二層：誰實際執行「業務批次邏輯」？
+			方案 A：一個「超級批次服務」直接連所有資料庫
+				* 特徵：
+					* 這個 Batch Service 裡面實作所有 domain 的 batch job（訂單、會員、帳務…）
+					* 它直接連所有 schema / DB
+				* 問題：
+					* 高度耦合：任何 domain schema 變更都要改這個超級批次 service
+					* 破壞 bounded context：一個程式知道全世界的資料結構
+					* 權限 / 資安面也很難控：這個 service 可以看到全部資料
+
+					→ 不推薦，除非系統真的很小。
+
+			方案 B：每個 bounded context 有自己的 batch worker，排程可以集中
+				* Job Orchestrator / Scheduler Service（可以共用）
+
+					* 負責：
+						* 儲存所有 job 定義、排程（系統標準 cron + 使用者自訂 cron）
+						* 決定什麼時間要啟動哪些 job
+						* 產生 command（例如丟 MQ message：{"jobType":"order-close","jobId":"...","params":{...}}）
+
+					* 它 不直接連所有 domain DB，只是出「指令」
+
+				Domain Batch Worker（可以是同 repo 或獨立 service）
+
+					* 例如：
+						* order-batch-service：負責訂單相關批次
+						* billing-batch-service：負責帳務批次
+
+					* 各自：
+						* 使用 Spring Batch（適合大量資料）
+						* 只連自己 domain 的 DB（或透過自家 domain service API 取資料）
+
+					* Job Orchestrator 丟指令給它，它啟動對應 Job
+
+				這種模式下：
+
+					* Scheduler 可以共用（跨服務、跨 domain），因為它只管「何時」、「哪種 job」，不直接碰業務資料。
+
+					* 資料庫不會被「一個批次服務」看光光，因為實際處理還是在各 domain 的 batch worker 內。
+
+		2.3 對照三種需求
+			(1) API 執行 → 觸發背景批次 → 通知使用者
+				建議拆成：
+
+					1. API Service 收到請求 → 快速做同步檢查（validate、基本授權…） → 回「已受理」＋一個 jobId
+
+					2. API Service 發出一個 「啟動 job 的指令」：
+						* 直接呼叫 domain 的 Batch Worker REST API
+						* 或丟訊息到 MQ（Kafka / RabbitMQ），由 Batch Worker 消費
+
+					3. Batch Worker（可能是 Spring Batch Job）：
+						* 執行大量計算 / DB 操作
+						* 把 job 狀態寫到 DB（JobRepository + 自己的 JobLog）
+						* 完成後：
+							發事件「JOB_COMPLETED」給 Notification Service
+
+					4. Notification Service：
+						* 發 email / SMS / WebSocket / push 通知給使用者
+
+					5. 使用者若要查進度：
+						* 前端查「JobStatus API」，由後端讀 job log / Batch metadata
+
+				Spring Batch 在這裡：
+				適合當這個「後面長時間工作」的框架（特別是你要 restart / 觀察 step 狀態）。
+
+			(2) 系統固定排程（e.g. 每天 02:00 跑對帳）
+				這種就標準：
+
+				* 在 Scheduler / Orchestrator service：
+
+					* 用 @Scheduled 或 Quartz，把「要啟動的 job」排出來
+
+					* 每到時間，就發指令給對應 Domain Batch Worker
+
+				* 若系統不大，也可以：
+
+					* 一個「Order service」裡同時有 API + Batch + @Scheduled
+
+					* 但多 instance 時要記得處理「只跑一次」：
+
+						* 用 ShedLock（常見做法：用 DB / Redis 當 lock store）
+
+			(3) 使用者可自訂排程（動態）
+				這個就不適合只靠 @Scheduled(cron=...) 寫死在註解裡了。
+
+				常見做法：
+
+					1. 使用者在 UI 設定：job 種類 / cron 表達式 / 參數
+
+					2. 後端（Scheduler service）把設定寫進 DB
+
+					3. Scheduler 有一支排程（或 Quartz / 自己寫輪詢）：
+
+						* 定期掃描 DB，找出「下一個到期要執行的 job」
+
+						* 到時間後，發指令給對應的 Batch Worker
+
+					4. 同樣，真正的 heavy job 仍然在 Batch Worker 內（Spring Batch）。
+
+					這樣使用者動態新增 / 修改排程，只要更新 DB 設定，不用重 deploy。
+
+3. 具體建議
+	3.1 「starter-batch」跟內建 Scheduling 怎麼抉擇？
+
+		可以這樣簡化決策：
+
+		* 如果這個工作是：
+
+			* 少量資料、幾秒內跑完、失敗重跑整個 method OK
+				→ 用 @Scheduled + 平常 service method 就夠了，不一定要 Spring Batch。
+
+		* 如果是：
+
+			* 大量資料 / 複雜流程 / 需要重跑 / 需要觀察每次結果
+				→ 用 Spring Batch（spring-boot-starter-batch） 會比較健康。
+				排程的部分再搭配：
+
+			* 內建 @Scheduled、或 Quartz、或 K8s CronJob，都可以。
+
+		多數中大型企業系統會是：
+			「重要 job 用 Spring Batch，
+			不重要的 housekeeping job 用 @Scheduled。」
+
+	3.2 「應該掛在同一個服務或獨立 batch 服務？可共用嗎？會不會 DB 範圍太大？」
+		建議方向：
+
+			* 不要做一個大怪物 batch 服務直接連所有 DB。
+
+			* 比較健康的拆法是：
+
+				1.排程 / Orchestration 可以集中（共用）
+
+					* 一個 Scheduler / Job Service 管所有 job 定義 + 何時執行
+
+				2.真正執行業務邏輯的 batch，盡量跟各自 domain 靠在一起
+
+					* 可以是：
+
+						* 跟 domain API 同一個 service（有 profile/啟動參數控制只跑 batch 或只跑 API）
+
+						* 或獨立出 xxx-batch-service，但仍然只碰該 domain 的 DB
+
+		* 資料庫範圍這件事：
+
+			* 如果某個批次確實跨多 domain，例如「全系統報表」，那就：
+
+				* 儘量透過各 domain 提供的 API 取資料
+					（保持 DB 各自獨立，雖然成本高一點，但架構乾淨）
+
+				* 或設計一個專門的 reporting DB / data warehouse 做整併，
+					batch 只碰這個 reporting DB，而不是各個 OLTP DB。
