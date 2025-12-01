@@ -1,5 +1,5 @@
 -- 宣告 registered_client.authMethods 為 private_key_jwt 用
--- oauth2_registered_client_jwk（regkj01）
+-- oauth2_registered_client_jwk（regkj01）使用紀錄
 CREATE TABLE regkj01 (
   issuer          VARCHAR(200) NOT NULL,
   rc_id           VARCHAR(100) NOT NULL,

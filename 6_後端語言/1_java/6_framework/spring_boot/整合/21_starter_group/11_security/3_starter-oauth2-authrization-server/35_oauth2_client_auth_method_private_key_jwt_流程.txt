@@ -1,0 +1,144 @@
+private_key_jwt
+
+client 端打到 auth server 之 token request 認證與生成 jwt 過程
+
+	1. Client 端（雲前端）在做什麼？
+		當你用 private_key_jwt 做 client authentication：
+		1.雲前端產生一顆 JWT（client_assertion）
+			header: alg, kid（對應你私鑰的 key id）
+			claims:
+				iss = client_id
+				sub = client_id
+				aud = token endpoint URL
+				jti, exp … 等防重放
+
+		2.用自己的 private key 把這顆 JWT 簽起來。
+
+		3.呼叫 token endpoint，送：
+			client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+			client_assertion=<上面簽好的 JWT>
+			其他 grant 相關參數（grant_type、scope、subject_token …）
+
+	2. Auth Server 在做什麼？
+		Auth Server 收到 token request（不管是 client_credentials 還是 token_exchange），使用 private_key_jwt 的大致步驟是：
+			1.解析 client_assertion 這顆 JWT：
+				* 讀出 kid、iss、sub、aud、exp …
+
+			2.找到對應的 RegisteredClient：
+				* 通常是看 iss/sub = client_id
+
+			3.為了驗證 JWT 簽章，需要對應的 public key：
+				* 如果這個 client 的 public key 是「直接存在 DB / RegisteredClient 裡的 JWK」
+					→ 不用打任何 URL，直接拿出來驗。
+
+				* 如果這個 client 是設定 clientSettings.jwkSetUrl = ...
+					→ Auth Server 背後會用一個 JWKS source（例如 Nimbus 的 RemoteJWKSet）：
+					* 會先看「快取裡有沒有對應 kid 的 public key」
+					* 沒有再去打一次 GET {jwkSetUrl}
+			4.拿到 public key 後做 JWT 驗章 & claims 驗證：
+				* iss/sub 是否一致、aud 是否是 token endpoint、exp 是否沒過期、jti 是否沒被重用（如果你有做防重放）
+
+			5.驗證通過 → client authenticated → 才進入接下來 grant_type 的邏輯，產 access token / refresh token / exchanged token。
+	
+		👉 所以「打 client jwkSetUrl」這件事，只發生在 Auth Server 這一側，而且通常有 key cache 機制，不會每一筆 request 都打一次。
+
+	所以比較完整的說法是：
+		* Token 還在前端 cache 內時：不會有 token request → 不會跑 private_key_jwt 
+			→ 自然也不會打 jwkSetUrl。
+
+		* 每次真的發 token request 時：
+			* client 一定會重新簽一顆新的 client_assertion（private_key_jwt 一定執行）。
+			* Auth Server 一定會重新驗這顆 assertion，但「是否真的打 HTTP 到 jwkSetUrl」則取決於它的 JWKS 快取狀況。
+
+
+Auth Server key cache 機制說明
+	* 預設 key cache 主要來自：
+		* Spring：JwtClientAssertionDecoderFactory + NimbusJwtDecoder.withJwkSetUri(...)。
+		* Nimbus：RemoteJWKSet + DefaultJWKSetCache(約 5 分鐘)。
+	
+	* 要調整 cache：
+		* 最實際的做法是 自訂 JwtDecoderFactory，用 NimbusJwtDecoder.withJwkSetUri(...).cache(yourSpringCache)，
+		* 再透過 JwtClientAssertionAuthenticationProvider#setJwtDecoderFactory(...) 掛進 Authorization Server config。
+
+Q1 : 如何看到 client 端發送 token request(private_key_jwt) 有 client_assertion_type、client_assertion ?
+A1 : client_assertion_type、client_assertion 在 form body 裡
+		做法 A：直接開 Reactor Netty wiretap（最省事）
+			如果你的 WebClient 是用 Reactor Netty（預設就是），
+			可以這樣開「底層 HTTP 的 debug log」（包含 body）：
+			java
+				HttpClient httpClient = HttpClient.create()
+						.wiretap("reactor.netty.http.client.HttpClient",
+								 io.netty.handler.logging.LogLevel.DEBUG,
+								 reactor.netty.transport.logging.AdvancedByteBufFormat.TEXTUAL);
+
+				WebClient webClient = WebClient.builder()
+						.clientConnector(new ReactorClientHttpConnector(httpClient))
+						.build();
+			
+			application.yml
+			  logging:
+				level:
+				  reactor.netty.http.client.HttpClient: DEBUG
+
+		做法 B：在 Auth Server 那一側看更準（順便驗證 server 有收到）
+			1.開 Spring 的 CommonsRequestLoggingFilter： 測試沒成功，暫時不知道哪邊問題
+				@Bean
+				public CommonsRequestLoggingFilter logFilter() {
+					CommonsRequestLoggingFilter filter = new CommonsRequestLoggingFilter();
+					filter.setIncludeQueryString(true);
+					filter.setIncludePayload(true);
+					filter.setMaxPayloadLength(10_000);
+					filter.setIncludeHeaders(true);
+					filter.setAfterMessagePrefix("REQ DATA : ");
+					return filter;
+				}
+			2.或自己寫一個 OncePerRequestFilter，只針對 /oauth2/token 做 payload log（測試時用）：
+				@Component
+				public class TokenEndpointLoggingFilter extends OncePerRequestFilter {
+
+					private static final Logger log = LoggerFactory.getLogger(TokenEndpointLoggingFilter.class);
+
+					@Override
+					protected void doFilterInternal(HttpServletRequest request,
+													HttpServletResponse response,
+													FilterChain filterChain)
+							throws ServletException, IOException {
+
+						if ("/oauth2/token".equals(request.getRequestURI())
+								&& "POST".equalsIgnoreCase(request.getMethod())) {
+
+							CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
+							String body = new String(wrapped.getInputStream().readAllBytes(), request.getCharacterEncoding());
+							log.info("Token request body: {}", body);
+
+							filterChain.doFilter(wrapped, response);
+						} else {
+							filterChain.doFilter(request, response);
+						}
+					}
+				}
+			
+		做法 C：硬要在 WebClient 的 filter 裡看 body（比較麻煩）
+			..... 略
+	
+	生產環境要小心 log 敏感資訊
+		client_assertion 是一顆簽好的 JWT，裡面雖然「沒有 client secret」，但：
+			* 它可以被重放（如果沒做 jti 防重放）
+			* 它包含 client_id、aud、exp 等資訊，安全上還是敏感
+		所以這種 log：
+			* 建議只在 local / test / debug 環境開
+			* 或是印之前先做 masking（例如把 JWT 只印前 20 字、後 10 字）
+
+Q2: Auth Server 我怎麼確認它有依據 private_key_jwt 模式 解析 client_assertion 這顆 JWT ?
+A2: 1. HTTP 層：確認 request 就是走 private_key_jwt
+		* client 端打印 log
+	2. 行為層：用「刻意弄錯」的方式驗證 Auth Server 有在解析 JWT
+		1.把 client 的 JWK 故意弄錯（例如換另一組 key）
+		2.把 client_assertion_type 拿掉或改錯字
+		3.把 JWT 的 aud claim 改掉（不要對 token endpoint）
+	3. 程式層：直接在 Auth Server 裡「抓」 private_key_jwt provider 有沒有被用到
+		1.用官方提供的 authenticationProviders(...) hook
+		2.也可以在 JwtDecoderFactory 裡 log「有在 decode client_assertion」
+	4. debug 模式 
+		JwtClientAssertionAuthenticationProvider.authenticate(...) 是最快速方式
+		
