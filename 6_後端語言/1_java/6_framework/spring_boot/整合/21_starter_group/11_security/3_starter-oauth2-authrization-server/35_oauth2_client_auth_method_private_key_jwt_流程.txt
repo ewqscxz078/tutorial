@@ -39,11 +39,11 @@ client 端打到 auth server 之 token request 認證與生成 jwt 過程
 				* iss/sub 是否一致、aud 是否是 token endpoint、exp 是否沒過期、jti 是否沒被重用（如果你有做防重放）
 
 			5.驗證通過 → client authenticated → 才進入接下來 grant_type 的邏輯，產 access token / refresh token / exchanged token。
-	
+
 		👉 所以「打 client jwkSetUrl」這件事，只發生在 Auth Server 這一側，而且通常有 key cache 機制，不會每一筆 request 都打一次。
 
 	所以比較完整的說法是：
-		* Token 還在前端 cache 內時：不會有 token request → 不會跑 private_key_jwt 
+		* Token 還在前端 cache 內時：不會有 token request → 不會跑 private_key_jwt
 			→ 自然也不會打 jwkSetUrl。
 
 		* 每次真的發 token request 時：
@@ -55,7 +55,7 @@ Auth Server key cache 機制說明
 	* 預設 key cache 主要來自：
 		* Spring：JwtClientAssertionDecoderFactory + NimbusJwtDecoder.withJwkSetUri(...)。
 		* Nimbus：RemoteJWKSet + DefaultJWKSetCache(約 5 分鐘)。
-	
+
 	* 要調整 cache：
 		* 最實際的做法是 自訂 JwtDecoderFactory，用 NimbusJwtDecoder.withJwkSetUri(...).cache(yourSpringCache)，
 		* 再透過 JwtClientAssertionAuthenticationProvider#setJwtDecoderFactory(...) 掛進 Authorization Server config。
@@ -74,7 +74,7 @@ A1 : client_assertion_type、client_assertion 在 form body 裡
 				WebClient webClient = WebClient.builder()
 						.clientConnector(new ReactorClientHttpConnector(httpClient))
 						.build();
-			
+
 			application.yml
 			  logging:
 				level:
@@ -117,10 +117,10 @@ A1 : client_assertion_type、client_assertion 在 form body 裡
 						}
 					}
 				}
-			
+
 		做法 C：硬要在 WebClient 的 filter 裡看 body（比較麻煩）
 			..... 略
-	
+
 	生產環境要小心 log 敏感資訊
 		client_assertion 是一顆簽好的 JWT，裡面雖然「沒有 client secret」，但：
 			* 它可以被重放（如果沒做 jti 防重放）
@@ -139,6 +139,5 @@ A2: 1. HTTP 層：確認 request 就是走 private_key_jwt
 	3. 程式層：直接在 Auth Server 裡「抓」 private_key_jwt provider 有沒有被用到
 		1.用官方提供的 authenticationProviders(...) hook
 		2.也可以在 JwtDecoderFactory 裡 log「有在 decode client_assertion」
-	4. debug 模式 
+	4. debug 模式
 		JwtClientAssertionAuthenticationProvider.authenticate(...) 是最快速方式
-		

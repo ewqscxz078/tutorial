@@ -17,6 +17,8 @@ https://spring.io/projects/spring-cloud
 		Dalston						1.5.x
 
 
+
+
 1. 設定中心：Spring Cloud Config
 	| Starter / 模組                                           | 功能                                                                                                                      | 什麼時候用                                                                                         |
 	| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -51,6 +53,7 @@ https://spring.io/projects/spring-cloud
 
 
 3. Gateway / API 路由：Spring Cloud Gateway
+	跟 OAuth2、OpenFeign、Circuitbreaker、LoadBalancer 深度整合。
 	3-1. Reactive / WebFlux 版本
 		| Starter                                                                         | 功能                                                                                                                                                 | 什麼時候用                                                                            |
 		| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -70,6 +73,11 @@ https://spring.io/projects/spring-cloud
 		要跨區段（像 C ↔ P）做 JWT 驗證 / token exchange、header 改寫、路由動態調整，Gateway 幾乎是必配。
 
 4. 客戶端呼叫：OpenFeign & LoadBalancer
+	希望自動整合：
+		Spring Cloud LoadBalancer（service name -> instance）
+		Circuitbreaker（Resilience4j）
+		Sleuth/Observability（traceId/ spanId）
+
 	4-1. OpenFeign
 		| Starter                          | 功能                                                                                                                       | 什麼時候用                                                                                                                                      |
 		| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -85,6 +93,9 @@ https://spring.io/projects/spring-cloud
 		[1]: https://spring.io/projects/spring-cloud?utm_source=chatgpt.com "Spring Cloud"
 
 5. Resilience / Circuit Breaker （新版集中在 Spring Cloud CircuitBreaker 專案）
+	Resilience4j 為主的斷路器抽象
+		非 reactive：spring-cloud-starter-circuitbreaker-resilience4j
+		reactive：spring-cloud-starter-circuitbreaker-reactor-resilience4j
 	| Starter                                                    | 功能                                                                     | 什麼時候用                                                                       |
 	| ---------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
 	| `spring-cloud-starter-circuitbreaker-resilience4j`         | 非 reactive app 的 **Resilience4j circuit breaker** starter。([Home][1]) | 傳統 MVC 專案、或你的業務呼叫多個外部系統，需要熔斷、retry、fallback。           |
@@ -105,16 +116,17 @@ https://spring.io/projects/spring-cloud
 		* OpenFeign + CircuitBreaker：某些下游 API 常 timeout，要走 fallback。
 
 6. 訊息 / Event 驅動：Spring Cloud Stream
-	建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
-		https://www.tpisoftware.com/tpu/articleDetails/1390
-			訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
-	是「在 Kafka / RabbitMQ 上建 event-driven microservice」的一組 abstraction。
-	常見 starter（artifactId 類型而非單一一個）：
+	訊息導向 microservices（Kafka / Rabbit…）
+		建構訊息驅動微服務的框架，讓微服務之間透過訊息代理(Message Broker)彼此溝通
+			https://www.tpisoftware.com/tpu/articleDetails/1390
+				訊息代理(Message Broker) 實作有 RabbitMQ、Apache Kafka....
+		是「在 Kafka / RabbitMQ 上建 event-driven microservice」的一組 abstraction。
+		常見 starter（artifactId 類型而非單一一個）：
 
-	| Starter 範例                         | 功能                                    | 什麼時候用                                                       |
-	| ------------------------------------ | --------------------------------------- | ---------------------------------------------------------------- |
-	| `spring-cloud-starter-stream-kafka`  | Spring Cloud Stream + Kafka binder。    | 你想用 Kafka 做 event bus，例如訂單事件、交易事件、Log event 等。|
-	| `spring-cloud-starter-stream-rabbit` | Spring Cloud Stream + RabbitMQ binder。 | 你公司已經大量使用 RabbitMQ，想用 Spring Cloud Stream 統一抽象。 |
+			| Starter 範例                         | 功能                                    | 什麼時候用                                                       |
+			| ------------------------------------ | --------------------------------------- | ---------------------------------------------------------------- |
+			| `spring-cloud-starter-stream-kafka`  | Spring Cloud Stream + Kafka binder。    | 你想用 Kafka 做 event bus，例如訂單事件、交易事件、Log event 等。|
+			| `spring-cloud-starter-stream-rabbit` | Spring Cloud Stream + RabbitMQ binder。 | 你公司已經大量使用 RabbitMQ，想用 Spring Cloud Stream 統一抽象。 |
 
 	還有一個世界叫 Spring Cloud Stream App Starters（spring-cloud-starter-stream-xxx / spring-cloud-stream-app-starters），是官方預先做好的 source/processor/sink app，你可以直接拿來跑或擴充。
 
@@ -127,6 +139,8 @@ https://spring.io/projects/spring-cloud
 
 
 8. Config Bus / 分散式 Refresh：Spring Cloud Bus
+	藉由 MQ (RabbitMQ / Kafka) 做設定變更廣播等 control bus
+
 	| Starter 範例                     | 功能                                       | 什麼時候用                                                                                               |
 	| -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
 	| `spring-cloud-starter-bus-amqp`  | 用 RabbitMQ 當 Bus，廣播 config 變更事件。 | 你用 Config Server 管設定，改了 git 後不想一台台 `/actuator/refresh`，希望自動广播「重新載入設定」事件。 |
@@ -190,3 +204,90 @@ https://spring.io/projects/spring-cloud
 	通常你只需要：
 		👉 spring-cloud-starter-vault-config
 	其他是擴充。
+
+
+11. Spring Cloud Function
+	代表 starter / module
+		* Web 版 starter：spring-cloud-starter-function-web
+		* WebFlux 版：spring-cloud-starter-function-webflux（搭配 WebFlux）
+		* 另外還有 AWS / Azure / GCP adaptor，不是 starter 型態。
+
+	適用情境
+		* 想以 Function / Supplier / Consumer 抽象商業邏輯：
+			* 方便部署到 Lambda、Azure Functions、Cloud Functions…
+		* 要做 serverless-friendly 的 stateless 處理，由 SCF 代你把 function 曝露成 HTTP / message handler。
+		* 搭配 Stream：Function<String, String> 當 Kafka 訊息處理器。
+
+
+12. Spring Cloud Stream + Task + Bus 組合
+	這三個常搭配 Spring Cloud Data Flow 使用：
+		* Stream：長駐、處理訊息流。
+		* Task：短命作業，例如匯入/轉換。
+		* Bus：用 MQ 做 control plane。
+
+	你如果之後想做「資料泵 / ETL / event-driven pipeline」，這組是主角。
+
+
+13. Spring Cloud Contract
+	關鍵概念
+		* 專門幫你實作 Consumer Driven Contracts (CDC)：
+			* Producer 把 API/Messaging contract 用 DSL 寫出來。
+			* Contract 會被轉成：
+				* Producer 端的自動化測試（驗證實作符合合約）
+				* Consumer 端用的 stub（WireMock server 或訊息 stubs），讓 consumer 不必啟動真正的 producer 也能測。
+
+	代表 starter（test scope 用）
+		* Producer 驗證 + 產生 stubs：
+			* spring-cloud-starter-contract-verifier（通常 test scope）
+
+		* Consumer or system tests 用 stub runner：
+			* spring-cloud-starter-contract-stub-runner（test scope）
+
+	適用情境
+		* 你有一堆微服務，彼此透過 HTTP / Messaging 互相 call：
+			* 想避免「大家都說自己沒改，但線上一接就爆」的情況。
+
+		* 希望在 CI 裡自動驗證：
+			* Producer：程式改了，還是 fulfilled 所有合約；
+			* Consumer：用最新 stubs 跑回歸，確保還能跟新版本溝通。
+
+		* 對你的 multi-zone 架構來說：
+			* 比如 cfa ↔ gateway ↔ auth server 的 API 介面，都可以用 Contract formalize 起來，讓跨 repo、跨線路的團隊不會各自 drift。
+
+14. Spring Cloud Task / Stream 專用 Task App Starters
+
+	官方還有一個專門給 Task 的 app starters repo，裡面的 starter 命名規則是：
+		* group：org.springframework.cloud.task.app
+		* artifact：spring-cloud-starter-task-<功能>
+
+	適用情境
+		* 你懶得從 0 寫批次，只想拿 預先做好的「時間戳記」、「檔案搬移」、「資料庫 dump」 那種任務，稍微調一下就用。
+		* 搭配 Spring Cloud Data Flow，把這些任務組裝成 pipeline。
+
+
+15. Spring Cloud Commons / Build
+	* spring-cloud-commons：
+		* 定義像 DiscoveryClient、ServiceInstance、LoadBalancerClient 等共用抽象，讓 Consul / Zookeeper / Eureka / K8s 都 plug 進來。
+	* spring-cloud-build：
+		* 給所有 Spring Cloud 子專案共用的建置規則 / checkstyle / enforcer，不是給業務專案用的 starter。
+	一般應用專案不會直接引用 spring-cloud-starter-commons 類的東西。
+
+
+如果你要「怎麼選」Starter 的簡單心法
+	只要是微服務，一定會看到的
+		* Config（或 Consul/Zoo/K8s config 其中之一）
+		* Gateway
+		* OpenFeign + LoadBalancer
+		* Circuitbreaker
+
+	有集中 Config / Secret 管理時
+		* 雲端 KV / Git：Config / Consul / Zookeeper / K8s ConfigMap
+		* HashiCorp Vault：直接上 spring-cloud-starter-vault-config
+
+	大量跨服務協作 / 多 team
+		* 加上 Spring Cloud Contract，讓 API 演進可控。
+
+	要做事件 / 批次 / pipeline
+		* 訊息流：Stream (+ Function)
+		* 一次性 job：Task
+		* 動態廣播指令：Bus

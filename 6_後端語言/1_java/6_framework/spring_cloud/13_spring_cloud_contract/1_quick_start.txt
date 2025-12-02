@@ -1,0 +1,306 @@
+簡單 hello word api 範例演示使用這個 starter 達到，
+	1.避免「大家都說自己沒改，但線上一接就爆」的情況，
+	2.以及如何在CI 裡自動驗證
+		Producer：程式改了，還是 fulfilled 所有合約；
+
+		Consumer：用最新 stubs 跑回歸，確保還能跟新版本溝通。
+
+
+重點是兩件事：
+	Producer：改程式時，自動驗證是不是還遵守合約。
+	Consumer：CI 自動拉最新版 stubs 來跑測試，確保還能跟 Producer 溝通。
+
+0. 情境先說清楚
+	* Producer：hello-service-producer
+		* 提供 GET /hello?name=David → 回傳純文字 Hello, David
+
+	* Consumer：hello-client-consumer
+		* 內部有 HelloClient 會呼叫 hello-service-producer 的 GET /hello
+		* 測試時不啟動真正的 producer，而是用 Spring Cloud Contract 產生的 stub (WireMock)
+
+
+1. Producer 專案：hello-service-producer
+	1.1 POM（重點：加 starter + plugin）
+		<dependencyManagement>
+			<dependencies>
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-dependencies</artifactId>
+					<version>${spring-cloud.version}</version>
+					<type>pom</type>
+					<scope>import</scope>
+				</dependency>
+			</dependencies>
+		</dependencyManagement>
+
+		<dependencies>
+			<!-- 一般 web API -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+
+			<!-- Spring Cloud Contract Verifier：用來產生測試 + stubs -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-contract-verifier</artifactId><scope>test</scope>
+			</dependency>
+		</dependencies>
+
+		<build>
+			<plugins>
+				<!-- 產生合約測試 & stub jar 的 plugin -->
+				<plugin>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-contract-maven-plugin</artifactId>
+					<version>${spring-cloud-contract.version}</version>
+					<extensions>true</extensions>
+					<configuration>
+						<!-- 所有自動產生的測試會 extend 這個 base class -->
+						<baseClassForTests>
+							com.example.hello.contract.BaseContractTest
+						</baseClassForTests>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+				</plugin>
+			</plugins>
+		</build>
+
+		這個設定就是官方推薦的典型用法：
+		依賴 spring-cloud-starter-contract-verifier，再加上 spring-cloud-contract-maven-plugin，跑 mvn clean install 會自動依照 contracts 產生測試與 stub jar。
+
+	1.2 簡單的 HelloController
+		// src/main/java/com/example/hello/HelloController.java
+		package com.example.hello;
+
+		import org.springframework.web.bind.annotation.GetMapping;
+		import org.springframework.web.bind.annotation.RequestParam;
+		import org.springframework.web.bind.annotation.RestController;
+
+		@RestController
+		public class HelloController {
+
+			@GetMapping("/hello")
+			public String hello(@RequestParam String name) {
+				return "Hello, " + name;
+			}
+		}
+
+	1.3 合約檔（Producer / HTTP 合約）
+		路徑：
+			src/test/resources/contracts/hello/shouldReturnHello.groovy
+				import org.springframework.cloud.contract.spec.Contract
+
+				Contract.make {
+					description 'hello API：傳入 name=David，回傳 Hello, David'
+
+					request {
+						method 'GET'
+						url('/hello') {
+							queryParameters {
+								parameter 'name': 'David'
+							}
+						}
+					}
+
+					response {
+						status 200
+						body('Hello, David')
+						headers {
+							contentType(textPlain())
+						}
+					}
+				}
+		這個合約意思是：
+
+		「當 client 呼叫 GET /hello?name=David 時，Server 一定要回 200，body 是 Hello, David，Content-Type: text/plain」。
+
+		寫法完全符合官方 HTTP 合約 DSL 的用法（request + response 部分）。
+
+	1.4 BaseContractTest：給產生出來的測試繼承
+		// src/test/java/com/example/hello/contract/BaseContractTest.java
+		package com.example.hello.contract;
+
+		import com.example.hello.HelloApplication;
+		import io.restassured.module.mockmvc.RestAssuredMockMvc;
+		import org.junit.jupiter.api.BeforeEach;
+		import org.springframework.beans.factory.annotation.Autowired;
+		import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+		import org.springframework.boot.test.context.SpringBootTest;
+		import org.springframework.web.context.WebApplicationContext;
+
+		@SpringBootTest(classes = HelloApplication.class)
+		@AutoConfigureMockMvc
+		public abstract class BaseContractTest {
+
+			@Autowired
+			WebApplicationContext context;
+
+			@BeforeEach
+			void setup() {
+				RestAssuredMockMvc.webAppContextSetup(context);
+			}
+		}
+		plugin 會根據 contracts 產生 JUnit 測試，並 extends 這個 BaseClass，
+		裡面準備好了 Spring Boot context + MockMvc / RestAssuredMockMvc 的初始化。
+
+	1.5 Producer 在 CI 裡做了什麼？
+		在 Producer 的 CI pipeline 裡，你只要：
+			mvn clean verify   # or clean install
+
+		會發生：
+
+			1.spring-cloud-contract-maven-plugin 掃描 src/test/resources/contracts/**
+
+			2.產生測試類別（例如 org.springframework.cloud.contract.verifier.tests.Hello_shouldReturnHelloTest）到
+				target/generated-test-sources/contracts
+
+			3.這些測試繼承 BaseContractTest，實際透過 MockMvc 去 call 你的 HelloController
+
+			4.如果你改壞了：
+				* 例如把 mapping 改成 /hello2 或回傳 "Hi, David"
+				→ 產生的合約測試就會失敗 → CI 紅燈，jar/stubs 都不會被發佈
+
+			5.如果測試全部通過：
+				* 打包正常的 hello-service-producer-x.y.z.jar
+				* 同時 打一個 stubs jar（通常 classifier = stubs），裡面是 WireMock 用的 JSON stubs，安裝到本機 .m2 或 deploy 到 Nexus / Artifactory
+
+		這一步就已經做到：
+			Producer 自己先保證「我沒破壞合約」才放行。
+
+2. Consumer 專案：hello-client-consumer
+	2.1 POM（重點：加 stub runner）
+		<dependencyManagement>
+			<!-- 同樣引入 spring-cloud-dependencies BOM -->
+		</dependencyManagement>
+
+		<dependencies>
+			<!-- 你自己的 web / service 依賴略過 -->
+
+			<!-- 測試時用 Producer 的 stubs -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-contract-stub-runner</artifactId><scope>test</scope>
+			</dependency>
+		</dependencies>
+
+		spring-cloud-starter-contract-stub-runner 會幫你下載 stub jar 並啟動 WireMock server。
+
+	2.2 HelloClient（實際呼叫 Producer 的地方）
+		// src/main/java/com/example/client/HelloClient.java
+		package com.example.client;
+
+		import org.springframework.stereotype.Component;
+		import org.springframework.web.client.RestTemplate;
+
+		@Component
+		public class HelloClient {
+
+			private final RestTemplate restTemplate;
+			private final String baseUrl;
+
+			public HelloClient(RestTemplate restTemplate) {
+				this.restTemplate = restTemplate;
+				// 正式環境會改成真正 Producer 的 URL（e.g. 透過設定檔 or service discovery）
+				this.baseUrl = "http://localhost:8080";
+			}
+
+			public String hello(String name) {
+				return restTemplate.getForObject(
+						baseUrl + "/hello?name={name}", String.class, name);
+			}
+		}
+
+		測試 profile 底下，baseUrl 綁到 stub runner 開的 WireMock port（下面用 8080）
+
+	2.3 Consumer 的合約測試（用 Producer stubs）
+		// src/test/java/com/example/client/HelloClientContractTest.java
+		package com.example.client;
+
+		import org.junit.jupiter.api.Test;
+		import org.springframework.beans.factory.annotation.Autowired;
+		import org.springframework.boot.test.context.SpringBootTest;
+		import org.springframework.cloud.contract.stubrunner.spring.AutoConfigureStubRunner;
+		import org.springframework.cloud.contract.stubrunner.spring.StubRunnerProperties;
+
+		import static org.assertj.core.api.Assertions.assertThat;
+
+		@SpringBootTest
+		@AutoConfigureStubRunner(
+				ids = "com.example:hello-service-producer:+:stubs:8080",
+				stubsMode = StubRunnerProperties.StubsMode.LOCAL
+		)
+		class HelloClientContractTest {
+
+			@Autowired
+			HelloClient helloClient;
+
+			@Test
+			void should_call_producer_stub_and_get_hello() {
+				String result = helloClient.hello("David");
+				assertThat(result).isEqualTo("Hello, David");
+			}
+		}
+		說明：
+			* ids = "com.example:hello-service-producer:+:stubs:8080"
+				* com.example：Producer 的 groupId
+				* hello-service-producer：artifactId
+				* +：版本號，用「最新可用版本」
+				* stubs：classifier（plugin 產生的 stub jar）
+				* 8080：WireMock 會在 8080 開 stub server
+
+			* stubsMode = LOCAL：
+				* 代表從本機 .m2 抓 stubs
+				* 如果是 CI / Nexus / Artifactory，可以改 REMOTE + repositoryRoot 設定
+
+		執行這個測試時：
+			1.Stub Runner 會起一個 WireMock server on localhost:8080
+			2.把 hello producer 的 stubs 內容餵進去
+			3.HelloClient 呼叫 http://localhost:8080/hello?name=David
+			4.WireMock 根據合約回 200 + "Hello, David"
+			5.測試驗證回傳結果
+		重點：這整個流程沒有啟動真正的 producer，完全靠合約產生的 stub。
+
+	2.4 Consumer 在 CI 裡做什麼？
+		Consumer 的 CI pipeline：
+			mvn clean verify
+		流程會是：
+			1.Maven 下載 com.example:hello-service-producer:最新:stubs 這個 jar（從 Nexus / Artifactory）
+			2.@AutoConfigureStubRunner 啟動 WireMock + 載入 stubs
+			3.跑 HelloClientContractTest：
+				* 如果 consumer 的程式碼跟合約不相容（例如呼錯路徑、沒帶 name、改成 JSON body 等），測試會 fail
+				* CI 因此紅燈，consumer 不能 deploy
+
+3.這樣如何避免「大家都說自己沒改，但線上一接就爆」？
+	（一）Producer 端防呆
+		1.合約規定 GET /hello?name=David → Hello, David
+		2.某天有人改了 controller：
+			* 把 mapping 改成 /hello2
+			* 或把回傳改成 "Hi, David"
+
+		3.Producer CI 跑 mvn clean verify 時：
+			* Spring Cloud Contract 產生的測試還是會 call /hello
+			* 或還是期待 body = Hello, David
+			* → 測試直接 fail，producer jar + stubs 不會被發佈
+
+		4.這代表：不可能發佈「破壞合約」的版本 到 artifact repo。
+
+	（二）Consumer 端防呆
+		1.Producer team 更新合約（例如多加 query param、body 結構改了），重新 build & deploy：
+			* 新版本的 stubs 被 deploy 到 artifact repo
+
+		2.Consumer 的 CI 配 ids="...:+:stubs:8080"，會抓「最新版本」的 stubs
+
+		3.如果 Consumer 還沒跟上新合約：
+			* 測試會在 stub 上跑出 4xx / 5xx 或解析錯誤
+				→ CI fail，Consumer 也不能 deploy
+
+		4.只有當：
+			* Producer 合約測試通過
+			* Consumer 在最新版 stubs 上測試也通過
+				→ 兩邊才能各自 deploy
+
+	這就變成一個「雙向卡關」機制，
+	誰說「我沒改」，看 CI 會不會綠就知道，不是嘴巴說而已
