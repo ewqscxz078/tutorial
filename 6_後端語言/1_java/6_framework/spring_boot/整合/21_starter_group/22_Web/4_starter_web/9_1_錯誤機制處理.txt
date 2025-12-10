@@ -12,7 +12,7 @@ Exception Handling with Spring for a REST API.
 	Since 3.2
 		@ControllerAdvice annotation
 			處理上述兩點的缺點
-				促進整個應用程式的統一異常處理
+				促進整個應用程式的統一異常處理，但只管「Spring MVC 世界裡的例外」
 
 	Spring 5
 		ResponseStatusException 類別
@@ -260,3 +260,95 @@ Exception Handling with Spring for a REST API.
 
 	若上面都沒有接收處理到
 		最終異常處理由 ErrorController 相關處理
+			例如:
+				1. 根本沒進 Spring MVC 的情況
+					1-1. 路徑不存在（典型 404）
+						預設情況下（Boot 2）：
+
+							你打了一個根本沒有任何 @RequestMapping 的 URL。
+
+							DispatcherServlet 找不到 handler，預設 不會丟 NoHandlerFoundException，而是直接讓容器 sendError(404)。
+
+							容器會做一個 ERROR dispatch 到 /error。
+
+						因此這種 404：
+
+							不會進你的 @ExceptionHandler(Exception.class)；
+
+							會直接由 ErrorController（預設 BasicErrorController）接手 /error。
+						
+						除非你額外設定：
+							spring:
+							  mvc:
+								throw-exception-if-no-handler-found: true
+							並且關掉 DispatcherServlet 的 setThrowExceptionIfNoHandlerFound(false) 預設值，
+							才會變成拋 NoHandlerFoundException，此時才有機會被你的 @ExceptionHandler 攔到。
+					
+					1-2. Static Resource / favicon 這種非 MVC 處理
+						* /css/**、/js/**、/favicon.ico、靜態檔案對應不到實體檔案；
+						* 或是被 ResourceHttpRequestHandler 處理時發生錯誤，但沒丟到 MVC handler 這邊。
+						這些很多時候是 在 HandlerMapping / Resource chain 裡自己處理 / 回 404 / sendError，
+						結果一樣：最後由容器把錯誤 forward 到 /error，進 ErrorController，不會跑到你的 Controller 層 @ExceptionHandler。
+				
+				2. 發生在「Spring MVC 之前」的錯誤
+					簡單講：在 DispatcherServlet 還沒處理請求前就爆炸了。
+					例如:
+						* Tomcat 層面的過濾器 / Servlet 出錯：
+							* 某個非 Spring 的 Filter 丟 Exception；
+							* Tomcat 處理 request 時就先炸（例如低階 IO 問題）。
+						* 你自己註冊了一個 Filter，但不是透過 Spring 的 DelegatingFilterProxy / Boot 自動掛在同一個 DispatcherServlet 鏈上，而是 container 級別的 Filter。
+
+						這些例外通常由 Servlet Container 捕捉，轉成 500 或對應錯誤，再：
+							* 呼叫 response.sendError(500) → ERROR dispatch → /error → ErrorController；
+
+							* 你的 @ControllerAdvice 根本沒有機會出場。
+
+
+				3. sendError(...) / error-page 機制主動導向的錯誤
+					有時候錯誤不是「丟 Exception」而是你自己或某個 library 呼叫：
+						response.sendError(HttpStatus.FORBIDDEN.value(), "Forbidden");
+					這種情況：
+						1.Servlet 視這是錯誤，觸發 error-page 流程。
+						2.Container 做 ERROR dispatch 到 /error。
+						3.Spring Boot 的 ErrorMvcAutoConfiguration 把這種 ERROR dispatch 交給 BasicErrorController。
+
+						過程中沒有任何 Exception 被往上丟到 Controller，所以 @ExceptionHandler(Exception.class) 完全不知道。
+				
+				4. 回應已經 committed 後才發生的錯誤
+					這種比較偏邊緣但也會碰到：
+						* Controller 已經開始寫 response，甚至 headers/部分 body 已經送出去了；
+						* 後面再發生 Exception（例如 streaming 過程中 IO 出錯）。
+
+					此時：
+						* response 其實已經「送出一部分」，再要 forward 到 /error 也來不及了；
+						* 通常情況是：log 裡有 Exception，client 得到一個「亂掉 / 中斷的 response」，不是一個正常 /error JSON / HTML；
+						* 自然也不會經過你的 @ExceptionHandler 或 ErrorController。
+
+					這類錯誤比較靠 log 排查。
+			
+				5. 非 MVC Thread 的例外（跟這支 request 不一樣的 thread）
+					雖然你這題主要關注 HTTP request，但順帶講一下另一類：
+
+						* 在 @Async method 裡丟出來的 Exception；
+
+						* 排程 @Scheduled 任務丟 Exception；
+
+						* 這些都不是當前 request 處理 thread 上發生的錯誤。
+
+					這類 Exception：
+
+						* 不會進 Spring MVC / DispatcherServlet；
+
+						* 當然也不會觸發 /error，更別說 @ExceptionHandler；
+
+						* 只能靠 log、AsyncUncaughtExceptionHandler 或排程框架的錯誤處理介面去處理。
+
+					只是讓你有個大 picture：@ControllerAdvice 只管「MVC request pipeline 裡的東西」。
+
+實務上要做到：
+
+	*「大部分業務錯誤 → 由 @ControllerAdvice 控制格式」
+
+	*「其餘（404、容器層錯誤）→ 由 /error + 自訂 ErrorAttributes / ErrorController 收尾」
+
+	會是比較完整的一套。
