@@ -35,9 +35,9 @@ springProperty
 	// 讓 logback 抓取 application.yml/property 裡的 key match 到 logback 裡使用的 property
 	<springProperty scope="${local/context/system}" name="name" source="${application.yml/property 裡的 key}" defalutValue="預設值"/>
 		scope
-			local：指定屬性僅在當前logback配置中使用。這是預設值。
-				僅影響當前 logback xml，通常預設即可
-			context：指定屬性在當前Spring環境的上下文中全局可用，可以被其他logback配置引用。
+			local：指定屬性僅在當前logback配置中使用。
+				僅影響當前 logback xml
+			context：指定屬性在當前Spring環境的上下文中全局可用，可以被其他logback配置引用。這是預設值。
 				Spring環境的上下文中全局可用 ， 代表 spring 架構程式可取得其值，一般比較少用到
 			system：指定屬性在整個系統中全局可用，可以被其他應用程式和系統層級的組件使用。
 				整個系統中全局可用
@@ -47,6 +47,10 @@ springProperty
 			application.yml/property 裡的 key
 		defalutValue
 			若 application.yml/property 裡 key 無對應的 value 則給予其預設值
+
+Logback 
+	1.裡變數查找順序是：local → context → system
+	2.同名時，local 會蓋掉 context，context 會蓋掉 system
 
 ========================================================================================================================
 =================================== color ==============================================================================
