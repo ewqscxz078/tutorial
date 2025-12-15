@@ -1,3 +1,5 @@
+ref ChatGPT
+
 PropertyMapper
 	ref https://juejin.cn/post/7225809587675906109
 	Spring提供的工具類，主要用於重新賦值，轉換等操作，位於org.springframework.boot.context.properties.PropertyMapper下。
@@ -81,3 +83,71 @@ PropertyMapper
 
 
 objectprovider
+	org.springframework.beans.factory.ObjectProvider
+
+	1) 主要用途是：
+		1.延遲取得 Bean
+		2.可選取得（沒有也不報錯）
+		3.取得多個候選 Bean（含排序）
+		用來把 DI 寫得更彈性、避免過早初始化或循環依賴、也更好做「有就用、沒有就跳過」的 auto-config 結構。
+
+	2) 你為什麼會需要 ObjectProvider？
+		常見痛點：
+			* 你想注入某個 Bean，但它可能不存在（可選依賴），例如某些 starter 才會提供的 bean
+
+			* 你不想在 @Configuration 建立時就把一堆 Bean 提前初始化（lazy / on-demand）
+
+			* 你想拿到 同型別的多個 Bean（List<T> 也行，但 ObjectProvider 更彈性，還能延遲）
+
+			* 你想避免一些「建構子注入時就觸發」造成的問題（例如循環依賴、初始化順序）
+	
+	3) 常用 API（重點就這幾個）
+		ObjectProvider<T> 常用方法：
+
+			getIfAvailable()：有就拿，沒有回 null
+
+			getIfAvailable(Supplier<T> defaultSupplier)：有就拿，沒有用你提供的預設
+
+			getIfUnique()：只有在「唯一候選」時才回傳，否則 null
+
+			orderedStream() / stream()：拿到所有候選（通常用 orderedStream() 尊重 @Order / Ordered）
+	
+	4) 用法示例
+		(A) 可選依賴：有就用、沒有就略過
+			@Configuration
+			class MyConfig {
+
+				@Bean
+				MyService myService(ObjectProvider<MyHook> hookProvider) {
+					MyHook hook = hookProvider.getIfAvailable(); // 沒有就 null
+					return new MyService(hook);
+				}
+			}
+
+		(B) 沒有就給預設實作（很適合 starter / auto-config）
+			@Bean
+			MyService myService(ObjectProvider<MyHook> hookProvider) {
+				MyHook hook = hookProvider.getIfAvailable(DefaultMyHook::new);
+				return new MyService(hook);
+			}
+
+		(C) 多個實作：全部串起來（像 Filter/Interceptor/Customizer pipeline）
+			@Bean
+			Pipeline pipeline(ObjectProvider<Step> steps) {
+				List<Step> ordered = steps.orderedStream().toList();
+				return new Pipeline(ordered);
+			}
+
+		(D) 只有唯一候選才用（避免「多個 bean」時誤選）
+			@Bean
+			MyService myService(ObjectProvider<MyHook> hookProvider) {
+				MyHook hook = hookProvider.getIfUnique(); // 不唯一就 null
+				return new MyService(hook);
+			}
+
+	5) 跟 @Autowired(required=false) / Optional<T> / List<T> 差在哪？
+		* Optional<T>：只能表達「0 或 1」，但不能優雅處理多個候選，也不強調 ordered
+
+		* List<T>：能拿多個，但通常會在注入點就決定並建立集合；ObjectProvider 更像「我需要時再取」
+
+		* @Autowired(required=false)：舊式寫法，現在通常更推薦 ObjectProvider / Optional
