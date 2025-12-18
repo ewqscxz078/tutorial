@@ -1,0 +1,99 @@
+ref ChatGPT
+
+Mono
+	Mono/Flux 的「宣告式 + 串接」很直覺，但真正跑起來是 訂閱(subscribe)時才執行、
+	而且可能 換執行緒/延後/重試，所以用傳統「在某行下斷點看變數」會很痛。
+	下面給你一套在 Java 21 + Spring Boot 3 + Reactor 很實用的
+		「可下斷點的位置」與「低侵入 debug 手法」
+
+
+
+該在哪裡下中斷點（最有效的幾個點）
+	1) 先抓「真正開始跑」：subscribe 點
+		Reactor 只有在訂閱時才會真的執行。
+		所以如果你在 service 內看不到流程跑，常見原因就是：還沒訂閱 或被上游吞掉。
+			* MVC（Servlet）通常由 Spring 幫你訂閱
+			* WebFlux 也是由框架訂閱
+			* 你自己用 .subscribe() / .block() 的地方，是最明確的起點
+		策略：先找到「誰訂閱了」
+		你可以在鏈末端先加：
+			.doOnSubscribe(s -> System.out.println("SUBSCRIBED: " + s))
+			然後對 doOnSubscribe 這行下斷點（幾乎每次都命中，且能確認是否真的開始）。
+	
+	2) 你想看資料流動：在 map/flatMap 的 lambda 內下斷點
+		最直覺也最穩：不要下在 .map(...) 那一行，而是下在 lambda 裡。
+			.map(v -> {
+				// <- 斷點下這裡
+				return transform(v);
+			})
+		
+		flatMap 也是同理：
+			.flatMap(v -> {
+				// <- 斷點下這裡
+				return asyncCall(v);
+			})
+	
+	3) 你想抓錯誤從哪裡來：doOnError + onErrorResume 分段
+		錯誤常常被某段轉換掉、或被 onErrorResume 吃掉，你會覺得「怎麼突然跳到 error」：
+		.doOnError(e -> {
+			// <- 斷點：看到當下真正的 exception
+		})
+		.onErrorResume(e -> {
+			// <- 斷點：看到誰決定要 fallback
+			return Mono.error(e);
+		})
+
+	4) 你懷疑換執行緒：在 publishOn/subscribeOn 附近插點
+		只要 pipeline 內出現 publishOn / subscribeOn，你在 IDE 看到的 call stack 會變得不直覺（因為工作被排到別的 scheduler/事件迴圈）。
+
+		做法：在它們前後加 doOnEach 或 doOnNext，並在裡面看 thread name：
+			.doOnNext(v -> {
+				// <- 斷點
+				System.out.println("thread=" + Thread.currentThread().getName());
+			})
+			.publishOn(Schedulers.boundedElastic())
+			.doOnNext(v -> {
+				// <- 斷點
+				System.out.println("thread=" + Thread.currentThread().getName());
+			})
+
+
+讓 pipeline「自己說話」：幾個超好用的 debug hook
+	A) log()：最懶、但資訊量很夠
+		mono.log("TE_FLOW");
+		
+		會看到 subscribe / request / onNext / onError / onComplete。
+	
+	B) doOnEach：一次掌握 onNext/onError/onComplete
+		.doOnEach(sig -> {
+			// <- 斷點
+			System.out.println(sig.getType() + " " + sig.get());
+		})
+
+	C) checkpoint()：幫你把 stacktrace 變「可讀的 Reactor 鏈」
+		當你遇到「錯誤 stacktrace 很長但找不到是哪一段」時，插這個超有感：
+			.checkpoint("after-call-auth-server", true)
+		true 會比較重一點，但 debug 時很值得。
+
+最推薦的寫法：把長鏈「切成有名字的段」＝可下斷點、可讀、可測
+	你不需要放棄鏈式寫法，只要切段：
+		Mono<TokenResponse> step1 = buildRequest(input)
+			.doOnSubscribe(s -> {/* breakpoint */});
+
+		Mono<TokenResponse> step2 = step1
+			.flatMap(this::callAuthServer)   // 可針對 callAuthServer 下斷點
+			.checkpoint("callAuthServer");
+
+		Mono<String> step3 = step2
+			.map(this::extractToken)         // lambda 內可下斷點
+			.checkpoint("extractToken");
+
+		return step3;
+
+	你會立刻得到：
+
+		* 每段都有變數名（IDE debug 超舒服）
+
+		* 每段可以單獨寫測試
+
+		* 出錯時 checkpoint 直接告訴你在哪段
