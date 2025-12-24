@@ -1,0 +1,94 @@
+
+機器對機器流程如下: 服務A 要打服務B
+	1.服務A 經 auth server 服務取的 JWT 後 
+	2.服務A + jwt 送到 gateway 
+	3.gateway 統一代為到 auth server 認證是否有效 
+	4.承3.若有效則轉發到服務B
+	假設 1.發送 token request 有 resource、audience 拿到的 jwt 有含有 aud
+
+一般驗證
+	服務 B 仍然建議（而且在多數架構下算「正確」）再驗一次，至少要做到：
+		1.驗簽 + iss + exp/nbf（JWT 基本有效性）
+		2.驗 aud（這顆 token 是否「發給服務 B」）
+
+	原因不是因為你 gateway 驗得不夠好，而是因為：
+		* Gateway 是中繼點，不是資源擁有者
+		* aud 的語意是「給誰用」，只有服務 B 才能做最終裁決
+		* 只靠 gateway 驗 → 等於服務 B 完全信任 gateway，不符合零信任，
+			也會讓「橫向轉打」風險變高（gateway 一旦誤轉發/被繞過，B 就沒防線）
+
+什麼情況下「可以不在服務 B 再驗」？
+	只有當你能保證「服務 B 永遠不會被直接呼叫」，例如：
+		* 服務 B 完全不對外開放，只允許 gateway 子網/網段進入
+		* 再加上 mTLS / 網路層 ACL / Service Mesh policy 保證「只有 gateway 身份能連到 B」
+		* 且你信任 gateway 的配置與執行環境是不可被繞過/不可被冒用的
+
+	即便如此，很多團隊仍會選擇在 B 做最小驗證（因為成本很低、風險大幅下降）
+
+
+目標系統驗證 jwt 範例
+	import java.util.List;
+
+	import org.springframework.context.annotation.Bean;
+	import org.springframework.context.annotation.Configuration;
+	import org.springframework.security.config.Customizer;
+	import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+	import org.springframework.security.web.SecurityFilterChain;
+
+	import org.springframework.security.oauth2.core.*;
+	import org.springframework.security.oauth2.core.validator.*;
+	import org.springframework.security.oauth2.jwt.*;
+
+	@Configuration
+	public class SecurityConfig {
+
+		private static final String ISSUER = "https://as.example.com"; // 你的 iss
+		private static final String EXPECTED_AUD = "service-b";        // 服務B的 audience
+
+		@Bean
+		SecurityFilterChain api(HttpSecurity http) throws Exception {
+			http
+				.authorizeHttpRequests(reg -> reg
+					.requestMatchers("/actuator/health").permitAll()
+					.anyRequest().authenticated()
+				)
+				.oauth2ResourceServer(oauth2 -> oauth2
+					.jwt(jwt -> jwt.decoder(jwtDecoder()))
+				);
+
+			return http.build();
+		}
+
+		@Bean
+		JwtDecoder jwtDecoder() {
+			// 1) 用 issuer 建 decoder（會自動抓 JWKS、驗簽等）
+			NimbusJwtDecoder decoder = JwtDecoders.fromIssuerLocation(ISSUER);
+
+			// 2) 預設驗證：iss、exp、nbf…（createDefaultWithIssuer 會包含 issuer 驗證）
+			OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(ISSUER);
+
+			// 3) 加上 audience 驗證（Spring 預設不驗 aud，所以你要自己加）
+			OAuth2TokenValidator<Jwt> withAudience = new AudienceValidator(EXPECTED_AUD);
+
+			decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience));
+			return decoder;
+		}
+
+		static final class AudienceValidator implements OAuth2TokenValidator<Jwt> {
+			private final String expectedAud;
+
+			AudienceValidator(String expectedAud) {
+				this.expectedAud = expectedAud;
+			}
+
+			@Override
+			public OAuth2TokenValidatorResult validate(Jwt jwt) {
+				List<String> aud = jwt.getAudience(); // 對應 JWT 的 "aud"
+				if (aud != null && aud.contains(expectedAud)) {
+					return OAuth2TokenValidatorResult.success();
+				}
+				OAuth2Error err = new OAuth2Error("invalid_token", "Invalid audience", null);
+				return OAuth2TokenValidatorResult.failure(err);
+			}
+		}
+	}

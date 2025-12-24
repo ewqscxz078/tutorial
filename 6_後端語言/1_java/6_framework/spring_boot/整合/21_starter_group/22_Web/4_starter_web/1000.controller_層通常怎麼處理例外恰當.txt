@@ -1,0 +1,99 @@
+ref chatGPT
+
+controller 層通常怎麼處理例外恰當
+	在 Spring Boot 3（Spring MVC / Servlet）常見的做法是：
+		1.Controller 盡量不寫 try/catch，讓例外往外丟
+		2.交給統一的例外處理層（@RestControllerAdvice / @ControllerAdvice）把它轉成一致的 HTTP 回應（多半是 RFC7807 ProblemDetail）
+		3.同時做好 log / traceId
+
+1) Controller 層一般怎麼做才「恰當」
+	常見推薦（大多數團隊）
+		* Controller 不處理例外（不 try/catch）
+		* 只負責：
+			* 參數綁定與 @Valid
+			* 呼叫 service
+			* 回傳 DTO / view name
+		* 例外交給：
+			* @RestControllerAdvice（REST API）
+			* @ControllerAdvice（JSP/MVC page）
+			* 或 Spring Security / Filter chain（認證授權的 401/403）
+
+	這樣的好處是：
+		* 例外回應格式一致（不會每支 controller 各寫各的）
+		* log/稽核/追蹤（traceId）集中
+		* 不容易漏掉「其實應該回 4xx，但你 catch 了變 200」
+
+	什麼時候 controller 可以處理？
+		少數情境才會在 controller 做局部處理：
+			* 要換 view（JSP）：例如捕捉特定商業例外導向特定頁面
+			* 要做回復策略：例如某個可容忍的 downstream 失敗，改回傳降級資料（但這通常更建議放在 service 層做）
+			* 真的只想處理某一種例外，且行為非常貼近「輸入輸出」而不是「商業邏輯」
+
+2) 「不處理、依預設底層錯誤處理」會怎樣？
+	如果你不做任何處理：
+		* 例外會被 Spring MVC 的 ExceptionResolver 鏈處理
+		* Spring Boot 會走到它的錯誤處理（包含 BasicErrorController / ErrorMvcAutoConfiguration 的那套）
+		* 若是 REST：
+			* 可能回傳預設 error body（或你關掉白頁、改成 ProblemDetail 風格後的內容）
+		* 若是 JSP / Page：
+			* 可能導向 /error，再由 error view / error page 對應顯示（或你自訂 ErrorController / ErrorViewResolver）
+
+	但「完全吃預設」通常會遇到兩個問題：
+		* 對外輸出的錯誤格式不一致、不好控管（尤其資安/滲透要求）
+		* 很多商業例外其實應該是 4xx，你沒 mapping 就變成 500
+
+		所以實務上會做：保留預設機制，但加一層統一 mapping（Advice）。
+
+
+3) 「catch Exception 不往外丟」會怎樣？
+	這要看你 catch 後做什麼，差異非常大：
+		(A) catch 了但什麼都不做（吞掉）
+			try { ... } catch (Exception e) { }
+			return "ok";
+
+			結果通常是災難：
+				* 真正失敗了，但你回 200 / 正常頁面
+				* 前端/呼叫方以為成功，資料可能不一致（部分寫入、交易回滾？）
+				* log 不一定有（或沒有 stacktrace），很難追
+				* 若後面程式依賴前面結果，可能造成 NullPointerException/狀態錯亂，變成更難查的錯
+		
+		(B) catch 了有 log，但還是回成功
+			catch (Exception e) {
+			  log.error("fail", e);
+			}
+			return ResponseEntity.ok(...);
+			
+			比吞掉好一點，但仍然：
+				* 呼叫方仍然收到成功，語意錯誤
+				* 監控看起來「都成功」，其實背後一直失敗
+
+		(C) catch 後轉成「你定義的例外」再丟出去（推薦）
+			catch (Exception e) {
+			  throw new DownstreamException("xxx failed", e);
+			}
+			
+			* 交給 @RestControllerAdvice 統一轉成 502 / 503 / 500 + ProblemDetail
+			* log / response 一致
+
+		(D) catch 後直接回對應錯誤 ResponseEntity（可行但不優先）
+			catch (FooException e) {
+			  return ResponseEntity.status(400).body(...);
+			}
+
+			* 能用，但會讓 controller 充滿分支
+			* 容易不一致、漏 mapping
+
+4) 可以用的「標準架構」建議
+	REST API（建議）
+		* Controller：不 catch
+		* Service：丟出語意清楚的 domain exception（例如 BizException、NotFoundException、DownstreamException）
+		* @RestControllerAdvice：
+			* 把 domain exception → 400/404/409/502…
+			* 把其他沒預期的 exception → 500
+			* 統一輸出 ProblemDetail
+			* 統一打 log（或只對 5xx 打 error，4xx 打 warn/info）
+	
+	JSP / MVC Page
+		* 若是純頁面導向：
+			* 用 @ControllerAdvice + @ExceptionHandler 回傳 ModelAndView 指向錯誤頁
+			* 或使用既有 /error + error page mapping（但你通常仍會想控管顯示內容）

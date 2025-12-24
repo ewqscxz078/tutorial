@@ -1,0 +1,27 @@
+spring boot 3 auth server 預設提供的 jwt 內容
+
+Header
+	{
+	  "kid": "fa69121a-aa6c-49b2-af42-42ce22d84309",
+	  "alg": "RS256"
+	}
+
+Payload
+	{
+	  "sub": "i06-cc-i06-bn",
+	  "nbf": 1766111028,
+	  "scope": [
+		"read"
+	  ],
+	  "iss": "http://localhost:9010/auth-server",
+	  "exp": 1766111328,
+	  "iat": 1766111028,
+	  "jti": "1f226530-bede-4be8-9e18-72b07c955d56"
+	}
+
+Signature
+	....略
+
+若要在 payload 額外增加自訂欄位
+	就要 OAuth2TokenCustomizer<JwtEncodingContext> jwtXXXCustomizer(){ .... }
+	比如常見的 aud(目標系統)

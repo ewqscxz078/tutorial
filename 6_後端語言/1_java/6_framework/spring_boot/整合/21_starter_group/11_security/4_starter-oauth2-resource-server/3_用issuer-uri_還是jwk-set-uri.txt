@@ -1,0 +1,36 @@
+ref chatGPT
+
+Q: resource server 內建 yml 什麼時候應該用 issuer-uri 還是 jwk-set-uri ?
+	spring.security.oauth2.resourceserver.jwt.issuer-uri: 
+	spring.security.oauth2.resourceserver.jwt.jwk-set-uri: 
+
+A: 能用 issuer-uri 就用 issuer-uri；只有在「不能/不想做 discovery」或「issuer 驗證不適用」時才用 jwk-set-uri。
+	issuer-uri 適用情境（建議優先）
+		Spring 會：
+			* 走 OIDC discovery：抓 /.well-known/openid-configuration
+			* 從裡面取得 jwks_uri
+			* 建 JwtDecoder
+			* 預設就會驗 iss 必須等於這個 issuer
+			* jwks_uri 更新（換 key）也會自動跟著走
+	
+	jwk-set-uri 適用情境（在這些狀況才選）
+		Spring 會：
+			* 不做 discovery
+			* 直接用你指定的 JWKS URL 驗簽
+			⚠️ 重要：用 jwk-set-uri 並不代表會自動驗 iss
+			你要不要驗 issuer，要你自己在 validator 裡做（例如 createDefaultWithIssuer(...)）。
+
+		用 jwk-set-uri 的典型情境
+			✅ 你公司環境不允許打 /.well-known/*（防火牆/WAF/規範）
+			✅ 你 AS 不是 OIDC compliant 或你不想依賴 discovery
+			✅ 你有「多 issuer 但共用同一組 JWKS」的特殊設計（少見，但有人這樣搞）
+			✅ 你要把 RS 的外連降到最小，只允許連固定 JWKS endpoint
+
+	| 你在意的事                                      | 選 `issuer-uri` | 選 `jwk-set-uri` |
+	| ----------------------------------------------- | --------------- | ---------------- |
+	| 想要最少設定、最少自訂                          | ✅              |                  |
+	| 想要 Spring 預設幫你驗 `iss`                    | ✅              | 需要你自己補     |
+	| AS 有標準 `/.well-known/openid-configuration`   | ✅              | 也可             |
+	| 企業環境禁用 discovery endpoint                 |                 | ✅               |
+	| 只允許連固定 JWKS URL                           |                 | ✅               |
+	| JWKS URL 未來可能變動、想自動跟著走             | ✅              | 你要自己改設定   |
