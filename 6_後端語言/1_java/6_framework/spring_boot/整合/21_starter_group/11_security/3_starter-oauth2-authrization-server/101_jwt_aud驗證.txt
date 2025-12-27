@@ -1,8 +1,8 @@
 
 機器對機器流程如下: 服務A 要打服務B
-	1.服務A 經 auth server 服務取的 JWT 後 
-	2.服務A + jwt 送到 gateway 
-	3.gateway 統一代為到 auth server 認證是否有效 
+	1.服務A 經 auth server 服務取的 JWT 後
+	2.服務A + jwt 送到 gateway
+	3.gateway 統一代為到 auth server 認證是否有效
 	4.承3.若有效則轉發到服務B
 	假設 1.發送 token request 有 resource、audience 拿到的 jwt 有含有 aud
 

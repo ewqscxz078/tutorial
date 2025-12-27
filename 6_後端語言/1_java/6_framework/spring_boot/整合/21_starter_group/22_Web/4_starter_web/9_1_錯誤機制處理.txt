@@ -276,20 +276,20 @@ Exception Handling with Spring for a REST API.
 							不會進你的 @ExceptionHandler(Exception.class)；
 
 							會直接由 ErrorController（預設 BasicErrorController）接手 /error。
-						
+
 						除非你額外設定：
 							spring:
 							  mvc:
 								throw-exception-if-no-handler-found: true
 							並且關掉 DispatcherServlet 的 setThrowExceptionIfNoHandlerFound(false) 預設值，
 							才會變成拋 NoHandlerFoundException，此時才有機會被你的 @ExceptionHandler 攔到。
-					
+
 					1-2. Static Resource / favicon 這種非 MVC 處理
 						* /css/**、/js/**、/favicon.ico、靜態檔案對應不到實體檔案；
 						* 或是被 ResourceHttpRequestHandler 處理時發生錯誤，但沒丟到 MVC handler 這邊。
 						這些很多時候是 在 HandlerMapping / Resource chain 裡自己處理 / 回 404 / sendError，
 						結果一樣：最後由容器把錯誤 forward 到 /error，進 ErrorController，不會跑到你的 Controller 層 @ExceptionHandler。
-				
+
 				2. 發生在「Spring MVC 之前」的錯誤
 					簡單講：在 DispatcherServlet 還沒處理請求前就爆炸了。
 					例如:
@@ -313,7 +313,7 @@ Exception Handling with Spring for a REST API.
 						3.Spring Boot 的 ErrorMvcAutoConfiguration 把這種 ERROR dispatch 交給 BasicErrorController。
 
 						過程中沒有任何 Exception 被往上丟到 Controller，所以 @ExceptionHandler(Exception.class) 完全不知道。
-				
+
 				4. 回應已經 committed 後才發生的錯誤
 					這種比較偏邊緣但也會碰到：
 						* Controller 已經開始寫 response，甚至 headers/部分 body 已經送出去了；
@@ -325,7 +325,7 @@ Exception Handling with Spring for a REST API.
 						* 自然也不會經過你的 @ExceptionHandler 或 ErrorController。
 
 					這類錯誤比較靠 log 排查。
-			
+
 				5. 非 MVC Thread 的例外（跟這支 request 不一樣的 thread）
 					雖然你這題主要關注 HTTP request，但順帶講一下另一類：
 

@@ -100,7 +100,7 @@ objectprovider
 			* 你想拿到 同型別的多個 Bean（List<T> 也行，但 ObjectProvider 更彈性，還能延遲）
 
 			* 你想避免一些「建構子注入時就觸發」造成的問題（例如循環依賴、初始化順序）
-	
+
 	3) 常用 API（重點就這幾個）
 		ObjectProvider<T> 常用方法：
 
@@ -111,7 +111,7 @@ objectprovider
 			getIfUnique()：只有在「唯一候選」時才回傳，否則 null
 
 			orderedStream() / stream()：拿到所有候選（通常用 orderedStream() 尊重 @Order / Ordered）
-	
+
 	4) 用法示例
 		(A) 可選依賴：有就用、沒有就略過
 			@Configuration

@@ -56,13 +56,13 @@ controller 層通常怎麼處理例外恰當
 				* 前端/呼叫方以為成功，資料可能不一致（部分寫入、交易回滾？）
 				* log 不一定有（或沒有 stacktrace），很難追
 				* 若後面程式依賴前面結果，可能造成 NullPointerException/狀態錯亂，變成更難查的錯
-		
+
 		(B) catch 了有 log，但還是回成功
 			catch (Exception e) {
 			  log.error("fail", e);
 			}
 			return ResponseEntity.ok(...);
-			
+
 			比吞掉好一點，但仍然：
 				* 呼叫方仍然收到成功，語意錯誤
 				* 監控看起來「都成功」，其實背後一直失敗
@@ -71,7 +71,7 @@ controller 層通常怎麼處理例外恰當
 			catch (Exception e) {
 			  throw new DownstreamException("xxx failed", e);
 			}
-			
+
 			* 交給 @RestControllerAdvice 統一轉成 502 / 503 / 500 + ProblemDetail
 			* log / response 一致
 
@@ -92,7 +92,7 @@ controller 層通常怎麼處理例外恰當
 			* 把其他沒預期的 exception → 500
 			* 統一輸出 ProblemDetail
 			* 統一打 log（或只對 5xx 打 error，4xx 打 warn/info）
-	
+
 	JSP / MVC Page
 		* 若是純頁面導向：
 			* 用 @ControllerAdvice + @ExceptionHandler 回傳 ModelAndView 指向錯誤頁

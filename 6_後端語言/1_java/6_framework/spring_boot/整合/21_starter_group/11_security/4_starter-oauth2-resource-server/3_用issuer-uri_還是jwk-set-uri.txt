@@ -1,8 +1,8 @@
 ref chatGPT
 
 Q: resource server 內建 yml 什麼時候應該用 issuer-uri 還是 jwk-set-uri ?
-	spring.security.oauth2.resourceserver.jwt.issuer-uri: 
-	spring.security.oauth2.resourceserver.jwt.jwk-set-uri: 
+	spring.security.oauth2.resourceserver.jwt.issuer-uri:
+	spring.security.oauth2.resourceserver.jwt.jwk-set-uri:
 
 A: 能用 issuer-uri 就用 issuer-uri；只有在「不能/不想做 discovery」或「issuer 驗證不適用」時才用 jwk-set-uri。
 	issuer-uri 適用情境（建議優先）
@@ -12,7 +12,7 @@ A: 能用 issuer-uri 就用 issuer-uri；只有在「不能/不想做 discovery�
 			* 建 JwtDecoder
 			* 預設就會驗 iss 必須等於這個 issuer
 			* jwks_uri 更新（換 key）也會自動跟著走
-	
+
 	jwk-set-uri 適用情境（在這些狀況才選）
 		Spring 會：
 			* 不做 discovery

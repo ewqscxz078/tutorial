@@ -19,20 +19,20 @@ Mono
 		你可以在鏈末端先加：
 			.doOnSubscribe(s -> System.out.println("SUBSCRIBED: " + s))
 			然後對 doOnSubscribe 這行下斷點（幾乎每次都命中，且能確認是否真的開始）。
-	
+
 	2) 你想看資料流動：在 map/flatMap 的 lambda 內下斷點
 		最直覺也最穩：不要下在 .map(...) 那一行，而是下在 lambda 裡。
 			.map(v -> {
 				// <- 斷點下這裡
 				return transform(v);
 			})
-		
+
 		flatMap 也是同理：
 			.flatMap(v -> {
 				// <- 斷點下這裡
 				return asyncCall(v);
 			})
-	
+
 	3) 你想抓錯誤從哪裡來：doOnError + onErrorResume 分段
 		錯誤常常被某段轉換掉、或被 onErrorResume 吃掉，你會覺得「怎麼突然跳到 error」：
 		.doOnError(e -> {
@@ -61,9 +61,9 @@ Mono
 讓 pipeline「自己說話」：幾個超好用的 debug hook
 	A) log()：最懶、但資訊量很夠
 		mono.log("TE_FLOW");
-		
+
 		會看到 subscribe / request / onNext / onError / onComplete。
-	
+
 	B) doOnEach：一次掌握 onNext/onError/onComplete
 		.doOnEach(sig -> {
 			// <- 斷點

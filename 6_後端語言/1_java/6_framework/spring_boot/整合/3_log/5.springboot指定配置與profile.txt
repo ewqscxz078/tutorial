@@ -48,7 +48,7 @@ springProperty
 		defalutValue
 			若 application.yml/property 裡 key 無對應的 value 則給予其預設值
 
-Logback 
+Logback
 	1.裡變數查找順序是：local → context → system
 	2.同名時，local 會蓋掉 context，context 會蓋掉 system
 
