@@ -76,6 +76,7 @@ Spring Cloud Config Server features:
 	  default-label: master #不然預設會先用 main branch 搜尋，找不到會有洗 deubg log 後再嘗試用 master branch 找 ，決定使用哪個 {label}
 	  git:
 	    uri: file:///${user.home}/config-repo  # 佈署環境應該成 https://${git-url}/$config-repo
+		    # spring.cloud.config.server.git.uri 可用 file: 指到本機 repo，快速上手
 			注意: Windows 為 file:///${user.home}/config-repo 格式
 			快速建立 git repo 範例
 				$ cd $HOME
@@ -111,6 +112,8 @@ Spring Cloud Config Server features:
 	/{label}/{application}-{profile}.yml
 	/{label}/{application}-{profile}.properties
 		curl localhost:8888/master/foo-db.properties
+
+	命名規則重點：，其中 {application} 通常就是 client 的 spring.application.name。
 
 5.spring cloud config server log
 	1.若設定正常應該會有如下資訊 log

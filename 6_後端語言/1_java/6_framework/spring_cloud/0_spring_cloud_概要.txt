@@ -5,6 +5,8 @@ https://spring.io/projects/spring-cloud
 	2025/1/5 官網 spring cloud 首頁看到的資訊 https://spring.io/projects/spring-cloud
 	注意 spring cloud 對應 spring boot 版本
 		Release Train				Spring Boot Generation
+		2025.1.x aka Oakwood		4.0.x
+		2025.0.x aka Northfields	3.5.x
 		2024.0.x aka Moorgate		3.4.x
 		2023.0.x aka Leyton			3.3.x, 3.2.x
 		2022.0.x aka Kilburn		3.0.x, 3.1.x (Starting with 2022.0.3)
@@ -15,9 +17,6 @@ https://spring.io/projects/spring-cloud
 		Finchley					2.0.x
 		Edgware						1.5.x
 		Dalston						1.5.x
-
-
-
 
 1. 設定中心：Spring Cloud Config
 	| Starter / 模組                                           | 功能                                                                                                                      | 什麼時候用                                                                                         |
