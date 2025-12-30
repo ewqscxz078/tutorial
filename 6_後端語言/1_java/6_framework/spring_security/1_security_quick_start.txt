@@ -39,7 +39,7 @@ https://ithelp.ithome.com.tw/m/articles/10250502
 https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
 
 https://stackoverflow.com/questions/52363487/what-is-the-reason-to-disable-csrf-in-spring-boot-web-application
-	開發的專案為 web
+	若非分散式架構之開發的專案為 web
 		預設使用 csrf 保護
 	開發的專案為後端服務
 		應該使用 csrf().disable()
