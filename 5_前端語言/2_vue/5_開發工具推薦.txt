@@ -1,0 +1,148 @@
+ref https://vuejs.org/guide/scaling-up/tooling?utm_source=chatgpt.com
+
+開發工具推薦
+	VS Code
+		+ the Vue - Official extension (previously Volar)
+		// https://marketplace.visualstudio.com/items?itemName=Vue.volar
+		// 多安裝官方推薦的擴展
+
+最小必要（建議至少裝這 3 個）
+
+	1. Vue - Official（Vue 官方擴充）
+
+		* 用途：.vue SFC 語法理解、template/TS 智慧提示、診斷、跳轉、重構
+
+		* Extension ID：Vue.volar
+
+	2. TypeScript and JavaScript Language Features（內建）
+
+		* 用途：TS/JS 語言服務（通常 VS Code 內建，不用另外裝）
+
+		* 備註：Vue - Official 會吃到 TS 能力，所以確保 VS Code 本體版本不要太舊即可
+
+	3. ESLint
+
+		* 用途：程式規範檢查、配合專案 eslint 設定自動提示
+
+		* Extension ID：dbaeumer.vscode-eslint
+
+	上面 3 個，基本上就能順暢開發 Vue3（SFC + TS）並維持程式品質。
+
+    ========================================================================================
+
+	4.Prettier - Code formatter 強烈建議（讓團隊一致、避免格式戰爭）
+
+		用途：統一格式化（配合專案 prettier 設定）
+
+		Extension ID：esbenp.prettier-vscode
+
+	ESLint 管「規範」，Prettier 管「格式」。企業協作通常這兩個都要。
+
+    ========================================================================================
+
+	常見加裝（看你們專案是否會用到）
+
+	5.EditorConfig for VS Code（如果你們用 .editorconfig）
+
+		用途：跨 IDE 的縮排/換行/字元集一致
+
+		Extension ID：EditorConfig.EditorConfig
+
+	6.Stylelint（如果你們有 stylelint）
+
+		用途：CSS/SCSS/Vue style 區塊的 lint
+
+		Extension ID：stylelint.vscode-stylelint
+
+	========================================================================================
+
+	內網離線安裝提醒（超常踩坑）
+
+		* extensions 裝好只是第一步；你本機還是要有 Node.js LTS 才能跑 npm/pnpm、vite、npm run dev/build。
+
+		* 若內網不能直連 npm registry，你們最好要有「內部 npm proxy registry」（Nexus/Artifactory/Verdaccio 等）或允許走 proxy，否則 npm install 會卡。
+
+
+
+備註: .vue SFC 語法理解 意思
+	// SFC : Single File Component（單一檔案元件）
+		一個 Vue 元件，用「一個 .vue 檔案」同時描述畫面、邏輯、樣式
+		常看到的這種檔案：
+			<template>
+			  <div>{{ msg }}</div>
+			</template>
+
+			<script setup lang="ts">
+			const msg = 'Hello Vue'
+			</script>
+
+			<style scoped>
+			div {
+			  color: red;
+			}
+			</style>
+		其實是三種語言混在一起的特殊格式
+			| 區塊                       | 實際語言                             |
+			| -------------------------- | ------------------------------------ |
+			| `<template>`               | HTML + Vue Template 語法             |
+			| `<script setup lang="ts">` | TypeScript                           |
+			| `<style scoped>`           | CSS（可能還含 scoped / module 規則） |
+
+		👉 SFC 語法理解 指的是 IDE 能做到下面這些「跨區塊的智慧理解」。
+			3. 有「SFC 語法理解」 vs 沒有，差在哪？
+				❌ 沒有 SFC 語法理解（把 .vue 當純文字）
+
+				* <template> 裡：
+					* 不知道 {{ count }} 是哪來的
+					* @click="inc" 不知道 inc 是不是存在
+
+				* <script> 裡：
+					* 不知道哪些變數會暴露給 template
+
+				* <style scoped>：
+					* 不理解 scoped 規則
+
+				結果：
+					* 沒補全
+					* 沒錯誤提示
+					* 跳不到定義
+					* 改名容易壞
+
+				✅ 有 SFC 語法理解（Vue - Official / Volar 在做的事）
+
+				IDE 會「整個檔案一起理解」：
+
+				* 在 <template>：
+
+					* {{ count }} 會知道來自 <script setup>
+
+					* @click="inc" 能跳到 inc() 定義
+
+					* props / emits 會有型別提示
+
+				* 在 <script setup>：
+
+					* defineProps() 的型別會回饋到 template
+
+				* 在 <style scoped>：
+
+					* 知道哪些 class 是這個元件的
+
+				📌 這不是單純語法高亮，是語意理解（semantic understanding）。
+
+			4.為什麼 Vue 特別需要「SFC 語法理解」？
+				因為 Vue 的 template 不是純 JS，也不是 JSX，而是：
+					* HTML
+					* 自訂指令（v-if, v-for, v-model）
+					* 與 <script> 變數強烈耦合
+
+				如果 IDE 不懂 SFC：
+					* 你幾乎等於在寫「沒型別、沒檢查的 DSL」
+					* 專案一大就很痛苦
+
+			5.用你熟悉的後端世界比喻（會很直覺）
+				| Java 世界                                  | Vue 世界                                 |
+				| ------------------------------------------ | ---------------------------------------- |
+				| IDE 真的懂 `@Controller + @RequestMapping` | IDE 真的懂 `<template> + <script setup>` |
+				| JSP + Controller 能互相跳轉                | template 能跳到 script                   |
+				| Lombok 有 IDE plugin                       | Vue SFC 有 Volar                         |

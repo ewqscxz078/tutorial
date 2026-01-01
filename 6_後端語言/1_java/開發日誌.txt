@@ -1,3 +1,6 @@
+20260101
+	java 21 -> java 25
+	spring boot 3.5.0 => 4.0.1
 20250315
 	調整 profile
 	新增 ccd-data-jpa-starter

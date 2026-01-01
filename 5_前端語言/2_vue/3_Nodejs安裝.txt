@@ -1,0 +1,199 @@
+ref ChatGPT
+
+
+Node.js 安裝
+	ref https://nodejs.org/zh-tw/download
+
+
+下載執行分
+	* dockerFile
+	* windows 安裝程式
+	* 獨立可執行檔
+
+	差異主要在「安裝方式/可攜性/誰負責管理版本與環境」
+
+
+1) Windows 安裝程式（.msi / .exe）
+	適合：大多數內網開發機、想省事、長期固定環境
+
+	特性
+		* 會把 node、npm 安裝到系統（通常 C:\Program Files\nodejs\）
+		* 會自動加到 PATH（你開 terminal 直接 node -v）
+		* 方便 IT 透過軟體派送、群組原則管理
+
+	優點
+		✅ 最穩、最省事
+		✅ 對 VS Code/Terminal 友善
+		✅ 企業標準化最好做
+
+	缺點
+		❌ 若你想「同時切換多版本 Node」會比較麻煩（可用 nvm-windows 解，但又多一層）
+
+2) 獨立可執行檔（Portable / zip）
+	（通常是 zip 解壓就能用，裡面有 node.exe，npm 也可用或需搭配）
+
+	適合：內網不能安裝、沒有 admin 權限、想「可攜式」帶著走
+
+	特性
+		* 不需要安裝程序：解壓到某個資料夾即可
+		* 你要自己處理 PATH（或用完整路徑執行）
+		* 版本切換可以用「多個資料夾」管理
+
+	優點
+		✅ 不用 admin 權限（很多公司電腦很需要）
+		✅ 好搬移、好回滾（換資料夾就回到舊版）
+		✅ 內網環境常見
+
+	缺點
+		❌ 你要自己管 PATH / 環境變數
+		❌ 有時候 npm 全域工具（如 npm install -g）的路徑要自己調
+
+	實務上，如果你不能裝 MSI，這是內網第二推薦。
+
+3) Dockerfile / Docker Image
+	適合：CI/CD、或你把前端 build 放在容器裡做（建置用）
+
+	特性
+		* Node.js 在 container 裡，不污染主機
+		* 版本可鎖死（image tag）
+		* 特別適合 Jenkins/GitLab CI 做 npm ci + npm run build
+
+	優點
+		✅ 可重現性最強（build 環境一致）
+		✅ 不需要在開發機裝 Node（如果你願意全部在 container 裡做）
+		✅ CI 最常用這條
+
+	缺點
+		❌ 對「本機互動式開發（HMR）」不一定最順（可做，但要處理 volume、port、檔案 watcher、效能）
+		❌ 內網若 Docker 也受限，就更麻煩
+
+	很多公司是：開發機用 MSI/portable，CI 用 Docker。
+
+
+你該怎麼選（內網 + VS Code 開發角度）
+	最推薦（一般情境）
+		* ✅ Windows MSI 安裝版：最少麻煩、最符合日常開發
+
+	沒 admin 權限或不允許安裝
+		* ✅ Portable/zip：解壓即用，自己設 PATH
+
+	你們想把 build 全交給 CI，開發機只寫碼
+		* ✅ CI 用 Docker 跑 build
+
+	開發機仍建議裝 Node（除非你也想用 dev container 流程）
+
+
+補一個你一定會碰到的點：npm 下載依賴仍要「能連 registry」
+
+	不管你用 MSI/portable/Docker：
+		* npm install 都需要連到 npm registry（外網或內部 proxy）
+		* 所以 Node 安裝方式 ≠ 解決內網依賴來源問題
+		（那要靠 proxy 或 Nexus/Artifactory/Verdaccio）
+
+
+
+
+備註: 安裝獨立可執行檔（Portable / zip）
+	還需要自己把「環境接好」
+		最少但必要
+			一定要做的 5 個步驟（照順序）
+				1.解壓到「固定、不會被亂動」的路徑
+					建議路徑（擇一）：
+						C:\tools\nodejs\
+						C:\dev\nodejs\
+						D:\runtime\nodejs\
+
+					解壓後你應該能看到：
+						node.exe
+						npm.cmd
+						npx.cmd
+
+				2️.設定 PATH（最重要）
+					把 Node.js 的目錄加到 使用者或系統 PATH。
+						C:\tools\nodejs\
+
+						分成「臨時（只對目前視窗）」跟「永久（建議）」作法
+							✅ 建議做法：永久加入 PATH（使用者層級）
+								這是最常用、也最安全的方式（不需要 admin 權限）。
+								在 命令提示字元（cmd） 執行：
+									setx PATH "%PATH%;C:\tools\nodejs"
+								📌 說明：
+									setx：永久寫入環境變數
+									只影響「目前使用者」
+									執行後要重開 VS Code / cmd 才會生效
+								⚠️ 重要注意（很多人踩雷）
+									setx 會：
+										* 把目前的 PATH 整包寫回
+										* 有 1024 字元限制（舊版 Windows）
+									👉 如果你公司電腦 PATH 很長，改用 PowerShell（較安全）
+
+								✅ 推薦做法（PowerShell，較安全）
+									在 PowerShell（非系統管理員也可）：
+										$nodePath = "C:\tools\nodejs"
+										$current = [Environment]::GetEnvironmentVariable("Path", "User")
+										[Environment]::SetEnvironmentVariable("Path", "$current;$nodePath", "User")
+									✔ 不會動到系統 PATH
+									✔ 不會被 1024 字元限制影響
+
+							🧪 只想「臨時測試」的方式（不寫入系統）
+								只影響目前這個 cmd 視窗：
+									set PATH=%PATH%;C:\tools\nodejs
+								關掉視窗就失效（適合快速驗證）。
+
+					設定完後 重開 VS Code / 終端機。
+						📋 最小檢查清單驗證：
+							where node
+							where npm
+							node -v
+							npm -v
+						只要 where node 指到你指定的路徑，就代表成功。
+
+				3.設定 npm 的全域目錄（避免寫到奇怪地方）
+					Portable 版很容易把 global 套件寫到你不想要的地方（甚至沒權限）。
+					建議你手動指定：
+						npm config set prefix C:\tools\nodejs\npm-global
+					然後把這個也加進 PATH：
+						C:\tools\nodejs\npm-global
+					用途：
+						npm install -g pnpm
+						npm install -g npm@latest
+						不會失敗或亂寫。
+
+				4.設定 npm registry（內網一定要）
+					如果你在內網：
+						A) 有內部 registry
+							npm config set registry https://npm.company.com/
+
+						B) 走 proxy
+							npm config set proxy http://proxy.company:8080
+							npm config set https-proxy http://proxy.company:8080
+
+						驗證：
+							npm config get registry
+
+				5.（建議）設定 npm cache 位置（可控、好清理）
+					npm config set cache C:\tools\nodejs\npm-cache
+
+					企業內網常要求這種可控目錄。
+	完成後你應該能做到這些
+		在 VS Code 的 Terminal 裡：
+			node -v
+			npm -v
+			npm install
+			npm run dev
+			npm run build
+		都能正常跑。
+
+	跟 MSI 安裝版差在哪？（讓你確認沒多做事）
+		| 項目       | MSI 安裝 | Portable   |
+		| ---------- | -------- | ---------- |
+		| PATH       | 自動     | 你要自己加 |
+		| npm prefix | 自動     | 建議手動   |
+		| cache      | 自動     | 建議手動   |
+		| admin 權限 | 通常要   | 不一定     |
+		| 可攜性     | 低       | 高         |
+
+	常見踩雷提醒（內網環境）
+		❌ 忘記重開 VS Code → PATH 沒生效
+		❌ npm registry 沒設 → npm install 卡死
+		❌ 全域 npm 套件寫到無權限目錄

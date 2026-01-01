@@ -1,10 +1,10 @@
 ref ChatGPT
 
-20251231 當時使用「最新的 Vue」開始做前端開發，建議直接走 
+20251231 當時使用「最新的 Vue」開始做前端開發，建議直接走
 	Vue 3 + Vite + TypeScript 這條主流路線（也是目前最常見、最順的組合）
-	
+
 	ref https://nodejs.org/zh-tw/download
-	
+
 0) 先準備環境（Windows 也適用）
 	1.安裝 Node.js LTS（建議用 LTS，不要追最新 Current）
 
@@ -88,7 +88,7 @@ ref ChatGPT
 		* 後端（Spring Boot）提供 API + OAuth2/JWT 驗證
 
 		* 本機開發用 Vite proxy 解決 CORS / cookie / token 測試
-		
+
 	Vite 代理（超常用）
 		在 vite.config.ts 加類似：
 			export default defineConfig({

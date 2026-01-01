@@ -1,0 +1,78 @@
+ref ChatGPT
+	https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide
+
+專案模組拆分差異
+	Boot 3.5.x：結構（是「官方推薦型」）
+		xxx-yyy                      ← 核心
+		xxx-spring-boot-starter-autoconfigure
+		  └─ 依賴 xxx-yyy
+		  └─ 放 各種模組 AutoConfiguration
+		xxx-spring-boot-starter		← 基底
+		  └─ 依賴 xxx-spring-boot-starter-autoconfigure
+
+		特點：
+			starter-autoconfigure 是 「技術整合層」
+			starter 只是 façade
+			你自訂 starter 去「參考別人的 autoconfigure class」是常見做法
+
+
+	Boot 4 的關鍵變化 (將各 starter 的自動配置更分離分散， 減少 classpath / optional 依賴地獄)
+		* Boot 3：
+			所有 auto-config 幾乎都在
+			spring-boot-autoconfigure
+		* Boot 4：
+			auto-config 分散在
+			spring-boot-data-jpa、spring-boot-webmvc、spring-boot-webflux …
+
+		xxx-yyy                      ← 某核心					// core 	: 核心實作擴充邏輯
+		xxx-yyy-spring-boot          ← 某核心 Boot 整合層（新） // boot 	: 主要做自動配置
+		  └─ 依賴 xxx-yyy
+		  └─ 放 AutoConfiguration
+		xxx-yyy-spring-boot-starter  ← Starter					// starter 	: 依賴入口
+		  └─ 依賴 xxx-yyy-spring-boot
+		  └─ 依賴 xxx-spring-boot-starter
+
+		* 明確分出：
+			* core（純邏輯）
+			* boot（整合 Spring Boot / auto-config / conditional）
+			* starter（依賴入口）
+
+	官網 Spring-Boot-4.0-Migration-Guide
+		Main Code
+			* All Spring Boot modules are named spring-boot-<technology>.
+
+			* The root package of each module is org.springframework.boot.<technology>.
+
+			* All “starter” POMs are named spring-boot-starter-<technology>.
+
+		Test Code
+			* All Spring Boot test modules are named spring-boot-<technology>-test.
+
+			* The root package of each such module is org.springframework.boot.<technology>.test.
+
+			* All test “starter” POMs are named spring-boot-starter-<technology>-test.
+
+class 調整
+	data jpa
+		原本 org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
+		改 org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+
+
+pom 調整
+	provided 系列
+		原本 <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-jpamodelgen</artifactId><scope>provided</scope></dependency>
+		改 <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-processor</artifactId><scope>provided</scope></dependency>
+
+	runtime 系列
+		原本依賴 <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency> 就含有 隱式 h2 yml 設定
+			可以 yml 設定 spring.h2.console.enabled
+		改要顯示依賴 <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-h2console</artifactId><scope>runtime</scope></dependency>
+			yml 才能用 spring.h2.console.enabled
+
+	test 系列
+		原本 <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency> <!-- 基底層用測試 --> 包含 @DataJpaTest、@AutoConfigureTestDatabase
+			import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+			import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+		改要多依賴 <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-data-jpa-test</artifactId><scope>test</scope></dependency> <!-- use @DataJpaTest、@AutoConfigureTestDatabase -->
+			import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+			import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;

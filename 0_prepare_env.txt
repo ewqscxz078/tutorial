@@ -117,7 +117,7 @@ once
 		Help[options]
 			Eclipse Marketplace
 				in Find input text type spring boot
-					install Spring Tools 4
+					install Spring Tools 4   // Spring Tools (aka Spring Tool Suite) X.X.X RELEASE
 						1.提供 application.properties 輔助資訊
 						2.Spring Initailizr tool
 						3.執行 spring boot 啟動輔助
