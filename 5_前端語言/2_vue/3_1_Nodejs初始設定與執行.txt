@@ -1,0 +1,60 @@
+
+建議用 powerShell 執行建議，若用 cmd 則 setx 可能遇到 PATH 太長的限制；若你們環境 PATH 很長，優先用 PowerShell 方案。
+
+方法一（最簡單、最推薦）：用 PowerShell「一次性允許」執行
+	不改系統安全設定、只對這次執行有效
+	
+	步驟 1️.開 PowerShell
+
+		Win + X → Windows PowerShell
+
+		不需要「系統管理員」
+	
+	步驟 2.切到腳本所在目錄
+		假設你的腳本在：
+			C:\tools\nodejs\
+
+		執行：
+			cd C:\tools\nodejs
+
+	步驟 3️.執行 ps1（重點）
+		powershell -ExecutionPolicy Bypass -File .\init-node-env.ps1
+
+		✔ 這條指令的意思是：
+
+			用一個新的 PowerShell 行程
+
+			暫時繞過 ExecutionPolicy
+
+			執行指定的 .ps1
+
+			不會改系統設定
+
+方法二：在目前 PowerShell Session 允許後直接執行
+	比較像「我信任這個檔案」
+	
+	步驟 1.允許目前使用者執行腳本
+		Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+		
+		選 Y 確認。
+		
+	步驟 2.直接執行
+		.\init-node-env.ps1
+
+	📌 這是「半永久」設定（只影響你這個使用者）。
+
+
+執行前你一定要確認的 3 件事
+
+	1.檔案副檔名真的是 .ps1（不是 .ps1.txt）
+	2️.檔案內容編碼是 UTF-8（VS Code 預設 OK）
+	3️.路徑沒有打錯（用 dir 確認）
+
+若出現錯誤訊息，常見怎麼解
+	❌「running scripts is disabled」
+
+		→ 用 方法一（Bypass）即可解。
+
+	❌「找不到檔案」
+
+		→ 確認你 cd 到正確資料夾，且用 .\檔名.ps1。
