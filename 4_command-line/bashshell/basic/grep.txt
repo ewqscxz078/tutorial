@@ -80,6 +80,10 @@ Binary file 1.open_DBSchemaEditor_NOSAVE.xlsm.gif matches
 	進階
 		grep -lR "sit\.ris\.sris\.dpl" | xargs sed -i 's/sit\.ris\.sris\.dpl/app\.ris\.sris\.dpl/g'
 
+		grep -lR "關鍵字\.do" . | xargs -r sed -i 's/關鍵字\.do/關鍵字/g'
+			// 找到符合關鍵字的檔案清單，然後對應處理取代動作
+			// xargs -r：避免沒找到檔案時仍執行 sed
+			
 grep 結果放在 loop
 	https://stackoverflow.com/questions/16317961/how-to-process-each-output-line-in-a-loop
 	grep xyz abc.txt | while read -r line ; do
