@@ -1,0 +1,225 @@
+ref ChatGPT
+
+引用方式
+	jsp
+		舊專案 JSP 常見實務
+		
+			JSP 裡使用 contextPath（避免反向代理 / 子路徑問題）
+				<link rel="stylesheet" href="${pageContext.request.contextPath}/css/main.css">
+				<script src="${pageContext.request.contextPath}/js/app.js"></script>
+			
+			或先定義：
+				<c:set var="ctx" value="${pageContext.request.contextPath}" />
+	
+	css、font、images、js
+		這樣瀏覽器才能用：
+		<link rel="stylesheet" href="/css/main.css">
+		<script src="/js/app.js"></script>
+		<img src="/images/logo.png">
+
+
+	有共用的 jsp 要 import
+		假設結構
+			/WEB-INF/jsp/
+			  ├─ page/a.jsp
+			  └─ include/xxx.jsp
+
+		a.jsp 匯入 include/xxx.jsp，最建議不要用 <c:import>，
+		而是用 JSP 的 include（因為這是「同一個 webapp 內的 JSP 片段」最正統、也最不踩雷的方式）
+
+		1.最推薦：<jsp:include>（動態 include）
+			* page 用 從 context root 開始的絕對路徑
+			* 這種 include 是 request-time include（可以帶參數、可依條件）
+
+			無參數：
+				<jsp:include page="/WEB-INF/jsp/include/xxx.jsp" />
+			
+			帶參數：
+				<jsp:include page="/WEB-INF/jsp/include/xxx.jsp">
+				  <jsp:param name="title" value="Hello"/>
+				</jsp:include>
+	
+		2.也很常用：<%@ include %>（靜態 include，編譯期）
+			<%@ include file="/WEB-INF/jsp/include/xxx.jsp" %>
+				* 編譯時就把內容貼進來
+
+				* 適合 header/footer/taglib 宣告片段等「固定內容」
+
+				* 但不適合依條件切換或帶參數
+		
+		3.<c:import url=...>
+			只建議在「真的要用 URL import（例如跨站/跨 context）或要走 controller」時才用
+				<%@ taglib prefix="c" uri="http://java.sumcom/jsp/jstl/core" %>
+				<c:import url="/WEB-INF/jsp/include/xxx.jsp" />
+			⚠️ 不過要注意：<c:import> 的 url 本質是「做一次內部的 request」，
+				在不同容器/設定下，有時候會被當成對外 URL 存取，而 WEB-INF 
+				又是禁止直接存取的區域，因此可能出現 404 或行為不一致。
+			
+			1) 什麼情況叫「真的要用 URL import」？
+				=> A. 你要抓的不是 JSP 檔案，而是「一個 URL 的輸出」
+					這種情境用 <jsp:include page="/widget/announcement" /> 也能做到
+					（因為它也可以 include 一個 servlet/controller 路徑）
+					，但 <c:import> 的定位就是「匯入 URL 內容」，並且它在 JSTL 世界裡
+					比較容易搭配一些控制（例如指定 var、處理字元集等）
+				=> B. 你要跨 context（同一台 server 內的另一個 webapp）
+					例如同一台 Tomcat 裡有：
+						* appA（你的主系統）
+						* common-web（提供共用頁首/頁尾）
+
+					你想在 appA 引入 common-web 的輸出：
+						<c:import url="http://localhost:8080/common-web/header"/>
+						或（依容器支援狀況）用相對/絕對 URL 方式去打另一個 context。
+					<jsp:include> 做不到「跨 webapp」的 include（它通常只在同一個 webapp/同一個 ServletContext 內處理）。
+					所以 跨 context / 跨站 這種需求，就比較偏 <c:import> 的領域。
+
+				=> C. 你要跨站（外部網站/服務）
+					例如你要把某個內部服務產的片段抓回來：
+						<c:import url="https://intranet.example.com/banner.html" />
+						（現代架構多半會改用前端 fetch 或反向代理，但概念上這就是 URL import。）
+
+			2) 什麼叫「要走 controller」？
+				重點是：你 include 的目標不是一個檔案路徑，而是一段後端邏輯。
+				
+				例如你想把「使用者通知數量」這塊做成共用元件：
+					@GetMapping("/fragments/notify")
+					public String notify(Model model) {
+					  model.addAttribute("count", service.countUnread());
+					  return "fragments/notify"; // /WEB-INF/jsp/fragments/notify.jsp
+					}
+				在頁面中：
+					<c:import url="/fragments/notify"/>
+				這樣你每個頁面不用自己查 unread count，統一由 controller 做。
+					你也可以用 <jsp:include page="/fragments/notify" /> 達到同樣效果。
+					所以這裡我說的「要走 controller」並不是只有 <c:import> 能做，而是：
+					當你的目標是一個 URL endpoint（controller/servlet）而不是純 JSP 片段時，
+					<c:import> 才比較合理。
+			
+			3) 那為什麼「純 JSP 片段」不建議用 <c:import url="/WEB-INF/...">？
+				因為你已經遇到過一次了：
+					WEB-INF 禁止外部直連。
+
+				<c:import> 很容易在某些情況被當成「去 GET 那個 URL」的行為（即便是 server 端），
+					而 GET /WEB-INF/jsp/include/xxx.jsp 本質上就是在走 URL 存取，容器會擋。
+					不同容器/設定下行為可能不一致，容易踩雷。
+				
+				相較之下：
+					* <jsp:include page="/WEB-INF/jsp/include/xxx.jsp" /> 是 JSP 引擎/Servlet 內部 include 的標準用法，對 WEB-INF 片段非常穩
+					* <%@ include file="..." %> 更是直接把檔案貼進去，根本不走請求
+
+備註
+	<jsp:include ... /> 不是 JSTL tag，而是 JSP 標準動作（standard action），JSP 容器原生就支援
+		所以不用像 <c:import> 一樣宣告 taglib prefix="c" ...。
+
+	什麼時候才需要 taglib？
+		只有你要用 JSTL（例如 <c:import>, <c:if>, <c:forEach>）才需要：
+
+
+
+快速選擇指南
+	✅ 用 <%@ include %>（最常見）
+
+		* header/footer、taglib 宣告、固定共用片段
+
+		* 不需要帶參數、也不需要依條件切換
+
+		* 追求效能與簡單
+
+	✅ 用 <jsp:include>
+
+		* 同一個 webapp 內 include
+
+		* 需要帶 <jsp:param>
+
+		* 或 include 的目標是 controller 路徑（/fragments/xxx）
+
+	✅ 用 <c:import>
+
+		* 你真的要「以 URL 的方式」抓內容
+
+		* 可能跨站/跨 context
+
+		* 或你要把結果存到變數再處理（例如 var="..."）：
+			<c:import url="/fragments/notify" var="html"/>
+			${html}
+
+
+Q1: 為何要這樣 jsp 或 js 指向 controller 在走到 WEB-INF/jsp 下對應的方式? 有點繞
+A1: 之所以看起來繞，不是技術人員愛繞，而是 Servlet / Spring MVC 的設計刻意把「URL」跟「檔案」分離
+	URL 是「對外 API」，JSP 是「內部 View 實作細節」。
+		* 對外永遠只打 Controller URL
+		* JSP 永遠只存在於 WEB-INF，只能被 server 端 forward
+	
+		這不是多此一舉，而是為了安全、可維護、可重構。
+	
+	一、如果「直接打 JSP 檔案」會怎樣？
+		href="/WEB-INF/jsp/XXXXX/tabs.jsp"
+		結果是：
+			瀏覽器直接 GET /WEB-INF/...
+			Servlet 規範：禁止
+			→ 404
+		
+		即使你把 JSP 放到 webapp 根目錄讓它能直接打：
+			/tabs.jsp
+			看起來簡單，但立刻產生這些問題：
+			
+			1️.安全問題
+				* 任意 JSP 都可被直接請求
+				* 包含 include fragment（header/footer）也能被單獨打
+				* 可能被繞過登入檢查
+			2.架構耦合
+				* URL = 檔案路徑
+				* 未來改資料夾、改技術（JSP → Thymeleaf / Vue）= 全站 URL 大改
+			
+			3️.控制權在前端
+				* 前端決定要存取哪個 JSP
+				* 後端無法集中做：
+					* 權限檢查
+					* 404 / 403 / redirect
+					* logging / audit
+	二、Controller + WEB-INF 的設計「到底在解決什麼？」
+		這是 Servlet/MVC 的核心設計，而不是 Spring 自創的。
+			| 層級       | 職責                  |
+			| ---------- | --------------------- |
+			| Browser    | 打 URL                |
+			| Controller | 驗證 / 決策 / 選 View |
+			| JSP        | Render HTML           |
+		所以流程是：
+			Browser
+			  ↓ GET /xxxxx/tabs
+			Controller
+			  ↓ return "XXXXX/tabs"
+			ViewResolver
+			  ↓ forward /WEB-INF/jsp/XXXXX/tabs.jsp
+			JSP Engine
+			  ↓ HTML
+			Browser
+			
+			瀏覽器永遠不知道 JSP 在哪裡。
+	
+	三、為什麼這對你現在的 EasyUI / href 特別重要？
+		現在不是「整頁請求」，而是：
+			* EasyUI href → AJAX 載入局部 HTML
+			* 這個請求：
+				* 可能是 GET / POST
+				* 可能帶 cookie / session
+				* 可能需要驗證登入
+		
+		如果你讓它直接打 JSP：
+			* JSP 裡只能「事後發現沒登入」
+			* 然後在 JSP 裡 location.href = ...
+			* 你已經看到：很亂、很容易壞
+		
+		改成 controller 的好處
+			@GetMapping("/xxxxx/tabs")
+			public String tabs(HttpSession session) {
+			  if (!loggedIn) {
+				return "redirect:/error/no-login";
+			  }
+			  return "XXXXX/tabs";
+			}
+
+			* 沒登入 → 根本不 render JSP
+
+			* EasyUI 收到 redirect / 401 → 前端統一處理
+
+			* JSP 只負責畫畫面，不管流程

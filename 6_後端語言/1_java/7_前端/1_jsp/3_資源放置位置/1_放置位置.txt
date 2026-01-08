@@ -1,0 +1,79 @@
+ref ChatGPT
+
+放置位置
+	jsp 
+		放在傳統的 webapp 下面：
+			src/main/webapp/WEB-INF/jsp/
+			  ├─ index.jsp
+			  └─ ...
+			
+			* WEB-INF 底下的 JSP 不會被直接用 URL 打到（比較安全）
+			* 這是最「傳統 Servlet 容器」的路徑，對外部 Tomcat 最友善
+			* 千萬別把 JSP 放到 src/main/resources/templates
+
+	css、font、images、js
+		WEB-INF 的語意是「只能由 Servlet 內部轉發，不能被瀏覽器直接存取」，
+		而 CSS / JS / images / fonts 本來就必須被瀏覽器直接抓取。
+		
+		靜態資源（可直接存取）
+			src/main/webapp/
+			  ├─ css/
+			  │   └─ main.css
+			  ├─ js/
+			  │   └─ app.js
+			  ├─ images/
+			  │   └─ logo.png
+			  └─ fonts/
+				  └─ xxx.woff2
+		
+		放在 src/main/webapp 或 src/main/resources/static，就會自動生效。
+			可選進階（若你想慢慢現代化）
+				src/main/resources/static/
+				  ├─ css/
+				  ├─ js/
+				  ├─ images/
+				👉 JSP + 現代前端（Vite / Vue build 後丟 static）常用這種混搭方式
+				👉 對 WAR / JAR 都相容
+
+
+
+		為什麼不能放在 WEB-INF？
+
+			* WEB-INF/** 永遠不能被直接請求
+
+			* 下列請求一定會 404：
+
+	總結
+		* JSP → WEB-INF/jsp
+		* CSS / JS / images / fonts → webapp 根目錄或 resources/static
+			絕對不要放在 WEB-INF
+
+	首頁
+		JSP 頁面（有後端資料、要走 Controller / ViewResolver）
+			放在 WEB-INF/jsp/ 最恰當（也最常見、較安全）
+				src/main/webapp/WEB-INF/jsp/index.jsp
+			然後用 Controller 轉發到它：
+				@Controller
+				public class HomeController {
+				  @GetMapping("/")
+				  public String home() {
+					return "index"; // 對應 /WEB-INF/jsp/index.jsp
+				  }
+				}
+			✅ 優點：JSP 不會被直接 URL 打到，只能經由 Controller/forward，較可控
+			✅ 舊專案模式：最「正統」
+			
+		靜態 html
+			放在可直接被存取的靜態資源位置（不要放 WEB-INF）
+				A. Spring Boot 慣用（推薦）
+					src/main/resources/static/index.html
+					瀏覽器打 / 會直接回傳這個 index.html（Boot 會自動處理）。
+				
+				B. 舊 Servlet 專案習慣
+					src/main/webapp/index.jsp   （如果你是 JSP 但想讓容器當 welcome-file）
+					或
+					src/main/webapp/index.html  （靜態）
+			但在 Boot 專案 我通常更偏向用 resources/static/index.html 做靜態首頁。
+
+
+
