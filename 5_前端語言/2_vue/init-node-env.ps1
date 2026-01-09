@@ -4,7 +4,7 @@
 # =========================
 
 # 1) 你的 Node.js portable 解壓路徑（請改成你的）
-$NodeHome = "C:\tools\nodejs"
+$NodeHome = "D:\software\nodejs"
 
 # 2) npm 全域安裝目錄與 cache 目錄（可改）
 $NpmGlobal = Join-Path $NodeHome "npm-global"
@@ -84,7 +84,7 @@ if ($Registry -ne "") { Write-Host "  npm config get registry" }
 
 
 
-
+# PowerShell 預設 big5，容易中文有中文亂碼問題 ref https://forum.emily.tips/t/powershell/455
 # 執行方式
 # PowerShell 可能預設禁止執行腳本，你可以用一次性方式執行（不改系統策略）：
 # powershell -ExecutionPolicy Bypass -File .\init-node-env.ps1

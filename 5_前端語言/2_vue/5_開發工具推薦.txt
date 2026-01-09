@@ -6,6 +6,12 @@ ref https://vuejs.org/guide/scaling-up/tooling?utm_source=chatgpt.com
 		// https://marketplace.visualstudio.com/items?itemName=Vue.volar
 		// 多安裝官方推薦的擴展
 
+		1.安裝可攜式的 zip 
+			https://code.visualstudio.com/Download#
+				選 .zip 旁的x64
+		2.於 vscode 裡建立 data
+			則新裝的 Extension 、 user setting 都會被自動放在裡面
+			
 最小必要（建議至少裝這 3 個）
 
 	1. Vue - Official（Vue 官方擴充）

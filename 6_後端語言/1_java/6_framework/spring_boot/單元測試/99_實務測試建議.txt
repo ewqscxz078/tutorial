@@ -1,0 +1,41 @@
+ref ChatGPT
+
+實務建議
+	在 Boot 世界常見的做法是用「受控掃描」或「slice test」，把掃描範圍縮到你要的那一小塊
+
+	* 測 config / service wiring：優先用
+
+		* @ExtendWith(SpringExtension.class) + @ContextConfiguration(classes=...)（最純最小）
+			@ExtendWith(SpringExtension.class)
+			@ContextConfiguration(classes = MyTest.TestConfig.class)
+			class MyTest {
+
+				@Configuration
+				@ComponentScan(basePackageClasses = my.feature.MyService.class)
+				static class TestConfig { }
+
+			}
+
+		* MinBoot 模式（仍享有 Boot Test 工具但很小）
+			@SpringBootTest(classes = XxxxConfigTest.MinConfiguration.class)
+			class XxxxConfigTest {
+
+				@SpringBootConfiguration
+				// @Import(XxxxConfiguration.class) 					方法1: 指定載入註冊配置檔方式
+				// @Import(XxxxService.class) 							方法2: 指定載入註冊class方式
+				// @ComponentScan(basePackClasses = { XXXXX.class }) 	方法3 : 限定掃描註冊方式
+				static class MinConfiguration { }
+
+				@Test
+				void test() {}
+			}
+
+	* 測 MVC controller：用 @WebMvcTest
+		@WebMvcTest(MyController.class)
+		class MyControllerTest {
+			// service 用 @MockBean
+		}
+
+	* 測完整 security/filter chain：用 @SpringBootTest + @AutoConfigureMockMvc
+
+	* 測 JPA：用 @DataJpaTest
