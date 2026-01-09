@@ -13,38 +13,54 @@ ref ChatGPT
 		npm -v
 
 1) 用官方方式建立 Vue 專案（Vite）
-	npm create vue@latest
-		* npm create 是 npm 提供的「建立專案腳手架（scaffold）」入口（等同於以前常見的 npm init <initializer> 形式）
-		* vue@latest 指的是：使用 npm registry 上的 create-vue 這個「專案初始化器套件」的最新版本來幫你生專案
+	舊一代建立方式(已不再建議使用的方式)
+		Vue CLI（舊一代），底層主要是 Webpack
+			npm install -g @vue/cli 
+			vue create vue-demo
+	
+	新一代建立方式
+		新一代，底層主要是 Vite
+			npm create vue@latest
+				* npm create 是 npm 提供的「建立專案腳手架（scaffold）」入口（等同於以前常見的 npm init <initializer> 形式）
+				* vue@latest 指的是：使用 npm registry 上的 create-vue 這個「專案初始化器套件」的最新版本來幫你生專案
 
-		換句話說，它做的是：
+				換句話說，它做的是：
 
-			1.到 npm registry 下載（或用快取）一個叫 create-vue 的套件（版本是 latest）
+					1.到 npm registry 下載（或用快取）一個叫 create-vue 的套件（版本是 latest）
 
-			2.在你本機執行這個套件的 CLI 程式
+					2.在你本機執行這個套件的 CLI 程式
 
-			3.依你回答的選項，把一個 Vue + Vite 專案骨架「寫到你的資料夾」裡
+					3.依你回答的選項，把一個 Vue + Vite 專案骨架「寫到你的資料夾」裡
 
-			4.它不會幫你自動 npm install（有些會問要不要幫你跑），你通常自己再裝依賴、啟動 dev server
+					4.它不會幫你自動 npm install（有些會問要不要幫你跑），你通常自己再裝依賴、啟動 dev server
 
-		所以它比較像：
-			*「下載一個腳手架程式 → 本機執行 → 產生專案模板」
-			* 而不是：「拉一個遠端打包好的完整環境（像 Docker image）」
+				所以它比較像：
+					*「下載一個腳手架程式 → 本機執行 → 產生專案模板」
+					* 而不是：「拉一個遠端打包好的完整環境（像 Docker image）」
 
-	它會問要不要開啟一些選項，我推薦你勾這些（很適合工程化）：
+			它會問要不要開啟一些選項，我推薦你勾這些（很適合工程化）：
 
-		* ✅ TypeScript
-		* ✅ Vue Router（前端路由）
-		* ✅ Pinia（狀態管理）
-		* ✅ ESLint（程式碼規範）
-		* ✅ Prettier（格式化）
+				* ✅ TypeScript
+				* ✅ Vue Router（前端路由）
+				* ✅ Pinia（狀態管理）
+				* ✅ ESLint（程式碼規範）
+				* ✅ Prettier（格式化）
 
-	然後進專案、裝依賴、跑起來：
-		cd your-project-name
-		npm install
-		npm run dev
+			然後進專案、裝依賴、跑起來：
+				cd your-project-name
+				npm install
+					# 若 npm 有新的版本會有訊息通知，類似如下
+						npm notice
+						npm notice New minor version of npm available! 11.6.2 -> 11.7.0
+						npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+						npm notice To update run: npm install -g npm@11.7.0
+						npm notice
+					npm install -g npm@11.7.0 #可更新到指定的版本
+					# 下 npm fund 可看到詳細裡面每個套件版本
+					
+				npm run dev
 
-	看到終端機提示的網址（通常是 http://localhost:5173）就成功了。
+			看到終端機提示的網址（通常是 http://localhost:5173）就成功了。
 
 
 2) Vue 專案基本結構你要先懂的幾個重點

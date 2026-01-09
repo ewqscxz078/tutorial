@@ -1,0 +1,159 @@
+ref ChatGPT
+
+1) 先把專案「開發體驗」調到順
+	1.1 開啟型別與 lint 的紅線（避免越寫越亂）
+		若建立專案時有選 ESLint/Prettier
+			* 先跑一次
+				npm run lint
+				npm run format
+			* VS Code 設定：存檔自動 format（Prettier）+ ESLint fix（通常擴充可以設定）
+	
+	1.2 了解 package.json scripts
+		你每天會用到的通常是：
+
+			npm run dev：開發
+
+			npm run build：打包（產出 dist/）
+
+			npm run preview：用本機模擬正式環境跑打包結果
+
+			npm run lint / format / test：品質
+
+2) 把 Vue 3 「Composition API」用熟（關鍵）
+	你要能自然寫出這幾個：
+
+		ref / reactive / computed / watch / watchEffect
+
+		defineProps / defineEmits
+
+		useXxx composables（把可重用邏輯抽出去）
+
+		元件溝通：props → emit、或用 store
+
+	建議練習題（很快就能變強）：
+
+		TodoList（新增/完成/刪除/篩選）
+
+		表單驗證（必填、格式、即時提示）
+
+		讀 API 列表 + 分頁 + loading/error 狀態
+
+3) 路由（Router）與頁面架構（一定要會）
+	如果你建立時選了 Router：
+
+		建議你馬上做三種頁面：
+
+			/ 首頁
+
+			/list 列表頁
+
+			/detail/:id 詳細頁
+
+	並練習：
+
+		巢狀路由（layout）
+
+		route guard（登入判斷 / 權限）
+
+		404 路由
+	
+	如果沒選 Router，也可以補裝：
+		npm i vue-router
+
+4) 狀態管理（Pinia）與資料流（越早建立觀念越好）
+
+	如果你建立時選了 Pinia：
+
+		* 用 Pinia 管三種狀態最典型：
+
+			1.使用者登入資訊（user、roles、token）
+
+			2.介面狀態（sidebar 展開、主題）
+
+			3.共享資料（cache、選單、字典）
+
+	練習重點：
+
+		store 的 state / getters / actions
+
+		store 持久化（localStorage）
+
+		「不要什麼都丟 store」：頁面內狀態留在 component，跨頁/跨元件才進 store
+
+5) 串接後端 API（你是工程師，這塊做起來就像完整產品）
+	建議做法（實務最常見）
+		1.安裝 axios
+
+			npm i axios
+
+		2.建一個 src/services/http.ts
+			* baseURL
+			* timeout
+			* request interceptor（自動帶 token）
+			* response interceptor（統一處理 401/403）
+
+		3.API 分層：
+
+			src/services/api/user.ts
+
+			src/services/api/order.ts
+
+		4.在頁面使用 composable：
+
+			src/composables/useUsers.ts
+		
+		會瞬間理解「前端工程化」在幹嘛。
+
+
+6) 專案結構（不要等變大才整理）
+
+	一個很常見、可擴充的結構：
+
+		src/pages（或 src/views）：頁面
+
+		src/components：共用元件
+
+		src/layouts：版型（Header/Sidebar）
+
+		src/router：路由
+
+		src/stores：Pinia
+
+		src/services：API/HTTP
+
+		src/composables：useXxx 可重用邏輯
+
+		src/utils：工具函式
+
+		src/types：型別（TS）
+
+7) UI 元件庫（讓你有時間做功能，不要一直手刻）
+
+	你可以選一套：
+
+		Element Plus（企業常見）
+
+		Naive UI（Vue3 體驗不錯）
+
+		Vuetify（Material Design）
+
+		TailwindCSS（偏客製、搭配 Headless UI）
+
+
+8) 打包與部署觀念（你跑得動 ≠ 你能上線）
+	至少要會：
+
+		* npm run build
+
+		* npm run preview
+
+		* .env.development / .env.production（環境變數）
+
+		* base path（如果不是部署在 / 根路徑，例如 /myapp/）
+
+
+最有效的下一步（我建議你直接做）
+
+	做一個「最小但完整」的小專案練習：
+
+	使用者列表（API） + Router + Pinia token + Axios interceptor + Loading/Error + Detail 頁
