@@ -5,6 +5,7 @@ ref ChatGPT
 		若建立專案時有選 ESLint/Prettier
 			* 先跑一次
 				npm run lint
+					# 執行專案裡定義好的「程式碼檢查」指令，用來把一些「雖然能跑，但不夠乾淨/容易出錯/不一致」的寫法抓出來。
 				npm run format
 			* VS Code 設定：存檔自動 format（Prettier）+ ESLint fix（通常擴充可以設定）
 	
@@ -157,3 +158,11 @@ ref ChatGPT
 	做一個「最小但完整」的小專案練習：
 
 	使用者列表（API） + Router + Pinia token + Axios interceptor + Loading/Error + Detail 頁
+
+
+備註:
+	npm run lint 其實是：
+
+		* npm run：叫 npm 去執行 package.json 裡的 scripts
+
+		* lint：scripts 裡的一個命令名稱
