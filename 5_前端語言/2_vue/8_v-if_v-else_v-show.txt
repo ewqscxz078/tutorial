@@ -1,0 +1,74 @@
+ref https://www.youtube.com/watch?v=3WAs4Gnb2dA&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=5
+
+
+v-if 、 v-else
+	靠 有沒有渲染 div，跟效能有關
+v-show
+	靠 css display: none，跟效能有關
+
+	<template>
+	  <button v-on:click="changeView(1)">顯示單向綁定<button/>
+	  <button v-on:click="changeView(2)">顯示雙向綁定<button/>
+	  #<button @click="changeView(1)">顯示單向綁定<button/>  另一種簡化寫法
+	  #<button @click="changeView(2)">顯示雙向綁定<button/>  另一種簡化寫法
+	  <button v-on:click="changeView(10000)">沒畫面<button/>
+
+	  <div class="contain-1" v-if="view === 1">
+		  <p>資料綁定(單向綁定)</p>
+		  {{data}}
+	  </div>
+
+	  <div class="contain-2" v-if="view === 2">
+		  <p>資料綁定(雙向綁定)</p>
+		  <input type="text" v-model="text" />
+		  {{text}}
+	  </div>
+
+	  <div  v-else>
+		  沒畫面
+	  </div>
+	  #<div  v-if="view !== 1 && view !== 2">
+	  #  沒畫面
+	  #</div>
+
+	  # v-show
+	  <div class="contain-1" v-show="view === 1">
+		  <p>資料綁定(單向綁定)</p>
+		  {{data}}
+	  </div>
+
+	  <div class="contain-2" v-show="view === 2">
+		  <p>資料綁定(雙向綁定)</p>
+		  <input type="text" v-model="text" />
+		  {{text}}
+	  </div>
+
+	  <div  v-show="view !== 1 && view !== 2">
+	    沒畫面
+	  </div>
+
+	</template>
+
+	<script setup>
+		const data = "Hello Vue"
+
+		import {ref} from "@vue/reactivity"
+		# 資料驅動畫面
+		const text = ref("123")
+		const view = ref(1)
+		#const changeView = function() {
+		#	....
+		#}
+		const changeView = (index) => {
+			view.value = index
+		}
+	</script>
+
+	<style>
+		.contain-1{
+		  border: 2px red solid;
+		}
+		.contain-2{
+		  border: 2px skyblue solid;
+		}
+	</style>

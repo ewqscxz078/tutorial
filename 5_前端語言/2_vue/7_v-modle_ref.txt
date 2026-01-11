@@ -1,0 +1,33 @@
+ref https://www.youtube.com/watch?v=vfxWeC1PwOc&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=4
+
+
+v-model
+	# 資料綁定(單向綁定)
+
+		<template>
+		  <p>資料綁定(單向綁定)</p>
+		  {{data}}
+		</template>
+
+		<script setup>
+			const data = "Hello Vue"
+		</script>
+
+		<style></style>
+
+ref
+	# 資料綁定(雙向綁定)
+
+		<template>
+		  <p>資料綁定(雙向綁定)</p>
+		  <input type="text" v-model="text" />
+		  {{text}}
+		</template>
+
+		<script setup>
+			import {ref} from "@vue/reactivity"
+			# 資料驅動畫面
+			const text = ref("123")
+		</script>
+
+		<style></style>
