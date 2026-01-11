@@ -3,14 +3,14 @@ ref ChatGPT
 引用方式
 	jsp
 		舊專案 JSP 常見實務
-		
+
 			JSP 裡使用 contextPath（避免反向代理 / 子路徑問題）
 				<link rel="stylesheet" href="${pageContext.request.contextPath}/css/main.css">
 				<script src="${pageContext.request.contextPath}/js/app.js"></script>
-			
+
 			或先定義：
 				<c:set var="ctx" value="${pageContext.request.contextPath}" />
-	
+
 	css、font、images、js
 		這樣瀏覽器才能用：
 		<link rel="stylesheet" href="/css/main.css">
@@ -33,12 +33,12 @@ ref ChatGPT
 
 			無參數：
 				<jsp:include page="/WEB-INF/jsp/include/xxx.jsp" />
-			
+
 			帶參數：
 				<jsp:include page="/WEB-INF/jsp/include/xxx.jsp">
 				  <jsp:param name="title" value="Hello"/>
 				</jsp:include>
-	
+
 		2.也很常用：<%@ include %>（靜態 include，編譯期）
 			<%@ include file="/WEB-INF/jsp/include/xxx.jsp" %>
 				* 編譯時就把內容貼進來
@@ -46,15 +46,15 @@ ref ChatGPT
 				* 適合 header/footer/taglib 宣告片段等「固定內容」
 
 				* 但不適合依條件切換或帶參數
-		
+
 		3.<c:import url=...>
 			只建議在「真的要用 URL import（例如跨站/跨 context）或要走 controller」時才用
 				<%@ taglib prefix="c" uri="http://java.sumcom/jsp/jstl/core" %>
 				<c:import url="/WEB-INF/jsp/include/xxx.jsp" />
 			⚠️ 不過要注意：<c:import> 的 url 本質是「做一次內部的 request」，
-				在不同容器/設定下，有時候會被當成對外 URL 存取，而 WEB-INF 
+				在不同容器/設定下，有時候會被當成對外 URL 存取，而 WEB-INF
 				又是禁止直接存取的區域，因此可能出現 404 或行為不一致。
-			
+
 			1) 什麼情況叫「真的要用 URL import」？
 				=> A. 你要抓的不是 JSP 檔案，而是「一個 URL 的輸出」
 					這種情境用 <jsp:include page="/widget/announcement" /> 也能做到
@@ -79,7 +79,7 @@ ref ChatGPT
 
 			2) 什麼叫「要走 controller」？
 				重點是：你 include 的目標不是一個檔案路徑，而是一段後端邏輯。
-				
+
 				例如你想把「使用者通知數量」這塊做成共用元件：
 					@GetMapping("/fragments/notify")
 					public String notify(Model model) {
@@ -93,7 +93,7 @@ ref ChatGPT
 					所以這裡我說的「要走 controller」並不是只有 <c:import> 能做，而是：
 					當你的目標是一個 URL endpoint（controller/servlet）而不是純 JSP 片段時，
 					<c:import> 才比較合理。
-			
+
 			3) 那為什麼「純 JSP 片段」不建議用 <c:import url="/WEB-INF/...">？
 				因為你已經遇到過一次了：
 					WEB-INF 禁止外部直連。
@@ -101,7 +101,7 @@ ref ChatGPT
 				<c:import> 很容易在某些情況被當成「去 GET 那個 URL」的行為（即便是 server 端），
 					而 GET /WEB-INF/jsp/include/xxx.jsp 本質上就是在走 URL 存取，容器會擋。
 					不同容器/設定下行為可能不一致，容易踩雷。
-				
+
 				相較之下：
 					* <jsp:include page="/WEB-INF/jsp/include/xxx.jsp" /> 是 JSP 引擎/Servlet 內部 include 的標準用法，對 WEB-INF 片段非常穩
 					* <%@ include file="..." %> 更是直接把檔案貼進去，根本不走請求
@@ -148,20 +148,20 @@ A1: 之所以看起來繞，不是技術人員愛繞，而是 Servlet / Spring M
 	URL 是「對外 API」，JSP 是「內部 View 實作細節」。
 		* 對外永遠只打 Controller URL
 		* JSP 永遠只存在於 WEB-INF，只能被 server 端 forward
-	
+
 		這不是多此一舉，而是為了安全、可維護、可重構。
-	
+
 	一、如果「直接打 JSP 檔案」會怎樣？
 		href="/WEB-INF/jsp/XXXXX/tabs.jsp"
 		結果是：
 			瀏覽器直接 GET /WEB-INF/...
 			Servlet 規範：禁止
 			→ 404
-		
+
 		即使你把 JSP 放到 webapp 根目錄讓它能直接打：
 			/tabs.jsp
 			看起來簡單，但立刻產生這些問題：
-			
+
 			1️.安全問題
 				* 任意 JSP 都可被直接請求
 				* 包含 include fragment（header/footer）也能被單獨打
@@ -169,7 +169,7 @@ A1: 之所以看起來繞，不是技術人員愛繞，而是 Servlet / Spring M
 			2.架構耦合
 				* URL = 檔案路徑
 				* 未來改資料夾、改技術（JSP → Thymeleaf / Vue）= 全站 URL 大改
-			
+
 			3️.控制權在前端
 				* 前端決定要存取哪個 JSP
 				* 後端無法集中做：
@@ -193,9 +193,9 @@ A1: 之所以看起來繞，不是技術人員愛繞，而是 Servlet / Spring M
 			JSP Engine
 			  ↓ HTML
 			Browser
-			
+
 			瀏覽器永遠不知道 JSP 在哪裡。
-	
+
 	三、為什麼這對你現在的 EasyUI / href 特別重要？
 		現在不是「整頁請求」，而是：
 			* EasyUI href → AJAX 載入局部 HTML
@@ -203,12 +203,12 @@ A1: 之所以看起來繞，不是技術人員愛繞，而是 Servlet / Spring M
 				* 可能是 GET / POST
 				* 可能帶 cookie / session
 				* 可能需要驗證登入
-		
+
 		如果你讓它直接打 JSP：
 			* JSP 裡只能「事後發現沒登入」
 			* 然後在 JSP 裡 location.href = ...
 			* 你已經看到：很亂、很容易壞
-		
+
 		改成 controller 的好處
 			@GetMapping("/xxxxx/tabs")
 			public String tabs(HttpSession session) {

@@ -8,7 +8,7 @@ ref ChatGPT
 					# 執行專案裡定義好的「程式碼檢查」指令，用來把一些「雖然能跑，但不夠乾淨/容易出錯/不一致」的寫法抓出來。
 				npm run format
 			* VS Code 設定：存檔自動 format（Prettier）+ ESLint fix（通常擴充可以設定）
-	
+
 	1.2 了解 package.json scripts
 		你每天會用到的通常是：
 
@@ -57,7 +57,7 @@ ref ChatGPT
 		route guard（登入判斷 / 權限）
 
 		404 路由
-	
+
 	如果沒選 Router，也可以補裝：
 		npm i vue-router
 
@@ -102,7 +102,7 @@ ref ChatGPT
 		4.在頁面使用 composable：
 
 			src/composables/useUsers.ts
-		
+
 		會瞬間理解「前端工程化」在幹嘛。
 
 

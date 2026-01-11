@@ -3,13 +3,13 @@
 
 方法一（最簡單、最推薦）：用 PowerShell「一次性允許」執行
 	不改系統安全設定、只對這次執行有效
-	
+
 	步驟 1️.開 PowerShell
 
 		Win + X → Windows PowerShell
 
 		不需要「系統管理員」
-	
+
 	步驟 2.切到腳本所在目錄
 		假設你的腳本在：
 			C:\tools\nodejs\
@@ -32,12 +32,12 @@
 
 方法二：在目前 PowerShell Session 允許後直接執行
 	比較像「我信任這個檔案」
-	
+
 	步驟 1.允許目前使用者執行腳本
 		Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-		
+
 		選 Y 確認。
-		
+
 	步驟 2.直接執行
 		.\init-node-env.ps1
 

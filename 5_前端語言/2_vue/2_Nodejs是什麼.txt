@@ -22,7 +22,7 @@ ref ChatGPT
 			* 前端 build 跑不起來
 
 	2.npm / pnpm / yarn 是什麼？
-		套件管理工具（Package Manager）
+		套件管理工具（Package Manager/ node package manager）
 			* 負責：
 				* 下載 JavaScript 套件
 				* 管理版本

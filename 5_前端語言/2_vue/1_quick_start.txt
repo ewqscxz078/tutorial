@@ -1,5 +1,9 @@
 ref ChatGPT
 
+教學	ref https://www.youtube.com/watch?v=FkVJCy3dao4&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&pp=0gcJCbEEOCosWNin
+			https://www.youtube.com/watch?v=d5mrJfl6UWM&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O
+				尚硅谷
+
 20251231 當時使用「最新的 Vue」開始做前端開發，建議直接走
 	Vue 3 + Vite + TypeScript 這條主流路線（也是目前最常見、最順的組合）
 
@@ -15,9 +19,9 @@ ref ChatGPT
 1) 用官方方式建立 Vue 專案（Vite）
 	舊一代建立方式(已不再建議使用的方式)
 		Vue CLI（舊一代），底層主要是 Webpack
-			npm install -g @vue/cli 
+			npm install -g @vue/cli
 			vue create vue-demo
-	
+
 	新一代建立方式
 		新一代，底層主要是 Vite
 			npm create vue@latest
@@ -57,7 +61,7 @@ ref ChatGPT
 						npm notice
 					npm install -g npm@11.7.0 #可更新到指定的版本
 					# 下 npm fund 可看到詳細裡面每個套件版本
-					
+
 				npm run dev
 
 			看到終端機提示的網址（通常是 http://localhost:5173）就成功了。
