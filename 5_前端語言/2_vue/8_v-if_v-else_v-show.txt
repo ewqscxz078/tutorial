@@ -2,9 +2,9 @@ ref https://www.youtube.com/watch?v=3WAs4Gnb2dA&list=PLSCgthA1AnifSzKdpV4FWq1pLV
 
 
 v-if 、 v-else
-	靠 有沒有渲染 div，跟效能有關
+	靠 有沒有渲染 div，跟效能有關，動態節點越多，效能較好，比如十萬個節點有無在html上有明顯差異
 v-show
-	靠 css display: none，跟效能有關
+	靠 css display: none，跟效能有關，節點越多效能越差
 
 	<template>
 	  <button v-on:click="changeView(1)">顯示單向綁定<button/>

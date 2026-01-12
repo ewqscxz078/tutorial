@@ -1,0 +1,80 @@
+ref https://www.youtube.com/watch?v=w6UaYZExkz0&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=6
+
+
+v-for
+	迴圈渲染 與 key 屬性
+
+	<template>
+	    # 靜態指定
+		<p>{{dataList[0]}}</p>
+		<p>{{dataList[1]}}</p>
+		<p>{{dataList[2]}}</p>
+		<p>{{dataList[3]}}</p>
+
+		# 陣列演示
+		<p v-for="xxx in dataList">
+			{{xxx}}
+		</p>
+
+		# 物件演示
+		<p v-for="(value, key, index) in dataList2">
+			{{index}}.{{key}}:{{value}}
+		</p>
+
+		# 物件 + v-show 演示
+		<p v-for="(value, key, index) in dataList2">
+			<span v-show="key !== 'key3'">
+				{{index}}.{{key}}:{{value}}
+			</span>
+		</p>
+
+		# key 屬性綁定之當內容變的時候重新渲染
+		<p class="test-cls" :key="test">
+			{{test}}
+		</p>
+	</template>
+
+
+	<script setup>
+		# 靜態模擬資料
+		# 陣列
+		const dataList = [
+		  'a',
+		  'b',
+		  'c',
+		  'd',
+		]
+
+		# 物件
+		const dataList2 = [
+		  key1:'a',
+		  key2:'b',
+		  key3:'c',
+		  key4:'d',
+		]
+
+		# 演示 key，確保綁定時連動畫也一起附著，因為重新渲染更新節點整個重新跑
+		import { ref } from 'vue'
+		const test = ref('test')
+		setTimeout(()=>{
+			test.value = 'apple!'
+		},2000)
+	</script>
+
+	<style>
+		.test-cls{
+			font-size: 40px;
+			animation: openIn 1s ease-in-out;
+		}
+
+		@keyframes openIn {
+			0% {
+				opacity: 0;
+				transform: translateY(20px);
+			}
+			100% {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+	</style>
