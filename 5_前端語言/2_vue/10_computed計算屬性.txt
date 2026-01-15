@@ -1,0 +1,71 @@
+ref https://www.youtube.com/watch?v=9HLPU8a85fw&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=7
+
+computed 計算屬性
+	資料預處理
+
+	<template>
+		<h1>computed 計算屬性</h1>
+		<h3>{{Number.isNaN(num*100) ? num : num*100}}%</h3> ui參雜邏輯不恰當
+
+		<h3>{{numFormat()}}</h3> 使用呼叫方法(若觸發 v-model="text" 也會間接觸發一般方法的 console.log('change') )
+
+		<input type=text v-model="text">
+		<input type=number v-model="num">
+		<h3>{{numFormat}}</h3> 使用computed呼叫，為響應式物件(若觸發 v-model="text" 不會觸發 computed 的 console.log('change') )
+
+		<input type=text v-model="fullName">
+		<p>{{firstName}}</p>
+		<p>{{lastName}}</p>
+	</template>
+
+
+	<script setup>
+		import { computed,ref } from 'vue'
+
+		const text = ref('Hello world')
+		// 一般方法封裝方式
+		//const num = 0.6
+		//const num = "沒資料!"
+		const num = ref(0)
+
+		//const numFormat = () => {
+		//  console.log('change')
+		//  if(Number.isNaN(num*100)) return num
+		//  return `${num*100}%`
+		//}
+
+		// 使用computed 封裝方式
+		//const numFormat = computed(() => {
+		//  if(Number.isNaN(num*100)) return num
+		//  return `${num*100}%`
+		//})
+
+		// 使用computed 封裝方式 + ref
+		// 用法一 : 若不需要修改 computed 外部響應式物件
+		// 注意用法
+		// 1.不要有 side effect 副作用(不要去操作別的物件結果)
+		// 2.不要修改 computed 回傳後的值又特別賦值覆蓋
+		const numFormat = computed(() => {
+		  console.log('change')
+		  if(Number.isNaN(num.value*100)) return num.value
+		  return `${num.value*100}%`
+		})
+
+		// 用法二 : 若需要修改 computed 外部響應式物件
+		const firstName = ref('John')
+		const lastName = ref('Doe')
+		const fullName = computed({
+		  get(){
+		    return `${firstName.value} ${lastName.value}`
+		  }
+		  set(newName){
+		    const [newfirstName, newLastName] = newName.split(' ')
+			firstName.value = newfirstName
+			lastName
+		  }
+		})
+
+	</script>
+
+	<style>
+	</style>

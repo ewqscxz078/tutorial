@@ -1,0 +1,107 @@
+ref https://www.youtube.com/watch?v=2s8gJ-0gUBs&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=8
+
+watch、watchEffect
+
+	// 當我變數是基礎變數時，建議用 ref
+	// 當我變數是物件時，用 reactive，reactive裡面一定是物件
+
+	<template>
+		//<input type=text v-model="text">
+		<input type=text v-model="text.levels.text">
+		<input type=text v-model="text.label">
+
+		<input type=text v-model="textDemo">
+	</template>
+
+
+	<script setup>
+		import { ref,reactive } from '@vue/reactivity'
+		import { watch,watchEffect } from '@vue/runtime-core'
+
+		//const text = ref('')
+		const text = ref({
+		  levels:{
+		    text: '',
+		  },
+		  label: '123',
+		})
+
+		// ================= watch =================
+		// 1.預設只會監聽物件的第一層
+		watch(text,(newData,oldData)=>{
+		  console.log(newData,oldData)
+		})
+
+		// 2.監聽物件的深層
+		watch(text,(newData,oldData)=>{
+		  console.log(newData,oldData)
+		}, {deep: true})
+
+		// 3.監聽物件的屬性
+		watch(
+		  () => text.value.levels.text,
+		  (newData,oldData)=>{
+		  console.log(newData,oldData)
+		}, {deep: true}) // 注意使用 deep 可能會有效能疑慮，因為它用遞迴掃描
+
+		// 4.監聽物件兩個屬性
+		watch(
+		  [
+		    () => text.value.levels.text,
+			() => text.value.label,
+		  ]
+		  (newData,oldData)=>{
+		    console.log(newData,oldData)
+		  },
+		  {deep: true}
+		)
+
+		// # 補充 reactive 可以 value不寫
+		const text = reactive({
+		  levels:{
+		    text: '',
+		  },
+		})
+		watch(
+		  () => text.levels.text, // value可以不寫
+		  (newData,oldData)=>{
+		    console.log(newData,oldData)
+		  }
+		)
+
+        // ================= watchEffect =================
+		// 自動監測依賴的東西
+		watchEffect(()=>{
+		  //console.log(text.value.levels.text)
+		  console.log(text.value.levels.text, text.value.label)
+		}
+
+		// 如何停止監聽
+		const stop = watchEffect(()=>{
+		  console.log(text.value.levels.text, text.value.label)
+		  if(text.value.label == 'stop') stop()
+		}
+
+        // 範例利用 watch 與 input text 輸入監控改變顏色與字體大小
+		const textDemo = ref('')
+
+		const dynamicSytle = reactive({
+		  color: 'red'
+		  fontSize: '14px'
+		  transitiion: 'ease-in-out 0.2s'
+		})
+		watch(text,(newData)=>{
+		  if(newData.length % 2 === 0){
+		    dynamicSytle.color = 'skyblue'
+			dynamicSytle.fontSize = '20px'
+		  } else {
+		    dynamicSytle.color = 'red'
+			dynamicSytle.fontSize = '14px'
+		  }
+		})
+
+
+	</script>
+
+	<style>
+	</style>
