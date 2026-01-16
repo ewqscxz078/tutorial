@@ -1,0 +1,173 @@
+
+Q: java 開發 + spring boot
+	若組織架構為 一組共用組，另外有其他組 for 各自業務
+
+	這各組版更時程可能不同，但僅有一組共用組，為了維護 lib 升版時
+
+	會建議怎麼設定 maven 以利既確保 各組可各自lib 升版，又有一定程度的共用
+
+	有點兩難的情況，主要共用組人力有限，怕改 A 壞 B。
+
+
+A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版時程不同」
+	用「BOM + 相容性保證 + 漸進升版機制」來解這個兩難
+	核心目標是：
+		* 共用組：能集中管依賴版本、做安全修補與升版，但不會一改就炸四組
+
+		* 各組業務：能「選擇」何時升版，必要時可以暫時停在舊版，甚至做少量 override
+	
+		
+	1) 把共用組拆成兩層：API 穩定層 + 實作演進層
+		A. common-api（強穩定、少改）
+			* 放「DTO / interface / annotation / error code / 共用 model」
+			* 原則：盡量不引入重依賴（Spring、HTTP client、DB driver 這些都別帶進來）
+			* 版本策略：偏向 極慢、高相容
+
+		B. common-starter / common-support（可演進）
+			* 放 Spring Boot 的 auto-config、共用 client、共用 filter、helper
+			* 版本策略：允許較快演進，但要靠下面的 BOM 與相容策略控風險
+			* 這樣共用組做重構或換底層 lib，多半限制在 support/starter，不會把所有業務線「編譯就壞」。
+	
+	2) 用「BOM」集中控版本，但讓各組可以選用（關鍵）
+		做一個共用 BOM：common-bom（packaging = pom）
+		它只做兩件事：
+			1.鎖住共用組推薦的版本（含三方依賴）
+			2.宣告共用模組自己的版本（common-api / common-starter 等）
+		
+		common-bom/pom.xml（示意）
+			<project>
+			  <modelVersion>4.0.0</modelVersion>
+			  <groupId>com.myco</groupId>
+			  <artifactId>common-bom</artifactId>
+			  <version>1.8.0</version>
+			  <packaging>pom</packaging>
+
+			  <dependencyManagement>
+				<dependencies>
+
+				  <!-- 1) 共用模組版本 -->
+				  <dependency><groupId>com.myco</groupId><artifactId>common-api</artifactId><version>${project.version}</version></dependency>
+				  <dependency><groupId>com.myco</groupId><artifactId>common-starter</artifactId><version>${project.version}</version></dependency>
+
+				  <!-- 2) 推薦三方依賴版本（範例） -->
+				  <dependency><groupId>com.github.ben-manes.caffeine</groupId><artifactId>caffeine</artifactId><version>3.2.0</version></dependency>
+
+				  <!-- 也可以在這裡 import Spring Boot BOM -->
+				  <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-dependencies</artifactId><version>3.5.0</version><type>pom</type><scope>import</scope></dependency>
+
+				</dependencies>
+			  </dependencyManagement>
+			</project>
+
+	3) 四組業務「用 import BOM」，但每組可以卡在不同 BOM 版本
+		每個業務線自己的 parent（或最上層 pom）只要：
+
+			<dependencyManagement>
+			  <dependencies>
+				<dependency>
+				  <groupId>com.myco</groupId>
+				  <artifactId>common-bom</artifactId>
+				  <version>1.7.2</version> <!-- 這裡就是每組可自行決定 -->
+				  <type>pom</type>
+				  <scope>import</scope>
+				</dependency>
+			  </dependencies>
+			</dependencyManagement>
+
+			<dependencies>
+			  <dependency>
+				<groupId>com.myco</groupId>
+				<artifactId>common-starter</artifactId>
+			  </dependency>
+			</dependencies>
+
+	這個設計的好處
+
+		* 共用組釋出 common-bom 1.8.0 不會逼四組立刻升
+
+		* A 組可以先升到 1.8.0，B/C/D 還停在 1.7.2
+
+		* 共用組人力有限時，只要把相容性保證清楚，就能降低「改 A 壞 B」
+	
+	4) 版本策略：用 SemVer + 「只對 common-api 保證相容」來控風險
+
+		建議定規則（非常重要，否則 BOM 再好也會亂）：
+
+			* common-api：嚴格 SemVer
+
+				MAJOR：破壞性變更
+
+				MINOR：新增但相容
+
+				PATCH：bugfix
+		
+			* common-starter/common-support：相容承諾可以「較鬆」，但要在 release note 清楚標「需要修改設定/行為改變」
+
+		然後共用組每次出新版 BOM，寫清楚：
+
+			* 升級成本：0/低/中/高
+
+			* 破壞性變更點
+
+			* 影響範圍（哪些 starter / auto-config）
+	
+	5) 防止「改 A 壞 B」：在共用 repo 做 Consumer 驗證（超值）
+
+		就算人力有限，也很建議做「最小化」的保護：
+			
+			A. 建立 4 個超小 Consumer（只編譯 + 跑冒煙測試）
+
+				在 common repo 裡放 samples/consumer-a ... consumer-d
+					* 每個只引用該業務線最常用的組合（例如：web + security + gateway client）
+
+					* CI：共用庫每次變更至少做：
+
+						* mvn -pl common-* -am test
+
+						* mvn -pl samples/consumer-* -am test（至少 compile + context load）
+				
+				這招可以把「改 A 壞 B」提早在共用組 CI 擋掉。
+		
+		
+			B. Maven Enforcer（讓依賴地獄不要爆）
+
+				在共用 BOM 或 parent 加上：
+
+					* requireUpperBoundDeps
+
+					* dependencyConvergence
+
+					* 禁止 snapshot（視需求）
+
+	6) 允許業務線少量 override，但要有規範（避免失控）
+		有時業務線會急著修 CVE 或特定 bug，想先升某個三方 lib。
+		可以允許，但要規範：
+
+			* 允許 override：在業務 pom 的 <dependencyManagement> 針對單一依賴覆寫版本
+
+			* 要求：提 issue/PR 回共用組，讓下個 BOM 版本吸收回來（避免各組各走各的）
+	
+	7) 如果四組差異真的大：做「可插拔的 starter」而不是一包打死
+		
+		共用組不要只出一個巨大 common-starter，改成：
+			* common-web-starter
+
+			* common-security-starter
+
+			* common-observability-starter
+
+			* common-db-starter
+		
+		業務線「用到再引」，降低 blast radius。
+
+	
+	會怎麼建議落地（最務實的組合）
+		1.共用組先做 common-bom（最有效的槓桿）
+
+		2.把共用拆成 common-api（穩）+ common-starter(s)（可演進）
+
+		3.四組各自選 BOM 版本，不同步也沒關係
+
+		4.共用 repo 加 4 個最小 consumer 來跑 CI（預防改 A 壞 B）
+
+		5.用 SemVer + release note 規範相容承諾

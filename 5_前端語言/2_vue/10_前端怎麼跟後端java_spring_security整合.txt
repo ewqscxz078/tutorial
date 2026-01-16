@@ -1,0 +1,102 @@
+ref ChatGPT
+
+vue3 前端怎麼跟後端 java 整合 spring boot security
+	把「前後端邊界」切清楚
+		* Vue 只負責 UI 與呼叫 API；
+		* Security 在後端用 Token（通常 JWT）保護 API
+
+
+	1) 最主流：前後端分離 + JWT（推薦）
+		整體流程
+			1.Vue 3 登入頁呼叫 POST /api/auth/login（或走 OAuth2/OIDC 授權碼流程）
+			2.後端回傳 access_token (JWT)（必要時再有 refresh token）
+			3.Vue 把 access_token 存在記憶體或（次佳）localStorage
+			4.之後每次呼叫 API 都帶上：
+				Authorization: Bearer <token>
+			5.後端 Spring Security 用 Resource Server 驗證 JWT、做授權（roles/scopes）
+	
+		後端（Spring Boot）典型重點
+			* 使用 spring-boot-starter-oauth2-resource-server
+			* 設定 SecurityFilterChain：
+				* csrf：純 API 通常可關閉或改成 token-based
+				* session：設成 STATELESS
+				* authorizeHttpRequests：登入/公開路徑放行，其餘要驗證
+				* oauth2ResourceServer().jwt()
+		記住一句：後端當 Resource Server，Vue 只要會帶 Bearer token 即可整合。
+		
+		前端（Vue 3）典型重點
+			* Axios（或 fetch）做一個 request interceptor：
+				* 從你存 token 的地方取出
+				* 自動加上 Authorization header
+			* 遇到 401：
+				* 如果有 refresh token：去換新 token 再重送
+				* 沒有 refresh：導回登入頁
+	
+	2) 同網域整合：後端用 Session + Cookie（也常見）
+		如果你希望「像傳統網站」那樣登入一次就靠 Cookie：
+			* Vue SPA 仍然可以用 Cookie-based session
+			* 關鍵在 CORS + SameSite + CSRF
+		
+		典型做法
+			* 前後端同網域（例如都在 https://example.com）：
+				* Vue 靜態檔由 Spring Boot 提供（或由 Nginx 提供但同網域）
+				* Cookie 自動帶，不用手動塞 Authorization header
+			* 若不同網域：
+				* 需要 withCredentials: true
+				* 後端 CORS allowCredentials(true)
+				* Cookie 要 SameSite=None; Secure
+		代價
+			* 你幾乎一定要處理 CSRF（因為 Cookie 自動附帶）
+			* 對 SPA 來說，JWT 模式通常更直覺
+	
+	3) OAuth2/OIDC 正規做法：授權碼 + PKCE（更安全、企業常用）
+		如果你的系統本來就有 Auth Server（或用 Keycloak/Okta/Entra ID）
+			* Vue 3 用 PKCE 走授權碼流程拿 token
+
+			* 後端 API 當 Resource Server 驗 JWT
+
+			* Vue 不自己處理帳密（帳密在 IdP 登入頁）
+
+		這在「多系統、SSO、跨服務」環境很常見，也最符合現代安全建議。
+	
+	
+	4) CORS、反向代理與路由：最容易卡的點
+		開發期（Vue dev server）常見
+			* Vue：http://localhost:5173
+
+			* Spring Boot：http://localhost:8080
+
+			* 會碰到 CORS
+
+		有兩種路線：
+
+			1.後端開 CORS（正式環境也可能需要）
+
+			2.Vite 用 proxy 讓前端看起來像同源（開發期最爽）
+		
+		開發期我通常建議先用 Vite proxy 省事；正式環境用 Nginx/Ingress 做反向代理再統一網域。
+	
+	5) 最小可行整合清單（你可以照這張做）
+		後端
+
+			✅ API 全部放 /api/**
+
+			✅ POST /api/auth/login 放行
+
+			✅ 其他 /api/** 需要驗證
+
+			✅ SessionCreationPolicy.STATELESS（若 JWT）
+
+			✅ 設好 JWT decoder / issuer / jwk-set-uri
+
+			✅ 回傳統一的 401/403 JSON（Vue 才好處理）
+
+		前端
+
+			✅ axios interceptor 自動塞 Authorization
+
+			✅ router guard：沒 token 不給進需要登入的頁
+
+			✅ 全域處理 401（跳登入 / refresh）
+
+			✅ 開發期用 Vite proxy 或後端 CORS
