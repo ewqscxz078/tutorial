@@ -1,0 +1,75 @@
+ref https://www.youtube.com/watch?v=gbtu3SHZvkk&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=9
+
+
+父子組件溝通、傳資料
+
+	// 父組件傳資料給子組件
+	// 子組件傳資料給父組件
+
+	App.vue
+		<template>
+			<input type="text" v-model="msg" />
+			<br>
+			<!-- 父組件傳資料給子組件 by : 或 v-binnder 方式 -->
+			<!-- 子組件傳資料給父組件 by 事件觸發方法處理 -->
+			<!-- 明確寫法 <Child v-binnder:data="msg" v-on:update="updateHandler" />
+			<Child :data="msg" @update="updateHandler" />
+		</template>
+
+
+		<script setup>
+			import { ref } from '@vue/reactivity'
+			import Child from './components/Child.vue'
+
+			const msg = ref("")
+			const updateHandler = (data) => { // 對照子組件 emit('update',newValue)，代表子組件有幾個參數，該處就接收幾個
+				console.log(data)
+			}
+		</script>
+
+		<style>
+		</style>
+
+
+	child.vue
+		<template>
+		    <!-- data: {{data}} -->
+			<div>
+			  字數: {{msgCount}}
+			</div>
+		</template>
+
+
+		<script setup>
+			import { ref } from '@vue/reactivity'
+			import { watch } from '@vue/runtime-core'
+
+			const emit = defineEmits(['update']) // 定義組件可以發出的事件
+
+			// 定義接收那些外部來的屬性
+			//const props = defineProps('[data]') 	// 第一種 : 字串陣列寫法
+			const props = defineProps({ 			// 第二種 : 物件寫法
+				data:{
+				  type: String,
+				  default: "",
+				  //request: true // 是否必須
+				  //validator(value){ // 是否驗證
+				  //  return value.length > 0
+				  //}
+				}
+			})
+
+			const msgCount = computed(() =>{
+			  return props.data.length;
+			})
+
+			// 監聽 msgCount 事件與發送
+			watch(msgCount,(newValue) => {
+			  emit('update', `from child: ${newValue}`)
+			})
+
+
+		</script>
+
+		<style>
+		</style>
