@@ -14,7 +14,7 @@ vue3 前端怎麼跟後端 java 整合 spring boot security
 			4.之後每次呼叫 API 都帶上：
 				Authorization: Bearer <token>
 			5.後端 Spring Security 用 Resource Server 驗證 JWT、做授權（roles/scopes）
-	
+
 		後端（Spring Boot）典型重點
 			* 使用 spring-boot-starter-oauth2-resource-server
 			* 設定 SecurityFilterChain：
@@ -23,7 +23,7 @@ vue3 前端怎麼跟後端 java 整合 spring boot security
 				* authorizeHttpRequests：登入/公開路徑放行，其餘要驗證
 				* oauth2ResourceServer().jwt()
 		記住一句：後端當 Resource Server，Vue 只要會帶 Bearer token 即可整合。
-		
+
 		前端（Vue 3）典型重點
 			* Axios（或 fetch）做一個 request interceptor：
 				* 從你存 token 的地方取出
@@ -31,12 +31,12 @@ vue3 前端怎麼跟後端 java 整合 spring boot security
 			* 遇到 401：
 				* 如果有 refresh token：去換新 token 再重送
 				* 沒有 refresh：導回登入頁
-	
+
 	2) 同網域整合：後端用 Session + Cookie（也常見）
 		如果你希望「像傳統網站」那樣登入一次就靠 Cookie：
 			* Vue SPA 仍然可以用 Cookie-based session
 			* 關鍵在 CORS + SameSite + CSRF
-		
+
 		典型做法
 			* 前後端同網域（例如都在 https://example.com）：
 				* Vue 靜態檔由 Spring Boot 提供（或由 Nginx 提供但同網域）
@@ -48,7 +48,7 @@ vue3 前端怎麼跟後端 java 整合 spring boot security
 		代價
 			* 你幾乎一定要處理 CSRF（因為 Cookie 自動附帶）
 			* 對 SPA 來說，JWT 模式通常更直覺
-	
+
 	3) OAuth2/OIDC 正規做法：授權碼 + PKCE（更安全、企業常用）
 		如果你的系統本來就有 Auth Server（或用 Keycloak/Okta/Entra ID）
 			* Vue 3 用 PKCE 走授權碼流程拿 token
@@ -58,8 +58,8 @@ vue3 前端怎麼跟後端 java 整合 spring boot security
 			* Vue 不自己處理帳密（帳密在 IdP 登入頁）
 
 		這在「多系統、SSO、跨服務」環境很常見，也最符合現代安全建議。
-	
-	
+
+
 	4) CORS、反向代理與路由：最容易卡的點
 		開發期（Vue dev server）常見
 			* Vue：http://localhost:5173
@@ -73,9 +73,9 @@ vue3 前端怎麼跟後端 java 整合 spring boot security
 			1.後端開 CORS（正式環境也可能需要）
 
 			2.Vite 用 proxy 讓前端看起來像同源（開發期最爽）
-		
+
 		開發期我通常建議先用 Vite proxy 省事；正式環境用 Nginx/Ingress 做反向代理再統一網域。
-	
+
 	5) 最小可行整合清單（你可以照這張做）
 		後端
 

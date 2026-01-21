@@ -15,11 +15,11 @@
 		* Settings 裡確認：
 			* Use WSL 2 based engine 開啟
 			* WSL Integration 有勾到你用的 distro（例如 Ubuntu）
-			
+
 			WSL 端檢查 在 WSL terminal 跑：
 				docker version
 				docker compose version
-			
+
 	2) 建一個專案資料夾（建議放 WSL 檔案系統）
 		於 wsl terminal
 			* 建立一個專案目錄與 compose.yml
@@ -55,10 +55,10 @@
 			volumes：資料不會因為 container 刪掉就消失
 			healthcheck：讓你之後服務可以等 DB ready 再啟動（很實用）
 			密碼必須符合 SQL Server 規則（大寫/小寫/數字/符號，且長度足夠），不然 container 會起不來。
-		
+
 		同目錄新增 .env
 			MSSQL_SA_PASSWORD=Your_Strong_Passw0rd!
-		
+
 	4) 啟動 SQL Server
 		在 WSL terminal（專案根目錄）：
 			執行前確認聚合的 yml 結果
@@ -70,32 +70,32 @@
 			查看 docker logs
 				docker logs -f mssql-dev
 				docker compose logs -f mssql-init
-				
+
 			1) 只把服務停掉（之後可再啟動）
 				停掉
 					docker compose stop
 				之後要再跑起來
 					docker compose start
-			
+
 			2) 停掉並移除容器（常見的「下下來」）
 				docker compose down
-				
+
 				連同 volumes 一起刪掉（資料也會不見）
 					docker compose down -v
 
 				連同 images 也一起清掉	(常用)
 					docker compose down --rmi local
-				
+
 				移除孤兒容器（compose.yml 已拿掉但還殘留的）
 					docker compose down --remove-orphans
 
-					
+
 		看到類似「SQL Server is now ready for client connections」就代表 DB ready。
-	
+
 	5) 連線測試（兩種方式）
 		方式 A：用容器內的 sqlcmd 測
 			docker exec -it mssql-dev /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Your_Strong_Passw0rd!' -Q "SELECT @@VERSION"
-		
+
 		方式 B：用你電腦上的工具連（推薦）
 			你可以用：
 				* Azure Data Studio
@@ -108,7 +108,7 @@
 				Port: 1433
 				User: sa
 				Password: 你設定的密碼
-	
+
 	6) 加上初始化 SQL（自動建 DB / 建表）
 		如果你希望 docker compose up 就自動建立資料庫與表，做法是準備一個 init 腳本容器（因為 mssql 官方 image 不會像 postgres 那樣自動執行 init 目錄）。
 
@@ -165,7 +165,7 @@
 				Docker Desktop（Windows 上的 Docker Engine）
 					   ↓
 				Linux VM / WSL2 backend
-	
+
 		也就是說：
 
 			* WSL 裡只有 docker 指令（client）
@@ -173,11 +173,11 @@
 			* 真正跑 container 的 docker engine 在 Docker Desktop 裡
 
 			* Docker Desktop 沒跑 → WSL 找不到 docker
-			
+
 		所以你看到的錯誤才會是：
 			The command 'docker' could not be found in this WSL 2 distro.
 			We recommend to activate the WSL integration in Docker Desktop settings.
-	
+
 	Q2: 跟「在 Linux VM 裡自己裝 Docker」差在哪？
 		如果你是在「純 Linux 主機」或「WSL 裡自己裝 docker-ce」：
 

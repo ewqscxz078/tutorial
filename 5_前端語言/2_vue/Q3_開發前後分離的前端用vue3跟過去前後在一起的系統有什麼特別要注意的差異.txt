@@ -24,8 +24,8 @@ A3: 前後分離（Vue3 SPA）跟「前後端在同一個專案裡（JSP/Thymele
 				* history mode vs hash mode：history 需要伺服器配合 rewrite
 
 			✅ 常見做法：部署層（Nginx / Spring）設定「非 /api/** 的路由都回 index.html」。
-	
-	
+
+
 	2) 認證與 Session 的位置改變：Cookie / Token / CSRF 取捨
 		以前
 
@@ -62,16 +62,16 @@ A3: 前後分離（Vue3 SPA）跟「前後端在同一個專案裡（JSP/Thymele
 					* Refresh token 的儲存策略要小心（localStorage 很方便但風險較高；HttpOnly cookie 常見）
 
 					* Token 失效、續期、401 重試要有一致的前端攔截器策略
-				
+
 				✅ 你在做 SSO / Gateway / JWT 的背景下：
 					建議一開始就明確定義「誰負責登入、誰發 token、token 放哪、如何 refresh」，
 					不要前端自己各寫各的。
-		
+
 	3) CORS、網域、反向代理：從「不用管」變成「一開始就要定」
 		以前
 
 			* 同一個 WAR/Server，幾乎不會遇到 CORS
-		
+
 		現在
 			* 只要前端與 API 的 origin 不同，就會遇到 CORS
 
@@ -86,7 +86,7 @@ A3: 前後分離（Vue3 SPA）跟「前後端在同一個專案裡（JSP/Thymele
 					https://example.com/api/ → proxy 到 Spring Boot
 
 			* 這樣你可以大幅減少 CORS、cookie SameSite、以及瀏覽器安全策略的坑
-	
+
 	4) 錯誤處理由「後端頁面」變成「API 合約 + 前端 UI」
 		以前
 
@@ -111,8 +111,8 @@ A3: 前後分離（Vue3 SPA）跟「前後端在同一個專案裡（JSP/Thymele
 			* 建議做一個前端的「API client」統一攔截（axios interceptors / fetch wrapper）
 
 			✅ 重點：不要讓每個頁面自己 try/catch 自己判斷，會很快失控。
-	
-	
+
+
 	5) 權限控管：後端授權仍是主體，但前端要做「體驗層」控管
 		以前
 
@@ -150,7 +150,7 @@ A3: 前後分離（Vue3 SPA）跟「前後端在同一個專案裡（JSP/Thymele
 				* 靜態資源 cache header（hash 檔可長快取、入口 HTML 不可長快取）
 
 				* API 版本化或相容性
-	
+
 	7) 開發流程：從「改完重啟伺服器」變成「兩個世界的工具鏈」
 		以前
 

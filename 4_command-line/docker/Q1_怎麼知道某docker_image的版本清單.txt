@@ -12,7 +12,7 @@ A1: 把「Docker image 的版本」理解成 tag 清單（有些 tag 對應語�
 			* 找 Tags 分頁，就會列出所有 tags、更新時間、架構（amd64/arm64）等
 
 			官方 image 通常在 library/<name>（例如 nginx、redis），Hub 也會顯示為 “Official Image”。
-	
+
 				GitHub Container Registry（GHCR）
 
 					* 通常路徑像：ghcr.io/<org>/<image>
@@ -24,15 +24,15 @@ A1: 把「Docker image 的版本」理解成 tag 清單（有些 tag 對應語�
 					* 都有各自的 UI 可以直接列出 tags
 
 					* 私有 Registry（Harbor）尤其方便，能看到 tag、digest、掃描報告
-	
+
 	2) 用 CLI 查 tag（不用開網頁、可自動化）
 		A. 用 docker search（只找得到“有哪些 image”，看不到 tags）
 			docker search eclipse-temurin
 				這只能幫你找到倉庫名稱，不會列 tag 清單。
-		
+
 		B. 用 Registry HTTP API 查 tags（最通用）
 			大多符合 Docker Registry v2 API：
-			
+
 			查 tags：
 				curl -s https://registry-1.docker.io/v2/library/nginx/tags/list
 
@@ -41,33 +41,33 @@ A1: 把「Docker image 的版本」理解成 tag 清單（有些 tag 對應語�
 				Docker Hub 對匿名請求有時會需要 token 或會被 rate limit
 
 				Hub 的 tag 清單通常要走它自己的 API 才比較好用
-			
+
 			如果是你自己的 registry（Harbor / 自建 registry）通常就很順：
 				curl -s https://<your-registry>/v2/<repo>/tags/list
-		
+
 		C. 用 skopeo（超好用，專門查 registry metadata）
-			
+
 			如果你可以裝工具，skopeo 幾乎是查 tag / digest / manifest 的瑞士刀：
 				skopeo list-tags docker://docker.io/library/nginx
 				skopeo list-tags docker://docker.io/eclipse-temurin
-		
+
 		D. 用 regctl（也很強）
 			regctl tag ls docker.io/library/nginx
-	
+
 	3) 只想知道「本機已拉過哪些版本」？
 		如果你的目標其實是 你電腦上已下載的 image：
 			docker images
 			# 或
 			docker image ls
-		
+
 		如果你要看某個 repo 的所有 tag（本機）：
 			docker image ls eclipse-temurin
-	
+
 	4) 最可靠的“版本鎖定”：用 digest
 		tag 可能被重指向（例如 latest、或某些浮動 tag），要做到可重現建置，建議鎖 digest：
 			docker pull eclipse-temurin:21-jre
 			docker inspect --format='{{index .RepoDigests 0}}' eclipse-temurin:21-jre
-		
+
 		之後 Dockerfile 可以用：
 			FROM eclipse-temurin@sha256:<digest>
 
@@ -77,19 +77,19 @@ A1: 把「Docker image 的版本」理解成 tag 清單（有些 tag 對應語�
 		* 企業私有鏡像：優先用 registry UI（Harbor/ECR）或 skopeo/regctl
 
 		* CI/CD：建議用 digest 鎖定，tag 用來“人類可讀”
-	
-	
+
+
 	案例 查 mcr.microsoft.com/mssql/server:2022-latest
 
 		docker search 只能查 Docker Hub（預設 registry），而你這個：
 
 		mcr.microsoft.com/mssql/server:2022-latest
-		
+
 		是 Microsoft Container Registry（MCR），所以：
 			✅ docker search mssql、docker search microsoft/mssql-server 之類在 Hub 可能找得到舊的（或別人鏡像）
 
 			❌ 但 docker search mcr.microsoft.com/mssql/server 查不到你要的（因為不在 Hub）
-		
+
 		那你要怎麼「正確查」mcr.microsoft.com/mssql/server 的 tag 清單？
 			方式 1：直接用 MCR 的 tags API（最簡單、最像你問的「版本清單」）
 				curl -s https://mcr.microsoft.com/v2/mssql/server/tags/list
@@ -98,7 +98,7 @@ A1: 把「Docker image 的版本」理解成 tag 清單（有些 tag 對應語�
 
 				如果你是在 Windows PowerShell，想看漂亮一點可用：
 					(Invoke-RestMethod https://mcr.microsoft.com/v2/mssql/server/tags/list).tags
-			
+
 			方式 2：用 MCR Discovery Portal（網頁看 tags）
 				到這頁可以用 UI 看 tag/更新資訊：
 					https://mcr.microsoft.com/product/mssql/server/tags?utm_source=chatgpt.com

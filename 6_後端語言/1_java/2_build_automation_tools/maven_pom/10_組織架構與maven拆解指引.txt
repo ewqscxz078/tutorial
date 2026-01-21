@@ -15,8 +15,8 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 		* 共用組：能集中管依賴版本、做安全修補與升版，但不會一改就炸四組
 
 		* 各組業務：能「選擇」何時升版，必要時可以暫時停在舊版，甚至做少量 override
-	
-		
+
+
 	1) 把共用組拆成兩層：API 穩定層 + 實作演進層
 		A. common-api（強穩定、少改）
 			* 放「DTO / interface / annotation / error code / 共用 model」
@@ -27,13 +27,13 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 			* 放 Spring Boot 的 auto-config、共用 client、共用 filter、helper
 			* 版本策略：允許較快演進，但要靠下面的 BOM 與相容策略控風險
 			* 這樣共用組做重構或換底層 lib，多半限制在 support/starter，不會把所有業務線「編譯就壞」。
-	
+
 	2) 用「BOM」集中控版本，但讓各組可以選用（關鍵）
 		做一個共用 BOM：common-bom（packaging = pom）
 		它只做兩件事：
 			1.鎖住共用組推薦的版本（含三方依賴）
 			2.宣告共用模組自己的版本（common-api / common-starter 等）
-		
+
 		common-bom/pom.xml（示意）
 			<project>
 			  <modelVersion>4.0.0</modelVersion>
@@ -88,7 +88,7 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 		* A 組可以先升到 1.8.0，B/C/D 還停在 1.7.2
 
 		* 共用組人力有限時，只要把相容性保證清楚，就能降低「改 A 壞 B」
-	
+
 	4) 版本策略：用 SemVer + 「只對 common-api 保證相容」來控風險
 
 		建議定規則（非常重要，否則 BOM 再好也會亂）：
@@ -100,7 +100,7 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 				MINOR：新增但相容
 
 				PATCH：bugfix
-		
+
 			* common-starter/common-support：相容承諾可以「較鬆」，但要在 release note 清楚標「需要修改設定/行為改變」
 
 		然後共用組每次出新版 BOM，寫清楚：
@@ -110,11 +110,11 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 			* 破壞性變更點
 
 			* 影響範圍（哪些 starter / auto-config）
-	
+
 	5) 防止「改 A 壞 B」：在共用 repo 做 Consumer 驗證（超值）
 
 		就算人力有限，也很建議做「最小化」的保護：
-			
+
 			A. 建立 4 個超小 Consumer（只編譯 + 跑冒煙測試）
 
 				在 common repo 裡放 samples/consumer-a ... consumer-d
@@ -125,10 +125,10 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 						* mvn -pl common-* -am test
 
 						* mvn -pl samples/consumer-* -am test（至少 compile + context load）
-				
+
 				這招可以把「改 A 壞 B」提早在共用組 CI 擋掉。
-		
-		
+
+
 			B. Maven Enforcer（讓依賴地獄不要爆）
 
 				在共用 BOM 或 parent 加上：
@@ -146,9 +146,9 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 			* 允許 override：在業務 pom 的 <dependencyManagement> 針對單一依賴覆寫版本
 
 			* 要求：提 issue/PR 回共用組，讓下個 BOM 版本吸收回來（避免各組各走各的）
-	
+
 	7) 如果四組差異真的大：做「可插拔的 starter」而不是一包打死
-		
+
 		共用組不要只出一個巨大 common-starter，改成：
 			* common-web-starter
 
@@ -157,10 +157,10 @@ A:「共用庫要持續演進」vs「各個業務線要能各自控版、更版�
 			* common-observability-starter
 
 			* common-db-starter
-		
+
 		業務線「用到再引」，降低 blast radius。
 
-	
+
 	會怎麼建議落地（最務實的組合）
 		1.共用組先做 common-bom（最有效的槓桿）
 
