@@ -1,0 +1,184 @@
+Q3: 開發前後分離的前端用vue3跟過去前後在一起的系統有什麼特別要注意的差異？
+
+A3: 前後分離（Vue3 SPA）跟「前後端在同一個專案裡（JSP/Thymeleaf/Servlet）」最大的差異，
+	不是技術名詞，
+	而是責任邊界、部署方式、認證流程、路由與錯誤處理整套都會跟著改
+
+
+	1) 路由從「後端控制」變成「前端控制」
+		以前（前後在一起）
+
+			* /orders/list 進來後端 Controller → 回傳 JSP/HTML
+
+			* 404/403 通常由後端統一導到錯誤頁
+
+		現在（Vue3 SPA）
+			* 你的 URL 多數是由前端 router（vue-router）處理
+
+			* 後端只提供 API（如 /api/orders），或提供一個 SPA 入口 index.html
+
+			* 你要特別處理：
+
+				* 刷新頁面（F5）：如果 Nginx/後端沒有把未知路由 fallback 到 index.html，會直接 404
+
+				* history mode vs hash mode：history 需要伺服器配合 rewrite
+
+			✅ 常見做法：部署層（Nginx / Spring）設定「非 /api/** 的路由都回 index.html」。
+	
+	
+	2) 認證與 Session 的位置改變：Cookie / Token / CSRF 取捨
+		以前
+
+			* Spring Security session-based 很常見
+
+			* 後端在同網域，瀏覽器自動帶 cookie，CSRF、SameSite 都是你熟的那套
+
+		現在
+
+			* Vue3 會用 fetch/axios 呼叫 API，認證你有幾種選擇：
+
+				1.同網域 + Cookie Session（最少改動）
+
+					* 前端與後端同網域（例如 https://example.com 下的 / 與 /api）
+
+					* 仍用 cookie session，前端請求要記得 withCredentials
+
+					* CSRF 仍要處理（特別是有狀態操作）
+
+				2.跨網域 + Cookie Session（最容易踩 SameSite/CORS）
+
+					* https://app.com 打 https://api.com
+
+					* cookie 要 SameSite=None; Secure
+
+					* CORS 需 Access-Control-Allow-Credentials: true
+
+					* CSRF 更需要你嚴格設計（否則風險更高）
+
+				3.Token（JWT/OIDC）
+
+					* 前端持有 access token（通常記憶體/短期），後端驗 JWT
+
+					* Refresh token 的儲存策略要小心（localStorage 很方便但風險較高；HttpOnly cookie 常見）
+
+					* Token 失效、續期、401 重試要有一致的前端攔截器策略
+				
+				✅ 你在做 SSO / Gateway / JWT 的背景下：
+					建議一開始就明確定義「誰負責登入、誰發 token、token 放哪、如何 refresh」，
+					不要前端自己各寫各的。
+		
+	3) CORS、網域、反向代理：從「不用管」變成「一開始就要定」
+		以前
+
+			* 同一個 WAR/Server，幾乎不會遇到 CORS
+		
+		現在
+			* 只要前端與 API 的 origin 不同，就會遇到 CORS
+
+			* 最省事且最穩的策略通常是：
+
+				* 用反向代理把前端與 API 併成同一個 origin
+
+				* 例如：
+
+					https://example.com/ → Vue 靜態檔
+
+					https://example.com/api/ → proxy 到 Spring Boot
+
+			* 這樣你可以大幅減少 CORS、cookie SameSite、以及瀏覽器安全策略的坑
+	
+	4) 錯誤處理由「後端頁面」變成「API 合約 + 前端 UI」
+		以前
+
+			* 403 → 導到 /accessDenied.jsp
+
+			* 500 → error page
+
+		現在
+
+			* 後端應該回「一致的錯誤格式」（JSON）
+
+			* 前端要決定：
+
+				* 401：導去登入？還是嘗試 refresh？
+
+				* 403：顯示無權限頁？還是導回首頁？
+
+				* 422/400：表單欄位錯誤怎麼顯示？
+
+				* 5xx：要不要顯示可重試提示？
+
+			* 建議做一個前端的「API client」統一攔截（axios interceptors / fetch wrapper）
+
+			✅ 重點：不要讓每個頁面自己 try/catch 自己判斷，會很快失控。
+	
+	
+	5) 權限控管：後端授權仍是主體，但前端要做「體驗層」控管
+		以前
+
+			* 後端渲染時就不輸出沒有權限的按鈕/頁面（或直接擋掉）
+		現在
+
+			* 前端可以用路由 meta（requiredRoles）控制「看得到/進得去」
+
+			* 但後端一定要再驗一次（前端只是一層 UX）
+
+			* 最常見的坑：
+
+				* 前端只靠角色隱藏按鈕，但 API 沒擋 → 被直接打 API
+
+				* 多系統多角色時，前端路由與後端權限規則不一致
+
+		✅ 建議：後端提供 /me 或 /session API 回傳「使用者資訊 + 權限/角色 + feature flags」，前端只拿這份資料做顯示與路由守衛。
+
+	6) 靜態資源與快取：你會第一次真正感受到「前端版本管理」
+
+		以前
+
+			* JSP/靜態檔一起打包，更新就是整包更新
+
+		現在
+
+			* Vue build 產出帶 hash 的檔名（例如 app.8d9f.js）
+
+			* 瀏覽器可能快取舊版 JS，造成「前端新版但 API 舊版」或反過來
+
+			* 你要注意：
+
+				* 部署策略（前後端是否要同時切換）
+
+				* 靜態資源 cache header（hash 檔可長快取、入口 HTML 不可長快取）
+
+				* API 版本化或相容性
+	
+	7) 開發流程：從「改完重啟伺服器」變成「兩個世界的工具鏈」
+		以前
+
+			* Maven/Gradle → 打包 → 部署
+		現在
+
+			* 前端：Node/Vite（npm run dev/build）
+
+			* 後端：Spring Boot
+
+			你要定義：
+
+				* local dev 如何 proxy API（Vite proxy）
+
+				* env 變數與設定（.env.* vs application.yml）
+
+				* CI/CD 產物：前端是靜態檔（可放 CDN/Nginx），後端是 jar/war 或容器
+
+	最務實的「先決策清單」（你只要先把這幾個定下來）
+
+		1.前端與 API 是否同網域？（決定 CORS/cookie 地獄程度）
+
+		2.認證要用 cookie session 還是 OIDC/JWT？refresh 怎麼做？
+
+		3.SPA 路由要用 history 嗎？伺服器 rewrite 怎麼設？
+
+		4.API 錯誤格式與代碼規範（401/403/422…）
+
+		5.權限資料由哪個 API 提供？前端路由守衛與選單怎麼對齊？
+
+		6.靜態檔快取策略與部署同步策略（避免前後不相容）

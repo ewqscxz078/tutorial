@@ -1,0 +1,151 @@
+
+在 window 啟動一個 docker 服務
+已建立一個 docker of mssql 為例
+
+	1) 先確認前置狀態
+		確認事前的工具已安裝 for windows 11
+			1.wsl 安裝
+			2.vscode 可攜式 + 更新到最新 安裝
+				擴展功能安裝
+					* Remote Development
+					* Dev Containers
+					* docker
+			3.Docker desktop 安裝
+		* Docker Desktop 開啟
+		* Settings 裡確認：
+			* Use WSL 2 based engine 開啟
+			* WSL Integration 有勾到你用的 distro（例如 Ubuntu）
+			
+			WSL 端檢查 在 WSL terminal 跑：
+				docker version
+				docker compose version
+			
+	2) 建一個專案資料夾（建議放 WSL 檔案系統）
+		於 wsl terminal
+			* 建立一個專案目錄與 compose.yml
+				mkdir -p ~/workspace/msql-demo && cd ~/workspace/msql-demo
+				code .
+
+	3) 建立 compose.yml（一個 SQL Server container）
+		在專案根目錄新增 compose.yml：
+			services:
+			  mssql:
+				image: mcr.microsoft.com/mssql/server:2022-latest
+				container_name: mssql-dev
+				environment:
+				  ACCEPT_EULA: "Y"
+				  MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+				  MSSQL_PID: "Developer"
+				ports:
+				  - "1433:1433"
+				volumes:
+				  - mssql-data:/var/opt/mssql
+				healthcheck:
+				  test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || exit 1"]
+				  interval: 10s
+				  timeout: 5s
+				  retries: 10
+				  start_period: 20s
+
+			volumes:
+			  mssql-data:
+
+		✅ 重點：
+			ports 1433:1433：Windows / WSL 都能連
+			volumes：資料不會因為 container 刪掉就消失
+			healthcheck：讓你之後服務可以等 DB ready 再啟動（很實用）
+			密碼必須符合 SQL Server 規則（大寫/小寫/數字/符號，且長度足夠），不然 container 會起不來。
+		
+		同目錄新增 .env
+			MSSQL_SA_PASSWORD=Your_Strong_Passw0rd!
+		
+	4) 啟動 SQL Server
+		在 WSL terminal（專案根目錄）：
+			啟動 docker by compose
+				docker compose up -d
+			觀察 docker
+				docker compose ps
+			查看 docker logs
+				docker logs -f mssql-dev
+
+			1) 只把服務停掉（之後可再啟動）
+				停掉
+					docker compose stop
+				之後要再跑起來
+					docker compose start
+			
+			2) 停掉並移除容器（常見的「下下來」）
+				docker compose down
+				
+				連同 volumes 一起刪掉（資料也會不見）
+					docker compose down -v
+
+				連同 images 也一起清掉	(常用)
+					docker compose down --rmi local
+				
+				移除孤兒容器（compose.yml 已拿掉但還殘留的）
+					docker compose down --remove-orphans
+
+					
+		看到類似「SQL Server is now ready for client connections」就代表 DB ready。
+	
+	5) 連線測試（兩種方式）
+		方式 A：用容器內的 sqlcmd 測
+			docker exec -it mssql-dev /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Your_Strong_Passw0rd!' -Q "SELECT @@VERSION"
+		
+		方式 B：用你電腦上的工具連（推薦）
+			你可以用：
+				* Azure Data Studio
+				* DBeaver
+				* DataGrip
+				* VS Code 的 MSSQL 擴充（也可）
+
+			連線資訊通常是：
+				Host: localhost
+				Port: 1433
+				User: sa
+				Password: 你設定的密碼
+	
+	6) 加上初始化 SQL（自動建 DB / 建表）
+		如果你希望 docker compose up 就自動建立資料庫與表，做法是準備一個 init 腳本容器（因為 mssql 官方 image 不會像 postgres 那樣自動執行 init 目錄）。
+
+		新增 db/init.sql：
+			IF DB_ID('appdb') IS NULL
+			BEGIN
+			  CREATE DATABASE appdb;
+			END
+			GO
+
+			USE appdb;
+			GO
+
+			IF OBJECT_ID('dbo.todo', 'U') IS NULL
+			BEGIN
+			  CREATE TABLE dbo.todo (
+				id INT IDENTITY(1,1) PRIMARY KEY,
+				title NVARCHAR(200) NOT NULL,
+				created_at DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME()
+			  );
+			END
+			GO
+
+		然後把 compose.yml 擴充成：
+			services:
+			  mssql:
+				.... 略
+
+			  mssql-init:
+				image: mcr.microsoft.com/mssql-tools
+				depends_on:
+				  mssql:
+					condition: service_healthy
+				volumes:
+				  - ./db:/db
+				entrypoint: ["/bin/bash", "-lc"]
+				command: >
+				  "/opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P 'Your_Strong_Passw0rd!' -i /db/init.sql
+				  && echo 'DB initialized.'"
+				restart: "no"
+
+			volumes:
+			  mssql-data:

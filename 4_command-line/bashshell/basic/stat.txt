@@ -1,0 +1,76 @@
+ref ChatGPT
+
+stat
+	用來顯示檔案或目錄的詳細中繼資料（metadata）
+		* 檔案大小
+
+		* 存取權限
+
+		* inode
+
+		* 擁有者 / 群組
+
+		* 存取時間、修改時間、變更時間
+
+		不加參數時，輸出會很完整、但也比較「人類閱讀向」。
+
+
+	-c = custom format（自訂輸出格式）
+		stat -c FORMAT FILE
+			* -c = custom format（自訂輸出格式）
+
+			* FORMAT 是一段格式字串
+
+			* FILE 是目標檔案或目錄
+			
+			👉 常用在 script / shell / 自動化，因為輸出穩定、好 parse。
+		
+		三、常見 -c 格式代碼
+			檔案基本資訊
+				| 格式 | 意義                                |
+				| ---- | ----------------------------------- |
+				| `%n` | 檔名                                |
+				| `%s` | 檔案大小（bytes）                   |
+				| `%F` | 檔案類型（regular file、directory） |
+				| `%i` | inode number                        |
+				| `%h` | hard link 數量                      |
+			
+			權限 / 擁有者
+				| 格式 | 意義                   |
+				| ---- | ---------------------- |
+				| `%a` | 權限（八進位，如 644） |
+				| `%A` | 權限（rwxr-xr-x）      |
+				| `%U` | 擁有者名稱             |
+				| `%G` | 群組名稱               |
+				| `%u` | 擁有者 UID             |
+				| `%g` | 群組 GID               |
+			
+			時間（非常常用）
+				| 格式 | 意義                    |
+				| ---- | ----------------------- |
+				| `%x` | 最後存取時間（atime）   |
+				| `%y` | 最後修改時間（mtime）   |
+				| `%z` | 最後狀態變更時間（ctime） |
+
+		四、實用範例
+			1.只看檔案大小
+				stat -c %s myfile.txt
+			
+			2.顯示檔名 + 大小
+				stat -c "%n %s" myfile.txt
+
+			3️.類似 ls -l 的權限顯示
+				stat -c "%A %U %G %s %n" myfile.txt
+
+			4️.shell script 常見用法
+				SIZE=$(stat -c %s myfile.txt)
+
+		五、-c 與 --printf 的差異（補充）
+			stat -c "%s\n" file
+			stat --printf "%s\n" file
+				* -c：每個檔案自動換行
+
+				* --printf：完全不自動換行（更接近 C printf）
+			
+			👉 一般腳本用 -c 就好
+

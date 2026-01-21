@@ -24,7 +24,7 @@ ref
 
 安裝過程
 	1.安裝 wsl : 開發人員可以在 Windows 電腦上同時存取 Windows 和 Linux 的功能
-		1.第一次執行
+		1.第一次執行(安裝 window Subsystem for Linux)
 			wsl --install
 				ref https://learn.microsoft.com/zh-tw/windows/wsl/install
 				預設安裝 Ubuntu
@@ -33,7 +33,7 @@ ref
 					<Distribution Name> 可透過以下指令查詢
 						wsl --list --online 或 wsl -l -o
 			會被要求重新開機
-		2.第二次執行
+		2.第二次執行(wsl 的 os:ubuntu)
 			wsl --install
 				會多要求設定帳號密碼
 					設定 linux unbuntu 管理員帳號密碼
@@ -69,7 +69,9 @@ ref
 			例如，儲存 WSL 專案檔時：
 				使用 Linux 檔案系統根目錄：\\wsl$\<DistroName>\home\<UserName>\Project
 				不是 Windows 檔案系統根目錄：C:\Users\<UserName>\Project 或 /mnt/c/Users/<UserName>/Project$
-
+			
+			參考最下面備註: Q1: 如何知道檔案放在WSL 的 home 下?
+			
 		5.安裝您慣用的程式碼編輯器
 			ref https://learn.microsoft.com/zh-tw/windows/wsl/tutorials/wsl-vscode
 				1.安裝 Visual Studio Code
@@ -94,6 +96,9 @@ ref
 								ref https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker
 
 				3.更新您的 Linux 發行版本
+					進入 wsl
+						開啟 powershell
+							輸入 wsl
 					更新 Debian 或 Ubuntu，請使用
 						sudo apt-get update
 					若要新增 wget (從網頁伺服器擷取內容) 和 ca-certificates (允許 SSL 型應用程式檢查 SSL 連線的真實性)
@@ -119,6 +124,176 @@ ref
 			1.安裝 Docker Desktop on Windows
 				ref https://docs.docker.com/desktop/install/windows-install/
 				安裝完後會要求重開機
+
 			2.確認是否安裝成功
 				powershell with 管理員開啟 或 Windows Terminal
 					docker --version
+
+	3.
+
+備註:
+	Q1: 如何知道檔案放在WSL 的 home 下?
+		現在看到的檔案到底是在 WSL 裡，還是在 Windows 檔案系統？
+		結論:
+			只要路徑不是 /mnt/c/...，而是 /home/你的帳號/...，那就是在 WSL 的 home（Linux 檔案系統）裡。
+		
+		1.在 WSL Terminal 直接判斷（最準）
+			在 WSL terminal（Ubuntu）輸入：
+				pwd
+					如果你看到的是：
+						/home/你的帳號
+					或
+						/home/你的帳號/workspace/msql-demo
+					
+					✅ 這就是 WSL 的 home
+				
+				如果你看到的是：
+					/mnt/c/Users/你的Windows帳號/...
+						❌ 這是 Windows 檔案系統（C 槽）
+			
+		2.用 ~ 快速確認（WSL 專用）
+			在 WSL 裡：
+				cd ~
+				pwd
+					結果一定會是：
+						/home/你的帳號
+
+		3️.從 VS Code 角度怎麼看？
+			正確方式（推薦）
+				在 WSL terminal 裡：
+					cd ~/workspace/msql-demo
+					code .
+
+				此時：
+
+					* VS Code 左下角會顯示：
+						WSL: Ubuntu
+
+					* Explorer 裡的路徑是 Linux style（/home/...）
+
+				👉 這代表：
+
+					VS Code 是「連進 WSL」，檔案真的在 WSL 裡
+			
+			常見錯誤方式（不推薦）
+				你在 Windows 直接：
+					C:\Users\xxx\project
+				然後在那裡打開 VS Code
+
+				就算 VS Code 顯示可以用 Docker / WSL
+				檔案還是在 Windows 檔案系統
+		
+		4️.用 df -h 看檔案系統類型（進階但超準）
+			在專案目錄執行：
+				df -h .
+			如果是 WSL home，會看到類似：
+				/dev/sdb        250G   20G  230G   8% /home
+			
+			如果是 Windows 掛載：
+				C:\             500G  300G  200G  60% /mnt/c
+
+		5.從 Windows 檔案總管也能「反向確認」
+			在 WSL terminal：
+				explorer.exe .
+			
+			如果你在 /home/xxx
+				Windows 檔案總管會打開：
+					\\wsl$\Ubuntu\home\xxx
+			這代表：
+				* 檔案實際在 WSL
+				* 不是 C 槽
+				* Docker / Linux tool 存取效能最好
+		
+		6.為什麼這件事對 Docker 很重要？
+			| 專案位置     | Docker 效能 | 建議                                      |
+			| ------------ | ----------- | ----------------------------------------- |
+			| `/home/...`  | ✅ 快       | **強烈建議**                              |
+			| `/mnt/c/...` | ❌ 慢       | 不建議（DB、node_modules、target 都很痛） |
+			
+			原因是：
+				Docker Desktop（WSL2）和 Linux FS 是同一層
+
+				Windows FS 是透過 9P 掛載，I/O 成本高
+	
+	
+	Q2: 什麼才算「開一個 WSL terminal」？
+		方法一（最推薦）
+			1.把所有目前開著的終端機視窗全部關掉
+			2.開始功能表 → 搜尋：
+				Ubuntu
+			3.點開它
+		方法二（Windows Terminal）
+			1.開 Windows Terminal
+			2.點 + 下拉選單
+			3.選：
+				Ubuntu
+		
+		方法三（從 PowerShell 進 WSL）
+			wsl
+				但這個方式 不推薦新手，容易搞混 shell 狀態。
+
+
+	Q3: 正確的「可攜式 VS Code 更新流程」
+		Step 1.完全關閉 VS Code
+		
+		Step 2️.找到你目前的 VS Code 目錄
+			例如
+				D:\tools\vscode\
+			裡面會有：
+				Code.exe
+				data\
+		
+		Step 3️.下載新版 VS Code Portable zip
+			開啟 vscode 右下角跳出
+				There is an available download
+					點擊 download update
+					瀏覽器會執行下載動作
+		
+		Step 4.整包取代（推薦）
+			⚠️ 不要只覆蓋 Code.exe
+			最安全作法：
+				1.把舊目錄改名（備份）：
+					vscode-old\
+				2.解壓新版 zip 到：
+					vscode\
+				3.如果你有 data\（設定與擴充）：
+					* 把舊的 data\ 複製回新的 vscode\ 裡
+				
+				目錄結構最後應該是：
+					vscode\
+					  Code.exe
+					  data\
+		
+		Step 5️.從新版 Code.exe 啟動
+			* 用新的 Code.exe 開 VS Code
+			* Help → About 確認版本
+		
+		更新 Windows PATH of vscode bin 路徑
+		
+		更新完後一定要做的「同步清理」（很重要）
+			更新 Portable VS Code 後，請在 WSL terminal：
+				rm -rf ~/.vscode-server ~/.vscode-server-insiders
+			再執行：
+				code -v
+				會看到
+					Installing VS Code Server for Linux x64
+					Downloading:  xx%
+				是正常現象，讓它跑完即可。
+					因為 VS Code 的設計就是：
+						* Windows 端：UI（你看到的 Code.exe）
+						* WSL 端：VS Code Server（Linux 後端）
+
+					只要符合以下任一條件，就會重新下載 Server：
+
+						* 第一次在該 WSL distro 使用 VS Code
+
+						* 你剛剛做的：rm -rf ~/.vscode-server
+
+						* Windows VS Code 升級到新版本
+
+						* WSL distro 換過 / 重裝	
+			
+		你會看到：
+			* 第一行：Windows VS Code 版本
+			* 第二行：WSL Server 版本
+			* 而且 不再跳更新提示

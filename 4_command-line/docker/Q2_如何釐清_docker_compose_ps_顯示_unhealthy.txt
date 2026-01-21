@@ -1,0 +1,112 @@
+
+
+Q2: 如何釐清 docker compose ps 顯示 unhealthy
+	幾乎都是「healthcheck 指令跑失敗」而不是容器真的掛掉
+	
+	以下以 sqlserver container 為例
+
+A2: 
+	1) 先看 healthcheck 失敗原因（最關鍵）
+		docker inspect mssql-dev --format '{{json .State.Health}}' | jq
+		
+		如果你沒裝 jq：
+			docker inspect mssql-dev --format '{{.State.Health.Status}}'
+			docker inspect mssql-dev --format '{{range .State.Health.Log}}{{println .ExitCode .Output}}{{end}}'
+
+		你要看的重點是 .State.Health.Log[].Output 裡面的錯誤訊息（例如找不到 sqlcmd、登入失敗、連線失敗、SSL/TLS 相關錯誤等）。
+	
+	2) 看容器本身 log（判斷 SQL Server 是否已起來）
+		
+		docker logs --tail 200 mssql-dev
+
+		重點關鍵字：
+
+			SQL Server is now ready for client connections（有看到通常代表 DB 起來了）
+
+			Error: / Login failed / password / EULA / TLS / certificate
+	
+	3) 直接在容器內跑一次 healthcheck 指令（重現錯誤）
+		你 compose 裡 healthcheck 是跑：
+
+		/opt/mssql-tools/bin/sqlcmd ...
+		
+		進去容器手動跑：
+			docker exec -it mssql-dev bash
+		
+		進去後檢查工具是否存在：
+			ls -l /opt/mssql-tools/bin/sqlcmd
+		
+		然後手動測試（用你的密碼）：
+			/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Your_Strong_Passw0rd!" -Q "SELECT 1"
+			echo $?
+		
+		常見結果怎麼判讀
+			* 找不到 /opt/mssql-tools/bin/sqlcmd
+
+				* 代表你用的 image（mcr.microsoft.com/mssql/server:2022-latest）不一定內建 mssql-tools（很多版本確實沒有）。
+
+				* 這時 healthcheck 會永遠失敗 → 容器看起來 unhealthy，但 DB 其實可能正常。
+
+			* sqlcmd 存在但 Login failed / 密碼不符
+
+				* 可能 SA 密碼未被正確套用（第一次啟動失敗、或 volumes 內已有舊設定），或密碼不符合規則導致 SQL Server 沒成功初始化。
+
+			* 連線失敗（例如 timeout / refused）
+
+				* 代表 SQL Server 進程可能還在初始化、或根本沒起來（看第 2 步 log）。
+	
+	4) 你這份 healthcheck 有一個容易踩坑的點：密碼變數展開
+		
+		test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || exit 1"]
+		
+			這裡的 $${MSSQL_SA_PASSWORD} 是為了避免 compose 在 YAML 解析階段展開 $...，讓它保留成 $MSSQL_SA_PASSWORD 給容器內 shell 用——概念是對的。
+		
+		但實務上你仍要確認 容器內真的有這個環境變數：
+			
+			docker exec -it mssql-dev printenv | grep MSSQL
+			
+			你應該會看到：
+
+				MSSQL_SA_PASSWORD=Your_Strong_Passw0rd!
+
+				ACCEPT_EULA=Y
+
+				MSSQL_PID=Developer
+	
+	5) 最常見真兇：image 沒有 sqlcmd（mssql-tools）
+
+		如果第 3 步證實 sqlcmd 不存在，你有兩條路：
+		
+			路 A：把 healthcheck 改成不依賴 sqlcmd（最省事）
+			
+				例如用 TCP 連線檢查（只確認 1433 有在 listen）：
+					healthcheck:
+					  test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/1433'"]
+					  interval: 10s
+					  timeout: 5s
+					  retries: 10
+					  start_period: 30s
+				
+				這只能檢查「port 活著」，不保證「DB 可登入」。
+			
+			路 B：自己做一個包含 mssql-tools 的 image（最可靠）
+				做一個 Dockerfile 安裝 mssql-tools，然後 compose 改用你 build 的 image。
+				（如果你需要我我可以給你一份可用的 Dockerfile + compose 改法，通常一貼就能跑。）
+	
+	6) 如果你懷疑「第一次啟動初始化失敗」：清掉 volume 重跑一次
+		注意：這會刪掉資料庫資料（你目前是 dev 用途應該 OK）。
+			docker compose down -v
+			docker compose up -d
+			docker logs --tail 200 mssql-dev
+			docker compose ps
+		如果是密碼規則不符或初始化錯誤，重跑後 log 通常會很明顯。
+	
+	
+	7) 快速判斷：unhealthy 但 DB 其實正常？
+		你可以在 host 端測試連線（如果你本機有 sqlcmd / Azure Data Studio / DBeaver）：
+			* host: localhost
+			* port: 1433
+			* user: sa
+			* password: Your_Strong_Passw0rd!
+		
+		若可以登入、查詢正常，那就是 healthcheck 設定/工具問題，不是 DB 本體
