@@ -11,7 +11,7 @@
 					* Dev Containers
 					* docker
 			3.Docker desktop 安裝
-		* Docker Desktop 開啟
+		* Docker Desktop 開啟  // 非常重要，不然無法操作 docker 相關指令
 		* Settings 裡確認：
 			* Use WSL 2 based engine 開啟
 			* WSL Integration 有勾到你用的 distro（例如 Ubuntu）
@@ -61,13 +61,16 @@
 		
 	4) 啟動 SQL Server
 		在 WSL terminal（專案根目錄）：
+			執行前確認聚合的 yml 結果
+				docker compose config
 			啟動 docker by compose
 				docker compose up -d
 			觀察 docker
 				docker compose ps
 			查看 docker logs
 				docker logs -f mssql-dev
-
+				docker compose logs -f mssql-init
+				
 			1) 只把服務停掉（之後可再啟動）
 				停掉
 					docker compose stop
@@ -149,3 +152,43 @@
 
 			volumes:
 			  mssql-data:
+
+
+
+備註:
+	Q1: 為什麼一定要開 Docker Desktop？
+		用的是 Docker Desktop + WSL2 架構，不是在 WSL 裡自己裝一套 Docker Engine
+			實際架構是這樣：
+				WSL (Ubuntu)
+				  └─ docker CLI（指令）
+					   ↓
+				Docker Desktop（Windows 上的 Docker Engine）
+					   ↓
+				Linux VM / WSL2 backend
+	
+		也就是說：
+
+			* WSL 裡只有 docker 指令（client）
+
+			* 真正跑 container 的 docker engine 在 Docker Desktop 裡
+
+			* Docker Desktop 沒跑 → WSL 找不到 docker
+			
+		所以你看到的錯誤才會是：
+			The command 'docker' could not be found in this WSL 2 distro.
+			We recommend to activate the WSL integration in Docker Desktop settings.
+	
+	Q2: 跟「在 Linux VM 裡自己裝 Docker」差在哪？
+		如果你是在「純 Linux 主機」或「WSL 裡自己裝 docker-ce」：
+
+			* Docker Engine 在 Linux 裡
+
+			* 不需要 Docker Desktop
+
+		但你目前這套是 Windows 官方推薦做法，優點是：
+
+			* 不用在 WSL 管 engine
+
+			* Windows / WSL 共用一套 Docker
+
+			* 跟 VS Code / Dev Containers 整合最好.
