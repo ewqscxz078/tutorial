@@ -1,0 +1,122 @@
+ref https://www.youtube.com/watch?v=UWcXzh9DhRY&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=11
+	https://vuejs.org/guide/essentials/lifecycle.html
+
+組件生命週期
+
+	App.vue
+		<template>
+			<!-- <button @click="count++">add num</button>
+			{{count}} -->
+
+			<button @click="showCompA = !showCompA">toggle CompA</button>
+			<br />
+			<CompA v-if="showCompA" />
+		</template>
+
+		<script setup>
+			import CompA from './components/CompA.vue'
+			import {
+			  onBeforeMount,
+			  onMounted,
+			  onBeforeUpdate,
+			  onUpdated,
+			  onBeforeUnmount,
+			  onUnmounted,
+			  ref,
+			} from 'vue'
+
+			const count = ref(0)
+			const showCompA = ref(true)
+
+			onBeforeMount(()=>{
+			  console.log('app: before mount')
+			})
+
+			// 若要操作異步動作
+			onBeforeMount(async()=>{
+			  await
+			  console.log('app: before mount')
+			})
+
+			onMounted(()=>{
+			  console.log('app: Mounted')
+			})
+
+			onBeforeUpdate(()=>{
+			  console.log('app: BeforeUpdate')
+			})
+
+			onUpdated(()=>{
+			  console.log('app: Updated')
+			})
+
+			// onBeforeUnmount(()=>{
+			//   console.log('app: BeforeUnmount')
+			// })
+
+			// onUnmounted(()=>{
+			//   console.log('app: Unmounted')
+			// })
+
+		</script>
+
+
+		<style>
+		</style>
+
+
+
+	CompA.vue
+		<template>
+			CompA
+		</template>
+
+		<script setup>
+			// import CompA from './components/CompA.vue'
+			import {
+			  onBeforeMount,
+			  onMounted,
+			  onBeforeUpdate,
+			  onUpdated,
+			  onBeforeUnmount,
+			  onUnmounted,
+			  ref,
+			} from 'vue'
+
+			const count = ref(0)
+
+			onBeforeMount(()=>{
+			  console.log('CompA: before mount')
+			})
+
+			// 若要操作異步動作
+			onBeforeMount(async()=>{
+			  await
+			  console.log('CompA: before mount')
+			})
+
+			onMounted(()=>{
+			  console.log('CompA: Mounted')
+			})
+
+			onBeforeUpdate(()=>{
+			  console.log('CompA: BeforeUpdate')
+			})
+
+			onUpdated(()=>{
+			  console.log('CompA: Updated')
+			})
+
+			onBeforeUnmount(()=>{
+			  console.log('CompA: BeforeUnmount')
+			})
+
+			onUnmounted(()=>{
+			  console.log('CompA: Unmounted')
+			})
+
+		</script>
+
+
+		<style>
+		</style>

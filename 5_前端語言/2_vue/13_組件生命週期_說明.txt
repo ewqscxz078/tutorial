@@ -1,0 +1,45 @@
+ref https://www.youtube.com/watch?v=xUdWNqD5JhI&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=10
+	https://vuejs.org/guide/essentials/lifecycle.html
+
+組件生命週期
+
+	<!-- 可以沒有 template 區塊 -->
+	<template>
+	</template>
+
+	<!-- Vue3 Composition API -->
+	<script setup>
+		import { h } from 'vue'
+
+		<!-- 使用 script 渲染出 template 方式 by h -->
+		jsx 語法
+		h(`<div>hello<div>`)
+		或更原始寫法
+		document.create....
+
+	</script>
+
+	<!-- Vue2 Options API -->
+	<script>
+		import { ref } from 'vue'
+		export default {
+		  name: 'App'
+		  components: {},
+		  data: () => ({
+			count: 0,
+		  })
+
+		  computed: {},
+		  methods: {},
+		  watch: {},
+
+		  // Vue3 Composition API
+		  setup(){
+		     userName = ref('')
+		    return { userName }
+		  },
+		}
+	</script>
+
+	<style>
+	</style>

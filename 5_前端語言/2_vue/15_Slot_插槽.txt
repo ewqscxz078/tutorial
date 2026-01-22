@@ -1,0 +1,177 @@
+ref https://www.youtube.com/watch?v=ISBoRHyHm_w&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=12
+
+Slot 插槽
+
+	1.情境1: 組件要動態多顆按鈕
+		* 類似匿名函式的 for ui
+		* slot 預設值
+		* 多個 slot ，則使用時如何指定對應的slot 設定
+		* slot attr for client 引用
+
+	// 原始設定
+	CustomTitle.vue
+		<template>
+			<div class='custom-title'>
+			  <section>
+			    <Icon><Document /></Icon>
+				<p>{{title}}</p>
+			  </section>
+			  <section>
+			    <button>編輯</button>
+			  </section>
+			</div>
+		</template>
+
+		<script setup>
+			import {Icon} from '@vions/utils'
+			import {Document} from '@vicons/carbon'
+
+			definePros({
+			  title: {type: String, defult: 'PageTile'}
+			})
+
+		</script>
+
+
+		<style scoped lang='postcss'>
+		  .custom-title{
+		    width: 100%;
+			dispaly: flex;
+			align-items: center;
+			justify-content: space-between;
+		  }
+		</style>
+
+	// 改良1
+	CustomTitle.vue
+		<template>
+			<div class='custom-title'>
+			  <section>
+			    <Icon><component :is="icons[icon]" /></Icon>
+				<p>{{title}}</p>
+			  </section>
+
+			  <section>
+			    <input v-show="inputText" placeholder="inputText" />
+				<button v-show="btn2Text && !hideBtn">{{btn2Text}}</button>
+				<button v-show="!hideBtn">{{btnText}}</button>
+			  </section>
+			</div>
+		</template>
+
+		<script setup>
+			import {Icon} from '@vions/utils'
+			import {Document, Warning, Close} from '@vicons/carbon'
+
+			definePros({
+			  title: {type: String, defult: 'PageTile' }
+			  icon: {type: String, defult: 'Document' }
+			  hideBtn: {type: Boolean, defult: false }
+			  inputText: {type: String, defult: '' }
+			  btnText: {type: String, defult: '編輯' }
+			  btn2Text: {type: String, defult: '' }
+			})
+
+			const icons = {
+			  Document: Document,
+			  Warning: Warning,
+			  Close: Close,
+			}
+
+		</script>
+
+
+		<style scoped lang='postcss'>
+		  .custom-title{
+		    width: 100%;
+			dispaly: flex;
+			align-items: center;
+			justify-content: space-between;
+		  }
+		</style>
+
+	// 改良2 by slot
+	CustomTitle.vue
+		<template>
+			<div class='custom-title'>
+			  <section>
+			    <slot name="icon" text="apple" msg="hello">
+					<Icon><Document /></Icon>
+				<slot/>
+				<slot> <!-- 預設 name 為 default -->
+				  PagetTitle  <!-- 預設值 -->
+				</slot>
+			  </section>
+
+			  <section>
+				<slot name="btns">
+				  <button>編輯</button>
+				</slot>
+			  </section>
+			</div>
+		</template>
+
+		<script setup>
+			import {Icon} from '@vions/utils'
+			import {Document} from '@vicons/carbon'
+
+			// data logic for slot attr 並導出給 client 使用
+		</script>
+
+
+		<style scoped lang='postcss'>
+		  .custom-title{
+		    width: 100%;
+			dispaly: flex;
+			align-items: center;
+			justify-content: space-between;
+		  }
+		</style>
+
+	App.vue
+		<template>
+			<div class='app'>
+			  <!-- 改良1 用法 -->
+			  <CustomTitle title='頁面標題文字' />
+			  <CustomTitle btn2Text="按鈕2" inputText="輸入框" />
+			  <CustomTitle btn2Text="按鈕2" inputText="輸入框" hideBtn />
+			  <CustomTitle icon="Warning" btn2Text="按鈕2" hideBtn />
+			  <CustomTitle icon="Close" btn2Text="按鈕2" hideBtn />
+
+			  <!-- 改良2 用法 -->
+			  <CustomTitle>
+
+				<template #icon="{text, msg}">
+				  {{text}}<br/>
+				  {{msg}}
+				  <Icon size="24" color="red"><Document /></Icon>
+				<template/>
+
+				<template #btns>
+				  <button>編輯</button>
+				  <button>設定</button>
+				<template/>
+
+			  </CustomTitle>
+			</div>
+		</template>
+
+		<script setup>
+			import {Icon} from '@vions/utils'
+			import {LogDiscord} from '@vicons/carbon'
+
+			import CustomTitle from './components/CustomTile.vue'
+
+		</script>
+
+
+		<style >
+		  .app{
+		    display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 500px;
+			height: 500px;
+			margin: auto;
+		  }
+		</style>
