@@ -107,3 +107,10 @@ ref ChatGPT
 	spring-core-xxxx.jar
 		org.springframework.util.unit
 			package-info.java
+			
+
+常見坑提醒
+
+	* 不要在整個根 package 一股腦全標：有些 package（例如 DTO 映射、反射、序列化）可能真的很常 null，全標會讓你到處 @Nullable，反而麻煩。
+
+	* 只標一層就好：@NonNullApi 不會自動「遞迴到子 package」，每個 package 是獨立的；你可以選你最核心的那幾個 package 標就好。

@@ -3,6 +3,17 @@
 		spring-boot-starter-parent
 
 
+	spring-boot
+		spring-core
+			commons-logging
+			jspecify
+		spring-context
+			spring-aop
+			spring-beans
+			spring-core
+			spring-expression
+			micrometer-observation
+
 	spring-boot-starter
 		spring-boot // 通用底層 class
 		spring-boot-autoconfigure // 通用自動配置 ref spring-boot
