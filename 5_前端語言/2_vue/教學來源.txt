@@ -1,0 +1,5 @@
+ref ChatGPT
+	https://www.youtube.com/watch?v=FkVJCy3dao4&list=PLSCgthA1AnifSzKdpV4FWq1pLVF4FbZ4K&index=1
+	https://www.youtube.com/watch?v=d5mrJfl6UWM&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O
+	https://vuejs.org/guide/introduction.html
+		官網
