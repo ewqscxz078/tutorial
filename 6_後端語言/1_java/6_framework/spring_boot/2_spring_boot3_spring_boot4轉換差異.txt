@@ -56,9 +56,24 @@ class 調整
 	data jpa
 		原本 org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 		改 org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
-
-
+	jackson 
+		原本預設 jackson 2
+			import com.fasterxml.jackson.databind.ObjectMapper;
+		改預設 jackson 3
+			import tools.jackson.databind.ObjectMapper;
+		
+	
 pom 調整
+	complier 系列
+		自動註冊
+			若有用到 import io.micrometer.tracing.Tracer; 的註冊 bean
+				要自行多依賴
+					<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-micrometer-tracing-brave</artifactId></dependency> <!-- 確保有自動註冊 Tracer 可用 -->
+			
+			Security Oauth2 client 若要用到 ClientRegistrationRepository 的註冊 bean ， ref OAuth2ClientConfigurations.ClientRegistrationRepositoryConfiguration
+				要確保有 yml 設定到 spring.security.oauth2.client
+					因為 @ConditionalOnOAuth2ClientRegistrationProperties
+			
 	provided 系列
 		原本 <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-jpamodelgen</artifactId><scope>provided</scope></dependency>
 		改 <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-processor</artifactId><scope>provided</scope></dependency>

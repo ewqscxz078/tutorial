@@ -2,7 +2,6 @@
 	spring-boot-dependencies
 		spring-boot-starter-parent
 
-
 	spring-boot
 		spring-core
 			commons-logging
