@@ -1,0 +1,319 @@
+ref ChatGPT
+
+
+前端要做的事（OIDC Client）
+	1) 先準備（註冊資訊）
+
+		* 你在 IdP/Auth Server 註冊一個 Client（通常是「Public Client」）
+
+		* 設好：
+
+			* redirect_uri（登入後導回前端的 URI）
+
+			* post_logout_redirect_uri（登出後導回）
+
+			* scopes：至少 openid，常加 profile、email
+
+			* 回應型別：response_type=code
+
+			* PKCE：通常要求 S256
+
+	2) 產生 PKCE 參數 + state/nonce
+
+		前端在「導去登入」前要做：
+
+			* 產生 code_verifier（高熵隨機字串）
+
+			* 產生 code_challenge = BASE64URL(SHA256(code_verifier))
+
+			* 產生 state（防 CSRF / 回應對應）
+
+			* 產生 nonce（OIDC 用來綁定 ID Token，防重放）
+
+		並把 code_verifier、state、nonce 暫存（常見：memory 或 sessionStorage；不建議 localStorage 放敏感資料）。
+
+	3) 送使用者去授權端點（Authorization Request）
+
+		前端導向：
+
+			* GET /authorize?...
+			包含：
+
+			* client_id
+
+			* redirect_uri
+
+			* response_type=code
+
+			* scope=openid ...
+
+			* code_challenge
+
+			* code_challenge_method=S256
+
+			* state
+
+			* nonce
+
+	4) 接收 redirect 回來的 code
+
+		登入成功後，IdP 會把使用者導回 redirect_uri，帶：
+
+			* code
+
+			* state
+
+		前端要做：
+
+			* 檢查 state 是否與先前保存一致（不一致就丟掉）
+
+			* 取得 code 後，進行「換 Token」
+
+	5) 用 PKCE 換 Token（Token Request）
+
+		前端呼叫 token endpoint：
+
+			* POST /token
+			帶：
+
+			* grant_type=authorization_code
+
+			* client_id（Public client 常見仍需要）
+
+			* code
+
+			* redirect_uri
+
+			* code_verifier（關鍵：PKCE 的 verifier）
+
+		換回：
+
+			* id_token（OIDC）
+
+			* access_token
+
+			* refresh_token（是否給，看 IdP 政策；SPA 現在很多建議用 refresh rotation/或乾脆不用）
+
+			* expires_in
+
+	6) 驗證 / 使用 Token（前端角度）
+
+		* 最小要求：至少要做 id_token 的 nonce 檢查（很多 OIDC library 會幫你做）
+
+		* 取得使用者資訊：
+
+			* 方式 A：解 id_token claims（常用）
+
+			* 方式 B：呼叫 userinfo endpoint（access_token + scope 控制）
+
+		* 呼叫後端 API 時：
+
+			* Authorization: Bearer <access_token>
+
+	7) Token 儲存策略（非常關鍵）
+
+		常見選擇：
+
+		* BFF 模式（推薦）：前端不要拿 access_token，改由後端持有 token；前端只拿 session cookie（HttpOnly + SameSite），安全性最好。
+
+		* 純 SPA 模式：前端持有 access_token
+
+			* 優先放 memory（重整會掉，要自行處理）
+
+			* 盡量不要 localStorage（XSS 風險）
+
+	8) 登出
+
+		* 前端導向 end_session_endpoint（或 IdP logout endpoint）
+
+		* 帶 id_token_hint、post_logout_redirect_uri（依 IdP）
+
+		* 本地也要清掉 session/token
+
+
+後端要做的事（API / Resource Server / BFF）
+
+	你後端的角色會有兩種典型：
+		A) 後端是 Resource Server（前端直接帶 access_token 來）
+
+			這是「SPA 直接呼叫 API」最常見的切法。
+
+				1) 驗證 JWT Access Token
+
+					* 設定 issuer-uri（或 jwk-set-uri）
+
+					* 驗章（簽章、有效期、issuer、audience、scope/roles）
+
+					* 把 claims 映射成你系統的授權模型（Authorities/Roles）
+
+				2) 授權（Authorization）
+
+					* 用 scope / roles / 自訂 claim（例如你的 aud / tenant / zone）
+
+					* API 端點做權限控制（例如 Spring Security hasAuthority("SCOPE_xxx")）
+
+				3) CORS / CSRF
+
+					* 因為是 Bearer token，多數情況 CSRF 不適用（不是 cookie-based）
+
+					* 但你要正確設定 CORS（允許前端網域、headers、methods）
+
+				4) 不要把 token 當 session
+
+					* 後端應該無狀態驗證（JWT）
+
+					* 只在必要時做 token blacklist / jti deny（登出立即失效的需求才做）
+
+		B) 後端是 BFF（Backend For Frontend）（推薦做法）
+
+			前端只跟 BFF 溝通，BFF 才跟 IdP 換 token、跟資源伺服器呼叫 API。
+
+				1) BFF 變成 OIDC Client
+
+					* BFF 負責：
+
+					* 建立 authorization request（含 PKCE，或由框架自動處理）
+
+					* 接 redirect（code 回到 BFF）
+
+					* 用 code_verifier 去 token endpoint 換 token
+
+					* token 存在後端（server-side）
+
+				2) 對前端用「Session Cookie」
+
+					* BFF 建立 session，發 HttpOnly cookie 給瀏覽器
+
+					* 前端呼叫 BFF API 時不帶 access_token，只靠 cookie
+
+				3) BFF 代呼叫下游 API
+
+					* BFF 從自己的 token store 取出 access_token
+
+					* 呼叫下游 Resource Server（或 Gateway）時加上 Bearer token
+
+				4) 安全性優點
+
+					* 前端 JS 拿不到 token（大幅降低 XSS 造成 token 外洩的風險）
+
+					* refresh token 也不會落在瀏覽器
+
+備註:
+	
+	對照表
+		| 階段       | Token     | aud      | 用來幹嘛        |
+		| ---------- | --------- | -------- | --------------- |
+		| 登入       | AT_portal | portal   | 證明使用者登入  |
+		| 點子系統 A | AT_A      | system-a | 呼叫 A API      |
+		| 點子系統 B | AT_B      | system-b | 呼叫 B API      |
+
+	決策表
+		| 條件               | 選擇                     |
+		| ------------------ | ------------------------ |
+		| 有 Gateway         | ✅ Token Exchange        |
+		| 有跨區 / zone      | ✅ Token Exchange        |
+		| 子系統不是第三方   | ✅ Token Exchange        |
+		| 強調平台治理       | ✅ Token Exchange        |
+		| 純 SaaS / 外部整合 | Authorization Code Flow  |
+		
+	「完整版本流程」
+		🔹 Step 1：使用者登入 Portal（人類登入）
+			Browser
+			  → /authorize (code + PKCE)
+			  → /token
+			取得：
+				| Token                    | 用途                  |
+				| ------------------------ | --------------------- |
+				| `id_token`               | 使用者身分（登入態）  |
+				| `access_token (portal)`  | Portal / BFF 用       |
+				| `refresh_token (portal)` | ✅ 可選（下面解釋）   |
+			👉 這一步是「人 → IdP」
+		
+		🔹 Step 2：點子系統（系統身分轉換）
+			Portal / Gateway
+			  → /token (grant_type=token_exchange)
+			參數概念：
+
+				* subject_token = access_token (portal)
+
+				* audience = system-A
+
+				* scope = system-a.*
+			取得：
+				| Token                     | 用途              |
+				| ------------------------- | ----------------- |
+				| `access_token (system-A)` | 打 system A API   |
+				| `refresh_token`           | ❌ 通常「不發」   |
+			👉 這一步是「系統 → IdP」
+	
+		🔥 關鍵修正點：不是「每顆 token 都該 refresh」
+	
+		1.Portal 登入 token：可以有 refresh token（看架構）
+			什麼時候「可以給」？
+
+				* Portal 是 BFF / server-side
+
+				* refresh token 不會落在瀏覽器 JS
+
+				* 你希望：
+
+					* 使用者久坐不被踢
+
+					* Portal session 可自動延長
+
+			👉 這很合理
+		
+		2.Token Exchange 出來的 system token：通常「不 refresh」
+			為什麼？
+
+				因為它的定位是：
+
+					「短命、用途單一、可重換」的系統 token
+
+			正規做法是：
+
+				system access token：
+
+					* TTL 短（5~15 分鐘）
+
+				快過期時：
+
+					* 再跑一次 Token Exchange
+
+					* 而不是 refresh 它
+
+				AT_system-A 快過期
+				   ↓
+				再用 AT_portal
+				   ↓
+				Token Exchange
+				   ↓
+				新的 AT_system-A
+				
+				👉 你已經有 source of truth（portal token）了，不需要 refresh system token
+		
+	「最乾淨模型」
+		【登入層】
+			Authorization Code + PKCE
+			  → AT_portal (+ RT_portal)
+
+		【系統層】
+			Token Exchange
+			  → AT_system (短命、無 RT)
+
+		【延長策略】
+			- Portal session：用 RT_portal
+			- System token：重新 exchange
+
+	一張「最終責任表」
+		| Token     | 來源           | 有 RT？     | 怎麼延長       |
+		| --------- | -------------- | ----------- | -------------- |
+		| AT_portal | Auth Code Flow | ✅ 可選     | refresh_token  |
+		| AT_system | Token Exchange | ❌ 建議不要 | 再 exchange    |
+		| id_token  | Auth Code Flow | ❌          | 不延           |
+	
+	結論
+		Portal 登入用 Authorization Code Flow + PKCE
+		子系統存取用 Token Exchange
+		延長登入用 refresh token（只限 Portal 層）
+		系統 token 一律短命、可重換

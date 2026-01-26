@@ -1,0 +1,63 @@
+ref ChatGPT
+
+
+Q1: PKCE 全名是什麼意思?
+	Proof Key for Code Exchange
+		「程式碼交換證明金鑰」（也有人稱「授權碼交換證明」）
+			拆字直覺版說明一下 👇
+
+			Proof（證明）
+				👉 用來「證明」這個請求真的是同一個 Client 發出的
+
+			Key（金鑰）
+				👉 一段只有 Client 自己知道的隨機字串
+
+			for Code Exchange（用於授權碼交換）
+				👉 用在 OAuth 2.0 的 Authorization Code → Access Token 這一步
+	
+	PKCE 在幹嘛（一句話版）
+		防止授權碼（authorization code）被攔截後遭人盜用
+			也就是：
+			就算有人偷到你的 authorization_code，
+			沒有原本的 PKCE key，也換不到 token 🔒
+
+	為什麼會有 PKCE？
+
+		最早 OAuth 2.0 假設：
+
+			* Client 能安全保存 client_secret
+
+		但在這些情境會出問題：
+
+			* SPA（Vue / React）
+
+			* Mobile App
+
+			* Desktop App
+
+		👉 根本不能安全存 secret
+
+		所以 PKCE 就變成：
+
+			不靠 client_secret，也能安全交換 token 的機制
+	
+	PKCE 流程超濃縮版
+
+		1.Client 先產生一段隨機字串
+			👉 code_verifier
+
+		2.對它做雜湊
+			👉 code_challenge
+
+		3.授權時送出 code_challenge
+
+		4.換 token 時送出 code_verifier
+
+		5.Auth Server 驗證：
+			hash(code_verifier) == code_challenge ?
+
+	現在的業界共識（很重要）
+		Authorization Code Flow 一律建議 + PKCE
+		（即使是 confidential client）
+		
+		OAuth 2.1 更是直接把 PKCE 當成「必備」

@@ -52,7 +52,7 @@ ref ChatGPT
 
 			* All test “starter” POMs are named spring-boot-starter-<technology>-test.
 
-class 調整
+package 調整
 	data jpa
 		原本 org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 		改 org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
@@ -61,8 +61,20 @@ class 調整
 			import com.fasterxml.jackson.databind.ObjectMapper;
 		改預設 jackson 3
 			import tools.jackson.databind.ObjectMapper;
-		
 	
+	annotation
+		原本 org.springframework.lang.Nullable : @Nullable
+		改 org.jspecify.annotations.Nullable : @Nullable
+			Spring Framework 7 的 deprecated list 也把整套 org.springframework.lang.* 的 nullability 方向指到 JSpecify：
+				* org.springframework.lang.Nullable → org.jspecify.annotations.Nullable
+				* org.springframework.lang.NonNull → org.jspecify.annotations.NonNull
+				* org.springframework.lang.NonNullApi / NonNullFields → 通常改用 package-level 的 org.jspecify.annotations.NullMarked（宣告「預設非 null」）
+			例：package-info.java
+				@org.jspecify.annotations.NullMarked
+				package com.example.foo;
+				
+			然後真的允許為 null 的地方再用 @Nullable。
+
 pom 調整
 	complier 系列
 		自動註冊
@@ -73,7 +85,16 @@ pom 調整
 			Security Oauth2 client 若要用到 ClientRegistrationRepository 的註冊 bean ， ref OAuth2ClientConfigurations.ClientRegistrationRepositoryConfiguration
 				要確保有 yml 設定到 spring.security.oauth2.client
 					因為 @ConditionalOnOAuth2ClientRegistrationProperties
-			
+	升版
+		jackson 2 yml => jackson 3 yml
+			<dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-yaml</artifactId></dependency>
+				=>
+				<dependency><groupId>tools.jackson.dataformat</groupId><artifactId>jackson-dataformat-yaml</artifactId></dependency>
+					// 另外用 jackson 轉 yml 變嚴格僅能
+						YAMLMapper yaml = new YAMLMapper(new YAMLFactory()); 建構方式
+						ObjectMapper 建構方式被移除
+
+
 	provided 系列
 		原本 <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-jpamodelgen</artifactId><scope>provided</scope></dependency>
 		改 <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-processor</artifactId><scope>provided</scope></dependency>

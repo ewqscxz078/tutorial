@@ -1,0 +1,273 @@
+ref ChatGPT
+
+提供給純粹靜態網頁的前端用的 jwt ，auth server 要注意那些?
+	原本的 M2M（Java 前端打 Java 後端）多半是 client_credentials / token exchange / private_key_jwt 這類「有能力安全保存憑證」的 client。
+	但 純靜態 SPA（Vue3 build 出來放 CDN / Nginx） 本質是「Public Client」：不能安全保存 client_secret / 私鑰，所以 Auth Server 的設計重點會完全不一樣。
+
+1) 流程要換：用 Authorization Code + PKCE（不要用 client_credentials）
+	* SPA 應走 OIDC Authorization Code Flow + PKCE
+
+	* 不要讓 SPA 走 client_credentials（那等於把機器身分授權給瀏覽器，風險很大）
+
+	* 在 Auth Server 註冊這個 Vue SPA 的 client：
+
+		* clientAuthenticationMethod = none（public client）
+
+		* requireProofKey = true（強制 PKCE）
+
+		* requireAuthorizationConsent 視需求（是否顯示同意頁）
+
+		* Redirect URI / Post-Logout Redirect URI 要精準控管（見下）
+			Redirect URI：
+				👉「使用者成功登入（或授權）後，Auth Server 要把人帶回哪裡」
+
+			Post-Logout Redirect URI：
+				👉「使用者從 Auth Server 登出後，要被導回哪裡」
+			這兩個 不是隨便跳轉用的網址，而是 安全白名單的一部分。
+			
+			
+2) Redirect URI / Origin / CORS 要非常嚴格
+	Redirect URI
+
+		* 只允許固定且精準的 redirect URI（避免 open redirect）
+
+			* 例如 https://portal.example.com/callback
+
+			* 避免用太寬鬆的 wildcard（或至少限制到可信子網域/路徑）
+
+	CORS
+
+		* SPA 會從瀏覽器直接打 /oauth2/token（換 token）、/.well-known/openid-configuration、/userinfo（若有）
+
+		* Auth Server 必須針對 token 端點的跨域設定謹慎：
+
+			* Access-Control-Allow-Origin 只允許你的前端網域（不要 *）
+
+			* Allow-Credentials 依你是否用 cookie 而定（見第 4 點）
+
+3) Token 的 audience / scope / API 邊界要重新整理
+
+	原本 M2M 的 JWT 可能 audience 很偏「服務對服務」，現在給 SPA 用通常要：
+		* 把 SPA 取得的 Access Token audience 限制在「API Gateway 或特定 Resource」
+		* scope 要更細（例如 api.read, api.write, profile…）
+		* 後端（Resource Server / Gateway）要驗證：
+			* iss、aud、exp、scope/roles
+			* 必要時加上 azp（authorized party / client_id）限制「此 token 必須由某些 client 簽發」
+
+4) Refresh Token 怎麼做：強烈建議走 BFF（或至少做旋轉與防護）
+
+	純 SPA 最痛的點是 token 放哪裡。
+
+	選項 A：建議的做法（BFF）
+
+		* 架一個很薄的 BFF（Backend For Frontend）（可以是你既有 Gateway 的一個 frontend 專用入口）
+
+		* 登入後：
+
+			* 瀏覽器只拿到 HttpOnly + Secure cookie（同站或適度跨站）
+
+			* Access token / refresh token 不落地在 JS 可讀的地方
+
+		* 這樣 XSS 打到也比較不容易直接偷走 token
+
+	選項 B：純 SPA 直連 AS（不建議但可做）
+
+		* 你就得面對：
+
+			* token 儲存在 memory / sessionStorage 的取捨
+
+			* 重新整理頁面後如何續期
+
+			* refresh token 可能被偷
+
+		* 如果一定要發 refresh token 給 SPA：
+
+			* Refresh Token Rotation（每次換新、舊的立刻失效）
+
+			* 啟用 reuse detection（偵測重放）
+
+			* refresh token 存活期要控（例如 7~30 天），access token 短（例如 5~15 分鐘）
+
+5) CSRF / SameSite / Cookie 策略（看你走 BFF 或直連）
+
+	* BFF + cookie：你要做 CSRF 防護（double submit / synchronizer token）
+		並設定 SameSite=Lax/Strict（若需要跨站登入流程可能要 None; Secure，但要非常小心）
+
+	* 純 SPA + Bearer token：CSRF 相對弱化，但你要更怕 XSS（偷 token）
+
+6) 前端安全會直接影響 Auth Server 風險面（XSS 是頭號敵人）
+
+	SPA 的 XSS 一旦成立，攻擊者很可能：
+
+		* 冒用使用者呼叫 API
+
+		* 甚至偷 refresh token（若你給 SPA）
+
+	所以你要搭配：
+
+		* CSP（Content-Security-Policy）
+
+		* 嚴禁 inline script / 嚴控第三方 script
+
+		* 前端輸出編碼、避免 dangerouslySetInnerHTML 類型用法
+
+		* Gateway/Resource Server 端也要做輸入驗證與輸出編碼（避免反射型 XSS）
+
+7) 登出與撤銷（logout / revocation）要想清楚
+
+	M2M 通常不太需要「使用者登出」，但 SPA 需要：
+
+		* OIDC RP-Initiated Logout（如果你有 OIDC）
+
+		* token revocation endpoint（/oauth2/revoke）與前端清 session
+
+		* 如果是 JWT access token：撤銷通常做不到即時，需靠短效 + refresh 控制，或做 denylist/版本號策略
+
+8) 風險控管：建議加上 DPoP 或 sender-constrained token（可選但很有用）
+
+	如果你真的要讓瀏覽器直接帶 Bearer token 打 API，建議評估：
+
+		* DPoP（證明持有人綁定）
+
+		* mTLS（通常不適合瀏覽器）
+			這能降低 token 被偷後的可用性（但會增加實作複雜度）
+
+
+最小可行建議（你現在就能落地的方向）
+
+	1.Auth Server 新增一個 vue-spa client：public client + PKCE 必開
+
+	2.access token 生命期縮短（例：10 分鐘）
+
+	3.refresh token：能用 BFF 就用 BFF；不行才給 SPA，且必做 rotation
+
+	4.嚴格限制：redirect URI、CORS allowed origins、audience/scope、（可選）限制 azp
+
+兩套落地方案：
+	方案 1：Portal/Vue → Gateway(BFF) → Resource（安全性高、最推薦）
+
+	方案 2：Portal/Vue 直連 AS 拿 token → Gateway → Resource（工程量較低但要補很多防護）
+
+Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
+	還是 獨立網域（例如 https://portal.example.com/），
+	我就能把 Redirect/CORS/SameSite 的設定也一起對齊
+
+備註:
+	SPA:
+		（單頁應用程式）是現代前後端分離架構的核心形式。
+		它僅載入單個 HTML 頁面，透過 JavaScript 動態更新內容（CSR），
+		無需重新整理即可切換畫面
+	
+	Redirect URI 是什麼？（登入成功後的回跳點）
+	
+		發生在什麼時候？
+			
+			使用者在瀏覽器：
+
+				1.被導向 Auth Server 登入頁
+
+				2.登入成功（帳密 / MFA / SSO）
+
+				3.Auth Server 會 redirect 回你指定的前端頁面
+
+				4.並在 URL 上附加 code（授權碼）
+
+			👉 這個「回你前端的 URL」就是 Redirect URI
+	
+		範例
+			典型 SPA（Vue3）
+				https://portal.example.com/callback
+			
+			Auth Server 會做：
+				302 Redirect →
+				https://portal.example.com/callback?code=abc123&state=xyz
+
+			前端在 /callback：
+
+				* 驗證 state
+
+				* 用 code + PKCE code_verifier 呼叫 /oauth2/token
+
+				* 換到 Access Token / ID Token
+		
+		為什麼一定要「事先註冊」？
+			👉 防止 Open Redirect 攻擊
+				如果不限制：
+					/login?redirect_uri=https://evil.com
+			攻擊者就可以：
+
+				* 讓使用者在「真的 Auth Server」登入
+
+				* 卻把 code 或 token 送到惡意網站
+
+			➡️ 所以 Auth Server 一定只允許「預先登記過」的 Redirect URI
+		
+		實務重點（非常重要）
+			❌ 不要用太寬鬆的 wildcard
+				https://portal.example.com/*
+			✅ 精準到 path
+				https://portal.example.com/callback
+			
+			開發 / 測試 / 正式 分開註冊
+				http://localhost:5173/callback
+				https://portal-dev.example.com/callback
+				https://portal.example.com/callback
+	
+	Post-Logout Redirect URI 是什麼？（登出後要去哪）
+		發生在什麼時候？
+			使用者：
+				1.在前端點「登出」
+
+				2.前端導向 Auth Server 的 logout endpoint
+
+				3.Auth Server：
+
+					* 清 session
+
+					* 清 SSO 狀態
+
+				4.再把使用者導回前端某個頁面
+		
+		常見用法
+			https://portal.example.com/logout-success
+			或直接回首頁：
+			https://portal.example.com/
+
+		為什麼也要註冊？
+			原因跟 Redirect URI 一樣：
+				* 防止登出後被導到惡意網站
+				* 避免被拿來當跳板
+	
+	
+常見整合方式
+	做法 1：Portal 是「入口＋選單」，點進前端服務1（不同網域/子網域）
+
+		* Portal：portal.example.com
+
+		* 前端服務1：app1.example.com
+
+		* 兩者都向 Auth Server 做 OIDC Login（SSO cookie 讓第二次免登入）
+
+		* 這是最典型的「多個 OIDC Client 共用一個 IdP」
+
+	做法 2：Gateway 統一掛載所有前端（同網域不同 path）
+
+		* https://gw.example.com/portal/*
+
+		* https://gw.example.com/app1/*
+
+		* 同網域下 cookie / CORS / SameSite 比較好控
+
+		* BFF 模式也更好做（Gateway-BFF）
+
+	最常見、最穩的「企業 SSO」建議落點
+
+		如果你目標是「安全與維運平衡」：
+
+		* Auth Server/IdP：OIDC（authorization_code + PKCE）
+
+		* Portal（SPA）：只負責 UI（不要存 token）
+
+		* Gateway-BFF：負責登入導轉、session、token 交換/保管
+
+		* Resource Server（後端服務1）：只認 Gateway 來的 token / 或只信任內網 header（視你的既有模式）
