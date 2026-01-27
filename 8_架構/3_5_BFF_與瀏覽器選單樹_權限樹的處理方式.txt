@@ -1,0 +1,148 @@
+ref ChatGPT
+
+
+BEF
+	選單樹/權限樹 的處理方式?
+		Q1 : 如果 session 不放選單樹/權限樹 那這樣前端怎麼動態帶出 選單樹/權限樹內容到前端?
+		A1 :
+			正確做法通常是：登入後/首次載入時取一次，之後用快取（伺服器端或瀏覽器端）；
+			session 只放「誰、有哪些角色/權限版本、快取鍵」這種小資訊。
+
+	常用、可落地的模式
+		方案 A：前端第一次進來呼叫 BFF 一次，BFF 回傳「可視選單樹」
+			流程
+
+				1.使用者登入後進首頁
+
+				2.SPA 呼叫 GET /bff/me 或 GET /bff/menu
+
+				3.BFF 用 session 知道是誰（userId/roles）
+
+				4.BFF 去查「選單樹/權限樹」→ 回 SPA
+
+				5.SPA 存在 memory / pinia（可搭配 localStorage 但看敏感度）
+
+			關鍵點
+
+				*「每次都要查」→ 不需要
+
+				* 你只要做：
+
+					* BFF 端快取（推薦）或
+
+					* 前端端快取（輕量，但要考慮敏感資訊與一致性）
+		
+		方案 B：BFF 做伺服器端快取（推薦企業 Portal）
+			
+			你 session 只放這些（很小）
+				* userId
+
+				* roles（或 role hash）
+
+				* menuVersion（或權限版本號）
+
+				* cacheKey（例如 menu:{tenant}:{userId}:{ver}）
+		
+			真正的大東西放哪？
+				
+				* Redis（應用快取）或資料庫（查出後快取）
+			流程
+
+				* SPA 打 GET /bff/menu
+
+				* BFF 先查 Redis 快取（命中直接回）
+
+				* 沒命中才去後端權限服務查一次，然後寫回 Redis
+
+			優點
+
+				* 不綁 JVM、可水平擴展
+
+				* 不會把大型物件塞 session（避免 Redis session 肥大）
+
+				* 可用 TTL + 權限版本號做一致性
+			
+			這其實就是你熟悉的「後端快取設計」，只是快取對象是 menu/permission tree。
+		
+		方案 C：前端快取 + ETag / If-None-Match（很省流量）
+			BFF 的 GET /bff/menu 回：
+
+				* body：選單 JSON
+
+				* header：ETag: "menuhash-xxx"
+			
+			下次 SPA 再打同一支 API 時帶：
+
+				* If-None-Match: "menuhash-xxx"
+			
+			若沒變，BFF 回 304 Not Modified（幾乎沒 payload）。
+
+			優點
+
+				* 前端不用每次拿完整 JSON
+
+				* 對「選單很大」特別有效
+	
+		方案 D：把「選單樹」拆成「靜態框架 + 動態授權遮罩」
+			
+			適合你的情境（Portal + 多子系統）：
+
+				* 前端有一份「全站選單模板」（基本不變，可打包進前端或 CDN）
+
+				* BFF 只回「可見節點列表/權限 bitset」
+
+					* 例如：["HR:VIEW", "IT:ADMIN", "REPORTS:READ"]
+
+				* 前端用這份授權遮罩去 render 選單
+
+			優點
+
+				* BFF 回應非常小
+
+				* 變動通常只在授權遮罩，而不是整棵樹
+
+				* 前端更好維護（選單結構由前端版本控）
+			
+			缺點
+
+				* 前端要寫一點「過濾選單」邏輯（但你本來就有角色選單）
+		
+	到底要不要「每次都透過 BFF 跟後端要」？
+		不建議每次都打後端權限服務的原因
+
+			* 浪費延遲
+
+			* 權限服務容易變瓶頸
+
+			* 你會為了選單把整個 Portal 體感拖慢
+
+		建議的折衷（最常見）
+
+			* 每次頁面刷新（F5）可以接受打一次 GET /bff/menu
+
+			* 但 GET /bff/menu 本身：
+
+				* 走 BFF cache（多半命中）
+
+				* 或走 ETag 304
+	
+	「實務推薦組合」（穩、好擴展）
+		1.方案 D（靜態選單模板）+ 方案 B（BFF 快取授權遮罩）
+
+		2.session 只存：userId, roles(or hash), authVersion
+
+		3.BFF 提供：
+
+			GET /bff/me（基本資料、角色、authVersion）
+
+			GET /bff/entitlements（授權遮罩，小 JSON）
+
+		4.前端依 entitlements render 選單
+
+	「選單樹/權限樹」是：
+
+		(1) 選單結構也會因人而異、甚至節點順序/內容動態生成
+		→ 偏向 方案 A/B/C（BFF 回完整樹 + 快取）
+
+		(2) 選單結構大致固定，只是哪些項目可見因角色不同
+		→ 偏向 方案 D（靜態樹 + 授權遮罩）最划算

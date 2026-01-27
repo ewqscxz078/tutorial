@@ -1,0 +1,86 @@
+ref ChatGPT
+
+前端自己跟後端打 token 取得後放 localStage 或 sessionStage 的資安問題
+
+	* 通常會被視為比較高風險的做法。
+	
+	* 而是瀏覽器端儲存位置很容易被 XSS 影響。
+
+為什麼 localStorage / sessionStorage 風險高
+
+	1.XSS（跨站腳本）一旦發生，token 很容易被讀走
+
+		* 只要有任意腳本能在你的網頁執行（第三方 script、弱點、DOM XSS），就能直接讀 localStorage.getItem(...)。
+
+		* sessionStorage 只是「關掉分頁就沒了」，但在那個分頁生命週期內一樣可被 JS 讀取，所以對 XSS 不是解法。
+
+	2.refresh token 若也放前端，風險更高
+
+		* refresh token 通常活得更久，被偷走的影響比 access token 更嚴重。
+
+	3.token 外洩後的利用門檻很低
+
+		* 大部分 API 只要帶 Authorization: Bearer ... 就能打。
+	
+
+沒用 BFF/BEF，就一定很危險嗎？
+	
+	不一定，但要看你採取哪一種「前端持 token」策略：
+
+
+較常見的三種做法（由相對安全到相對危險）
+
+	1.BFF + HttpOnly Secure Cookie（建議）
+
+		* token 不進前端 JS 世界；前端只拿到「同站 cookie」的 session。
+
+		* 缺點是要多一層後端，但安全性與控管最好。
+
+	2.純 SPA：Authorization Code + PKCE，但 token 只放「記憶體」
+
+		* 不落地（不寫入 local/session storage），刷新頁面就需要重新走流程或用更安全的機制續期。
+
+		* 搭配 短效 access token、嚴格 CSP、避免第三方 script，可把風險壓低。
+
+		* 這在很多 SPA 是主流折衷。
+
+	3.token 放 localStorage/sessionStorage（不建議）
+
+		好處是「刷新頁面還在」，但等於用便利性換安全性，通常在資安要求高的環境會被打回票。
+
+如果你現在「沒有 BFF」但又想降低風險，實務建議
+
+	情境是 Vue3 + OIDC（常見是 Authorization Code + PKCE），我會建議採用下面的組合（由優先順序排列）：
+
+		1. access token 盡量只放記憶體（in-memory）
+
+		2. refresh token 若可能就不要給 SPA（或採用 Rotation + DPoP/MTLS 類機制；至少要 rotation）
+
+		3. access token 設很短（例如 5~10 分鐘）+ 需要時靜默續期
+
+		4. 全面強化 XSS 防線（這點是關鍵）
+
+			* 嚴格 CSP（避免 inline script、限制 script-src）
+
+			* 依賴掃描/鎖版（npm lockfile、SCA）
+
+			* 不信任的 HTML 一律 sanitize
+
+		5.若用 cookie（非 BFF）
+
+			* 你可能會想「我直接把 token 放 HttpOnly cookie 給後端吃」
+				這會把風險轉成 CSRF（因為 cookie 會自動帶），你就必須做：
+
+				* SameSite=Lax/Strict（視需求）
+
+				* CSRF token（雙提交或框架機制）
+
+				* CORS/Origin 檢查
+
+			* 也就是：cookie 不是萬靈丹，只是把威脅模型從 XSS 轉向 CSRF。
+
+	一句話結論
+
+		* 是，放 localStorage/sessionStorage 更容易出資安事（主要是 XSS 直接讀走 token）。
+
+		* 如果你不做 BFF/BEF，建議至少做到：token in-memory + 短效 token + 強 CSP/XSS 防護 +（必要時）更安全的續期策略。

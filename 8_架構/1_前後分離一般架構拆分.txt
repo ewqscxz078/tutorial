@@ -4,23 +4,33 @@
 
 	前端 (vue3 gen)
 		portal-spa 
-		子系統 a、b、c （a-spa、b-spa、c-spa）
+		子系統
+			a-spa
+			b-spa
+			c-spa
 
 	中間層 (java) // 掛載在 gateway-server 之前，專門讓前端打 
-		portal-bff 
-		子系統 a-bff、b-bff、c-bff、通用-bff
+		portal-bff
+		子系統 
+			a-bff
+			b-bff
+			c-bff
+			通用-bff
 
 	基礎建設
 		auth-server		(java)
 		gateway-server 	(java)
-		radis			(容器服務) 1.for BEF session radis
+		radis			(容器服務) 1.for BFF session radis 以利 csrf of Session Cookie 防護問題
 		// config-server	(java)
 		// vault			(容器服務)
 
 	後端 (java)
-
-		一般服務
-			子系統 a-bn、b-bn、c-bn、通用-bn
+		portal-bn
+		子系統 
+			a-bn
+			b-bn
+			c-bn
+			通用-bn
 
 
 對外入口：
@@ -28,7 +38,7 @@
 
 		/ → portal SPA（靜態檔）
 
-		/bff/** → portal-bef
+		/bff/** → portal-bff
 
 		/oauth2/** 或 /auth/** → auth-server（或經 nginx 轉發）
 
@@ -54,9 +64,10 @@
 最常見的互動模式：Portal 只負責「導流」+「SSO」
 	1) 使用者在 Portal 完成 SSO（建立登入狀態）
 
-		Portal SPA ↔ portal-bef（cookie session）
+		Portal SPA ↔ portal-bff（session cookie）
 
-		portal-bef ↔ auth-server（換 token / refresh / token exchange 視你的設計）
+		portal-bff ↔ auth-server（換 token / refresh / token exchange 視你的設計）
+			BY Authorization Code + PKCE
 
 	2) 使用者點選子系統 a/b/c，跳到子系統前端
 
@@ -69,17 +80,17 @@
 		👉 子系統前端負責讓自己「能呼叫 API（拿到自己的 access token 或 session）」
 	
 	
-子系統前端到底要不要經 portal-bef？三種成熟做法
+子系統前端到底要不要經 portal-bff？三種成熟做法
 
 	做法 A（最推薦，乾淨）：每個子系統有自己的 BFF（a-bff / b-bff / c-bff）
 
 	互動：
 
-		* a-spa ↔ a-bef（cookie session）
+		* a-spa ↔ a-bff（cookie session）
 
-		* a-bef ↔ auth-server（必要時 token exchange / refresh）
+		* a-bff ↔ auth-server（必要時 token exchange / refresh）
 
-		* a-bef ↔ gateway-server ↔ a-service
+		* a-bff ↔ gateway-server ↔ a-service
 
 	Portal 做什麼？
 
@@ -87,7 +98,7 @@
 
 		* 點 a 連結就開 a-spa
 
-		* a-spa 發現沒有 session → 導向 auth-server（同 SSO session 下通常會直接無感登入）→ 回到 a-bef 建立 cookie session
+		* a-spa 發現沒有 session → 導向 auth-server（同 SSO session 下通常會直接無感登入）→ 回到 a-bff 建立 cookie session
 
 	優點：
 
