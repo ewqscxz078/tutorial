@@ -1,0 +1,42 @@
+ref ChatGPT
+
+若需要前端管理 token，通常建議走 BFF 模式前端不管 token 處理，因此就不會用到這個 套件
+
+1) 通用 OIDC（最常用，適合你自建 Spring Authorization Server / 一般 OIDC 供應商）
+	✅ oidc-client-ts（通用、規格導向）
+
+		* 直接支援 Authorization Code + PKCE，也有 session / token 管理能力
+			適合：你是「標準 OIDC」環境、想保留最大彈性。
+
+			可能還需要部份實作
+				ref oidc-spa 官網
+					* Token renewal, and what happens on expiry.
+
+					* Idle timeout UX. Auto-logout and re-auth prompts.
+
+					* Login/logout sync across tabs.
+
+					* Reliable session restore on reload, including third‑party cookie blocks.
+
+					* Provider quirks. Keycloak, Entra ID, and Auth0 differ in practice.
+
+	✅ oidc-spa（新一點、主打降低瀏覽器 token 暴露風險）
+
+		* 明確標榜 Code + PKCE，也支援一些安全強化（例如 DPoP）
+			適合：你很在意 SPA token exposure 的安全議題，想走更「安全取向」的封裝。
+
+2) 若你用的是特定身分平台（會更省事）
+	✅ Auth0：@auth0/auth0-spa-js
+
+		* 官方 SDK，明確就是給 SPA 用 Authorization Code + PKCE
+			適合：你用 Auth0（或公司已採用）。
+
+	✅ Microsoft Entra ID / Azure AD：msal-browser
+
+		* Microsoft 官方，文件明講 SPA 使用授權碼流程需要 PKCE，且 MSAL 支援
+			適合：你用 Entra ID（Azure AD）。
+
+	✅ Keycloak：keycloak-js
+
+		* Keycloak 官方 JS adapter：預設用 Authorization Code flow，並會在 redirect 回來後幫你交換 token
+			適合：你用 Keycloak。

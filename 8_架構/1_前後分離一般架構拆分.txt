@@ -1,0 +1,102 @@
+系統項目
+	web server
+		nginx			(容器服務)
+
+	前端 (vue3 gen)
+		portal-spa 
+		子系統 a、b、c （a-spa、b-spa、c-spa）
+
+	中間層 (java) // 掛載在 gateway-server 之前，專門讓前端打 
+		portal-bff 
+		子系統 a-bff、b-bff、c-bff、通用-bff
+
+	基礎建設
+		auth-server		(java)
+		gateway-server 	(java)
+		radis			(容器服務) 1.for BEF session radis
+		// config-server	(java)
+		// vault			(容器服務)
+
+	後端 (java)
+
+		一般服務
+			子系統 a-bn、b-bn、c-bn、通用-bn
+
+
+對外入口：
+	nginx
+
+		/ → portal SPA（靜態檔）
+
+		/bff/** → portal-bef
+
+		/oauth2/** 或 /auth/** → auth-server（或經 nginx 轉發）
+
+		/api/** → gateway-server
+
+內部呼叫：
+	portal-bff 	→ gateway-server 	→ portal-service
+	a-bff 		→ gateway-server	→ a-service
+	b-bff		→ gateway-server	→ b-service
+	c-bff		→ gateway-server	→ c-service
+	
+這樣切的好處是：
+
+	* BFF(Backend for frontend) 的存在目的就是處理「瀏覽器特殊需求」（cookie、session、CSRF、防 token 外洩、聚合多 API）。它是「前端的延伸」，不太像一般後端子系統。
+
+	* 避免 gateway 變成「所有東西都要先過一層」，把 gateway 的責任限縮在「保護後端 API」。
+
+	* 你可以讓 portal-bff 用 cookie-based session（HttpOnly + SameSite + Secure），瀏覽器完全不碰 access token；portal-bff 再用 token（或 token exchange 後的 token）去打 gateway / 後端。
+
+	這是最多團隊最後會落在的樣子：瀏覽器只信任 BFF 的 cookie；BFF 才是 token 的持有者。
+
+
+最常見的互動模式：Portal 只負責「導流」+「SSO」
+	1) 使用者在 Portal 完成 SSO（建立登入狀態）
+
+		Portal SPA ↔ portal-bef（cookie session）
+
+		portal-bef ↔ auth-server（換 token / refresh / token exchange 視你的設計）
+
+	2) 使用者點選子系統 a/b/c，跳到子系統前端
+
+		使用者跳到 https://portal.domain/a/ 或 https://a.domain/（看你是否同網域）
+
+		子系統前端自己要有「登入檢查」與「取得呼叫 API 的憑證」的策略
+
+	關鍵差別在於：
+		👉 Portal 負責讓使用者「已登入（SSO）」
+		👉 子系統前端負責讓自己「能呼叫 API（拿到自己的 access token 或 session）」
+	
+	
+子系統前端到底要不要經 portal-bef？三種成熟做法
+
+	做法 A（最推薦，乾淨）：每個子系統有自己的 BFF（a-bff / b-bff / c-bff）
+
+	互動：
+
+		* a-spa ↔ a-bef（cookie session）
+
+		* a-bef ↔ auth-server（必要時 token exchange / refresh）
+
+		* a-bef ↔ gateway-server ↔ a-service
+
+	Portal 做什麼？
+
+		* Portal 只提供「入口」與「系統清單」
+
+		* 點 a 連結就開 a-spa
+
+		* a-spa 發現沒有 session → 導向 auth-server（同 SSO session 下通常會直接無感登入）→ 回到 a-bef 建立 cookie session
+
+	優點：
+
+		* 邊界超清楚：每個系統自己的 cookie、自己的 CSRF、防護策略
+
+		* 權限與稽核也比較自然（系統自己的操作在系統自己的 BFF）
+
+		* Portal 不會變成全域瓶頸
+
+	缺點：
+
+		系統多就多幾個 BFF（但這是可控的工程量）

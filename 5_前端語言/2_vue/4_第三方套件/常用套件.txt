@@ -1,0 +1,138 @@
+ref ChatGPT
+
+
+vue3 常用套件
+
+	1) 路由與頁面架構（Web 的基本盤）
+		* vue-router：SPA 路由、巢狀路由、導航守衛（登入/權限）。
+
+		* 類比：spring-boot-starter-web（你一定會用到的 Web 基礎）
+
+	2) 狀態管理（全域狀態 / 使用者資訊 / 權限）
+		* pinia：Vue 3 主流狀態管理（取代 Vuex 的主流路線）。
+
+		* 類比：沒有完全等價的 starter，但功能定位像「應用層的全域 Context + Session State」
+
+		常見搭配：
+
+			* pinia-plugin-persistedstate：把 token / user profile 等持久化到 localStorage/sessionStorage
+
+			* 類比：Spring Security 的「記住我 / session persistence」那種效果（概念上）
+	
+	3) HTTP API 呼叫（打後端 / 攔截器 / Token）
+		* axios：最常見（攔截器好用：自動帶 token、統一錯誤處理）
+
+		* @tanstack/vue-query：更進階的「server-state」管理（快取、去重、重試、背景刷新）
+
+		* 類比：
+			* axios ≈ spring-boot-starter-web + RestTemplate/WebClient 那種「Client 工具」
+
+			* vue-query ≈ 「把呼叫 API 的快取/重試/同步策略」包成框架級能力（有點像你做一個 my-webclient-starter 再加 cache/retry）
+
+	4) 表單與驗證（大量表單的必備）
+		* vee-validate + zod（或 yup）：表單驗證、錯誤訊息、schema 驗證
+
+		* 類比：spring-boot-starter-validation（Jakarta Validation）那種「表單驗證基本盤」
+	
+	5) UI 元件庫（快速做出一致 UI）
+		常見選擇（看你專案風格）：
+			* Element Plus：企業後台常用、元件齊全
+
+			* Naive UI：設計感不錯、TypeScript 友善
+
+			* Vuetify：Material Design 路線
+
+			* Ant Design Vue：Ant 生態
+
+			* 類比：像你在後端選 spring-boot-starter-web + 一堆「常用企業元件」的整合；前端則是直接把 UI 解決方案整包帶走
+	
+	6) 圖表與資料視覺化（儀表板常見）
+		* ECharts（或 vue-echarts）
+
+		* Chart.js
+
+		* ApexCharts
+
+		* 類比：後端沒有完全對等，但功能上像「你選了某個報表/圖表引擎」
+
+	7) 權限控管（RBAC / Route Guard / Menu）
+
+		常見做法是「vue-router + pinia + 自訂 guards」，再搭配：
+
+			* CASL（能力/規則導向的權限庫）
+
+			* 或自己做 roles/permissions 判斷工具
+
+			* 類比：spring-boot-starter-security（但前端的重點是「顯示/導頁限制」，真正授權仍要後端做）
+	
+	8) OIDC / OAuth2（你這專案會很常用）
+		如果你要走 Authorization Code + PKCE（你前面正在做），常用：
+
+			* oidc-client-ts：最常見的 OIDC 客戶端之一（SPA 用）
+
+			* @auth0/auth0-spa-js：用 Auth0 生態時很方便（不一定適合自架 SAS）
+
+			* （Vue 封裝）vue-oidc-client（封裝程度看專案需求）
+
+			* 類比：spring-boot-starter-oauth2-client / spring-boot-starter-oauth2-resource-server
+	
+	9) i18n（多語系）
+
+		* vue-i18n
+
+		* 類比：後端常見是 message bundles + LocaleResolver（概念對應）
+
+	10) 日期時間與格式化
+
+		* dayjs（輕量常用）
+
+		* date-fns
+
+		* 類比：後端的 java.time + formatter（但前端偏好套件）
+
+	11) 工具型：Lodash / UUID / 加解密（謹慎用）
+
+		* lodash-es（或只挑你要的函式，避免 bundle 膨脹）
+
+		* uuid
+
+		* 加密相關通常更建議交給後端，前端避免「自以為安全」
+
+	12) 開發品質：Lint / Format / Git Hooks
+
+		幾乎等同「前端 starter」的存在感：
+
+			* ESLint（含 TypeScript / Vue plugin）
+
+			* Prettier
+
+			* lint-staged + Husky（commit 前自動跑 lint/format）
+
+			* 類比：像後端的 Checkstyle / SpotBugs / formatter + CI gate
+
+	13) 測試
+
+		* Vitest（Vite 生態主流單元測試）
+
+		* @vue/test-utils
+
+		* Playwright 或 Cypress（E2E）
+
+		* 類比：spring-boot-starter-test
+
+
+如果想像後端那樣做「平台化」，前端常見做法是把下列東西包成「公司內部的前端基底套件」：
+
+	* @company/ui：基於 Element Plus/Naive 的設計系統與元件封裝
+
+	* @company/http：axios instance + token refresh + error mapping（ProblemDetail 對應）
+
+	* @company/auth：OIDC/PKCE 封裝（登入、登出、silent renew、route guards）
+
+	* @company/router：route meta 規範（requiredRoles/menuGroup/title）
+
+	* @company/eslint-config / @company/tsconfig：統一規範
+
+	* @company/vite-config：統一 build、proxy、env schema
+
+	* 這整套就很像你在 Java 做一堆 my-xxx-starter 的概念，只是 Vue 世界多半用「npm 套件 + Vite plugin + 封裝 composables」來實現。

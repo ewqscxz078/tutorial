@@ -41,7 +41,7 @@ ref https://vuejs.org/guide/scaling-up/tooling?utm_source=chatgpt.com
 		用途：統一格式化（配合專案 prettier 設定）
 
 		Extension ID：esbenp.prettier-vscode
-
+		
 	ESLint 管「規範」，Prettier 管「格式」。企業協作通常這兩個都要。
 
     ========================================================================================

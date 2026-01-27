@@ -1,0 +1,58 @@
+ref ChatGPT
+
+BFF
+	1) Session 裡到底該存什麼、不該存什麼？
+
+		✅ 建議放（最小必要、可重建）
+
+			(A) 身分與授權資訊（可快取）
+
+				* userId / subject (sub)
+
+				* username / displayName（非必要，但常見）
+
+				* authorities / roles
+
+				* tenantId / orgId（如果是多租戶）
+
+				* 一些 UI 需要的「不敏感偏好」：language、theme（可選）
+			
+			(B) 與登入流程相關、BFF 需要持有的安全狀態
+
+				* Spring Security 的 SecurityContext
+
+				* （若你用 OAuth2 Login）OAuth2AuthorizedClient（含 access_token / refresh_token）
+
+					* 這通常由 Spring Security 存在 session / authorized client service（你不需要自己塞）
+
+			(C) CSRF 的伺服端狀態（若你採 cookie+header 雙提交）
+
+				Spring Security 會管理 token 期望值/關聯狀態（依你用的 repo/策略）
+
+				核心原則：放「能支撐授權判斷」與「能續期」的最小集合。其餘資料用快取或後端查。
+
+		❌ 不建議放（容易爆、容易洩、難一致）
+
+			(A) 大型資料
+
+				* 使用者完整 profile、組織樹、選單樹、上千筆權限清單
+
+				* 查詢結果、報表資料、DTO 大物件
+
+			(B) 會頻繁變動、需要強一致的資料
+
+				* 帳戶餘額、即時狀態、訂單狀態
+
+				* “登入後可用功能清單”如果會被即時調整，應該由後端權限服務或快取層控制，而非 session 固化
+
+			(C) 高敏感、無必要的 PII 或秘密
+
+				* 身分證字號、完整地址、生日等（除非真的必要）
+
+				* 下游系統 API key、client secret（這些應該在伺服器設定/Secret 管理，不該跟 session 綁）
+
+			(D) 無界成長的集合
+
+				* “曾點過哪些頁面”、操作歷史、審計紀錄（應進 log/audit 系統）
+
+				* 判斷口訣：會變大 / 會變動 / 會牽涉隱私 / 會牽涉密鑰 → 不放 session。

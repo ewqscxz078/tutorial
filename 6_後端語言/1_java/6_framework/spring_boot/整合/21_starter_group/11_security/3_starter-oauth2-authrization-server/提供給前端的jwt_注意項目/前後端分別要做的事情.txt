@@ -317,3 +317,12 @@ ref ChatGPT
 		子系統存取用 Token Exchange
 		延長登入用 refresh token（只限 Portal 層）
 		系統 token 一律短命、可重換
+
+
+你的架構脈絡下（Portal + 多子系統 + Token Exchange），建議
+
+	* 先用 oidc-client-ts 把 Portal 的 Code+PKCE 登入跑穩（最少變數、最符合規格）
+
+	* 子系統 token 的事情（Token Exchange / refresh / 續期）盡量放在 Gateway/BFF 端做，前端只維持登入狀態或拿短命 access token
+
+	* 因為「瀏覽器端很難安全保存 token」是業界長期共識，BFF/Token Handler 這類模式就是為了把 token 留在後端。

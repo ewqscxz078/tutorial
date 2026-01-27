@@ -1,0 +1,47 @@
+ref ChatGPT
+
+BFF
+	Redis Session 跟 JWT Claim 大小比較？
+		這題要用「傳輸成本」與「儲存成本」分開看。
+
+		JWT（前端持有）大小特性
+
+			* JWT 每次請求都要帶：Authorization: Bearer <JWT>
+
+			* JWT 內容包含 claims（roles/scopes/tenant/…），base64 後通常：
+
+				* 常見 1~3 KB
+
+				* 權限多、巢狀多：5~15 KB 也很常見
+
+			* 代價：
+
+				* 每次 request 都會增加上行流量
+
+				* 後端每次都要驗簽/解析
+
+				* 要支援「立即登出/強制失效」會變麻煩（黑名單/短效/狀態檢查）
+
+		Session（BFF）大小特性
+
+			* Cookie 只帶 JSESSIONID（幾十 bytes）＋（若你用）CSRF cookie（也很小）
+
+			* 不把大資料放 cookie，因此每次 request payload 很輕
+
+			* 代價搬到：
+
+				* Redis 讀寫 session（通常小物件）
+
+				* session 內容若塞太多會變肥、序列化成本上升（所以第 1 題很重要）
+
+		直覺比較（很實務）
+
+			* JWT 模式：把狀態成本「分攤到每次請求的網路傳輸」
+
+			* Session 模式：把狀態成本「集中到伺服器端儲存（Redis）」
+
+		在「權限多、子系統多」的企業 Portal：
+
+			* JWT 往往越長越肥（因為想把授權都塞進去），每次 request 都痛
+
+			* Session + Redis 只要你控制住 session 內容，通常更穩

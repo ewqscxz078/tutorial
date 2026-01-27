@@ -1,0 +1,157 @@
+ref ChatGPT
+
+核心前提：
+	走 BFF 模式時，瀏覽器不拿 access token；瀏覽器靠「cookie」來表示已登入。
+	這個 cookie 就是我說的 cookie session。
+
+BFF 模式要補的 3 件事
+
+	走 BFF 後，你通常要在 BFF 上補齊：
+
+		1.CSRF 防護（因為你用 cookie session）
+			✅ 誰用 cookie session？
+				瀏覽器（Portal SPA）用 cookie session 呼叫 portal-bef 時用的。
+					典型流程是：
+						1.使用者登入成功後
+
+						2.portal-bef 回一個 Set-Cookie（例如 PORTAL_SESSION=...; HttpOnly; Secure; SameSite=Lax）給瀏覽器
+
+						3.之後 Portal SPA 呼叫 https://xxx/bef/api/... 時
+							瀏覽器會自動帶上這顆 cookie
+
+						4.portal-bef 用這顆 cookie 找到對應的「登入狀態」（可能在記憶體/Redis/DB），知道這是誰			
+						
+						這就是「cookie session」。
+			
+			✅ 為什麼需要 CSRF？
+				因為 cookie 會被瀏覽器自動帶上，所以攻擊者可能做這種事：
+
+					* 使用者已登入你的 portal（瀏覽器已有 session cookie）
+
+					* 使用者又去逛惡意網站
+
+					* 惡意網站偷偷送出一個請求到你的 portal-bef（例如轉帳/改密碼 API）
+
+					* 瀏覽器可能會自動把 cookie 帶上
+
+					* 如果你沒做 CSRF 防護，portal-bef 可能就誤以為是使用者本人操作
+
+				所以：只要你用「cookie 當作登入憑證」+ 有「會改資料的操作（POST/PUT/DELETE）」→ 就要處理 CSRF。
+				
+				簡單版：
+					BFF 用 cookie 讓瀏覽器維持登入 → cookie 自動送出 → CSRF 風險上升 → 需要 CSRF 防護。
+				
+				
+		2.CORS 變簡單（最好同網域，或至少同站點策略一致）
+			更精準的講法：
+
+				最好讓 Portal SPA 與 portal-bef 是同一個 Origin
+				例如都在 https://portal.example.com
+
+					* /：Portal SPA 靜態檔
+
+					* /bef/**：portal-bef API
+
+			這樣前端打 /bef/api/... 是同源，通常就：
+
+				* 不太需要 CORS 設定（或極少）
+
+				* cookie 也比較不會卡在 SameSite=None 這種高風險設定
+
+			如果你把 BFF 放在不同網域，例如：
+
+				* SPA：https://portal.example.com
+
+				* BFF：https://api.example.com
+
+			那就會遇到：
+
+				* 需要 CORS 允許
+
+				* cookie 要 SameSite=None; Secure 才比較能跨站帶
+
+				* 設定不小心就會「前端打不到」或「安全變差」
+
+			所以我說「CORS 變簡單」的意思就是：
+			✅ 把 SPA 跟 BFF 放同源（或至少同站點）會讓 cookie 與瀏覽器安全策略好處理很多。
+
+
+		3.Session 續期策略（token refresh 在 BFF 做，前端只感覺「一直登入中」）
+			
+			BFF 常常不是無狀態（至少在「登入狀態」這件事上）。
+			
+			✅ 誰需要 session 續期？
+				
+				是 portal-bef（BFF） 要做。
+			
+				因為你採 BFF 後會有兩種「狀態」：
+
+					(A) 瀏覽器 ↔ BFF：Session（通常是有狀態）
+
+						* 瀏覽器持有 PORTAL_SESSION cookie
+
+						* BFF 端會存 session 對應資料，例如：
+
+							* userId
+
+							* scopes
+
+							* access token（或其參照）
+
+							* refresh token（或其參照）
+
+							* 過期時間
+
+					這就是「session 狀態」。
+
+					(B) BFF ↔ auth-server：OAuth token（本質上有有效期）
+
+						* access token 會過期（例如 5~15 分鐘）
+
+						* refresh token 用來續 access token（或 rotation）
+
+			✅ 為什麼需要「續期策略」？
+
+				* 因為使用者可能開著 Portal 操作一小時：
+
+					* BFF 手上的 access token 早就過期了
+
+					* 但使用者體感上應該是「還在線上，不要一直被踢回登入」
+
+				* 因此 BFF 要在背後做其中一種：
+
+					* access token 快過期就自動 refresh
+
+					* 收到 401/invalid_token 再 refresh 重試一次
+
+					* refresh 也失敗才把 session 視為失效，讓前端重新登入
+
+				這就是我說的「前端只感覺一直登入中」。
+
+
+
+
+BFF 狀態
+
+	BFF 可以「部署上水平擴展」，但不代表它「完全無狀態」。
+
+		* 完全無狀態通常是：每個請求都帶 bearer token（前端帶）
+
+		* BFF 模式通常是：每個請求只帶 session cookie → BFF 必須能還原登入狀態
+		→ 狀態放在：
+
+			* 記憶體（單機不建議）
+
+			* Redis（最常見）
+
+			* DB（可行但較慢）
+
+	所以：BFF 多數是「有 session 狀態」的服務，只是狀態外部化（Redis）以便擴展。
+
+對照表
+	| 問題         | 你卡住的點                | 正確對應                                                    |
+	| ------------ | ------------------------- | ----------------------------------------------------------- |
+	| CSRF         | 「誰用 cookie session？」 | 瀏覽器呼叫 BFF 時，用 cookie 當登入憑證                     |
+	| CORS         | 「同網域意思？」          | SPA 與 BFF 同源最好，cookie/CORS 最好處理                   |
+	| Session 續期 | 「BFF 不是無狀態嗎？」    | BFF 通常有 session（狀態外部化），並負責 refresh/token 續期 |
+

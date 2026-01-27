@@ -1,0 +1,26 @@
+ref ChatGPT
+
+小結
+
+	可以直接採用的落地規格（建議）
+		Session 內容（建議上限思維）
+
+			* 只放：userId / roles / tenant / authorized clients（token）/ 必要少量 UI metadata
+
+			* 不放大型選單樹、組織樹、完整 profile
+
+		Token Exchange
+
+			* 每子系統一份 token（aud/scope 隔離）
+
+			* 同 session 管理，多 token cache
+
+			* 以到期時間做 refresh/exchange
+
+		大小與效能
+
+			* 如果你發現 session 在 Redis 變很大：
+				先檢查是不是把「選單樹/權限樹/DTO」塞進去了
+
+			* 如果你發現 JWT 很大：
+				先檢查是不是把「roles/permissions」塞爆，考慮改用 reference/權限查詢或縮減 claims
