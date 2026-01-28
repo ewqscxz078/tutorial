@@ -199,7 +199,7 @@ ref ChatGPT
 					* refresh token 也不會落在瀏覽器
 
 備註:
-	
+
 	對照表
 		| 階段       | Token     | aud      | 用來幹嘛        |
 		| ---------- | --------- | -------- | --------------- |
@@ -215,7 +215,7 @@ ref ChatGPT
 		| 子系統不是第三方   | ✅ Token Exchange        |
 		| 強調平台治理       | ✅ Token Exchange        |
 		| 純 SaaS / 外部整合 | Authorization Code Flow  |
-		
+
 	「完整版本流程」
 		🔹 Step 1：使用者登入 Portal（人類登入）
 			Browser
@@ -228,7 +228,7 @@ ref ChatGPT
 				| `access_token (portal)`  | Portal / BFF 用       |
 				| `refresh_token (portal)` | ✅ 可選（下面解釋）   |
 			👉 這一步是「人 → IdP」
-		
+
 		🔹 Step 2：點子系統（系統身分轉換）
 			Portal / Gateway
 			  → /token (grant_type=token_exchange)
@@ -245,9 +245,9 @@ ref ChatGPT
 				| `access_token (system-A)` | 打 system A API   |
 				| `refresh_token`           | ❌ 通常「不發」   |
 			👉 這一步是「系統 → IdP」
-	
+
 		🔥 關鍵修正點：不是「每顆 token 都該 refresh」
-	
+
 		1.Portal 登入 token：可以有 refresh token（看架構）
 			什麼時候「可以給」？
 
@@ -262,7 +262,7 @@ ref ChatGPT
 					* Portal session 可自動延長
 
 			👉 這很合理
-		
+
 		2.Token Exchange 出來的 system token：通常「不 refresh」
 			為什麼？
 
@@ -289,9 +289,9 @@ ref ChatGPT
 				Token Exchange
 				   ↓
 				新的 AT_system-A
-				
+
 				👉 你已經有 source of truth（portal token）了，不需要 refresh system token
-		
+
 	「最乾淨模型」
 		【登入層】
 			Authorization Code + PKCE
@@ -311,7 +311,7 @@ ref ChatGPT
 		| AT_portal | Auth Code Flow | ✅ 可選     | refresh_token  |
 		| AT_system | Token Exchange | ❌ 建議不要 | 再 exchange    |
 		| id_token  | Auth Code Flow | ❌          | 不延           |
-	
+
 	結論
 		Portal 登入用 Authorization Code Flow + PKCE
 		子系統存取用 Token Exchange

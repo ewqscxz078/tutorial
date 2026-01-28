@@ -1,0 +1,32 @@
+ref https://www.youtube.com/watch?v=rmlP1UVumbw&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=8
+
+
+setup的返回值
+
+		<template>
+		</template>
+
+		<script lang="ts">
+		    export default() {
+			  name: 'Person',
+			  setup(){
+			    ....
+
+				// 各種回傳寫法
+				// 寫法一
+				// return function(){
+				//  return '哈哈'
+				//}
+				// 寫法二
+				// return ()=>{
+				//  return '哈哈'
+				//}
+				// 寫法三
+			    return ()=> '哈哈' // 直接渲染結果到template，不管 template 裡的內容
+
+				// setup的返回值也可以是一個渲染函數
+			  }
+			}
+		</script>
+
+		<style></style>

@@ -18,7 +18,7 @@ vue3 常用套件
 			* pinia-plugin-persistedstate：把 token / user profile 等持久化到 localStorage/sessionStorage
 
 			* 類比：Spring Security 的「記住我 / session persistence」那種效果（概念上）
-	
+
 	3) HTTP API 呼叫（打後端 / 攔截器 / Token）
 		* axios：最常見（攔截器好用：自動帶 token、統一錯誤處理）
 
@@ -33,7 +33,7 @@ vue3 常用套件
 		* vee-validate + zod（或 yup）：表單驗證、錯誤訊息、schema 驗證
 
 		* 類比：spring-boot-starter-validation（Jakarta Validation）那種「表單驗證基本盤」
-	
+
 	5) UI 元件庫（快速做出一致 UI）
 		常見選擇（看你專案風格）：
 			* Element Plus：企業後台常用、元件齊全
@@ -45,7 +45,7 @@ vue3 常用套件
 			* Ant Design Vue：Ant 生態
 
 			* 類比：像你在後端選 spring-boot-starter-web + 一堆「常用企業元件」的整合；前端則是直接把 UI 解決方案整包帶走
-	
+
 	6) 圖表與資料視覺化（儀表板常見）
 		* ECharts（或 vue-echarts）
 
@@ -64,7 +64,7 @@ vue3 常用套件
 			* 或自己做 roles/permissions 判斷工具
 
 			* 類比：spring-boot-starter-security（但前端的重點是「顯示/導頁限制」，真正授權仍要後端做）
-	
+
 	8) OIDC / OAuth2（你這專案會很常用）
 		如果你要走 Authorization Code + PKCE（你前面正在做），常用：
 
@@ -75,7 +75,7 @@ vue3 常用套件
 			* （Vue 封裝）vue-oidc-client（封裝程度看專案需求）
 
 			* 類比：spring-boot-starter-oauth2-client / spring-boot-starter-oauth2-resource-server
-	
+
 	9) i18n（多語系）
 
 		* vue-i18n

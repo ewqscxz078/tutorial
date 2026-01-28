@@ -19,10 +19,10 @@ BFF 模式要補的 3 件事
 						3.之後 Portal SPA 呼叫 https://xxx/bef/api/... 時
 							瀏覽器會自動帶上這顆 cookie
 
-						4.portal-bef 用這顆 cookie 找到對應的「登入狀態」（可能在記憶體/Redis/DB），知道這是誰			
-						
+						4.portal-bef 用這顆 cookie 找到對應的「登入狀態」（可能在記憶體/Redis/DB），知道這是誰
+
 						這就是「cookie session」。
-			
+
 			✅ 為什麼需要 CSRF？
 				因為 cookie 會被瀏覽器自動帶上，所以攻擊者可能做這種事：
 
@@ -37,11 +37,11 @@ BFF 模式要補的 3 件事
 					* 如果你沒做 CSRF 防護，portal-bef 可能就誤以為是使用者本人操作
 
 				所以：只要你用「cookie 當作登入憑證」+ 有「會改資料的操作（POST/PUT/DELETE）」→ 就要處理 CSRF。
-				
+
 				簡單版：
 					BFF 用 cookie 讓瀏覽器維持登入 → cookie 自動送出 → CSRF 風險上升 → 需要 CSRF 防護。
-				
-				
+
+
 		2.CORS 變簡單（最好同網域，或至少同站點策略一致）
 			更精準的講法：
 
@@ -77,13 +77,13 @@ BFF 模式要補的 3 件事
 
 
 		3.Session 續期策略（token refresh 在 BFF 做，前端只感覺「一直登入中」）
-			
+
 			BFF 常常不是無狀態（至少在「登入狀態」這件事上）。
-			
+
 			✅ 誰需要 session 續期？
-				
+
 				是 portal-bef（BFF） 要做。
-			
+
 				因為你採 BFF 後會有兩種「狀態」：
 
 					(A) 瀏覽器 ↔ BFF：Session（通常是有狀態）

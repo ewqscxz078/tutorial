@@ -1,0 +1,31 @@
+ref https://www.youtube.com/watch?v=10EkGp0mCJk&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=6
+
+這段 YouTube 影片「【极简Vue3】006 OptionsAPI 与 CompositionAPI」主要是在解釋 Vue2 / Vue3 的兩種不同寫法（API 風格）之間的差異與優點，以下整理成 5–10 個重點摘要（含時間戳）：
+
+(00:01) 說明 Vue2 的寫法是把資料、方法等分散寫在不同的配置項（data、methods、computed 等）裡，這種寫法稱為 Options API（選項式 API / 配置式 API），例如 data 是放資料、methods 放方法。
+
+(00:30) 提到 Options API 的缺點：當功能變多時各種屬性分散在不同欄位，維護、修改和尋找程式碼變得不方便。
+
+	這也是官方在 Vue3 推出時提到的問題之一：相關邏輯分散在不同選項中不利於維護與重用。
+
+(01:06) 演示對比 Options API 與 Composition API（組合式 API）。Options API 中所有功能陳列在 export default { ... } 的物件裡；每個功能的資料、方法、監聽等是分散的。
+
+(02:08) 說明 Vue3 的核心語法：Vue2 採用 Options API，而 Vue3 推出 Composition API，是一種以 功能邏輯為單位 來組織程式碼的風格。
+
+(03:11) 影片用圖示說明：在 Options API 裡，不同功能的資料、方法、計算屬性等是分散的，需要跳來跳去找。
+
+(04:15) 舉例功能 B（綠色區塊），若要修改一個功能，開發者需要在 data、methods、computed、watch 等各個配置項中到處找程式碼。
+
+(05:17) Options API 的缺點在於程式碼的分散，使得功能相關內容被拆散，對於複雜專案不利維護。
+
+(06:19) Composition API 是把相關的資料、方法、計算屬性、監視等邏輯組合在一起（放進 setup() 裡面的函式），開發者可以把某個功能放在一個模組／函式裡，不再分散。
+
+(07:22) 重點強調：Composition API 將功能集中，維護時只需到對應的函式／模組裡看一看即可，不必在各大配置項中跳來跳去。
+
+	結論重申：Options API 還是可以使用，但 Composition API 在邏輯集中、維護性和重用性上有優勢。
+
+📌 核心對比補充（Web 資源）：
+
+	Vue2 的 Options API 是透過一個配置物件（data, methods, computed, watch）定義組件，初學者容易上手。
+
+	Vue3 的 Composition API 則透過 setup() 和相關函式（如 ref, reactive, watch 等）把功能組合在一起，更利於邏輯重用與整理。

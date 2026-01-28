@@ -1,0 +1,64 @@
+ref https://www.youtube.com/watch?v=0fXSNIhHkH8&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=7
+
+
+		<template>
+		  <div class="person">
+		    <h2>姓名:{{name}}</h2>
+			<h2>年齡:{{age}}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="showTel">查看聯絡方式</button>
+			<hr>
+			<h2>測試1:{{a}}</h2>
+			<h2>測試2:{{c}}</h2>
+			<h2>測試3:{{d}}</h2>
+			<button @click="b">測試</button>
+		  </div>
+		</template>
+
+		<script lang="ts">
+		    export default() {
+			  name: 'Person',
+			  beforeCreate(){
+			    console.log('beforeCreate')
+			  },
+			  data(){
+			    return{
+				  a:100,
+				  c:this.name, // vue2 this 可以讀取到 vue3 : setup 變數
+				  d:900
+				}
+			  },
+			  methods:{
+			    b(){
+				  console.log('b')
+				}
+			  },
+			  // vue2、vue3 語法可共存、vue2可存取到vue3東西，vue3無法存取到vue2 東西
+			  setup(){
+
+			    let name = '張三'
+			    let age = 18
+			    let tel = '123456789'
+
+				let x = d
+				// vue3 無法讀取到 vue2 的 data 變數
+
+			    function changeName(){
+				  name= 'zhange-san' // 注意: 這樣修改 name, 頁面是沒有變化的
+				  console.log(name)  // name 確實改了, 但 name 不是響應式的
+				},
+				function changeAge(){
+				  age += 1			// 注意: 這樣修改 age, 頁面是沒有變化的
+				  console.log(age)	// age 確實改了, 但 age 不是響應式的
+				},
+				function showTel(){
+				  alert(this.tel)
+				}
+
+				return {name,age, changeName,changeAge,showTel}
+			  }
+			}
+		</script>
+
+		<style></style>

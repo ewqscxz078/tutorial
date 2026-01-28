@@ -1,0 +1,28 @@
+ref https://www.youtube.com/watch?v=M4SgtHLpmPU&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=3
+
+
+(00:00) 介紹建立 Vue 3 工程的兩種方式：傳統的 Vue CLI 和新版的 Vite，官方推薦使用 Vite 來建立 Vue3 專案。
+
+(01:04) 解釋什麼是 Vite：Vite 是一種新的前端構建工具，比起老牌的 Webpack 啟動和熱重載速度快很多（按需編譯，不像 Webpack 需要整包處理後再啟動）。
+
+(02:08) 用圖解比較 Webpack 和 Vite 的啟動流程：Webpack 需完整分析所有模組才準備好；Vite 先啟動伺服器再按需編譯，啟動快、熱重載快。
+
+(05:15) 示範如何透過命令建立基於 Vite 的 Vue3 專案（需先安裝 Node.js；若沒有 Node 或 npm 命令不可用需先安裝）。
+
+(06:17) 在命令執行時會互動式詢問專案名稱、是否要加入 TypeScript、JSX、路由、Pinia（狀態管理）、測試、ESLint 等；示範選擇加入 TypeScript，其它暫不加入。
+
+(08:23) 解釋為何選擇不加入 ESLint：避免預設規則干擾開發時輸出 console、alert 等語法警告。
+
+(09:24) 建立好工程後推薦使用 VS Code 來開發（官方提供支援 Vue 的擴充套件）。
+
+(10:26) 打開專案後講解專案結構：public 是靜態資源（例如 favicon），src 是主要工程碼；src 下的設定文件讓 TS 辨識各類檔案類型。
+
+(14:37) 介紹 index.html 是真正的入口檔案，演示如何修改內容並啟動專案（npm run dev 啟動開發伺服器）。
+
+(15:40) 展示 main.ts 在 src 中是應用的實際啟動點，並簡單提到其它配置檔等。
+
+(16:43) 結尾回顧工程基本結構與未分析完的部分預告會在後續教學深入講解。
+
+🎯 補充（來自官方快速開始文件的重點）：
+
+使用 Vite 建立 Vue3 專案通常是透過指令 npm init vue@latest，並按提示選擇配置（TS、router、pinia 等）後安裝依賴、啟動開發伺服器。

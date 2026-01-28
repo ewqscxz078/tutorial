@@ -3,7 +3,7 @@ ref ChatGPT
 前端自己跟後端打 token 取得後放 localStage 或 sessionStage 的資安問題
 
 	* 通常會被視為比較高風險的做法。
-	
+
 	* 而是瀏覽器端儲存位置很容易被 XSS 影響。
 
 為什麼 localStorage / sessionStorage 風險高
@@ -21,10 +21,10 @@ ref ChatGPT
 	3.token 外洩後的利用門檻很低
 
 		* 大部分 API 只要帶 Authorization: Bearer ... 就能打。
-	
+
 
 沒用 BFF/BEF，就一定很危險嗎？
-	
+
 	不一定，但要看你採取哪一種「前端持 token」策略：
 
 

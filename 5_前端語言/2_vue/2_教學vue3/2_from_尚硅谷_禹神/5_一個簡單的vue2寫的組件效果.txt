@@ -1,0 +1,62 @@
+ref https://www.youtube.com/watch?v=UgT78vtiKUo&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=5
+
+
+一個簡單的元件 by vue2
+
+(00:00) 開始建立備份資料夾並將當前 src 下的檔案複製過去（用 01_ 前綴命名）以示範備份習慣。
+
+(01:02) 在 components 目錄下新增 person.vue 組件，並用自訂的程式碼片段快速生成基本 Vue3 檔案結構。
+
+(02:05) 撰寫基本樣式與結構，示範 VSCode 偵測 class 是否有 match 以及 CSS 參考對應。
+
+(03:07) 用 Options API（Vue2 風格）在 person.vue 裡寫 data()，定義 name、age、tel 等資料。
+
+(04:10) 寫出模板中插值呈現 name 與 age，並建立按鈕來「查看聯絡」等事件綁定（@click="showTel"）。
+
+(05:12) 返回 App.vue 引入及註冊 person 組件，並在模板中使用 <person />，看到畫面渲染效果。
+
+(06:15) 提醒若瀏覽器看不到效果可重新啟動專案或開發者工具，並介紹安裝 Vue Devtools 外掛的離線安裝方法。
+
+(07:18) 示範如何在 Chrome 的 extensions 頁面開啟開發者模式後，拖曳 .crx 安裝 Vue 工具插件。
+
+(08:20) 為 person.vue 加入更多功能按鈕：「修改名字」、「修改年齡」，並在 methods 中用 this.name、this.age++ 更新資料。
+
+(09:21) 調整按鈕樣式間距，確認按下按鈕後畫面資料會更新，證明 Vue3 也能寫 Vue2 的 Options API 語法。
+
+
+
+		<template>
+		  <div class="person">
+		    <h2>姓名:{{name}}</h2>
+			<h2>年齡:{{age}}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="showTel">查看聯絡方式</button>
+		  </div>
+		</template>
+
+		<script lang="ts">
+		    export default() {
+			  name: 'Person',
+			  data(){
+			    return {
+				  name: '張三',
+				  age: 18,
+				  tel: '123456789'
+				}
+			  },
+			  methods(){
+			    changeName(){
+				  this.name= 'zhange-san'
+				},
+				changeAge(){
+				  this.age += 1
+				},
+				showTel(){
+				  alert(this.tel)
+				}
+			  }
+			}
+		</script>
+
+		<style></style>

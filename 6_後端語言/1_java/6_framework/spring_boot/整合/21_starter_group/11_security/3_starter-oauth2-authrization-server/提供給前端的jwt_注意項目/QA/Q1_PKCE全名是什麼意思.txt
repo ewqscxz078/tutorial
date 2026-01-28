@@ -14,7 +14,7 @@ Q1: PKCE 全名是什麼意思?
 
 			for Code Exchange（用於授權碼交換）
 				👉 用在 OAuth 2.0 的 Authorization Code → Access Token 這一步
-	
+
 	PKCE 在幹嘛（一句話版）
 		防止授權碼（authorization code）被攔截後遭人盜用
 			也就是：
@@ -40,7 +40,7 @@ Q1: PKCE 全名是什麼意思?
 		所以 PKCE 就變成：
 
 			不靠 client_secret，也能安全交換 token 的機制
-	
+
 	PKCE 流程超濃縮版
 
 		1.Client 先產生一段隨機字串
@@ -59,5 +59,5 @@ Q1: PKCE 全名是什麼意思?
 	現在的業界共識（很重要）
 		Authorization Code Flow 一律建議 + PKCE
 		（即使是 confidential client）
-		
+
 		OAuth 2.1 更是直接把 PKCE 當成「必備」

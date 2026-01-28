@@ -16,7 +16,7 @@ BFF
 				* tenantId / orgId（如果是多租戶）
 
 				* 一些 UI 需要的「不敏感偏好」：language、theme（可選）
-			
+
 			(B) 與登入流程相關、BFF 需要持有的安全狀態
 
 				* Spring Security 的 SecurityContext

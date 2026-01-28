@@ -1,0 +1,67 @@
+ref https://www.youtube.com/watch?v=0fXSNIhHkH8&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=7
+
+以下是 「【极简Vue3】007 setup概述」 YouTube 影片內容重點整理（含時間戳）：
+
+🧠 影片重點整理
+
+00:00–01:02: 介紹學習 Vue3 組合式 API 的重要性，強調 setup 是 Vue3 新的配置項，所有組合式 API 幾乎都寫在 setup 裡。學習 Vue3 的第一步是學好 setup。
+
+01:02–02:04: 開始精簡專案程式碼，展示 Vue3 支援多 root 節點（可以有多個根元素），這是相對 Vue2 的一個小升級。模板中多個元素不再需要一個根包裹。
+
+02:04–03:05: 比較 Vue2 選項式 API（data、methods）與 Vue3 組合式 API。說明 Vue2 的寫法都是配置式（選項式）且將在後續用 setup 重寫。
+
+03:05–05:10: 在 setup 函數裡定義資料；先用普通變數定義（let name = ...），再透過 return 將變數返回，使其在模板可用。若不 return，模板讀不到變數值。
+
+05:10–07:17: 示範如何在 setup 中定義方法（不需寫在 methods 裡）。提醒在 setup 裡 不能使用 this，因為 this 在 setup 中是 undefined。
+
+07:17–09:21: 說明變數本身若直接寫成普通變數，不是響應式的（改變後模板不會自動更新）。目前階段只講 setup 結構，響應式資料將在後續章節講解。
+
+09:21–10:24: 解釋什麼是「響應式」：reactive 的變數在變更後模板自動更新；目前示範的變數尚未變成響應式，因此改變不會反映到畫面。
+
+10:24–11:26: 暫不討論如何讓資料響應式，先完成對 setup 的全面介紹。後續會講解 ref、reactive 等響應式 API。
+
+11:26–12:30: 簡單提到 Vue2 生命週期中的 beforeCreate，並指出 setup 執行時機比 Vue2 的 beforeCreate 更早。
+
+		<template>
+		  <div class="person">
+		    <h2>姓名:{{name}}</h2>
+			<h2>年齡:{{age}}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="showTel">查看聯絡方式</button>
+		  </div>
+		</template>
+
+		<script lang="ts">
+		    export default() {
+			  name: 'Person',
+			  beforeCreate(){
+			    console.log('beforeCreate')
+			  },
+			  setup(){
+			    // console.log(this) // setup函數中的this是undifined, Vue3中已經弱化this了
+				// 資料原本是寫在data中, 此時的name、age、tel 都不是響應式的資料
+
+			    let name = '張三'
+			    let age = 18
+			    let tel = '123456789'
+
+			    function changeName(){
+				  name= 'zhange-san' // 注意: 這樣修改 name, 頁面是沒有變化的
+				  console.log(name)  // name 確實改了, 但 name 不是響應式的
+				},
+				function changeAge(){
+				  age += 1			// 注意: 這樣修改 age, 頁面是沒有變化的
+				  console.log(age)	// age 確實改了, 但 age 不是響應式的
+				},
+				function showTel(){
+				  alert(this.tel)
+				}
+
+				// 將資料與方法交出去，模板才可以使用
+				return {name,age, changeName,changeAge,showTel}
+			  }
+			}
+		</script>
+
+		<style></style>

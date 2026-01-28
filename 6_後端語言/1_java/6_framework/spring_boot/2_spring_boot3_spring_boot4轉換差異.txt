@@ -56,12 +56,12 @@ package 調整
 	data jpa
 		原本 org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 		改 org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
-	jackson 
+	jackson
 		原本預設 jackson 2
 			import com.fasterxml.jackson.databind.ObjectMapper;
 		改預設 jackson 3
 			import tools.jackson.databind.ObjectMapper;
-	
+
 	annotation
 		原本 org.springframework.lang.Nullable : @Nullable
 		改 org.jspecify.annotations.Nullable : @Nullable
@@ -72,7 +72,7 @@ package 調整
 			例：package-info.java
 				@org.jspecify.annotations.NullMarked
 				package com.example.foo;
-				
+
 			然後真的允許為 null 的地方再用 @Nullable。
 
 pom 調整
@@ -81,7 +81,7 @@ pom 調整
 			若有用到 import io.micrometer.tracing.Tracer; 的註冊 bean
 				要自行多依賴
 					<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-micrometer-tracing-brave</artifactId></dependency> <!-- 確保有自動註冊 Tracer 可用 -->
-			
+
 			Security Oauth2 client 若要用到 ClientRegistrationRepository 的註冊 bean ， ref OAuth2ClientConfigurations.ClientRegistrationRepositoryConfiguration
 				要確保有 yml 設定到 spring.security.oauth2.client
 					因為 @ConditionalOnOAuth2ClientRegistrationProperties

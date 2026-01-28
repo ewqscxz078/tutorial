@@ -24,8 +24,8 @@ ref ChatGPT
 			Post-Logout Redirect URI：
 				👉「使用者從 Auth Server 登出後，要被導回哪裡」
 			這兩個 不是隨便跳轉用的網址，而是 安全白名單的一部分。
-			
-			
+
+
 2) Redirect URI / Origin / CORS 要非常嚴格
 	Redirect URI
 
@@ -157,11 +157,11 @@ Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
 		（單頁應用程式）是現代前後端分離架構的核心形式。
 		它僅載入單個 HTML 頁面，透過 JavaScript 動態更新內容（CSR），
 		無需重新整理即可切換畫面
-	
+
 	Redirect URI 是什麼？（登入成功後的回跳點）
-	
+
 		發生在什麼時候？
-			
+
 			使用者在瀏覽器：
 
 				1.被導向 Auth Server 登入頁
@@ -173,11 +173,11 @@ Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
 				4.並在 URL 上附加 code（授權碼）
 
 			👉 這個「回你前端的 URL」就是 Redirect URI
-	
+
 		範例
 			典型 SPA（Vue3）
 				https://portal.example.com/callback
-			
+
 			Auth Server 會做：
 				302 Redirect →
 				https://portal.example.com/callback?code=abc123&state=xyz
@@ -189,7 +189,7 @@ Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
 				* 用 code + PKCE code_verifier 呼叫 /oauth2/token
 
 				* 換到 Access Token / ID Token
-		
+
 		為什麼一定要「事先註冊」？
 			👉 防止 Open Redirect 攻擊
 				如果不限制：
@@ -201,18 +201,18 @@ Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
 				* 卻把 code 或 token 送到惡意網站
 
 			➡️ 所以 Auth Server 一定只允許「預先登記過」的 Redirect URI
-		
+
 		實務重點（非常重要）
 			❌ 不要用太寬鬆的 wildcard
 				https://portal.example.com/*
 			✅ 精準到 path
 				https://portal.example.com/callback
-			
+
 			開發 / 測試 / 正式 分開註冊
 				http://localhost:5173/callback
 				https://portal-dev.example.com/callback
 				https://portal.example.com/callback
-	
+
 	Post-Logout Redirect URI 是什麼？（登出後要去哪）
 		發生在什麼時候？
 			使用者：
@@ -227,7 +227,7 @@ Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
 					* 清 SSO 狀態
 
 				4.再把使用者導回前端某個頁面
-		
+
 		常見用法
 			https://portal.example.com/logout-success
 			或直接回首頁：
@@ -237,8 +237,8 @@ Vue 是放在 同網域（例如 https://gw.example.com/ 底下）
 			原因跟 Redirect URI 一樣：
 				* 防止登出後被導到惡意網站
 				* 避免被拿來當跳板
-	
-	
+
+
 常見整合方式
 	做法 1：Portal 是「入口＋選單」，點進前端服務1（不同網域/子網域）
 

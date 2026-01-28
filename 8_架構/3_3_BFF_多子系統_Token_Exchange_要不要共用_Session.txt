@@ -4,13 +4,13 @@ BFF
 	多子系統 Token Exchange 要不要共用 Session？
 
 		先拆概念：共用的是「使用者的登入態」，不是「每個子系統的 access token 一定共用」。
-	
-		
-		✅ 正確做法：一個使用者 → 一個 BFF Session（共用登入態）	
+
+
+		✅ 正確做法：一個使用者 → 一個 BFF Session（共用登入態）
 			* 使用者在 Portal/BFF 登入後拿到一個 session（JSESSIONID）
 
 			* 這個 session 表示：這個瀏覽器是誰、有哪些基本權限
-		
+
 		Access Token 的策略：建議「每子系統各自一份、同一個 Session 內管理」
 			在同一個 session 之下，你會有多個 “downstream token”：
 
@@ -27,7 +27,7 @@ BFF
 				2.最小權限：只給該子系統需要的權限，不要“一 token 打天下”
 
 				3.隔離風險：A token 洩了不等於 B 也能用
-			
+
 			那「要不要重複做 Token Exchange」？
 				建議策略：
 
