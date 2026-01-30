@@ -29,7 +29,7 @@
 			每個模組由 CI 分配 port（例如 Jenkins matrix 用 BUILD_NUMBER 推算）
 
 			或是 用 -Dopenapi.httpPort=... -Dopenapi.jmxPort=... 覆蓋
-	
+
 	作法
 		版本 A：prepare-package 產 + package attach（單指令 package 就有）
 		或

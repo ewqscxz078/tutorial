@@ -4,7 +4,7 @@
 	3.BFF 與後端 api 一致性維護方式
 	4.有登入系統的 BFF 要 redis session 處理橫向擴展
 	5.若要有 token rotation 要有 vault/保密器 + config server 同步
-	
+
 
 系統項目
 	web server
@@ -33,7 +33,7 @@
 	基礎建設
 		auth-server			(java)
 		gateway-server 		(java)
-		radis				(容器服務) 
+		radis				(容器服務)
 			1.for BFF redis session 以利 csrf of Session Cookie 防護問題
 		// config-server	(java)
 		// vault			(容器服務)

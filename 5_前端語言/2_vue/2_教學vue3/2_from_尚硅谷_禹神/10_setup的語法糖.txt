@@ -60,7 +60,7 @@ setup的語法糖
 		//   於 plugins 裡補上
 		//     VueSetupExtend()
 		//  setup 後面就可以用 name 指定元件名稱
-		//  <script lang="ts" setup>
+		//  <script lang="ts" setup name="xxx">
 
         // setup 語法糖
 		<script lang="ts" setup>

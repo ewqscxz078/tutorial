@@ -157,11 +157,11 @@ BFF 狀態
 
 備註:
 	注意項目
-		有登入使用者的 BFF 
+		有登入使用者的 BFF
 			1.CSRF 防護（因為你用 cookie session）
 			2.CORS 處理(前端與 BFF 使否同網域)
 			3.Session 續期策略
-				
+
 		無登入使用者的 BFF : 也就是 M2M BFF
 			1.CSRF：通常不用（因為你沒有 cookie/session 這種瀏覽器自動帶憑證的情境）
 			2.CORS：看前端與 BFF 是否同源；若同源幾乎不用，若跨網域就要配

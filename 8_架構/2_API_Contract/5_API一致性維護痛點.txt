@@ -8,9 +8,9 @@ ref ChatGPT
 		最常見、也最容易落地：OpenAPI（REST）
 		做法是：後端服務產生並發布 OpenAPI 規格（JSON/YAML），
 			BFF 端用規格產生 client 或至少做 contract test。
-		
+
 		兩種路線
-			
+
 			A. Codegen client（強一致，推薦）
 				* 後端：維護 OpenAPI spec（或由註解/程式產生 spec）
 
@@ -25,22 +25,22 @@ ref ChatGPT
 				* BFF CI 下載 spec 跑驗證（例如：你的呼叫/序列化是否符合 spec、是否仍可用）
 
 				* 好處：較不侵入，但一致性比 codegen 稍弱
-			
+
 			你已經用 WebClient 了，其實很適合走 A：把「拼 URL、拼 DTO」這些脆弱點直接用生成碼移除。
-		
+
 	2) CI 裡做「破壞性變更偵測」：Breaking Change Gate
-	
+
 		只靠 spec 不夠，還要擋住「破壞性改動」進主幹。
-		
+
 		做法：
 			* 後端每次 PR 產生 OpenAPI spec
 
 			* 與 main branch 的 spec 做 diff
 
 			* 若是 breaking change（刪欄位、改型別、改必填、改路徑、改 status code…）直接 fail pipeline
-		
+
 		這一步的價值是：後端不可能「不小心」把 BFF 弄壞。
-	
+
 	3) 用 Consumer-driven contract（CDC）：Pact / Spring Cloud Contract
 
 		如果你的 API 規格「不只是一張 OpenAPI」，而是還包含很多細節：
@@ -62,11 +62,11 @@ ref ChatGPT
 			* 契約檔版本化 + 發布到 broker（或 artifact repository）
 
 		OpenAPI 管「介面形狀」，CDC 管「行為與情境」。兩個可以並存。
-	
+
 	4) DTO / Model 的一致性：共享「模型模組」要慎用
-	
+
 		你可能會想：「那我把 DTO 抽成共用 jar 不就好了？」
-			
+
 		可以，但要小心：
 			* 會把 BFF 與後端在編譯期綁太死（特別是跨團隊/跨部署節奏）
 
@@ -101,7 +101,7 @@ ref ChatGPT
 			* 把 scope/audience/claim 的規則寫成可測試的 policy（例如一組 JSON/YAML policy + 單元測試）
 
 			* 或至少把「BFF 會帶哪些 scope/claim」寫成 provider-side 驗證測試
-	
+
 
 建議你落地（最短路徑）
 	如果你要一個最省力但效果很硬的組合：

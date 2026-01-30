@@ -1,5 +1,5 @@
 
-windows 11 
+windows 11
 	使用 wsl with docker compose
 
 建置一個 docker for nginx 的設定

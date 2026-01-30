@@ -7,10 +7,10 @@ ref ChatGPT
 		以及它們的對應關係一次整理清楚。
 		（重點：phase 是生命週期的階段；goal 是外掛提供的具體動作；
 		你在 CLI 可以叫 phase 或直接叫 goal。）
-	
+
 	1) 你在 CLI 打 phase：Maven 會跑到那個階段為止（包含前面所有階段）
 		default lifecycle（最常用：編譯 / 測試 / 打包 / 安裝 / 部署）
-		
+
 			| 你打的 phase  | 主要做什麼                          | 常見會被執行的「預設 goal（典型綁定）」                                                 |
 			| ------------- | ----------------------------------- | --------------------------------------------------------------------------------------- |
 			| `validate`    | 檢查專案結構、pom 基本正確性        | （通常無預設外掛動作）                                                                  |
@@ -20,22 +20,22 @@ ref ChatGPT
 			| `verify`      | 做整體驗證（常用於整合測試後）      | `maven-failsafe-plugin:integration-test` + `maven-failsafe-plugin:verify`（若你有設定） |
 			| `install`     | 安裝到本機 repo (`~/.m2`)           | `maven-install-plugin:install`                                                          |
 			| `deploy`      | 部署到遠端 repo（Nexus/Artifactory）| `maven-deploy-plugin:deploy`                                                            |
-	
+
 		常用：mvn clean package、mvn test、mvn install、mvn deploy
-	
-		
+
+
 		clean lifecycle（清理）
 			| 你打的 phase | 做什麼                | 常見 goal                  |
 			| ---------    | --------------------- | -------------------------- |
 			| `clean`      | 刪除 `target/` 等輸出 | `maven-clean-plugin:clean` |
-		
-		
+
+
 		site lifecycle（產生報表/站台）
 			| 你打的 phase  | 做什麼         | 常見 goal                  |
 			| ------------- | -------------- | -------------------------- |
 			| `site`        | 產生 site 報表 | `maven-site-plugin:site`   |
 			| `site-deploy` | 發佈 site      | `maven-site-plugin:deploy` |
-	
+
 	2) 你在 CLI 打 goal：就是「直接跑某個外掛動作」
 		格式：
 
@@ -52,7 +52,7 @@ ref ChatGPT
 			* mvn spring-boot:run
 
 			* mvn org.codehaus.mojo:exec-maven-plugin:3.1.0:java
-		
+
 		常見「查詢/診斷」類 goals
 			| 指令                                      | 用途                                                                  |
 			| ----------------------------------------- | --------------------------------------------------------------------- |
@@ -78,7 +78,7 @@ ref ChatGPT
 			3.你在 <pluginManagement> 定義，子模組再引用
 
 			4.你用 CLI 直接點 goal（繞過 phase 綁定）
-	
+
 	4) 你常在 CLI 會用到的「組合」與意義
 		| 指令                           | 代表意思                                                       |
 		| ------------------------------ | -------------------------------------------------------------- |

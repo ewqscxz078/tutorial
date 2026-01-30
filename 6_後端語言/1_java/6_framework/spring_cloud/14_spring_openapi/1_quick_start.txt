@@ -3,10 +3,10 @@ ref ChatGPT
 用 openAPI spec 確保 api 一致性又降低依賴
 
 	Part A：後端提供 OpenAPI spec（Spring Boot + springdoc）
-		
+
 		A1) 後端 pom.xml（加入 springdoc）
 			（Spring MVC 專案用 springdoc-openapi-starter-webmvc-ui，會自動提供 /v3/api-docs 與 swagger-ui）
-	
+
 			<!-- backend-service/pom.xml -->
 			<dependencies>
 			  <!-- 你的 web / validation / security ... 省略 -->
@@ -27,7 +27,7 @@ ref ChatGPT
 				GET /swagger-ui/index.html（UI）
 
 			springdoc 模組與行為可參考官方 modules 說明。
-		
+
 		A2) 後端一個簡單 Controller（範例）
 			package com.example.backend.api;
 
@@ -56,10 +56,10 @@ ref ChatGPT
 				path: /v3/api-docs
 			  swagger-ui:
 				path: /swagger-ui.html
-		
+
 		A4) Build 時自動產出 openapi.json（springdoc-openapi-maven-plugin）
 			springdoc 官方 Maven plugin 的目的就是「在 build 階段產出 json/yaml spec」，
-			它會配合 spring-boot-maven-plugin，在 integration-test（mvn verify）階段啟動 
+			它會配合 spring-boot-maven-plugin，在 integration-test（mvn verify）階段啟動
 			app 抓 /v3/api-docs 生成檔案。
 
 			<!-- backend-service/pom.xml -->
@@ -111,13 +111,13 @@ ref ChatGPT
 				* 或在 CI pipeline 裡當作 build artifact
 
 				* 或簡單一點：先在 mono-repo 內複製到 bff/src/main/resources/openapi/backend-openapi.json
-	
+
 	Part B：BFF 用 OpenAPI Generator 產 Java client（DTO + API 封裝）
-		
+
 		OpenAPI Generator 的 Java generator 支援 library=webclient，會生出一套 client（ApiClient + 各 Api 類 + DTO）。
-		
+
 		B1) BFF pom.xml：openapi-generator-maven-plugin
-			
+
 			假設你把後端產出的 spec 放在：
 				portal-bff/src/main/resources/openapi/backend-openapi.json
 
@@ -182,17 +182,17 @@ ref ChatGPT
 				</plugin>
 			  </plugins>
 			</build>
-			
+
 			跑：
 				mvn -pl portal-bff -DskipTests=false test
 
 			就會在 target/generated-sources/openapi 出現 generated code。
-		
+
 		B2) 在 BFF 裡把「JWT」塞進 generated client（最常見作法）
-			
+
 			生成的 ApiClient（invoker）通常會有一個底層 WebClient，
 			你可以用「自訂 WebClient + filter」把 Authorization header 統一掛上。
-	
+
 			(1) 建立一個配置：ApiClient Bean
 				package com.example.bff.config;
 
@@ -258,7 +258,7 @@ ref ChatGPT
 					return resp.getMessage();
 				  }
 				}
-				
+
 				這樣的好處是：後端改了 response 欄位/型別，BFF 生成碼會變，
 				編譯期就能抓到不一致（或至少 CI 會因 codegen diff/編譯失敗而擋住）。
 

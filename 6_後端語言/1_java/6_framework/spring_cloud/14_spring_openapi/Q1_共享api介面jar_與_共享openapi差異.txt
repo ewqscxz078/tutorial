@@ -1,5 +1,5 @@
 
-Q1: 若將 openapi.json 入到 repo 讓 bff 依賴，以利之後生成使用方的 api 
+Q1: 若將 openapi.json 入到 repo 讓 bff 依賴，以利之後生成使用方的 api
 	那這樣跟我後端提供一個 api 介面 jar ，讓 bff 依賴引用有何差異?
 
 
@@ -27,7 +27,7 @@ A1: 差異核心在一句話：
 			* 後端內部怎麼實作、DTO 怎麼命名、怎麼分層，不會外溢到 BFF
 
 		結論： jar 是「共享類別」，OpenAPI 是「共享協定」。
-	
+
 	2) 語言/技術棧彈性：OpenAPI 天生跨語言，jar 不行
 		OpenAPI：
 			BFF 以後如果不是 Java（或有別的 consumer：Node、Go、Python），
@@ -36,7 +36,7 @@ A1: 差異核心在一句話：
 		jar：
 			只能 Java 世界用，而且還要跟你的序列化框架（Jackson / record / lombok）
 			綁在一起
-	
+
 	3) 版本治理：OpenAPI 更容易做「相容性檢查」與 gate
 		OpenAPI 的好處是：你可以在 CI 做很清楚的「breaking change gate」：
 
@@ -47,7 +47,7 @@ A1: 差異核心在一句話：
 			* 你通常只會看到「BFF 編譯壞了」或「runtime 序列化壞了」
 
 			* 很難用一個標準工具清楚判斷「這次改動是不是破壞性」
-	
+
 	4) 一致性的範圍不同：jar 只保證型別一致，不保證 HTTP 行為一致
 		jar 能保證什麼？
 

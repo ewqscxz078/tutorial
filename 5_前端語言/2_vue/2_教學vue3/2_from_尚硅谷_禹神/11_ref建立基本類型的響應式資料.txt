@@ -1,0 +1,58 @@
+ref https://www.youtube.com/watch?v=t5XjTkbiSYE&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=11
+
+ref建立 "基本類型" 的響應式資料
+	作用: 定義響應式變數
+	語法: let xx = ref(初始值)
+	返回值: 一個 RefImpl 的實例對象, 簡稱 ref 對象 或 ref , ref 對象的 value 屬性是響應式的
+	注意點:
+		* JS 中操作資料需要: XXX.value, 但模板不需要 .value, 直接使用即可
+		* 對於 let name = ref('張三')來說， name 不是響應式, name.value 是響應式的
+
+
+		<template>
+		  <div class="person">
+		    <h2>姓名:{{name}}</h2>
+			<h2>年齡:{{age}}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="showTel">查看聯絡方式</button>
+			<hr>
+		  </div>
+		</template>
+
+
+		// vue2 data 下的屬性預設就是 : ref 響應式資料
+		// vue3 需要將變數用 ref 包起來才算響應式資料
+			此 vu3 ref 與 vue2 的 <h2 ref="xxx" /> 是不一樣的東西
+		// vue3 分 ref 、 reactive 兩大類
+		<script lang="ts" setup>
+			import { ref } from 'vue'
+
+
+			let name = ref('張三')
+			let age = ref(18)
+			let tel = '123456789'
+			let address = 'xxxxx yyyyy'
+
+			console.log(1,name)
+			console.log(2,age)
+			console.log(3,tel)
+			console.log(4,address)
+
+
+			function changeName(){
+			  name.value = 'zhange-san' // ref 響應式變數存取要 .value
+			  console.log(name.value)  // name 確實改了, 是響應式的，畫面也變了
+			},
+			function changeAge(){
+			  age.value += 1			// ref 響應式變數存取要 .value
+			  console.log(age.value)	// name 確實改了, 是響應式的，畫面也變了
+			},
+			function showTel(){
+			  alert(this.tel)
+			}
+
+		</script>
+
+
+		<style></style>
