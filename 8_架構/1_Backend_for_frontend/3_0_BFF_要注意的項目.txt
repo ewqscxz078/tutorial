@@ -155,3 +155,14 @@ BFF 狀態
 	| CORS         | 「同網域意思？」          | SPA 與 BFF 同源最好，cookie/CORS 最好處理                   |
 	| Session 續期 | 「BFF 不是無狀態嗎？」    | BFF 通常有 session（狀態外部化），並負責 refresh/token 續期 |
 
+備註:
+	注意項目
+		有登入使用者的 BFF 
+			1.CSRF 防護（因為你用 cookie session）
+			2.CORS 處理(前端與 BFF 使否同網域)
+			3.Session 續期策略
+				
+		無登入使用者的 BFF : 也就是 M2M BFF
+			1.CSRF：通常不用（因為你沒有 cookie/session 這種瀏覽器自動帶憑證的情境）
+			2.CORS：看前端與 BFF 是否同源；若同源幾乎不用，若跨網域就要配
+			3.Session 續期：不需要（使用者 session）；改成關注 M2M access token 的刷新/快取

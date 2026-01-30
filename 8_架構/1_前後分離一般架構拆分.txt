@@ -1,16 +1,29 @@
+已知難點
+	1.前端vue3 拆分後的前後變化差異
+	2.前端不要直接打後端+不要維護token，前端只要打BFF
+	3.BFF 與後端 api 一致性維護方式
+	4.有登入系統的 BFF 要 redis session 處理橫向擴展
+	5.若要有 token rotation 要有 vault/保密器 + config server 同步
+	
+
 系統項目
 	web server
 		nginx			(容器服務)
 
 	前端 (vue3 gen)
-		portal-spa
-		子系統
-			a-spa
-			b-spa
-			c-spa
+		無登入系統類
+			noLogin-d-spa
+		統一登入系統類
+			portal-spa
+			子系統
+				a-spa
+				b-spa
+				c-spa
 
 	中間層 (java) // 掛載在 gateway-server 之前，專門讓前端打
-		portal-bff
+		noLogin-d-bff	(無狀態)
+		portal-bff		(有狀態)
+			需要 redis session 處理橫向擴展的 session
 		子系統
 			a-bff
 			b-bff
@@ -18,9 +31,10 @@
 			通用-bff
 
 	基礎建設
-		auth-server		(java)
-		gateway-server 	(java)
-		radis			(容器服務) 1.for BFF session radis 以利 csrf of Session Cookie 防護問題
+		auth-server			(java)
+		gateway-server 		(java)
+		radis				(容器服務) 
+			1.for BFF redis session 以利 csrf of Session Cookie 防護問題
 		// config-server	(java)
 		// vault			(容器服務)
 

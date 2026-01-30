@@ -1,0 +1,180 @@
+
+整合測試方式
+	1. window 11 eclipse spring boot 啟動配置 nginx 對應 port
+		* 省去 jar 丟到 wsl 佈署時間
+		* 更容易更新疊代測試
+		
+	2.開發專案放到 wsl docker 裡
+
+		做法 A（最推薦）：專案整包放 WSL 內，WSL 內 build + docker build
+			1) 把程式碼放到 WSL（不是 jar）
+				例如放到：
+					/home/<你>/work/your-project/
+
+				如果你現在專案在 Windows（例如 C:\work\your-project），可以用其中一種搬法：
+
+				* 直接在 WSL 複製一份進來（一次性搬家）
+					mkdir -p ~/work
+					cp -r /mnt/c/work/your-project ~/work/
+
+				* 或用 git 在 WSL 重新 clone（更乾淨、推薦）
+					mkdir -p ~/work
+					cd ~/work
+					git clone <repo>
+		
+			2) 在 WSL 內產 jar
+				以 Maven 為例：
+					cd ~/work/your-project
+					./mvnw -DskipTests package
+
+			3) 用 Dockerfile 把 jar 做成 image（每個服務各自一個 Dockerfile）
+				例如 xx-bff/Dockerfile：
+					FROM eclipse-temurin:21-jre
+					WORKDIR /app
+					COPY target/*.jar app.jar
+					EXPOSE 8080
+					ENTRYPOINT ["java","-jar","/app/app.jar"]
+
+			4) compose 用 build: 直接 build image（不用手動搬 jar）
+				services:
+				  xx-bff:
+					build:
+					  context: ./xx-bff
+					ports:
+					  - "8081:8080"
+
+			✅ 這個做法的好處：全部在 WSL，快、乾淨、最貼近 CI/CD。
+			你也不用「把 jar 放到 docker 裡」，Docker build 會把 jar copy 進 image。
+		
+		做法 B（也很常用）：jar 仍在 WSL 產，compose 用 bind mount 把 jar 掛進容器
+
+			適合你想快速換 jar、避免每次都 docker build。
+				services:
+				  xx-bff:
+					image: eclipse-temurin:21-jre
+					working_dir: /app
+					volumes:
+					  - ./xx-bff/target/xx-bff.jar:/app/app.jar:ro
+					command: ["java","-jar","/app/app.jar"]
+					ports:
+					  - "8081:8080"
+
+			✅ 優點：改一改、mvn package 後重啟容器即可。
+			⚠️ 缺點：不像 image 那麼「可攜、可版本化」。
+		
+		
+		做法 C：jar 在 windows 產，然後搬到 wsl，compose 用 bind mount 把 jar 掛進容器
+			
+			1) 在 WSL 準備一個「部署用資料夾」
+				mkdir -p ~/deploy/jars
+				mkdir -p ~/deploy/compose
+
+				~/deploy/
+				  jars/
+					xx-bff.jar
+					xx-bn.jar
+					auth-server.jar
+					gateway-server.jar
+				  compose/
+					docker-compose.yml
+			
+			2) Windows 產 jar 後，複製進 WSL（用 wsl.exe 做 copy）
+				
+				你可以在 Windows PowerShell 用：
+					wsl mkdir -p ~/deploy/jars
+					wsl cp /mnt/c/work/xx-bff/target/xx-bff.jar ~/deploy/jars/xx-bff.jar
+					wsl cp /mnt/c/work/xx-bn/target/xx-bn.jar ~/deploy/jars/xx-bn.jar
+					wsl cp /mnt/c/work/auth-server/target/auth-server.jar ~/deploy/jars/auth-server.jar
+					wsl cp /mnt/c/work/gateway-server/target/gateway-server.jar ~/deploy/jars/gateway-server.jar
+
+				這裡的重點：cp 的目標在 ~/deploy/...（WSL 檔案系統）
+				之後 docker compose 就完全在 WSL 內跑，不會一直碰 /mnt/c
+			
+			3) WSL 的 docker-compose 用 bind mount 掛 jar
+				在 ~/deploy/compose/docker-compose.yml：
+					services:
+					  auth-server:
+						image: eclipse-temurin:21-jre
+						container_name: auth-server
+						working_dir: /app
+						volumes:
+						  - ../jars/auth-server.jar:/app/app.jar:ro
+						command: ["java","-jar","/app/app.jar"]
+						ports:
+						  - "9000:9000"
+						environment:
+						  - SERVER_PORT=9000
+
+					  gateway-server:
+						image: eclipse-temurin:21-jre
+						container_name: gateway-server
+						working_dir: /app
+						volumes:
+						  - ../jars/gateway-server.jar:/app/app.jar:ro
+						command: ["java","-jar","/app/app.jar"]
+						ports:
+						  - "8080:8080"
+						environment:
+						  - SERVER_PORT=8080
+
+					  xx-bff:
+						image: eclipse-temurin:21-jre
+						container_name: xx-bff
+						working_dir: /app
+						volumes:
+						  - ../jars/xx-bff.jar:/app/app.jar:ro
+						command: ["java","-jar","/app/app.jar"]
+						ports:
+						  - "8081:8081"
+						environment:
+						  - SERVER_PORT=8081
+
+					  xx-bn:
+						image: eclipse-temurin:21-jre
+						container_name: xx-bn
+						working_dir: /app
+						volumes:
+						  - ../jars/xx-bn.jar:/app/app.jar:ro
+						command: ["java","-jar","/app/app.jar"]
+						ports:
+						  - "8082:8082"
+						environment:
+						  - SERVER_PORT=8082
+
+			然後在 WSL：
+				cd ~/deploy/compose
+				docker compose up -d
+				docker compose ps
+			
+			更新 jar 後怎麼快速套用？
+				你每次 Eclipse build 後：
+					1.Windows PowerShell 再跑一次 wsl cp ... 把新 jar 覆蓋到 ~/deploy/jars/
+
+					2.在 WSL 重啟對應 container
+						cd ~/deploy/compose
+						docker compose restart xx-bff
+					
+					如果你想更「一鍵」，可以寫個 PowerShell 腳本（可選）：
+						# deploy-jars.ps1
+						wsl mkdir -p ~/deploy/jars
+						wsl cp /mnt/c/work/xx-bff/target/xx-bff.jar ~/deploy/jars/xx-bff.jar
+						wsl cp /mnt/c/work/xx-bn/target/xx-bn.jar ~/deploy/jars/xx-bn.jar
+						wsl cp /mnt/c/work/auth-server/target/auth-server.jar ~/deploy/jars/auth-server.jar
+						wsl cp /mnt/c/work/gateway-server/target/gateway-server.jar ~/deploy/jars/gateway-server.jar
+						wsl bash -lc "cd ~/deploy/compose && docker compose restart xx-bff xx-bn auth-server gateway-server"
+
+				這做法的優缺點（讓你心裡有底）
+
+				✅ 優點
+
+					Eclipse 完全留在 Windows，不用改習慣
+
+					Docker 執行檔案在 WSL，效能好、問題少
+
+					更新流程很清楚：build → copy → restart
+
+				⚠️ 缺點
+
+					jar 不是在容器 image 內，部署可攜性較差（但本機開發很 OK）
+
+					你要記得 copy + restart（用腳本就解決）

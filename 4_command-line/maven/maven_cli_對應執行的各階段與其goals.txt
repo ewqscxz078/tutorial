@@ -1,0 +1,101 @@
+ref ChatGPT
+
+將 maven 依據 cli 對應執行的各階段 與其 goals 有哪些?
+
+	下面用「你在 CLI 打的指令」為主軸，
+		把 Maven Lifecycle（階段 phase）、Goal（目標）、
+		以及它們的對應關係一次整理清楚。
+		（重點：phase 是生命週期的階段；goal 是外掛提供的具體動作；
+		你在 CLI 可以叫 phase 或直接叫 goal。）
+	
+	1) 你在 CLI 打 phase：Maven 會跑到那個階段為止（包含前面所有階段）
+		default lifecycle（最常用：編譯 / 測試 / 打包 / 安裝 / 部署）
+		
+			| 你打的 phase  | 主要做什麼                          | 常見會被執行的「預設 goal（典型綁定）」                                                 |
+			| ------------- | ----------------------------------- | --------------------------------------------------------------------------------------- |
+			| `validate`    | 檢查專案結構、pom 基本正確性        | （通常無預設外掛動作）                                                                  |
+			| `compile`     | 編譯主程式碼                        | `maven-compiler-plugin:compile`                                                         |
+			| `test`        | 跑單元測試                          | `maven-surefire-plugin:test`                                                            |
+			| `package`     | 打包（jar/war…）                    | `maven-jar-plugin:jar` 或 `maven-war-plugin:war`                                        |
+			| `verify`      | 做整體驗證（常用於整合測試後）      | `maven-failsafe-plugin:integration-test` + `maven-failsafe-plugin:verify`（若你有設定） |
+			| `install`     | 安裝到本機 repo (`~/.m2`)           | `maven-install-plugin:install`                                                          |
+			| `deploy`      | 部署到遠端 repo（Nexus/Artifactory）| `maven-deploy-plugin:deploy`                                                            |
+	
+		常用：mvn clean package、mvn test、mvn install、mvn deploy
+	
+		
+		clean lifecycle（清理）
+			| 你打的 phase | 做什麼                | 常見 goal                  |
+			| ---------    | --------------------- | -------------------------- |
+			| `clean`      | 刪除 `target/` 等輸出 | `maven-clean-plugin:clean` |
+		
+		
+		site lifecycle（產生報表/站台）
+			| 你打的 phase  | 做什麼         | 常見 goal                  |
+			| ------------- | -------------- | -------------------------- |
+			| `site`        | 產生 site 報表 | `maven-site-plugin:site`   |
+			| `site-deploy` | 發佈 site      | `maven-site-plugin:deploy` |
+	
+	2) 你在 CLI 打 goal：就是「直接跑某個外掛動作」
+		格式：
+
+			* mvn <plugin-prefix>:<goal>
+
+			* 或 mvn <groupId>:<artifactId>:<version>:<goal>
+
+		例子：
+
+			* mvn dependency:tree
+
+			* mvn help:effective-pom
+
+			* mvn spring-boot:run
+
+			* mvn org.codehaus.mojo:exec-maven-plugin:3.1.0:java
+		
+		常見「查詢/診斷」類 goals
+			| 指令                                      | 用途                                                                  |
+			| ----------------------------------------- | --------------------------------------------------------------------- |
+			| `mvn help:effective-pom`                  | 看展開後的完整 POM（含 parent / profile / pluginManagement 套用結果） |
+			| `mvn help:active-profiles`                | 看現在哪些 profile 被啟用                                             |
+			| `mvn help:all-profiles`                   | 看有哪些 profile 可用                                                 |
+			| `mvn dependency:tree`                     | 看依賴樹（排查衝突）                                                  |
+			| `mvn dependency:list`                     | 列出依賴清單                                                          |
+			| `mvn versions:display-dependency-updates` | 看依賴可升級版本（需 versions-maven-plugin）                          |
+
+	3) phase 與 goal 的關係：靠「綁定（binding）」決定
+
+		* Maven 的 phase 本身不做事
+
+		* 外掛 goal 綁到某個 phase，phase 被執行時才會觸發那些 goal
+
+		* 綁定來源：
+
+			1.Maven 的預設生命週期綁定（packaging 不同綁定不同：jar/war/pom）
+
+			2.你在 pom.xml 的 <build><plugins> 明確綁定
+
+			3.你在 <pluginManagement> 定義，子模組再引用
+
+			4.你用 CLI 直接點 goal（繞過 phase 綁定）
+	
+	4) 你常在 CLI 會用到的「組合」與意義
+		| 指令                           | 代表意思                                                       |
+		| ------------------------------ | -------------------------------------------------------------- |
+		| `mvn clean package`            | 先 clean lifecycle 的 clean，再跑 default lifecycle 到 package |
+		| `mvn -DskipTests package`      | 打包但跳過測試執行（仍會編譯測試碼，依設定可能略有差異）       |
+		| `mvn -Dtest=FooTest test`      | 只跑指定測試                                                   |
+		| `mvn -pl :moduleA -am install` | 只建 moduleA，並順便建它依賴的模組（常用於多模組）             |
+		| `mvn -DskipITs verify`         | 跑到 verify，但跳過整合測試（前提是你把 IT 綁到 failsafe）     |
+
+	5) 你要「列出某專案到底綁了哪些 phase/goal」怎麼查
+
+		最實用（會把實際執行的 mojo/goal 列出來）：
+
+			* mvn -X <你的指令>（超詳細）
+
+			* mvn -Dverbose <phase>（部分外掛會更清楚）
+
+			* mvn help:effective-pom（看綁定配置）
+
+			* mvn help:describe -Dplugin=<plugin>（看外掛有哪些 goal）

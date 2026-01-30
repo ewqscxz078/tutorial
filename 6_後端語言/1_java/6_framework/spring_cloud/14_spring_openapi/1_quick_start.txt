@@ -1,0 +1,269 @@
+ref ChatGPT
+
+用 openAPI spec 確保 api 一致性又降低依賴
+
+	Part A：後端提供 OpenAPI spec（Spring Boot + springdoc）
+		
+		A1) 後端 pom.xml（加入 springdoc）
+			（Spring MVC 專案用 springdoc-openapi-starter-webmvc-ui，會自動提供 /v3/api-docs 與 swagger-ui）
+	
+			<!-- backend-service/pom.xml -->
+			<dependencies>
+			  <!-- 你的 web / validation / security ... 省略 -->
+
+			  <!-- OpenAPI spec + Swagger UI -->
+			  <dependency>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			  </dependency>
+			</dependencies>
+
+			啟動後你會有：
+
+				GET /v3/api-docs（JSON）
+
+				GET /v3/api-docs.yaml（YAML，若有啟用）
+
+				GET /swagger-ui/index.html（UI）
+
+			springdoc 模組與行為可參考官方 modules 說明。
+		
+		A2) 後端一個簡單 Controller（範例）
+			package com.example.backend.api;
+
+			import io.swagger.v3.oas.annotations.Operation;
+			import io.swagger.v3.oas.annotations.tags.Tag;
+			import jakarta.validation.constraints.NotBlank;
+			import org.springframework.web.bind.annotation.*;
+
+			@Tag(name = "Greeting") 			// 強化資訊
+			@RestController
+			@RequestMapping("/api")
+			public class GreetingController {
+
+			  @Operation(summary = "Say hello")	// 強化資訊
+			  @GetMapping("/hello")
+			  public HelloResponse hello(@RequestParam @NotBlank String name) {
+				return new HelloResponse("Hello, " + name);
+			  }
+
+			  public record HelloResponse(String message) {}
+			}
+
+		A3) （可選）application.yml：調整 OpenAPI 基本資訊/路徑
+			springdoc:
+			  api-docs:
+				path: /v3/api-docs
+			  swagger-ui:
+				path: /swagger-ui.html
+		
+		A4) Build 時自動產出 openapi.json（springdoc-openapi-maven-plugin）
+			springdoc 官方 Maven plugin 的目的就是「在 build 階段產出 json/yaml spec」，
+			它會配合 spring-boot-maven-plugin，在 integration-test（mvn verify）階段啟動 
+			app 抓 /v3/api-docs 生成檔案。
+
+			<!-- backend-service/pom.xml -->
+			<build>
+			  <plugins>
+				<!-- 讓 plugin 能在 verify 階段啟動 Spring Boot -->
+				<plugin>
+				  <groupId>org.springframework.boot</groupId>
+				  <artifactId>spring-boot-maven-plugin</artifactId>
+				</plugin>
+
+				<!-- 產生 OpenAPI spec -->
+				<plugin>
+				  <groupId>org.springdoc</groupId>
+				  <artifactId>springdoc-openapi-maven-plugin</artifactId>
+				  <executions>
+					<execution>
+					  <id>generate-openapi</id>
+					  <phase>integration-test</phase>
+					  <goals>
+						<goal>generate</goal>
+					  </goals>
+					  <configuration>
+						<!-- app 起來後的 api-docs URL -->
+						<apiDocsUrl>http://localhost:8080/v3/api-docs</apiDocsUrl>
+
+						<!-- 輸出位置 -->
+						<outputDir>${project.build.directory}</outputDir>
+						<outputFileName>openapi.json</outputFileName>
+
+						<!-- 可選：等待 app 起來的時間 -->
+						<waitTimeInSeconds>10</waitTimeInSeconds>
+					  </configuration>
+					</execution>
+				  </executions>
+				</plugin>
+			  </plugins>
+			</build>
+
+			執行：
+				mvn -pl backend-service verify
+			你會拿到：
+				backend-service/target/openapi.json
+
+			接下來你可以把這個 openapi.json：
+
+				* 發到 artifact repo（Nexus/Artifactory）
+
+				* 或在 CI pipeline 裡當作 build artifact
+
+				* 或簡單一點：先在 mono-repo 內複製到 bff/src/main/resources/openapi/backend-openapi.json
+	
+	Part B：BFF 用 OpenAPI Generator 產 Java client（DTO + API 封裝）
+		
+		OpenAPI Generator 的 Java generator 支援 library=webclient，會生出一套 client（ApiClient + 各 Api 類 + DTO）。
+		
+		B1) BFF pom.xml：openapi-generator-maven-plugin
+			
+			假設你把後端產出的 spec 放在：
+				portal-bff/src/main/resources/openapi/backend-openapi.json
+
+			<!-- portal-bff/pom.xml -->
+			<build>
+			  <plugins>
+				<plugin>
+				  <groupId>org.openapitools</groupId>
+				  <artifactId>openapi-generator-maven-plugin</artifactId>
+				  <executions>
+					<execution>
+					  <id>gen-backend-client</id>
+					  <phase>generate-sources</phase>
+					  <goals>
+						<goal>generate</goal>
+					  </goals>
+					  <configuration>
+						<inputSpec>${project.basedir}/src/main/resources/openapi/backend-openapi.json</inputSpec>
+
+						<generatorName>java</generatorName>
+						<library>webclient</library>
+
+						<output>${project.build.directory}/generated-sources/openapi</output>
+
+						<!-- 產出的 package -->
+						<apiPackage>com.example.bff.backend.client.api</apiPackage>
+						<modelPackage>com.example.bff.backend.client.model</modelPackage>
+						<invokerPackage>com.example.bff.backend.client.invoker</invokerPackage>
+
+						<!-- Boot 3/4 都是 jakarta，建議開 -->
+						<configOptions>
+						  <useJakartaEe>true</useJakartaEe>
+						  <dateLibrary>java8</dateLibrary>
+						</configOptions>
+
+						<!-- 建議：不要產測試/文件，乾淨 -->
+						<generateApiTests>false</generateApiTests>
+						<generateModelTests>false</generateModelTests>
+						<generateApiDocumentation>false</generateApiDocumentation>
+						<generateModelDocumentation>false</generateModelDocumentation>
+					  </configuration>
+					</execution>
+				  </executions>
+				</plugin>
+
+				<!-- 讓 Maven 自動編譯 generated-sources -->
+				<plugin>
+				  <groupId>org.codehaus.mojo</groupId>
+				  <artifactId>build-helper-maven-plugin</artifactId>
+				  <executions>
+					<execution>
+					  <id>add-openapi-sources</id>
+					  <phase>generate-sources</phase>
+					  <goals><goal>add-source</goal></goals>
+					  <configuration>
+						<sources>
+						  <source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
+						</sources>
+					  </configuration>
+					</execution>
+				  </executions>
+				</plugin>
+			  </plugins>
+			</build>
+			
+			跑：
+				mvn -pl portal-bff -DskipTests=false test
+
+			就會在 target/generated-sources/openapi 出現 generated code。
+		
+		B2) 在 BFF 裡把「JWT」塞進 generated client（最常見作法）
+			
+			生成的 ApiClient（invoker）通常會有一個底層 WebClient，
+			你可以用「自訂 WebClient + filter」把 Authorization header 統一掛上。
+	
+			(1) 建立一個配置：ApiClient Bean
+				package com.example.bff.config;
+
+				import com.example.bff.backend.client.invoker.ApiClient;
+				import com.example.bff.backend.client.api.GreetingApi;
+				import org.springframework.context.annotation.Bean;
+				import org.springframework.context.annotation.Configuration;
+				import org.springframework.web.reactive.function.client.*;
+
+				@Configuration
+				public class BackendClientConfig {
+
+				  @Bean
+				  ApiClient backendApiClient(TokenSupplier tokenSupplier) {
+					// 你的 base URL（可從設定檔來）
+					String basePath = "http://backend-service:8080";
+
+					WebClient webClient = WebClient.builder()
+						.baseUrl(basePath)
+						.filter((request, next) -> {
+						  String token = tokenSupplier.getAccessToken(); // M2M 取 token 的地方
+						  ClientRequest newReq = ClientRequest.from(request)
+							  .headers(h -> h.setBearerAuth(token))
+							  .build();
+						  return next.exchange(newReq);
+						})
+						.build();
+
+					ApiClient apiClient = new ApiClient(webClient);
+					apiClient.setBasePath(basePath);
+					return apiClient;
+				  }
+
+				  @Bean
+				  GreetingApi greetingApi(ApiClient backendApiClient) {
+					return new GreetingApi(backendApiClient);
+				  }
+
+				  /** 你可以用 OAuth2AuthorizedClientManager 或自家 token cache 來實作 */
+				  public interface TokenSupplier {
+					String getAccessToken();
+				  }
+				}
+
+			(2) 實際使用（BFF 呼叫後端）
+				package com.example.bff.service;
+
+				import com.example.bff.backend.client.api.GreetingApi;
+				import com.example.bff.backend.client.model.HelloResponse;
+				import org.springframework.stereotype.Service;
+
+				@Service
+				public class GreetingService {
+
+				  private final GreetingApi greetingApi;
+
+				  public GreetingService(GreetingApi greetingApi) {
+					this.greetingApi = greetingApi;
+				  }
+
+				  public String hello(String name) {
+					HelloResponse resp = greetingApi.hello(name);
+					return resp.getMessage();
+				  }
+				}
+				
+				這樣的好處是：後端改了 response 欄位/型別，BFF 生成碼會變，
+				編譯期就能抓到不一致（或至少 CI 會因 codegen diff/編譯失敗而擋住）。
+
+		接下來最重要的兩個「一致性加固」
+
+			1.後端 CI：spec diff / breaking change gate（避免後端不小心破壞 BFF）
+
+			2.BFF CI：永遠從最新 spec 產生 client 再編譯測試（避免 spec 與 client 漂移）
