@@ -52,7 +52,7 @@ ref ChatGPT
 
 			然後進專案、裝依賴、跑起來：
 				cd your-project-name
-				npm install
+				npm install => 類似 maven update 把 package.json 用到的套件下到 local repo
 					# 若 npm 有新的版本會有訊息通知，類似如下
 						npm notice
 						npm notice New minor version of npm available! 11.6.2 -> 11.7.0

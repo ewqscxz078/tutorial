@@ -50,6 +50,35 @@ Node.js 安裝
 
 	實務上，如果你不能裝 MSI，這是內網第二推薦。
 
+	建議將解壓縮後支援 ps 的命令改名，否則很容易遇到如下問題
+		PS D:\dev\vue\vue-dev> npm -v
+			npm : 因為這個系統上已停用指令碼執行，所以無法載入 D:\software\dev_code_tools\node-v24.13.0-win-x64\npm.ps1 檔案。如需
+			詳細資訊，請參閱 about_Execution_Policies，網址為 https:/go.microsoft.com/fwlink/?LinkID=135170。
+			位於 線路:1 字元:1
+			+ npm -v
+			+ ~~~
+				+ CategoryInfo          : SecurityError: (:) [], PSSecurityException
+				+ FullyQualifiedErrorId : UnauthorizedAccess
+
+		powershell
+			PS C:\WINDOWS\system32> Get-Command npm -All
+				CommandType     Name                                               Version    Source
+				-----------     ----                                               -------    ------
+				ExternalScript  npm.ps1                                                       D:\software\dev_code_tools\node-v24.13...
+				Application     npm.cmd                                            0.0.0.0    D:\software\dev_code_tools\node-v24.13...
+				Application     npm                                                0.0.0.0    D:\software\dev_code_tools\node-v24.13...
+
+		npm.ps1 => npm.ps1.bak
+		npx.ps1 => npx.ps1.bak
+
+		powershell
+			PS C:\WINDOWS\system32> Get-Command npm -All
+				CommandType     Name                                               Version    Source
+				-----------     ----                                               -------    ------
+				Application     npm.cmd                                            0.0.0.0    D:\software\dev_code_tools\node-v24.13...
+				Application     npm                                                0.0.0.0    D:\software\dev_code_tools\node-v24.13...
+
+
 3) Dockerfile / Docker Image
 	適合：CI/CD、或你把前端 build 放在容器裡做（建置用）
 

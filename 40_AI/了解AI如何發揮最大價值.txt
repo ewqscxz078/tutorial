@@ -1,0 +1,296 @@
+ref ChatGPT
+
+
+Q: 要懂哪些關鍵技術，才真的能把 AI 用到「有戰力」而不是玩玩 Demo。
+
+A: 最有實務價值的 AI 關鍵字 分成幾個層級（從模型 → 系統 → 落地）
+
+	🧠 第一層：模型層（AI 的大腦）
+		| 關鍵字                         | 是什麼                    | 為什麼重要                  |
+		| ------------------------------ | ------------------------- | --------------------------- |
+		| **Machine Learning (ML)**      | 機器從資料學規則          | 所有 AI 的基礎              |
+		| **Deep Learning (DL)**         | 用多層神經網路學複雜模式  | 語音、影像、NLP 核心技術    |
+		| **Neural Network**             | 模擬人腦神經元的數學模型  | DL 的骨架                   |
+		| **Transformer**                | 一種模型架構（注意力機制）| 現代 LLM、生成式 AI 的核心  |
+		| **LLM (Large Language Model)** | 大型語言模型              | ChatGPT、Copilot 背後的技術 |
+		| **Embedding**                  | 把文字轉成向量            | 搜尋、語意比對、RAG 必備    |
+		| **Fine-tuning**                | 在既有模型上再訓練        | 客製化 AI 能力              |
+
+	🧩 第二層：能力類型（AI 能做什麼）
+		| 關鍵字                                | 領域            | 用途                  |
+		| ------------------------------------- | --------------- | --------------------- |
+		| **NLP (Natural Language Processing)** | 語言理解        | 對話、文件分析        |
+		| **Computer Vision (CV)**              | 影像理解        | 辨識、監控、醫療影像  |
+		| **ASR / TTS**                         | 語音辨識 / 合成 | 語音助理、客服        |
+		| **Generative AI**                     | 生成式 AI       | 產文、畫圖、寫 code   |
+		| **Multimodal**                        | 多模態          | 圖 + 文 + 聲音整合    |
+
+		👉 這層是「AI 能力技能樹」。
+
+	🏗 第三層：現代 AI 系統架構
+		| 關鍵字                                   | 是什麼                 | 為何是關鍵         |
+		| ---------------------------------------- | ---------------------- | ------------------ |
+		| **RAG (Retrieval-Augmented Generation)** | 模型 + 知識庫查詢      | 讓 AI 用你公司資料 |
+		| **Vector Database**                      | 存 embedding 的 DB     | 語意搜尋核心       |
+		| **Prompt Engineering**                   | 設計提問方式           | 大幅影響 AI 表現   |
+		| **Inference**                            | 模型推論執行           | AI 實際跑的階段    |
+		| **Token**                                | 模型計算單位           | 成本 & 效能核心    |
+		| **Latency**                              | 回應延遲               | AI 系統 UX 關鍵    |
+		| **Hallucination**                        | AI 胡說八道            | 企業導入最大風險   |
+
+		👉 這層 = AI 變產品的關鍵。
+
+	🤖 第四層：Agent 與自動化
+		| 關鍵字                              | 是什麼                      |
+		| ----------------------------------- | --------------------------- |
+		| **AI Agent**                        | 會自己規劃步驟完成任務的 AI |
+		| **Tool Calling / Function Calling** | AI 呼叫 API、DB、工具       |
+		| **Autonomous Workflow**             | AI 自主執行多步驟任務       |
+		| **Planning / Reasoning**            | AI 任務拆解能力             |
+
+		👉 這是「AI 不只是聊天，而是會做事」。
+
+	🛡 第五層：企業落地必懂
+		| 關鍵字                | 意義               |
+		| --------------------- | ------------------ |
+		| **AI Governance**     | AI 管理與合規      |
+		| **Data Privacy**      | 資料隱私           |
+		| **Model Drift**       | 模型效果隨時間下降 |
+		| **Observability**     | AI 系統監控        |
+		| **Cost Optimization** | Token 成本控管     |
+
+	🎯 如果你是「工程架構師」，最值得優先學：
+
+		1.LLM 原理（Transformer + Token 概念）
+
+		2.Embedding + Vector DB
+
+		3.RAG 架構
+
+		4.Prompt Engineering
+
+		5.AI Agent 架構
+
+		6.Inference 成本與延遲控制
+
+		這幾個懂了，你已經是「能把 AI 放進企業架構」的人，而不是只會玩 API 的人。
+
+	👉 「企業 AI 系統完整架構圖（從使用者 → Gateway → RAG → LLM → Agent → DB）」
+
+
+定位地圖
+	模型層        → LLM / Transformer / Embedding
+	系統層        → RAG / Vector DB / Agent
+	工具整合層    → MCP / Function Calling / Tool Use
+	能力封裝層    → Skill / Plugin / Action
+	人機互動模式  → Vibe Coding / Prompt UX
+
+
+	🔌 MCP（Model Context Protocol）
+		定位：👉 AI 世界的「USB / API 標準插槽」
+
+		MCP 是讓 AI 模型可以「接外部世界」的一種標準協議概念。
+
+			以前：
+				LLM 只會聊天
+
+			現在：
+				LLM 可以「拿資料、查 DB、呼叫 API、操作工具」
+
+			MCP 做的事就是：
+				定義「模型怎麼安全地使用外部工具」
+
+		解決的痛點
+			| 沒 MCP               | 有 MCP    |
+			| -------------------- | --------- |
+			| 每個工具接法不同     | 統一介面  |
+			| Agent 系統很難維護   | 模組化    |
+			| 工具安全難控管       | 可治理    |
+
+		👉 等級：系統整合層核心技術
+		👉 未來 AI 能不能「進企業系統」，MCP 類技術是關鍵。
+
+	🎧 Vibe Coding（氣氛式寫程式）
+		定位：👉 人機互動模式的改變，不是技術
+
+		這不是演算法，是一種開發方式的文化詞。
+
+		意思是：
+			不再「精確寫規格」
+			而是「用感覺對話讓 AI 幫你完成」
+
+		例如：
+			「幫我做個登入頁，簡潔、企業風」
+
+			「這段 code 有點醜，幫我重構得優雅一點」
+
+		這叫 Vibe → AI 解讀 → 產生程式
+
+		代表什麼趨勢？
+			| 傳統 Coding   | Vibe Coding |
+			| ------------- | ----------- |
+			| 精準規格      | 模糊意圖    |
+			| 人寫邏輯      | AI 補細節   |
+			| IDE 為主      | 對話為主    |
+
+		👉 等級：人機互動革命
+		👉 這會改變軟體工程流程。
+
+	🧠 Skill（技能模組）
+		定位：👉 AI 的「功能外掛模組」
+			Skill 本質就是：
+
+				* 將某種能力封裝給 AI 使用
+
+			像這些都算 Skill：
+
+				* 查天氣
+
+				* 讀公司文件
+
+				* 幫你下 SQL
+
+				* 產生報表
+
+			你可以把它想成：
+				| 世界   | 對應物 |
+				| ------ | ------ |
+				| 手機   | App    |
+				| 瀏覽器 | Plugin |
+				| AI     | Skill  |
+
+		Skill = AI 可以被「賦予能力」的單元。
+
+		👉 這是 Agent 系統的核心概念
+
+	三者的層級關係
+		人類意圖
+		   ↓
+		Vibe Coding（互動方式）
+		   ↓
+		LLM
+		   ↓
+		Agent
+		   ↓
+		Skill（能力模組）
+		   ↓
+		MCP（讓 Skill 接到外部世界）
+
+	🏗 企業角度的價值排序
+		| 詞              | 對企業 AI 導入的重要度 |
+		| --------------- | ---------------------- |
+		| **MCP**         | ⭐⭐⭐⭐⭐（架構層級）      |
+		| **Skill**       | ⭐⭐⭐⭐（功能模組化）     |
+		| **Vibe Coding** | ⭐⭐（開發文化）         |
+
+	🔥 總結
+		| 關鍵字          | 本質                         |
+		| --------------- | ---------------------------- |
+		| **MCP**         | AI 接世界的「標準介面」      |
+		| **Skill**       | AI 能力的「模組化封裝」      |
+		| **Vibe Coding** | 人與 AI 協作的「新工作方式」 |
+
+
+	破題
+		模型已經不是重點，
+		「怎麼控制 AI、怎麼讓它接系統、怎麼避免失控」才是核心價值。
+
+	🏗 和 MCP / Skill 同層級的重要概念
+		🔄 Tool Use / Function Calling
+			定位：AI 呼叫外部系統的執行機制
+
+			MCP 是協議概念，而 Tool Calling 是「實際運作方式」。
+
+			這是讓 AI 從「說話」變成「做事」的轉折點。
+
+		🧩 AI Agent
+			定位：會規劃、會拆步驟的 AI
+
+			LLM ≠ Agent
+			Agent = LLM + 記憶 + 工具 + 任務流程
+
+			這是下一代 AI 系統的核心。
+
+		🧠 Prompt Engineering → Context Engineering（升級版）
+			現在已經不只是寫 prompt，而是：
+
+				* 如何設計 AI 的「上下文結構」
+
+			包括：
+
+				* 系統提示詞
+
+				* RAG 注入內容
+
+				* 使用者狀態
+
+				* 工具回傳結果
+
+			這是 控制 AI 行為的真正技術。
+
+		📚 RAG（Retrieval-Augmented Generation）
+			定位：讓 AI 有「企業知識」的方式
+
+			沒有 RAG 的 AI ＝ 會聊天但不懂你公司。
+
+		🧠 Embedding & Vector DB
+
+			定位：AI 語意搜尋的基礎
+
+			這是 RAG 的底層。
+
+		🛑 Guardrails
+			定位：AI 的「防呆機制」
+
+			包括：
+
+				* 敏感資訊檢查
+
+				* 輸出驗證
+
+				* SQL 注入防護
+
+				* 幻覺偵測
+
+			企業導入一定要有。
+
+		🧠 Memory（記憶機制）
+			沒有記憶，AI 只是短暫聊天機器。
+
+			有記憶，才是「助理」。
+
+		🧮 Inference Optimization
+			定位：成本與效能控制
+
+			包括：
+
+				* Token 控制
+
+				* 快取
+
+				* 小模型 + 大模型混用
+
+				* Streaming
+
+		🧠 Model Orchestration
+
+			定位：多模型協作
+
+				未來不是「用一個 GPT」，而是：
+
+					* 小模型做分類
+
+					* 中模型做摘要
+
+					* 大模型做推理
+
+		「企業 AI 能力雷達圖」
+			| 類別       | 關鍵字                      |
+			| ---------- | -------------------------- |
+			| 🔌 系統整合 | MCP, Tool Calling, Skill   |
+			| 🤖 智能流程 | Agent, Memory, Planning    |
+			| 📚 知識強化 | RAG, Embedding, Vector DB  |
+			| 🧠 行為控制 | Prompt/Context Engineering |
+			| 🛡 風險控制 | Guardrails, Validation     |
+			| ⚙️ 效能成本 | Inference Optimization     |
+			| 🎛 調度能力 | Model Orchestration        |

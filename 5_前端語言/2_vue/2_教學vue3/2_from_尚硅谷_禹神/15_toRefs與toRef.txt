@@ -1,0 +1,74 @@
+ref https://www.youtube.com/watch?v=a9QAmiVjlPI&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=15
+
+作用:
+	將一個響應式對象中的每一個屬性，轉換為 ref 對象
+		=> 截錄物件屬性為響應式對象
+備註:
+	toRefs 與 toRef 功能一致, 但 toRefs 可以批量轉換
+
+		<template>
+		  <div class="person">
+		    <!-- <h2>姓名:{{person.name}}</h2> -->
+			<!-- <h2>年齡:{{person.age}}</h2> -->
+			<h2>姓名:{{name}}</h2>
+			<h2>年齡:{{age}}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { ref, reactive,toRefs, toRef } from 'vue'
+
+			// 資料
+			let person = reactive({
+			  name = '張三'
+			  age = 18
+			})
+
+			// 讀出屬性放到另外的屬性(非響應式)
+			// let {name, age} = person
+				// let name = person.name
+				// let age = person.age
+
+			// 讀出物件所有屬性放到另外的物件屬性響應式
+			let {name, age} = toRefs(person)
+			// let x = toRefs(person)
+			// console.log(x)
+
+			let nl = toRef(person, 'age') // 拿出其中一個屬性轉成響應式物件
+			console.log(nl.value)
+
+			// 方法
+			function changeName(){
+			  // person.name += "~" 	// 原始操作
+			  // name += "~"  			// 沒有 toRefs 對應的操作
+			  name.value += '~' 		// toRefs 對應的操作
+			  console.log(name, person.name)
+			}
+			function changeAge(){
+			  // person.age += 1		// 原始操作
+			  // age += 1				// 沒有 toRefs 對應的操作
+			  age.value += 1			// toRefs 對應的操作
+			  console.log(age, person.age)
+			}
+
+		</script>
+
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+

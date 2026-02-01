@@ -1,0 +1,104 @@
+ref https://www.youtube.com/watch?v=5aEQedeeYrE&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=14
+
+宏觀角度看
+	ref 		==> 可以建立 : "基本類型"、"對象類型" 的響應式資料
+	reactive 	==> 只能建立 : "對象類型" 的響應式資料
+
+區別
+	ref 建立的變數必須使用 .value (可以使用 volar 插件自動添加.value)
+	reacitve 重新分配一個新對象，會失去響應式(可以使用Object.assign去整體替換)
+
+使用原則
+	1.若需要一個基本類型的響應式資料，必須使用ref。
+	2.若需要一個響應式對象，層級不深，ref、reactive 都可以
+	3.若需要一個響應式對象，且層級較深，推薦使用 reactive
+
+		<template>
+		  <div class="person">
+		    <h2>一輛:{{car.brand}}車, 價值{{car.price}}</h2>
+			<button @click="changeBrand">修改汽車的品牌</button>
+			<button @click="changePrice">修改汽車的價格</button>
+			<button @click="changeCar">修改汽車</button>
+			<hr>
+			<h2>當前求和為:{{sum}}</h2>
+			<button @click="changeSum">點我sum+1</button>
+		  </div>
+		</template>
+
+		// 演示 reactive 操作
+		<script lang="ts" setup>
+			import { ref, reactive } from 'vue'
+
+			let car = reactive({
+			  brand: '奔馳',
+			  price: 100,
+			})
+			let sum = ref(0)
+
+			function changeBrand(){
+			  car.brand = '寶馬'
+			}
+
+			function changePrice(){
+			  car.price += 10
+			}
+
+			function changeCar(){
+			  // car = {brand:'奧迪',price=1} 只會變成一般 物件，失去響應式模式
+			  // car = reactive({brand:'奧迪',price=1}) 變成跟原本不同響應式模式，無效果
+			  Object.assign(car , {brand:'奧迪',price=1}) // assign {brand:'奧迪',price=1} 所有內容到 car 裡
+			}
+
+			function changeSum(){
+			  sum.value += 1
+			  // sum = ref(9) ，無效果，無法越過value 修改
+			}
+
+
+		</script>
+
+		// 演示 ref 操作
+		<script lang="ts" setup>
+			import { ref } from 'vue'
+
+			let car = ref({
+			  brand: '奔馳',
+			  price: 100,
+			})
+			let sum =ref(0)
+
+			function changeBrand(){
+			  car.value.brand = '寶馬'
+			}
+
+			function changePrice(){
+			  car.value.price += 10
+			}
+
+			function changeCar(){
+			  car.value = {brand:'奧迪',price=1} // ref 可以直接用 value 就改成對應的物件響應式，修改value 的內容必是響應式內容
+			}
+
+			function changeSum(){
+			  sum.value += 1
+			}
+
+
+		</script>
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+

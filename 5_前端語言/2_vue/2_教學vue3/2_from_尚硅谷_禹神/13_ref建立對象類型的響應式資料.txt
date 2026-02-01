@@ -1,6 +1,7 @@
 ref https://www.youtube.com/watch?v=suwpLqjD3Kk&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=13
 
-ref建立 "對象類型" 的響應式資料
+ref 		==> 可以建立 : "基本類型"、"對象類型" 的響應式資料
+reactive 	==> 只能建立 : "對象類型" 的響應式資料
 
 		<template>
 		  <div class="person">
@@ -16,52 +17,34 @@ ref建立 "對象類型" 的響應式資料
 			</ul>
 			<button @click="changeFirstGame">修改第一個遊戲的名字</button>
 
-			<hr>
-			<h2>測試: {{obj.a.b.c}}</h2>
-			<button @click="changeObj">測試</button>
 		  </div>
 		</template>
 
 
-		// vue3 分 ref 、 reactive 兩大類
-		// ref 給基本類型用
-		// reactive 給對象類型用
 		<script lang="ts" setup>
-			import { reactive } from 'vue'
+			import { ref } from 'vue'
 
-			let car = reactive({
+			let car = ref({
 			  brand: '奔馳',
 			  price: 100,
 			})
 
-			let games = reactive([
+			let games = ref([
 			  {id:'sdfsdfs01', name:'亡者榮耀'},
 			  {id:'sdfsdfs02', name:'圓神'},
 			  {id:'sdfsdfs03', name:'三國志'},
 			])
-			let obj = reactive({
-			  a:{
-			    b:{
-				  c:666
-				}
-			  }
-			})
 
-			console.log(car)
-			console.log(games)
 
 			function changePrice(){
-			  car.price += 10
-			  console.log(car.price)
+			  car.value.price += 10
+			  console.log(car.value.price)
 			}
 
 			function changeFirstGame(){
-			  games[0].name = '流星蝴蝶劍'
+			  games.value[0].name = '流星蝴蝶劍'
 			}
 
-			function changeObj(){
-			  obj.a.b.c = 999
-			}
 
 		</script>
 
