@@ -1,0 +1,108 @@
+ref ChatGPT
+
+codex cli
+
+	安裝 
+		Windows / Linux
+			npm install -g @openai/codex
+	
+	安裝完成後可檢查版本
+		codex --version
+	
+	登入 Codex CLI
+		codex login
+		
+		若你在公司環境/遠端環境「開瀏覽器回呼」常失敗，改用 device code flow： 這是官方建議的 headless/受限環境做法
+			codex login --device-auth
+	
+	測試 Codex CLI
+		codex help
+
+
+在專案目錄啟動 Codex（互動模式）
+	cd D:\path\to\your\repo
+	codex
+
+
+最快上手的使用習慣（強烈建議）
+	✅ 先做 Git checkpoint
+		因為 Codex 會改檔，官方 quickstart 建議你在任務前後做 checkpoint 方便回滾：
+			git status
+			git commit -am "checkpoint: before codex task"  # 或用 git stash 也行
+
+	✅ 放入 AGENTS.md
+		在 repo 根目錄放 AGENTS.md，Codex 會讀它來遵循你的規範
+
+
+Windows 
+	* 「最少踩雷」建議：用 WSL 跑
+		如果你遇到任何怪異（權限、路徑、TUI、執行指令、git hook 等），就照官方建議：把 repo 放在 WSL 檔案系統內，從 WSL terminal 跑 codex
+
+	* 建議使用 終端機選 cmd 執行 codex
+
+Codex CLI 
+	以下為常用的 指令與技巧：
+		核心操作指令
+			codex "指令"：直接在終端機輸入自然語言要求，例如 codex "編寫一個 Python 函數來讀取 CSV"。
+			codex prompt：發送自由格式指令來產生代碼。
+			codex complete <file>：在指定檔案的遊標位置產生程式碼補全。
+			codex explain <file>：要求對特定檔案進行逐行註解或總結。
+			codex chat：啟動互動式 REPL 模式，與 AI 進行對話式代碼建議。
+			codex --auto-edit：以自動編輯模式執行，適用於日常開發。
+			codex --full-auto：以全自動模式執行，適用於快速原型開發。 
+		快捷與內部命令 (在對話模式中輸入)
+			/new：開啟新的會話。
+			/init：初始化 AGENTS.md 指導文件。
+			/compact：壓縮上下文，避免超過 token 限制。
+			/diff：顯示 git 差異。
+			/mode：在運行中切換操作模式。 
+
+		常用情境範例
+			解釋代碼：codex "解釋這個專案的結構" .
+			找出 Bug：`codex "找出 src/index.js 中的錯誤"。
+			產生測試：codex "為此檔案編寫單元測試" user.py 
+
+codex 互動模式（全螢幕 TUI）裡，最常用的是 「斜線指令（slash commands）」：你在輸入框打 / 就會跳出清單，開始打字可過濾
+	最常用 8 個
+
+		/diff：看目前工作目錄的 Git diff（含尚未被 Git track 的新檔）—改完一定先看這個再決定要不要留。
+
+		/review：請 Codex 幫你檢查 working tree（像第二雙眼睛），常用來找漏測試、可疑改動。
+
+		/status：看目前 session 狀態（使用的 model、權限/approval 模式、可寫目錄、token 使用量等）。
+
+		/permissions：調整 Codex 做事前需不需要你同意（例如改成 Read Only / Auto 等）。
+
+		/model：切換模型（也可能含推理強度選項，視當下提供的能力）。
+
+		/mention：把特定檔案/資料夾「點名」附到對話裡，讓它專注看那幾個檔。
+
+		/new：同一個 CLI session 裡開一個「新對話 thread」，清空上下文但不離開 Codex。
+
+		/quit 或 /exit：離開 CLI（兩個等價）。
+
+	很實用但你可能不會天天用
+
+		/compact：把目前可見對話壓縮成摘要，釋放上下文 token（長時間 session 很有用）。
+
+		/fork：把目前對話「分支」成另一個 thread，用來平行嘗試不同解法。
+
+		/resume：從 session 清單恢復先前存的對話。
+
+		/init：在目前目錄自動產生一份 AGENTS.md scaffold（你要快速建立規範很方便）。
+
+		/apps：瀏覽可用的 connectors/app，插入到 prompt 讓 Codex用。
+
+		/mcp：列出已設定的 MCP 工具（你如果有接外部工具才會常用）。
+
+		/ps：看背景終端（長時間指令的輸出監看用，屬實驗功能）。
+
+		/feedback：回報問題並送 logs 給維護者。
+
+		/logout：登出清掉本機認證。
+
+	小提醒
+
+		/approvals 還能用，但不一定會出現在 / 的清單裡（屬於 alias）。
+
+		我建議你的固定節奏：做完一段任務 → /diff → /review → 再決定要不要 commit / 跑測試
