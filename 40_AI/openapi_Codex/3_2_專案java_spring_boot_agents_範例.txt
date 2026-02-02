@@ -1,0 +1,126 @@
+# AGENTS.md（Java 25 / Spring Boot 4 專案）
+
+## 專案概覽（Project Overview）
+- 語言：Java 25
+- 框架：Spring Boot 4
+- 建置：Maven（優先）或 Gradle（依專案既有）
+- 目標：小步修改、維持既有分層與慣例、每次修改都能驗證
+
+---
+
+## 核心工作規則（How to work）
+1. 若涉及多檔案或跨模組修改，先提出簡短計畫（3–7 點）。
+2. 優先沿用專案既有寫法，不任意引入新架構/新抽象。
+3. 每次完成要提供：
+   - 修改了哪些檔案
+   - 為什麼這樣改
+   - 如何驗證（指令 + 成功判斷）
+4. 除非明確要求，避免：
+   - 大規模重構
+   - 大版本升級
+   - 大量搬移/改名
+
+---
+
+## 常用指令（Commands）
+> 依專案實際狀況調整；若兩套建置工具都存在，以 repo 既有為準。
+
+### Maven
+- 編譯與測試：`mvn -q test`
+- 全量驗證（含整合測試若有）：`mvn -q verify`
+- 只跑特定模組：`mvn -q -pl :<artifactId> -am test`
+- 啟動服務：`mvn -q spring-boot:run -pl :<artifactId>`
+
+### Gradle（若使用）
+- 測試：`./gradlew test`
+- 驗證：`./gradlew check`
+- 啟動：`./gradlew bootRun`
+
+---
+
+## 程式結構與分層（Architecture / Layers）
+- 維持既有分層：Controller → Service → Repository（或 UseCase/Domain → Adapter）
+- Controller 不放商業邏輯：只做輸入驗證、轉換、呼叫 service
+- Service 保持可測試：避免把外部 I/O 細節散落各處
+- Repository 僅負責資料存取；避免把 DTO mapping 混在查詢層（除非既有已是此風格）
+- 優先使用 constructor injection；避免 field injection
+- 新增檔案/套件命名請遵守既有慣例
+
+---
+
+## 設定與環境（Configuration）
+- 不硬編碼環境差異；使用 `application.yml` + profile（例如 `application-local.yml`）
+- 機密資訊不得寫入 repo（token、密碼、私鑰）
+- 對外 URL / port / feature toggle 一律走設定檔或環境變數
+- 若要新增設定屬性：
+  - 優先建立 `@ConfigurationProperties`
+  - 需要時補 metadata（IDE 提示）與預設值策略
+
+---
+
+## Web / API 規範（REST API）
+- 遵守既有 API 風格（路徑命名、回應格式、錯誤格式）
+- 回應 DTO 與內部 domain/entity 分離（除非專案既有就混用）
+- 錯誤處理集中化（`@ControllerAdvice` / Problem Details 等），避免各 Controller 重複 try/catch
+- 如有 OpenAPI / Springdoc：
+  - 不任意更改 endpoint 或 schema（除非需求明確）
+  - 變更需同步更新測試與文件生成流程（若有）
+
+---
+
+## 安全（Spring Security）
+- 不要降低既有安全性（例如放行全部、關閉 CSRF）除非你明確要求
+- 若專案使用 OAuth2/JWT：
+  - 遵循既有 claim 解析與權限策略（scope/roles/authorities）
+  - 不把敏感 claim/Token 記到 log
+- 如需新增 endpoint，需同步更新：
+  - SecurityFilterChain 規則
+  - 需要的授權註解/權限檢查
+
+---
+
+## 資料庫與 Migration（DB）
+- 未經確認，不做 schema 變更
+- 若專案使用 Flyway/Liquibase：
+  - 任何 schema 變更必須以 migration 檔案呈現
+  - migration 命名/版本規範遵循既有
+- JPA/Hibernate：
+  - 避免 N+1（必要時使用 fetch join / entity graph）
+  - 避免在 entity 上新增破壞性欄位/關聯（需先確認影響）
+
+---
+
+## 日誌與觀測（Logging / Observability）
+- Log 不得包含敏感資訊（token、密碼、私鑰、個資）
+- 避免過度 debug log；保留必要的操作追蹤資訊
+- 若專案有 MDC/TraceId/CorrelationId：
+  - 不要破壞既有串接
+  - 新增流程需延續既有欄位/格式
+
+---
+
+## 測試（Testing）
+- 行為改動必須補測試（單元測試優先，必要時整合測試）
+- 測試命名與結構遵循既有（JUnit5 / SpringBootTest / Testcontainers 等）
+- 完成前至少確保：
+  - `mvn test` 或 `./gradlew test` 通過
+  - 有需要再跑 `verify/check`
+
+---
+
+## 風險控管（Require confirmation）
+遇到以下情況必須先請求確認才可進行：
+- 刪除/改名大量檔案或 package 結構
+- 大規模重構（跨多個模組/多層）
+- DB schema / migration 變更
+- 升級主要依賴或框架大版本
+- 引入新套件（尤其是 security / persistence / reactive stack）
+
+---
+
+## 交付總結（Deliverable Summary）
+完成時請提供：
+- 變更檔案清單
+- 關鍵決策（為什麼這樣做）
+- 驗證指令（可直接複製執行）
+- 若有風險或不確定性：明確標註與替代方案

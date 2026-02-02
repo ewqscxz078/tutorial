@@ -1,0 +1,97 @@
+# AGENTS.md（Vue 3 專案）
+
+## 專案概覽（Project Overview）
+- 前端框架：Vue 3
+- 建構工具：Vite
+- 開發語言：TypeScript（優先使用）
+- 狀態管理：Pinia（若專案已有）
+- HTTP 客戶端：Axios 或 Fetch（遵循既有用法）
+
+---
+
+## 開發指令（Development Commands）
+- 安裝依賴：`npm install`
+- 啟動開發伺服器：`npm run dev`
+- 建置正式版：`npm run build`
+- 預覽建置結果：`npm run preview`
+- Lint 檢查：`npm run lint`
+- 型別檢查（若有）：`npm run type-check`
+
+---
+
+## 程式風格與結構（Code Style & Structure）
+- 優先使用 Composition API（`setup`、`ref`、`computed`、`watch`），避免使用 Options API。
+- 若啟用 TypeScript，請使用 `<script setup lang="ts">`。
+- 元件應小而單一職責（Single Responsibility）。
+- 不要把業務邏輯寫在元件內，重複邏輯請抽到 `composables/`。
+- 使用 `@/` 作為 `src` 根目錄 alias。
+
+---
+
+## 狀態與資料處理（State & Data Handling）
+- 共用狀態請使用 Pinia store，不要使用全域變數。
+- 不可直接修改 props。
+- 子元件 → 父元件請使用 `emit`。
+- 避免不必要的深層 reactive 物件結構。
+
+---
+
+## API 呼叫規範（API Calls）
+- API 呼叫集中於 `/api/` 或 `/services/` 目錄。
+- 不要在多個元件內直接呼叫後端，請重用 service 層。
+- 明確處理 loading 與 error 狀態。
+
+---
+
+## UI / Template 規範（UI / Template Rules）
+- 避免 inline style，優先使用 CSS/SCSS module 或 utility class。
+- Template 保持易讀，複雜邏輯請移至 computed。
+- 除非需要頻繁切換，優先使用 `v-if` 而非 `v-show`。
+
+---
+
+## UI 框架規則（UI Framework Rules）
+> 若專案已使用 UI 框架，請遵循以下原則：
+
+- 優先使用專案既有 UI 框架（例如 Element Plus / Naive UI / Vuetify / Ant Design Vue）。
+- 不要自行混用多套 UI 框架。
+- 不自行改寫框架元件樣式，應透過 theme 或 class 覆蓋。
+- 表單元件需統一驗證方式（遵循現有 form validation 模式）。
+- 對話框、通知、loading 元件應使用框架提供的全域方法。
+- 不要自製與框架功能重疊的元件（例如自行做 modal / message）。
+
+---
+
+## 路由規範（Routing）
+- 路由定義集中於 `router/`。
+- 頁面元件需使用 lazy loading。
+- 新增路由時需同步更新導航結構。
+
+---
+
+## 變更前須知（Before Making Changes）
+1. 若涉及多檔案修改，先提出簡短計畫。
+2. 遵循既有命名規則。
+3. 非必要不得新增套件。
+
+---
+
+## 測試與品質（Testing & Quality）
+- 行為變更需新增或更新測試。
+- 任務完成前需確保 `npm run build` 成功。
+- 最終程式碼不得保留 console.log。
+
+---
+
+## 安全規範（Safety Rules）
+- 前端不得暴露 API secret。
+- 不可硬編碼後端網址，應使用環境變數。
+- 刪除元件或大規模重構前需先確認。
+
+---
+
+## 交付總結（Deliverable Summary）
+任務完成時需提供：
+- 修改檔案清單
+- 關鍵決策說明
+- 驗證指令與方式

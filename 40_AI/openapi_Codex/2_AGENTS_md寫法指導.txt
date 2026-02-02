@@ -1,0 +1,71 @@
+ref ChatGPT
+
+AGENTS.md 寫法指導
+
+AGENTS.md 裡應該寫什麼？ 你可以添加任何有助於 AI 高效理解和處理你專案的資訊。官方推薦包含以下章節：
+	* 專案結構與模組組織：概述原始碼、測試和資源檔的位置。
+	* 建置、測試與開發指令：列出關鍵指令（如 npm test, make build）並簡要說明其作用。
+	* 編碼風格與命名慣例：指定縮排規則、程式碼風格偏好和命名模式。
+	* 測試規範：標明測試框架、覆蓋率要求以及如何執行測試。
+	* Commit 與 PR 指南：總結專案的 Git commit 訊息規範和 PR 要求。
+	* 其他可選章節：例如安全設定提示、架構概覽，或任何你想告訴新團隊成員的注意事項。
+	你可以在終端機中使用 /init 指令，讓 Codex 自動為你生成一份包含上述章節的 AGENTS.md 範本檔案。
+
+
+它是如何運作的？
+	Codex 會智慧地在多個位置尋找 AGENTS.md 檔案，並由上到下地將它們的資訊合併，形成最終的上下文理解。整個尋找路徑就像層層的指令疊加：
+
+	1. ~/.codex/AGENTS.md：個人全域設定。這裡的規則適用於你本地所有的專案，比如你個人的編碼偏好。
+	2. 倉庫根目錄下的 AGENTS.md：專案級設定。由整個團隊共享和維護，確保 AI 的行為符合專案規範。
+	3. 目前工作目錄下的 AGENTS.md：子模組／功能級設定。為特定模組提供最具體、最優先的指導。
+
+
+1) 最推薦的放法：根目錄先放一份「全域規則」
+	放在 repo 根目錄，寫「整個專案都適用」的內容（build/test 指令、共用規範、安全守則…）
+
+2) 需要覆蓋時：在子資料夾再放「更精準的」
+	多模組時很實用，例如：
+		/AGENTS.md                     # 全 repo 共用：通用規範、共用指令
+		/apps/bff/AGENTS.md            # 只給 BFF：WebFlux/WebMVC、CORS/CSRF、測試指令
+		/services/bn/AGENTS.md         # 只給後端服務：DB、Batch、migration 規則
+		/frontend/AGENTS.md            # 只給前端：pnpm/vite/lint/format
+
+3) 覆蓋的搜尋/套用邏輯
+	以 Codex 的說明來看，通常是沿著目錄樹做「層層套用」：
+
+	* 全域層（你個人偏好）：在 ~/.codex（或 CODEX_HOME）可放 AGENTS.override.md 或 AGENTS.md（override 會先被讀）。
+
+	* 專案層 → 子目錄層：repo root 的 AGENTS.md 當底，再往子資料夾逐層加上更具體規則；衝突時以更深層者為準。
+
+	* 你的當次 prompt / 指令：如果你在對話裡明確下指令，通常仍會比檔案內容更優先（也就是你臨時要求可以蓋過文件規則）。
+
+	另外，Codex 在每個目錄層級也支援 AGENTS.override.md 優先於 AGENTS.md
+
+
+實務
+	1.根目錄 AGENTS.md：只放不太會吵架的共通規則（repo 介紹、總 build/test、通用 coding style、安全禁令）。
+
+	2.每個子系統目錄各放一份：只寫「那個子系統專用」的指令與規範（例如 bff 用哪些 profile/port、前端用 pnpm 還是 npm、bn 的 DB 規則）。
+
+	3.真的要強制覆蓋才用 AGENTS.override.md：例如某個目錄禁止改 schema、或必須跑特定測試才可提交。
+
+代表 AGENTS.md 也會入庫，除非列到 .gitignore，但入庫又沒差
+	為什麼入庫通常「沒差」甚至更好
+		* 團隊一致性：每個人（或 CI、不同機器上的 agent）拿到 repo 就會用同一套規則，不會「你電腦可以、我電腦不行」。
+		* 可審查：規範變更可以 code review，避免某次調整悄悄把 agent 引導到錯的流程。
+		* 文件化：某種程度就是「給人跟 agent 都看的 CONTRIBUTING」。
+
+什麼情況才建議不要入庫（或用 override / ignore）
+	* 含敏感資訊：例如內網網址、帳密、token、VPN 連線方式等（這些絕對不要寫進去）。
+	* 個人偏好不想影響團隊：例如你希望它永遠用你本機的指令、你的工具路徑、你的快捷流程。
+		這種更適合放在個人層（例如你家目錄 ~/.codex/... 的 AGENTS.override.md / AGENTS.md），不用入庫。 (我這裡沒做 web.run，因為你這句是在確認概念，不涉及新資訊)
+
+最穩的做法（你們這種多模組專案很適合）
+	* 入庫：/AGENTS.md + 各子目錄 /apps/bff/AGENTS.md、/services/bn/AGENTS.md（寫團隊共識）
+	* 個人覆蓋（不入庫）：用 AGENTS.override.md 放你自己的偏好（例如你的本機 port、你習慣的指令別名）
+
+一句提醒（真的重要）
+	AGENTS.md 裡面避免出現：
+		* 任何 secret（client_secret、DB 密碼、token）
+		* 真實內網 IP/域名（若有資安規範的話）
+		* 只在某個人電腦才存在的絕對路徑（例如 D:\xxx）
