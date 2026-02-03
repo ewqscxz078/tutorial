@@ -1,0 +1,121 @@
+ref ChatGPT
+
+
+CICD 也要配合前後端分離架構的關係做適當的調整，以利不會所有佈署要被綁在一塊
+
+想達到的目標
+	前後端分離的 CI/CD 調整，本質是把「一條大流水線」改成「多條小流水線 + 明確契約」。
+
+
+理想狀態：
+	* 前端（SPA）：改 UI → 只部署靜態檔（CDN / Nginx），不用動後端
+	* BFF：改聚合邏輯/對外 API → 只部署 BFF
+	* 後端 BN：改商業邏輯/DB → 只部署 BN
+	* 只有在「契約變更」或「跨服務協調」時，才需要一起上
+
+
+1) Pipeline 要拆：前端 / BFF / BN 各自獨立建置與部署
+	前端（Vue3）
+
+		* build：npm ci → npm run build
+
+		* 產物：dist/
+
+		* deploy：上傳到 CDN bucket 或更新 Nginx 靜態目錄
+
+		* 可以一天多次上線，不用碰後端
+
+	後端（BFF、BN）
+
+		* build：mvn -T 1C clean verify
+
+		* 產物：container image（建議）或 jar/war
+
+		* deploy：滾動更新（K8s/compose/VM 都可）
+
+		* 版本化與回滾用 image tag 很清楚
+
+	重點：前端 pipeline 不要再依賴後端 build；後端也不要把前端 build 當成必經步驟。
+
+2) “不綁在一起”的關鍵：用版本化與環境注入解耦
+	如果你還在用「打包時寫死 API base URL」，就會卡住。
+
+	建議改成：
+
+		* 前端 build 只負責產出靜態檔
+
+		* API 位置用 runtime 注入（例如 config.js / Nginx sub_filter / 或一個 /env endpoint）
+
+	這樣你換環境、換 Gateway/BFF 位址，不用重新 build 前端。
+
+
+3) API 契約要進 CI：用 OpenAPI 做 breaking-change gate
+
+	有在做 OpenAPI（後端生成 openapi.json，BFF 消費端用 generator），這套非常適合做「不綁部署但保證相容」。
+
+	典型做法：
+
+		* BN pipeline 在 merge 時產出 openapi.json artifact（或發布到 repo）
+
+		* BFF pipeline 拉最新合約/指定版本 → codegen → compile
+
+		* CI 加一關：breaking change 就 fail
+
+			* 刪 endpoint / 改型別 / 必填改動 / 刪欄位 → 直接擋
+
+	這會讓你不用每次靠「兩邊一起上」來保證不壞，而是靠 CI 保證相容。
+
+
+4) 版本策略：避免「非得同步上線」的設計
+
+	前後端分離後，最常讓人又被綁回去的雷是：
+
+		* 後端改了 response 欄位名稱/型別
+
+		* 前端或 BFF 還沒上新版本 → 立刻壞
+
+	常見解法（由簡到難）：
+
+		1. 只加不改：先新增欄位（保持舊欄位一段時間）
+
+		2. 向後相容：response 欄位盡量不要刪；必要時 deprecated
+
+		3. API 版本化：/v1、/v2 或 header version
+
+		4. Consumer-driven contract / OpenAPI gate：在 CI 就擋掉不相容變更
+
+5) 部署層的安排：Nginx/Gateway 讓前後端真正分開
+
+	你如果把 Vue3 靜態站跟 BFF 掛在同一個 Nginx 443 下，仍然可以解耦部署，做法通常是：
+
+		* 前端：只更新 /usr/share/nginx/html（或 CDN）
+
+		* BFF：獨立容器更新 upstream
+
+		* Nginx 設定不動（或很少動）
+
+	也就是：「同域」不等於「同部署」；同域只是解 CORS 的好處，部署仍然可以分開。
+
+6) 實務建議：一個最小可行的 CI/CD 拆法（你可直接套）
+
+	假設 repo 結構是：
+
+		frontend/（Vue3）
+
+		bff/（Spring Boot）
+
+		bn/（Spring Boot）
+
+	你可以設三條 pipeline（或一條 pipeline 裡做 path filter）：
+
+		* FE pipeline：只有 frontend/** 變更才跑 → build & deploy static
+
+		* BFF pipeline：bff/** 變更才跑 → test → build image → deploy
+
+		* BN pipeline：bn/** 變更才跑 → test → build image → deploy + publish openapi artifact
+
+	再加一個「契約檢查 job」：
+
+		* BN 變更時：跑 OpenAPI diff gate（跟上一版比較）
+
+		* BFF 變更時：拉 BN 的 OpenAPI（固定版本或 latest）→ codegen → compile（確保相容）

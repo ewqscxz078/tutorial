@@ -19,24 +19,24 @@ ref https://www.youtube.com/watch?v=c2ZaqEyLVZI&list=PLmOn9nNkQxJEnGM4Jf0liBcyed
 		    <h1>監視ref 定義的基本類型 資料</h1>
 			<h2>當前求和為:{{sum}}</h2>
 			<button @click="changeSum">點我sum+1</button>
-			
-			
+
+
 		  </div>
 		</template>
 
 		<script lang="ts" setup>
 			import { ref,watch } from 'vue'
-			
+
 			// 資料
 			let sum = ref(0)
-			
+
 			// 方法
 			function changeSum(){
 			  sum.value += 1
 			}
-			
+
 			console.log(sum.value)
-			
+
 			// 監視, 監視ref 定義的基本類型 資料
 			const stopWatch = watch(sum,(newValue, oldValue)=>{
 			  console.log('sum變化了',newValue, oldValue)

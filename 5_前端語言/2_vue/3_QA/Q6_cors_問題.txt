@@ -1,9 +1,9 @@
 
 Q1: cors 問題
-	vue3 本地開發 http://localhost:5173/ 打到 
+	vue3 本地開發 http://localhost:5173/ 打到
 		http://localhost:10000/aa-bff/hello?name=xxxx 會遇到 嗎?
 
-A1: 
+A1:
 	* 你的前端來源（Origin）是 http://localhost:5173
 
 	* 你呼叫的 API 是 http://localhost:10000
@@ -12,8 +12,8 @@ A1:
 
 	所以在瀏覽器看來，這就是跨來源請求（CORS），只要你的 BFF（10000）
 	沒有正確回 Access-Control-Allow-Origin 等標頭，瀏覽器就會擋。
-	
-	
+
+
 什麼情況「一定會」爆 CORS？
 	1) 你用 fetch/axios 打 BFF，且包含下列任一條件
 		* 送 POST/PUT/DELETE 且 Content-Type: application/json
@@ -24,7 +24,7 @@ A1:
 
 		* 不是簡單請求（simple request）
 
-		這些會觸發 preflight（OPTIONS）。只要 BFF 沒處理 OPTIONS 或 CORS 
+		這些會觸發 preflight（OPTIONS）。只要 BFF 沒處理 OPTIONS 或 CORS
 		標頭不完整，前端就會看到 CORS error。
 
 什麼情況「可能不會」爆？
@@ -39,8 +39,8 @@ A1:
 			不然瀏覽器一樣會擋「讀取回應」。
 
 		換句話說：即使是 GET，也可能被擋。
-	
-	
+
+
 本地開發最常見的兩種解法
 	解法 A：讓 Vite 幫你「同源轉發」(推薦)
 		你不要直接打 http://localhost:10000/...，改成打同源路徑，例如：
@@ -70,11 +70,11 @@ A1:
 				}
 			  }
 			});
-			
+
 		二、前端呼叫方式（關鍵觀念）
 			❌ 不要這樣寫（會 CORS）
 				axios.get("http://localhost:10000/aa-bff/hello?name=xxx");
-			
+
 			✅ 正確寫法（同源）
 				axios.get("/aa-bff/hello", {
 				  params: { name: "xxx" }
@@ -82,7 +82,7 @@ A1:
 
 				或用 fetch：
 					fetch("/aa-bff/hello?name=xxx");
-			
+
 		三、建議：統一 axios instance（實務必做）
 			// src/api/http.ts
 			import axios from "axios";

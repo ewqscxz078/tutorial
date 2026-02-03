@@ -10,7 +10,7 @@ docker compose 管理方式
 			* 預設 project name = 資料夾名稱
 			* 所以你在 A/compose.yml 起來是一個 project，在 B/compose.yml 起來是另一個 project
 			* 你在 A 下 docker compose ps 只會看 A 那個 project
-	
+
 		但「看不到」只是在 compose 的預設範圍；Docker 其實都存在。
 
 	* 看所有 container：docker ps -a
@@ -29,15 +29,15 @@ docker compose 管理方式
 			⚠️ 缺點
 				* 檔案會越來越大
 				* 不同服務的環境差異/啟動組合會變難維護（除非你用 profiles）
-	
+
 	做法 B：多目錄、多 compose（多專案），但用「固定 project name」讓你可控
 		適合： 平行專案很多、需要分開起停，但你又想「可用同一個名字管理」。
-		
+
 		你可以在任何目錄都用同一個 project name 來操作：
 			docker compose -p mylab -f path/to/compose.yml up -d
 			docker compose -p mylab -f path/to/compose.yml ps
 			docker compose -p mylab -f path/to/compose.yml down
-		
+
 		或用環境變數：
 			export COMPOSE_PROJECT_NAME=mylab
 			docker compose -f path/to/compose.yml up -d
@@ -55,7 +55,7 @@ docker compose 管理方式
 		根目錄放一個 compose.yml 當入口，引用其他 compose 檔
 		（新版 Docker Compose 支援 include 概念；如果你的版本不支援，
 		就改用多個 -f 合併也行）。
-		
+
 		方式：多檔合併（最通用）
 			docker compose \
 			  -f infra/mssql/compose.yml \

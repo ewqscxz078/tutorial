@@ -2,19 +2,19 @@ ref ChatGPT
 
 codex cli
 
-	安裝 
+	安裝
 		Windows / Linux
 			npm install -g @openai/codex
-	
+
 	安裝完成後可檢查版本
 		codex --version
-	
+
 	登入 Codex CLI
 		codex login
-		
+
 		若你在公司環境/遠端環境「開瀏覽器回呼」常失敗，改用 device code flow： 這是官方建議的 headless/受限環境做法
 			codex login --device-auth
-	
+
 	測試 Codex CLI
 		codex help
 
@@ -34,13 +34,13 @@ codex cli
 		在 repo 根目錄放 AGENTS.md，Codex 會讀它來遵循你的規範
 
 
-Windows 
+Windows
 	* 「最少踩雷」建議：用 WSL 跑
 		如果你遇到任何怪異（權限、路徑、TUI、執行指令、git hook 等），就照官方建議：把 repo 放在 WSL 檔案系統內，從 WSL terminal 跑 codex
 
 	* 建議使用 終端機選 cmd 執行 codex
 
-Codex CLI 
+Codex CLI
 	以下為常用的 指令與技巧：
 		核心操作指令
 			codex "指令"：直接在終端機輸入自然語言要求，例如 codex "編寫一個 Python 函數來讀取 CSV"。
@@ -49,18 +49,18 @@ Codex CLI
 			codex explain <file>：要求對特定檔案進行逐行註解或總結。
 			codex chat：啟動互動式 REPL 模式，與 AI 進行對話式代碼建議。
 			codex --auto-edit：以自動編輯模式執行，適用於日常開發。
-			codex --full-auto：以全自動模式執行，適用於快速原型開發。 
+			codex --full-auto：以全自動模式執行，適用於快速原型開發。
 		快捷與內部命令 (在對話模式中輸入)
 			/new：開啟新的會話。
 			/init：初始化 AGENTS.md 指導文件。
 			/compact：壓縮上下文，避免超過 token 限制。
 			/diff：顯示 git 差異。
-			/mode：在運行中切換操作模式。 
+			/mode：在運行中切換操作模式。
 
 		常用情境範例
 			解釋代碼：codex "解釋這個專案的結構" .
 			找出 Bug：`codex "找出 src/index.js 中的錯誤"。
-			產生測試：codex "為此檔案編寫單元測試" user.py 
+			產生測試：codex "為此檔案編寫單元測試" user.py
 
 codex 互動模式（全螢幕 TUI）裡，最常用的是 「斜線指令（slash commands）」：你在輸入框打 / 就會跳出清單，開始打字可過濾
 	最常用 8 個

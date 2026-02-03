@@ -1,7 +1,7 @@
 
 Q1: docker 跟 docker comopse 之間的關係
 	是「互補關係」
-	
+
 	docker：低階、單一資源導向（container / image / network / volume）
 	docker compose：高階、多容器「應用」導向（一整組服務）
 
@@ -24,7 +24,7 @@ Q1: docker 跟 docker comopse 之間的關係
 				docker logs nginx
 				docker exec -it nginx sh
 				docker rm -f nginx
-		
+
 		docker compose 在做什麼？
 
 			👉 操作「一整個服務集合（application stack）」
@@ -35,7 +35,7 @@ Q1: docker 跟 docker comopse 之間的關係
 					* 依賴順序
 					* 設定（env / volume / port）
 					* 以 project 為單位管理
-			
+
 			ex:
 				docker compose up -d
 				docker compose ps
