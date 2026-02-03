@@ -67,6 +67,17 @@ ref ChatGPT
 			看到終端機提示的網址（通常是 http://localhost:5173）就成功了。
 
 
+			慣例初始化
+			  cd ${projectName}
+			   npm install
+			   npm run format
+			   npm run dev
+
+			| Optional: Initialize Git in your project directory with:
+
+			   git init && git add -A && git commit -m "initial commit"
+
+
 2) Vue 專案基本結構你要先懂的幾個重點
 	會常碰到這些檔案/資料夾：
 

@@ -1,0 +1,59 @@
+
+Q1: docker 跟 docker comopse 之間的關係
+	是「互補關係」
+	
+	docker：低階、單一資源導向（container / image / network / volume）
+	docker compose：高階、多容器「應用」導向（一整組服務）
+
+	docker 是「零件工具」
+	docker compose 是「組裝說明書 + 啟動器」
+
+	用層級來看差異
+		docker 在做什麼？
+
+			👉 操作「單一 Docker 物件」
+
+			常見用途：
+				* 啟動一個 container
+				* 看 container log
+				* 進 container
+				* 刪 image / volume / network
+			ex:
+				docker run nginx
+				docker ps -a
+				docker logs nginx
+				docker exec -it nginx sh
+				docker rm -f nginx
+		
+		docker compose 在做什麼？
+
+			👉 操作「一整個服務集合（application stack）」
+
+				它幫你處理：
+					* 多個 container
+					* 它們之間的 network
+					* 依賴順序
+					* 設定（env / volume / port）
+					* 以 project 為單位管理
+			
+			ex:
+				docker compose up -d
+				docker compose ps
+				docker compose logs -f
+				docker compose down
+
+現實中的使用方式其實是這樣 👇
+
+	* 用 docker compose
+		* 起服務
+		* 停服務
+		* 看整組狀態
+		* 本機 / CI 啟整套系統
+
+	用 docker
+		* debug 單一 container
+		* 查 volume / network
+		* 緊急處理殘留資源
+		* 精準觀察底層狀態
+
+	👉 99% 情況：先用 compose 起，出問題才下 docker

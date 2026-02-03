@@ -1,0 +1,104 @@
+
+Q1: cors 問題
+	vue3 本地開發 http://localhost:5173/ 打到 
+		http://localhost:10000/aa-bff/hello?name=xxxx 會遇到 嗎?
+
+A1: 
+	* 你的前端來源（Origin）是 http://localhost:5173
+
+	* 你呼叫的 API 是 http://localhost:10000
+
+	* port 不同就算不同 origin（同協定 + 同網域 + 同 port 才算同源）
+
+	所以在瀏覽器看來，這就是跨來源請求（CORS），只要你的 BFF（10000）
+	沒有正確回 Access-Control-Allow-Origin 等標頭，瀏覽器就會擋。
+	
+	
+什麼情況「一定會」爆 CORS？
+	1) 你用 fetch/axios 打 BFF，且包含下列任一條件
+		* 送 POST/PUT/DELETE 且 Content-Type: application/json
+
+		* 自己加了自訂 header（例如 Authorization、X-xxx）
+
+		* credentials: "include"（帶 cookie）
+
+		* 不是簡單請求（simple request）
+
+		這些會觸發 preflight（OPTIONS）。只要 BFF 沒處理 OPTIONS 或 CORS 
+		標頭不完整，前端就會看到 CORS error。
+
+什麼情況「可能不會」爆？
+	2) 這是一個「簡單請求（simple request）」
+		例如：
+			* GET http://localhost:10000/aa-bff/hello?name=xxxx
+			* 不帶自訂 header
+			* 不帶 cookie
+			* 不帶 Authorization
+
+		這時通常不會有 preflight，但仍然需要 BFF 回 CORS 允許的 Origin，
+			不然瀏覽器一樣會擋「讀取回應」。
+
+		換句話說：即使是 GET，也可能被擋。
+	
+	
+本地開發最常見的兩種解法
+	解法 A：讓 Vite 幫你「同源轉發」(推薦)
+		你不要直接打 http://localhost:10000/...，改成打同源路徑，例如：
+			* 前端呼叫：/aa-bff/hello?name=xxxx
+			* Vite dev server 代理到：http://localhost:10000
+
+		這樣瀏覽器看起來就是：
+			* 你打的是 http://localhost:5173/aa-bff/...（同源）
+			* Vite 在背後轉發到 10000
+			* 瀏覽器不會觸發 CORS
+
+		一、vite.config.ts 設定 proxy（核心）
+			import { defineConfig } from "vite";
+			import vue from "@vitejs/plugin-vue";
+
+			export default defineConfig({
+			  plugins: [vue()],
+			  server: {
+				port: 5173,
+				proxy: {
+				  "/aa-bff": {
+					target: "http://localhost:10000",
+					changeOrigin: true,
+					secure: false
+					// cookieDomainRewrite: "localhost"  如果 BFF 有用 Session / Cookie
+				  }
+				}
+			  }
+			});
+			
+		二、前端呼叫方式（關鍵觀念）
+			❌ 不要這樣寫（會 CORS）
+				axios.get("http://localhost:10000/aa-bff/hello?name=xxx");
+			
+			✅ 正確寫法（同源）
+				axios.get("/aa-bff/hello", {
+				  params: { name: "xxx" }
+				});
+
+				或用 fetch：
+					fetch("/aa-bff/hello?name=xxx");
+			
+		三、建議：統一 axios instance（實務必做）
+			// src/api/http.ts
+			import axios from "axios";
+
+			export const http = axios.create({
+			  baseURL: "/",          // 一定是相對路徑
+			  withCredentials: true // 若你 BFF 用 cookie session
+			});
+
+			使用時：
+				http.get("/aa-bff/hello", {
+				  params: { name: "david" }
+				});
+
+	解法 B：在 BFF 端開 CORS
+		如果你就是想前端直接打 10000，那你必須在 BFF（Spring Boot）設定：
+			* 允許 Origin：http://localhost:5173
+			* 允許 methods / headers
+			* 若要帶 cookie：allowCredentials(true) 且不能用 *

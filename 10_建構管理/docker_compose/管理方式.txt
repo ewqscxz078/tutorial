@@ -1,0 +1,87 @@
+
+docker compose 管理方式
+
+	預設就是以「你當前目錄」的 compose 檔（或你用 -f 指定的檔）
+	組成一個「專案（project）」在操作，所以不同目錄、不同 project name 的資源，
+	彼此在「預設命令的視角」下看起來就像互相看不到。
+
+	「彼此看不到」的真正原因
+		會用 Project Name 把資源分組：
+			* 預設 project name = 資料夾名稱
+			* 所以你在 A/compose.yml 起來是一個 project，在 B/compose.yml 起來是另一個 project
+			* 你在 A 下 docker compose ps 只會看 A 那個 project
+	
+		但「看不到」只是在 compose 的預設範圍；Docker 其實都存在。
+
+	* 看所有 container：docker ps -a
+
+	* 看所有 network：docker network ls
+
+	* 看所有 volume：docker volume ls
+
+三種常見做法
+	做法 A：全部集中在根目錄（單一大專案）
+		適合： 你想一鍵 up/down 全部，彼此高度耦合（例如整套平台）。
+			✅ 優點
+				* 一個 compose 專案，最直覺
+				* docker compose up -d 就全部起來
+
+			⚠️ 缺點
+				* 檔案會越來越大
+				* 不同服務的環境差異/啟動組合會變難維護（除非你用 profiles）
+	
+	做法 B：多目錄、多 compose（多專案），但用「固定 project name」讓你可控
+		適合： 平行專案很多、需要分開起停，但你又想「可用同一個名字管理」。
+		
+		你可以在任何目錄都用同一個 project name 來操作：
+			docker compose -p mylab -f path/to/compose.yml up -d
+			docker compose -p mylab -f path/to/compose.yml ps
+			docker compose -p mylab -f path/to/compose.yml down
+		
+		或用環境變數：
+			export COMPOSE_PROJECT_NAME=mylab
+			docker compose -f path/to/compose.yml up -d
+
+		✅ 優點
+			服務可以分目錄整理
+			你仍可用同一個 project name 統一管理（只要你一律用 -p/環境變數）
+
+		⚠️ 缺點
+			你必須養成「永遠帶 -p/-f」的習慣（或寫腳本）
+
+	做法 C：根目錄做「聚合（compose include）」；子目錄各自維護
+		適合： 你想每個服務都有自己資料夾，但根目錄又能一鍵帶起整套。
+
+		根目錄放一個 compose.yml 當入口，引用其他 compose 檔
+		（新版 Docker Compose 支援 include 概念；如果你的版本不支援，
+		就改用多個 -f 合併也行）。
+		
+		方式：多檔合併（最通用）
+			docker compose \
+			  -f infra/mssql/compose.yml \
+			  -f infra/nginx/compose.yml \
+			  -f apps/auth/compose.yml \
+			  up -d
+
+		✅ 優點
+			* 子目錄乾淨、責任清楚
+			* 根目錄一鍵起整套
+
+		⚠️ 缺點
+			* 需要維護一個「聚合啟動指令」（通常會寫成 Makefile 或腳本）
+
+務實建議
+	如果你覺得「多平行目錄很痛、常常搞丟自己起的是哪一套」：
+
+		* 小規模 / 初期：選做法 A（全放根目錄最省腦）
+
+		* 中大型 / 服務愈來愈多：選做法 C（子目錄維護 + 根目錄聚合，一鍵啟動）
+
+		* 你已經很多平行目錄，但想保持獨立：選做法 B（統一 -p 管理規則）
+
+讓「彼此看不到」變得可控的小技巧
+	* 在每個 compose 明確指定 project name（或統一用 -p）
+
+	* 明確命名 container / network（可讀性高）
+
+	* 善用 docker ps -a、docker network ls 做全局盤點（避免誤以為不存在）

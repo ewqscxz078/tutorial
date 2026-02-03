@@ -243,7 +243,32 @@ docker compose
 	啟動 docker 若有問題
 		測試確認 docker 內設定狀況，離開就刪除
 			docker compose run --rm -it nginx-edge /bin/bash
+	
+	進去已啟動的 docker 查看
+		docker compose exec nginx bash
+		docker compose exec nginx sh
+	
+	清除
+		作法 A：直接把「舊專案」整套刪掉（最乾淨）
+			docker compose ls
+			docker compose -p <舊專案名> down
+			docker compose -p <舊專案名> down -v
+				希望連同舊專案建立的 volumes也一起刪掉（資料會不見）：
+		
+		作法 B：你還留著舊的 compose 檔，就用檔案把它刪掉
+			docker compose -f <舊docker-compose.yml路徑> down
+			docker compose -f <舊docker-compose.yml路徑> down -v // 同樣要刪 volumes：
 
+		
+		作法 C：只刪「已停止」的舊 container（快速清垃圾）
+			docker container prune
+		
+		作法 D：看 label 精準刪掉某一套 compose 的 container（進階但很準）
+			docker ps -a --filter "label=com.docker.compose.project=<舊專案名>"
+			docker rm -f $(docker ps -aq --filter "label=com.docker.compose.project=<舊專案名>")
+			也想把舊專案的 network 刪掉（通常 down 會一起處理）：
+				docker network ls --filter "label=com.docker.compose.project=<舊專案名>"
+	
 測：
 	curl -k https://localhost/
 
