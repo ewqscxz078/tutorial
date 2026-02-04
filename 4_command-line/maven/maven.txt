@@ -239,3 +239,36 @@ This command build the project, runs all the test cases and run any checks on th
 ========================= 確認有效 pom =========================================
 ================================================================================
 	mvn help:effective-pom
+
+================================================================================
+========================= 多模組專案 ===========================================
+================================================================================
+
+mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
+	* 只在 reactor（同一個 multi-module 專案）裡，選出指定模組來執行目標
+	* 其他「不在選取名單內」的模組，預設不會建（除非被 -am 拉進來）
+	=> 以 openapi-provider 這個 profile 跑，但只建 sris5-aa-bn-exec 這個模組；
+	如果它需要依賴同 reactor 的其他模組，就把那些依賴模組也一起建（-am）。
+	
+	為什麼可以用 :artifactId 這種寫法？
+		-pl 支援幾種「模組座標」寫法，最常見：
+			1.相對路徑
+				-pl aa/sris5-aa-bn-exec
+
+			2.GAV 座標（簡寫）
+				-pl groupId:artifactId
+				-pl :artifactId（groupId 省略）
+				-pl groupId:（artifactId 省略，較少用）
+		
+	這條命令中的 -pl + -am 組合的關鍵
+		-pl :sris5-aa-bn-exec：鎖定目標模組
+		-am：把它 所依賴且也在 reactor 裡的模組 一起建起來（例如 common/lib、parent 以外的實際 jar module）
+
+		所以結果通常是：
+
+		「最小集合建置」：只建到能讓 sris5-aa-bn-exec 成功跑完 verify 的必要模組集合。
+
+		想更直觀看這次 -pl/-am 到底選了哪些模組，最實用的是加：
+			mvn ... -pl ... -am -DskipTests clean verify -X
+		或至少：
+			mvn ... -pl ... -am -DskipTests clean verify -Dstyle.color=never

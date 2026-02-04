@@ -1,0 +1,60 @@
+
+reactor 是什麼?
+	是 Maven 多模組的核心概念，但官方名詞聽起來很玄，其實它就是：
+		「這一次 Maven 執行時，所掌握到的整個多模組建置世界」
+
+Reactor = 本次 mvn 指令中，被納入一起建置、並由 Maven 幫你排好依賴順序的所有 modules 集合。
+
+
+假設你的專案：
+	root
+	 ├─ pom.xml  (packaging=pom)
+	 ├─ aa-common
+	 ├─ aa-domain
+	 ├─ sris5-aa-bn-exec
+	 └─ sris5-aa-bff-exec
+
+	root/pom.xml：
+		<modules>
+			<module>aa-common</module>
+			<module>aa-domain</module>
+			<module>sris5-aa-bn-exec</module>
+			<module>sris5-aa-bff-exec</module>
+		</modules>
+
+當你在 root 目錄 下打：
+	mvn clean install
+
+	👉 Maven 會：
+
+		1. 讀 root POM
+
+		2. 找到 <modules>
+
+		3. 把這些 module 全部「收進來」
+
+		4. 分析 模組彼此依賴
+
+		5. 排出正確建置順序（topological sort）
+
+		這整包「被納入、排序後、準備建置的模組集合」
+			➡️ 就叫 Reactor
+	
+Reactor 在做什麼？
+	Reactor 幫你做 3 件超重要的事
+		| 功能                      | 說人話                                                        |
+		| ------------------------- | ------------------------------------------------------------- |
+		| 🔗 **模組發現**           | 找出這次 build 要處理哪些 modules                             |
+		| 🧠 **依賴排序**           | 自動算出誰要先 build（例如 common → bn → bff）                |
+		| 🚀 **統一執行 lifecycle** | 對所有 modules 套用你下的 phase（compile / package / verify…）|
+
+
+為什麼 -pl、-am、-amd 都圍繞 Reactor？
+	因為它們都是在說：
+	「在 Reactor 這個集合裡，我只想挑其中某些 module 來建」
+
+		| 參數   | 對 Reactor 做的事                               |
+		| ------ | ----------------------------------------------- |
+		| `-pl`  | 從 Reactor 裡挑出「我要建的模組子集合」         |
+		| `-am`  | 把這些模組「依賴的其他 Reactor 模組」也加入建置 |
+		| `-amd` | 把「依賴這些模組的下游 Reactor 模組」也加入     |
