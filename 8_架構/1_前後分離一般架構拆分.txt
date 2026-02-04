@@ -1,4 +1,4 @@
-已知難點
+已知需要考量的東西
 	1.前端vue3 拆分後的前後變化差異
 		cors 問題
 			local vue3  to local bff
@@ -7,7 +7,7 @@
 					解法 B：在 BFF 端開 CORS
 
 	2.前端不要直接打後端+不要維護token，前端只要打BFF
-	3.BFF 與後端 api 一致性維護方式
+	3.BFF 與後端 api 一致性維護方式，不可破壞性
 	4.有登入系統的 BFF 要 redis session 處理橫向擴展
 	5.若要有 token rotation 要有 vault/保密器 + config server 同步
 	6.oauth2.scope 與 api 權限的控管維護

@@ -1,12 +1,14 @@
 根模組目錄 下指令
-	gen openapi
+	bn gen openapi
+		cd D:\to_black_tool\0_開發工具\eclipse\202512\eclipse-jee-2025-12-R-win32-x86_64\_workspace_dev\mock
 		指定群組模組下的專案
 			// mvn -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am verify
 			// mvn -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am package
 			// mvn -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am verify install
-			mvn -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am -DskipTests verify
+			// mvn -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am -DskipTests verify
+			// 1. gen opanapi.json
 			mvn -Popenapi-provider -pl :sris5-aa-bn-exec -am -DskipTests verify
-			  // 只把 openapi.json 裝到 local repo
+				// 2. 只把 openapi.json 裝到 local repo
 				mvn -q install:install-file \
 				  -Dfile=PROJ-BACKEND/AA-BN/sris5-aa-bn-exec/target/openapi/openapi.json \
 				  -DgroupId=tw.gov.openapi \
@@ -15,10 +17,23 @@
 				  -Dpackaging=json \
 				  -Dclassifier=openapi \
 				  -DgeneratePom=true
+		    // mvn -Popenapi-provider -pl PROJ-BACKEND/BB-BN/sris5-bb-bn-exec -am -DskipTests verify
+			
+			// 1. gen opanapi.json
+			mvn -Popenapi-provider -pl :sris5-bb-bn-exec -am -DskipTests verify
+				// 2. 只把 openapi.json 裝到 local repo
+				mvn -q install:install-file \
+				  -Dfile=PROJ-BACKEND/BB-BN/sris5-bb-bn-exec/target/openapi/openapi.json \
+				  -DgroupId=tw.gov.openapi \
+				  -DartifactId=sris5-bb-bn-exec \
+				  -Dversion=5.0.0-SRIS-SNAPSHOT \
+				  -Dpackaging=json \
+				  -Dclassifier=openapi \
+				  -DgeneratePom=true
 
 			// mvn -Popenapi-consumer -pl :sris5-aa-bff-exec -am -DskipTests package
 			mvn -Popenapi-consumer -pl :sris5-aa-bff-exec -DskipTests generate-sources
-				於 bff 專案確保 被 Maven/IDE 當成 source root
+				// 於 bff 專案確保 被 Maven/IDE 當成 source root
 		debug
 			mvn -X -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am verify
 			mvn -X -Popenapi-provider -pl PROJ-BACKEND/AA-BN/sris5-aa-bn-exec -am package

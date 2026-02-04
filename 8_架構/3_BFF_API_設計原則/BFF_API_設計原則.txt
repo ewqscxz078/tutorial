@@ -1,0 +1,160 @@
+
+在 BFF（Backend for Frontend） 的 request/response 設計上，
+	主流做法其實很一致：以「前端/畫面」為中心設計 API
+		把 BFF 想成「UI 的 API 層」。
+
+1) BFF 的設計核心原則（跟 BN 最大差別）
+
+	* UI 導向（screen / widget）：一個 endpoint 對應一個畫面或一個區塊需要的資料
+
+	* 聚合（aggregation）：允許一次回傳多塊資料，避免前端多次 round-trip
+
+	* 穩定合約：BFF 擋住 BN 變動，前端合約盡量少改
+
+	* 可觀測性：traceId/版本/快取狀態要能回給前端（通常在 meta）
+
+	* 錯誤一致：不把 BN 的錯誤格式直接透出去
+
+2) BFF request（參數）一般怎麼設計？
+	A. 讀取畫面資料：GET /ui/... + 少量 query
+		適合：畫面初始化、列表頁面
+			* GET /ui/orders?page=1&size=20&status=PAID
+			* GET /ui/dashboard?range=7d
+
+		特點：
+			* query 參數 只放 UI 需要的（page/size/filter/sort）
+			* 不要照抄 BN 的一堆 filter（BFF 只承諾前端需要的能力）
+
+	B. 複雜查詢：POST /ui/.../_search（body 放條件）
+		當前端查詢條件很複雜（多選、巢狀、進階篩選）：
+			* POST /ui/orders/_search
+				{
+				  "status": ["PAID", "SHIPPED"],
+				  "keyword": "A123",
+				  "dateRange": { "from": "2026-02-01", "to": "2026-02-03" },
+				  "page": { "index": 1, "size": 20 },
+				  "sort": [{ "field": "createdAt", "dir": "DESC" }]
+				}
+
+	C. 寫入/動作：以「Use case」命名（command style）
+		BFF 很常不是 CRUD，而是「使用者操作」：
+			* POST /actions/orders/{id}:cancel
+			* POST /actions/login（若有登入）
+			* POST /actions/cart:addItem
+
+		Body 會是 UI 需要的欄位，不一定等於 BN command：
+			{ "reason": "duplicate", "note": "..." }
+		
+		為什麼用 action 命名？
+		因為 BFF 代表 UI 行為，比 REST 資源更符合「畫面事件」。
+
+
+3) BFF response（回傳值）一般怎麼設計？
+	主流：統一 Envelope（data/meta/error/paging）
+
+	你前面問到 BN 的回傳，我建議 BN 用 ProblemDetail；而 BFF 對前端，最常見是這個形狀：
+
+	A. 成功（單物件）
+		{
+		  "data": {
+			"user": { "displayName": "ccd david" },
+			"menu": [{ "id": "m1", "text": "Home" }],
+			"permissions": ["ORDER_READ"]
+		  },
+		  "meta": {
+			"traceId": "9c1f...",
+			"ts": "2026-02-03T10:20:00+08:00",
+			"apiVersion": "2026-02"
+		  }
+		}
+	
+	B. 成功（列表 + paging）
+		{
+		  "data": {
+			"items": [
+			  { "id": "O1", "status": "PAID" },
+			  { "id": "O2", "status": "SHIPPED" }
+			]
+		  },
+		  "paging": { "page": 1, "size": 20, "total": 135 },
+		  "meta": { "traceId": "9c1f...", "ts": "..." }
+		}
+	
+	C. 失敗（建議搭配正確 HTTP status）
+		{
+		  "error": {
+			"code": "BFF-VALIDATION",
+			"message": "輸入資料有誤",
+			"violations": [
+			  { "field": "dateRange.from", "reason": "must be <= to" }
+			]
+		  },
+		  "meta": { "traceId": "9c1f...", "ts": "..." }
+		}
+
+4) BFF 的狀態碼（HTTP status）一般怎麼用？
+
+	BFF 通常會「再語意化」一次：
+		* 400：前端輸入錯誤（BFF 直接擋）
+		* 401/403：未登入/無權限（若有登入就會用到）
+		* 409：操作衝突（例如重複提交）
+		* 422：語意驗證失敗（可選）
+		* 502/503/504：上游（gateway/BN）錯誤（BFF 聚合時很常）
+
+	重點：前端能靠 status 做第一層分類，靠 error.code 做第二層行為。
+
+5) BFF 對「聚合」的常見回傳模型
+
+	BFF 最常做的是把多個 BN 的資料拼成前端需要的「一包」。
+
+	例如 dashboard：
+
+		* GET /ui/dashboard
+			{
+			  "data": {
+				"summary": { "todayOrders": 12, "alerts": 2 },
+				"recentOrders": [ ... ],
+				"notices": [ ... ]
+			  },
+			  "meta": { "traceId": "...", "ts": "..." }
+			}
+		
+		這種設計讓前端「一次拿全」，比叫前端自己打 3~5 支 API 好維護、也更安全（前端少知道後端拓樸）。
+
+6) BFF 的 DTO 命名與分層（維護關鍵）
+
+	實務上會分三層 DTO（避免混在一起）：
+
+		* *UiRequest / *UiResponse：BFF 對前端合約（最穩定）
+
+		* *BnClientRequest / *BnClientResponse：BFF 呼叫 BN 的合約（可能常變）
+
+		* *Domain：BFF 內部聚合用模型（可選）
+
+7) 你這種「前端無登入、BFF M2M」的建議簡化版
+
+	因為你前端不登入，很多 auth error 不會出現，但仍建議：
+
+		* 仍保留 meta.traceId（超重要：查 gateway/BN log）
+
+		* error.code 固定命名規則（例如 BFF-UPSTREAM-* / BFF-VAL-*）
+
+		* 不透出 BN 原始訊息（避免洩漏內部細節）
+
+	成功：{ data, meta }
+	失敗：{ error, meta }
+	
+	就很夠用了。
+
+8) 一套「可直接當規範」的 BFF endpoint 命名慣例
+	常見分兩群：
+
+		UI 讀取
+			* GET /ui/{screen}
+			* GET /ui/{screen}/{section}
+			* POST /ui/{screen}/_search
+
+		行為/動作
+			* POST /actions/{feature}:{action}
+			* POST /actions/orders/{id}:cancel
+			* POST /actions/cart:addItem

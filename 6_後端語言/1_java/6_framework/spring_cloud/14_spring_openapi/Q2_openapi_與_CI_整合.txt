@@ -1,0 +1,137 @@
+
+
+OpenAPI 的好處是：你可以在 CI 做很清楚的「breaking change gate」
+
+刪欄位、改型別、必填改動、刪 endpoint → 直接判定不相容 → 阻擋合併
+
+
+1) 基礎層：檢查 OpenAPI 規格本身是否有效
+
+	這層像是：
+
+		* JSON/YAML 是否可 parse
+
+		* OpenAPI 版本 / schema 是否符合規範
+
+		* $ref 是否能解析、循環引用、漏定義
+
+		* path/operationId 重複、格式不合法
+
+		這層比較像「文件/規格健康檢查」，不是 breaking change gate 的重點，但通常會先做。
+
+2) 契約層：跟「上一版基準」做 diff
+	CI 會拿「這次產出的 openapi.json」去跟某個基準版本比對，基準版本常見來源：
+		* main/master 分支上的 openapi.json（repository 裡有存基準檔）
+		* 或是上一個 release tag 的 openapi.json（例如 v1.2.3）
+		* 或從 artifact repo（Nexus/Artifactory）下載上一版的 spec
+
+	CI 的工作是跑一個工具做比較，輸出「有哪些變更」：
+		* endpoints 新增/刪除/改 method
+		* request/response schema 變更
+		* query/path/header/cookie 參數變更
+		* status code、content-type 變更
+		* required、enum、format、pattern…等限制變更
+
+3) Gate 層：把變更分類成「相容」或「不相容」並決定是否阻擋
+	你提到的例子都屬於 breaking changes，典型規則如下（不同工具判斷細節略有差異）：
+
+	常見會被判定為 breaking
+		* 刪掉 endpoint / 改 path / 改 HTTP method
+		* 刪掉 response status（例如不再回 200）
+		* 刪掉欄位（尤其 response 欄位）
+		* 欄位型別改變（string → int、object → array）
+		* required 變多（原本 optional 變 required）
+		* enum 縮水、加上更嚴格的限制（例如 maxLength 變小）
+		* request body 結構改動導致舊 client 無法送
+
+	常見被視為 non-breaking（或可設定成允許）
+		* 新增 endpoint
+		* response 新增 optional 欄位（對多數 client 是相容的）
+		* enum 增加值（通常相容，但要看 client 是否嚴格驗 enum）
+		* 描述文字、example、tag 變更
+
+	CI 的 gate 就是：只要 breaking-change = true，就 fail pipeline / 擋 PR merge
+	（當然你也可以設計成：breaking change 必須升 major version 或必須貼上 BREAKING_CHANGE_APPROVED label 才放行。）
+
+核心是：
+	✅ 先 validate 規格（可選）
+	✅ 再做 spec diff
+	✅ 再做 breaking-change 判定並 gate
+
+如果要落地成 pipeline，最低成本做法（概念）
+
+	1.build 後產出 openapi.json
+	2.從 main 抓 openapi.json（或上一版 release）當 baseline
+	3.跑「openapi-diff / breaking-change 工具」
+	4.工具 exit code 非 0 → pipeline fail
+
+做法核心（不管 Jenkins / GitHub Actions 都一樣）
+
+	1.你的 PR build 產出 openapi.json（revision）
+
+	2.CI 取得 main 分支（或上一版 release）的 openapi.json（base）
+
+	3.執行：
+
+		* oasdiff breaking base.json revision.json --fail-on ERR
+
+	4.只要有 breaking change，指令會以失敗狀態結束（exit code 非 0）→ pipeline fail → 擋合併
+
+		oasdiff 會把變更分級（INFO/WARN/ERR），你用 --fail-on ERR 就是「只要判定為不相容」就 fail。
+
+範例 ：Jenkins Pipeline（Declarative）
+
+	概念相同：拉 baseline、產 revision、跑 oasdiff breaking，回傳非 0 就讓 pipeline fail。
+		pipeline {
+		  agent any
+		  stages {
+			stage('Checkout') {
+			  steps {
+				checkout scm
+			  }
+			}
+
+			stage('Generate OpenAPI (revision)') {
+			  steps {
+				sh './mvnw -q -DskipTests package'
+				sh 'test -f build/openapi.json'
+			  }
+			}
+
+			stage('Fetch baseline (main)') {
+			  steps {
+				sh 'git fetch origin main:refs/remotes/origin/main'
+				sh 'git show origin/main:spec/openapi.json > /tmp/base-openapi.json'
+			  }
+			}
+
+			stage('Breaking change gate') {
+			  steps {
+				sh '''
+				  docker run --rm \
+					-v "$WORKSPACE":/work \
+					-v /tmp:/tmp \
+					ghcr.io/oasdiff/oasdiff:latest \
+					breaking /tmp/base-openapi.json /work/build/openapi.json --fail-on ERR
+				'''
+			  }
+			}
+		  }
+		}
+
+CI 為什麼能「直接判定不相容」？
+
+	因為這些都屬於「破壞既有 consumer」的典型變更，diff 工具會在 schema / paths 層級抓到並標記成 breaking：
+
+		* 刪 endpoint：paths/operation 不見 → consumer 原本呼叫會 404/405
+		* 刪欄位（尤其 response schema）：consumer 反序列化/邏輯可能炸
+		* 改型別：string→int / object→array → consumer 明顯不相容
+		* 必填改動：optional→required → 舊 client 不送就會 400 或驗證失敗
+
+	oasdiff 這類工具本來就是用來偵測這些 breaking changes 的。
+
+實務上我會建議你加 2 個小規則（更好用）
+
+	1.baseline 放 repo 或 release artifact：你才能保證比對基準固定、可追溯
+
+	2.允許例外流程：如果真要 breaking，規範「必須升 major version / 必須加 PR label 才能放行」

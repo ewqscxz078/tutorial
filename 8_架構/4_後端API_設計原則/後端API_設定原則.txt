@@ -1,0 +1,155 @@
+
+「BFF 這一側要去呼叫 BN（後端 API）」 時，
+	BN 的 request/response（參數與回傳值）一般怎麼設計
+
+1) BN API 的參數設計（Request）
+	(1) 查詢類：用 Query String + 明確型別
+
+		適合：篩選、排序、分頁、時間區間
+
+			* GET /orders?status=PAID&from=2026-02-01&to=2026-02-03&page=1&size=20&sort=createdAt,desc
+
+		建議規則：
+
+			* 分頁：page（從 0 或 1 擇一全系統一致）、size
+
+			* 排序：sort=field,(asc|desc)（可多個 sort）
+
+			* 時間：用 ISO-8601（含時區）或明確宣告 LocalDate（只日期）
+
+			* filter 很多：可以接受，但超過一定複雜度，改用 POST search（見下一點）
+
+	(2) 複雜查詢：用 POST /xxx/_search（Body 放查詢條件）
+
+		當 query 參數變得很長、條件巢狀、要傳陣列/群組邏輯（AND/OR）時：
+		
+		* POST /orders/_search
+			{
+			  "status": ["PAID", "SHIPPED"],
+			  "createdAt": { "from": "2026-02-01T00:00:00+08:00", "to": "2026-02-03T23:59:59+08:00" },
+			  "keyword": "abc",
+			  "page": { "index": 1, "size": 20 },
+			  "sort": [{ "field": "createdAt", "dir": "DESC" }]
+			}
+
+		優點：
+			request schema 穩定、可擴充
+			很好做 OpenAPI/SDK codegen
+			不會遇到 URL 長度限制
+	
+	(3) 寫入類：Body 用「命令模型」（Command）
+		寫入/更新建議把 input 變成「業務命令」，避免直接暴露資料表結構：
+
+		* POST /orders
+			{
+			  "customerId": "C001",
+			  "items": [{ "sku": "S001", "qty": 2 }],
+			  "note": "..."
+			}
+	
+	(4) 更新：PUT vs PATCH 的常見選擇
+		* PUT /orders/{id}：整包替換（通常要傳完整資源）
+
+		* PATCH /orders/{id}：部分更新（BFF 常用，前端也常用）
+
+		PATCH 有兩派：
+
+			1.JSON Merge Patch（RFC 7386）
+
+			2.自訂 patch DTO（最常見、最好控）
+		
+		企業內部我更常見的是：自訂 patch DTO + 明確欄位（比較好驗證與稽核）
+
+2) BN API 的回傳值設計（Response）
+	(1) 成功回傳：直接回 resource 或回「結果模型」
+		常見兩種：
+			A. 回資源表示（Resource Representation）
+				GET /orders/{id} → 200 + order JSON
+				POST /orders → 201 + body 回建立後的 order（或至少回 id）
+
+			B. 回「結果」：命令導向、回必要資訊即可
+				例如你只需要告訴 BFF “成功 + 新 id”：
+
+			{ "id": "O12345" }
+	
+	(2) 列表回傳：固定分頁格式
+		{
+		  "items": [ ... ],
+		  "page": { "index": 1, "size": 20, "total": 135 }
+		}
+		
+		重點是：不要讓不同 BN 各自發明分頁格式，不然 BFF 聚合時會很痛。
+	
+3) BN 錯誤回傳：建議統一採用 RFC 7807 Problem Details
+	在 Spring Boot 3/4 其實很適合用 ProblemDetail 這個模型去做一致化（你 BFF 也好接）。
+
+		回應（例）：
+
+		* HTTP 400 / 404 / 409 / 422 / 500
+			{
+			  "type": "https://example.com/problems/validation-error",
+			  "title": "Validation failed",
+			  "status": 400,
+			  "detail": "Request validation failed",
+			  "instance": "/orders",
+			  "errors": [
+				{ "field": "items[0].qty", "message": "must be >= 1" }
+			  ],
+			  "traceId": "9c1f..."
+			}
+	BFF 的好處：
+
+		* 上游是 gateway / 多個 BN 時，BFF 可以統一把 ProblemDetail 轉成你對前端的 error schema
+
+		* traceId 能一路串起來
+
+4) BN 的 DTO 版本策略：讓 BFF 不容易被「破壞性變更」打爆
+	
+	(1) 原則：BN DTO 不是 DB Entity，也不是前端 VM
+		BN Response DTO 建議是「API 合約」：
+			* 欄位命名穩定
+			* 不要為了省事直接把 JPA Entity 透出去
+			* 欄位新增通常是 non-breaking；刪/改型別/必填變更就是 breaking
+	
+	(2) 兼容策略（常用）
+		* 新增欄位：OK（前端/BFF 不用改）
+		* 刪欄位：不建議（會 breaking）
+		* 改型別：不建議（會 breaking）
+		* 必填↔可選：非常敏感（會 breaking）
+		* 想重構：開新版本 endpoint（如 /v2/...）或新資源名稱
+
+5) 跟 BFF 最相關的：BN 設計時要「BFF 友善」
+	BFF 會做聚合，所以 BN API 建議：
+
+		1.批次查詢（避免 N+1）
+			* POST /users/_batch body 傳 ids → 回 users map/list
+
+		2.欄位裁切（field selection）（可選）
+			* GET /users/{id}?fields=id,name,roles
+
+		3.穩定的錯誤碼與 HTTP status
+
+		4.idempotency 支援（建立/付款這類操作）
+			* Idempotency-Key header（選配，但在分散式很有用）
+
+6) 給你一個「BN 合約」最常見的標準模板（你可以當作規範）
+	查詢單筆
+		* GET /{resource}/{id} → 200 + resource / 404 ProblemDetail
+
+	查詢列表
+		* GET /{resource}?page=&size=&sort= → 200 + { items, page }
+
+	複雜查詢
+		* POST /{resource}/_search → 200 + { items, page }
+
+	建立
+		* POST /{resource} → 201 + resource（或 {id}） + Location header
+
+	更新
+		* PATCH /{resource}/{id} → 200 + resource（或 204 no content）
+
+	刪除
+		* DELETE /{resource}/{id} → 204
+
+	錯誤
+		* 統一 ProblemDetail（含 traceId、errors）

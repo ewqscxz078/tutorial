@@ -80,8 +80,8 @@ docker compose 管理方式
 		* 你已經很多平行目錄，但想保持獨立：選做法 B（統一 -p 管理規則）
 
 讓「彼此看不到」變得可控的小技巧
-	* 在每個 compose 明確指定 project name（或統一用 -p）
+	1. 在每個 compose 明確指定 project name（或統一用 -p）
 
-	* 明確命名 container / network（可讀性高）
+	2. 明確命名 container / network（可讀性高）
 
-	* 善用 docker ps -a、docker network ls 做全局盤點（避免誤以為不存在）
+	2. 善用 docker ps -a、docker network ls 做全局盤點（避免誤以為不存在）
