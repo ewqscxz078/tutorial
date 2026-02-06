@@ -1,0 +1,127 @@
+ref ChatGPT
+
+1) 啟動、停止、重啟
+	* 啟動（前景）：看到 console log（適合 debug）
+		docker compose up
+	
+	* 啟動（背景）：最常用
+		docker compose up -d
+	
+	停止（保留容器）
+		docker compose stop
+	
+	啟動已停止的服務（不重建）
+		docker compose start
+	
+	重啟
+		docker compose restart
+	
+	停止並移除容器/網路（不含 volume）
+		docker compose down
+	
+	停止並移除，連 volume 一起砍（資料會不見）
+		docker compose down -v
+
+2) 看狀態、看有哪些服務
+	看目前專案的容器狀態
+		docker compose ps
+	
+	列出 compose 檔定義的服務名稱
+		docker compose config --services
+	
+	展開後的最終設定（用來確認 merge / env / profile 結果）
+		docker compose config
+
+3) Logs（常用）
+	看所有服務 log（持續追）
+		docker compose logs -f
+	
+	看特定服務 log
+		docker compose logs -f <service>
+	
+	只看最後 N 行
+		docker compose logs --tail=200 -f <service>
+	
+	加時間戳
+		docker compose logs -f --timestamps
+
+4) Build / Pull / 重新建立
+	建 image
+		docker compose build
+	
+	建某個服務
+		docker compose build <service>
+	
+	拉 image（用 tag 的情境）
+		docker compose pull
+
+	更新後強制重建並重跑（常用）
+		docker compose up -d --build
+	
+	不沿用舊容器（更乾淨的重建）
+		docker compose up -d --force-recreate
+	
+	不沿用 image cache（最乾淨但最慢）
+		docker compose build --no-cache
+
+5) 只操作某個服務（部分啟動/停止）
+	只啟動某幾個
+		docker compose up -d <service1> <service2>
+
+	停某個
+		docker compose stop <service>
+
+	移除某個服務容器
+		docker compose rm -f <service>
+
+6) 進容器、跑指令（debug / 查檔 / 查網路）
+	在服務容器內開 shell（優先用 exec）
+		docker compose exec <service> sh
+		# 或 bash（視 image 而定）
+		docker compose exec <service> bash
+	
+	在容器內跑一次性指令
+		docker compose exec <service> ls -al
+
+	run：起一個一次性容器來跑命令（常用於工具容器）
+		docker compose run --rm <service> <cmd>
+
+7) 清理舊資源
+	移除停止狀態容器（只針對本 compose 專案）
+		docker compose rm
+
+	down 並移除「孤兒容器」（改名/刪服務後常見）
+		docker compose down --remove-orphans
+
+	清理整台機器沒用到的資源（全域，小心）
+		docker system prune
+		# 連沒用到的 image 都砍（更激進）
+		docker system prune -a
+		# 連沒用到的 volume 都砍（資料會不見）
+		docker system prune --volumes
+
+8) 常用參數（實務上很重要）
+	指定 compose 檔（多檔合併）
+		docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+	
+	指定 project name（避免不同目錄互相衝突）
+		docker compose -p myproj up -d
+	
+	Profile（只啟動某些群組）
+		docker compose --profile debug up -d
+
+9) 你會很常用的「組合技」
+	更新程式後：重建 + 背景啟動
+		docker compose up -d --build
+
+	只追某個服務 log
+		docker compose logs -f --tail=200 <service>
+
+	服務卡住：重啟
+		docker compose restart <service>
+
+	改了服務名稱或刪服務後：清孤兒
+		docker compose down --remove-orphans
+		docker compose up -d
+		
+		docker compose down --rmi local

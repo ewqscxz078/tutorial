@@ -1,0 +1,89 @@
+ref ChatGPT
+
+
+1.設定 volume
+	差異在於：你把資料放在主機哪裡、由誰管理、可攜性與可維運性
+		寫法一:
+			語法
+				volumes:
+				  - ${STACK_ROOT}/00_infra/gitea/data:/data
+			說明
+				Bind Mount（綁定主機路徑）
+
+				意思：把「主機上的某個實際目錄」直接掛進容器。
+
+					* 資料實際位置：就在你指定的那個路徑（例如你的專案目錄底下）
+
+					* 優點
+
+						* 你很清楚資料放哪裡，ls/tree 直接看得到
+
+						* 方便備份、搬移、用 git ignore 管理（資料夾在專案樹內）
+
+						* 權限/擁有者問題比較「可見」也比較好手動處理（chown/chmod）
+
+					* 缺點
+
+						* 跨環境可攜性較差（別台機器沒有同樣路徑就掛不起來）
+
+						* 在 WSL / Windows 檔案系統混用時，效能與權限行為可能更複雜
+
+						* 容易不小心把敏感資料放進工作目錄、或被清掉
+
+					常見用途：需要人類直接操作檔案/設定、或要把資料固定在某個專案資料夾中（例如：nginx.conf、certs、gitea data 想直接看到）。
+
+
+		寫法二:
+			語法
+				  volumes: - mssql-data:/var/opt/mssql 
+				volumes:
+				  mssql-data:
+			
+			說明
+				意思：你告訴 Docker：「幫我建立一個叫 mssql-data 的資料卷」，Docker 會把它存到 Docker 自己管理的地方。
+
+				* 資料實際位置：在 Docker 的 volume 儲存區（Linux 通常在 /var/lib/docker/volumes/.../_data，但在 Docker Desktop/WSL 下不一定能用你想像的路徑直接看到）
+
+					* 優點
+
+						* 可攜性高：compose 檔比較乾淨，不綁死特定主機路徑
+
+						* Docker 會負責管理生命週期（建立、掛載、備份/還原可以用 docker volume 工具）
+
+						* 對資料庫這種「不需要人類直接翻資料檔」的用途很適合
+
+					* 缺點
+
+						* 你不一定能在主機上很直覺地找到資料目錄（尤其 Docker Desktop/WSL）
+
+						* 權限問題比較像「容器內部的事」，你要用 docker run 或進容器處理
+
+						* 備份通常要用 docker 指令（例如用臨時容器把 volume 打包），不像 bind mount 直接 tar 那個資料夾
+
+					常見用途：資料庫（MSSQL/Postgres/Redis 等）、不需要人直接改檔案的持久資料。
+	用一句話記
+		* Bind mount：資料在「你指定的主機路徑」，你自己管。
+		* Named volume：資料在「Docker 管理的地方」，Docker 幫你管。
+
+	實務建議（你這個情境很適用）
+
+		* MSSQL：優先用 named volume（穩、可攜、符合常見做法）
+
+		* Gitea
+			* 若你希望資料夾就在 00_infra/gitea/data 方便備份與觀察：用 bind mount OK
+			* 若你希望更像資料庫那樣由 Docker 管理：也可以改成 named volume（尤其你不想碰權限）
+
+2.列舉所有 volumn
+	docker volume ls
+
+3.「是否真的沒被用」的確認（安全）
+	docker ps -a --filter volume=msql-demo_mssql-data
+	docker ps -a --filter volume=mssql-demo_mssql-data
+
+	如果都沒有列出 container，通常就可以刪。
+	再更精準一點：
+		docker volume inspect msql-demo_mssql-data
+		docker volume inspect mssql-demo_mssql-data
+
+4.確定要清掉這兩個 volume（會刪資料庫資料）
+	docker volume rm msql-demo_mssql-data mssql-demo_mssql-data

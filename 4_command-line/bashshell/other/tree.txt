@@ -1,0 +1,14 @@
+ref ChatGPT
+
+只看前 2 層（我最常用）
+	tree -L 2
+
+只看某個目錄
+	tree 00_infra/nginx-reproxy
+
+顯示檔案權限與大小（除錯 volume 很好用）
+	tree -L 2 -p -h
+
+
+排除某些目錄（例如 node_modules、.git）
+	tree -I "node_modules|.git"

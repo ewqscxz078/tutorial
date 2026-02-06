@@ -13,7 +13,10 @@
 			3.Docker desktop 安裝
 		* Docker Desktop 開啟  // 非常重要，不然無法操作 docker 相關指令
 		* Settings 裡確認：
-			* Use WSL 2 based engine 開啟
+			* Use WSL 2 based engine 開啟，
+				很重要，不然下 docker ps -a 可能會出現錯誤訊息
+					failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory
+	
 			* WSL Integration 有勾到你用的 distro（例如 Ubuntu）
 
 			WSL 端檢查 在 WSL terminal 跑：
