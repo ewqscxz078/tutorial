@@ -18,7 +18,7 @@
 				  -Dclassifier=openapi \
 				  -DgeneratePom=true
 		    // mvn -Popenapi-provider -pl PROJ-BACKEND/BB-BN/sris5-bb-bn-exec -am -DskipTests verify
-			
+
 			// 1. gen opanapi.json
 			mvn -Popenapi-provider -pl :sris5-bb-bn-exec -am -DskipTests clean verify
 				// 2. 只把 openapi.json 裝到 local repo

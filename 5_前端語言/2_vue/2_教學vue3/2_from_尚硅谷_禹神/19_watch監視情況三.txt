@@ -1,0 +1,97 @@
+ref https://www.youtube.com/watch?v=wL1JFDBUSoA&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=19
+
+作用: 監視資料的變化
+特點: 監視四種情況
+	1. ref 定義的資料
+	2. reactive 定義的資料
+	3. 函數返回一個值(getter 函數)
+	4. 一個包含上述內容的數組
+
+情況三: reactive 定義的 對象類型 資料
+
+		<template>
+		  <div class="person">
+		    <h1>監視 ref 定義的 對象類型 資料</h1>
+			<h2>姓名: {{ person.name }}</h2>
+			<h2>年齡: {{ person.age }}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="changePerson">修改整個人</button>
+
+			<h2>測試: {{obj.a.b.c}}</h2>
+			<button @click="test">修改obj.a.b.c</button>
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { reactive,watch } from 'vue'
+
+			// 資料
+			let person = reactive({
+			  name: '張三 ',
+			  age: 18
+			})
+
+			let obj = reactive({
+			  a:{
+			    b:{
+				  c:666
+				}
+			  }
+			})
+
+			// 方法
+			function changeName(){
+			  person.name += '~'
+			}
+
+			function changeAge(){
+			  person.age += 1
+			}
+
+			function changePerson(){
+			  // reactive 無法整體直接修改
+			  // person = { name:'李四', age: 90 }
+			  // person = reactive({ name:'李四', age: 90 })
+			  Object.assign(person, { name:'李四', age: 80 }) // 僅修改物件裡的屬性，物件的參考還是一樣
+
+			}
+
+			function test(){
+			  obj.a.b.c = 888
+			}
+
+			// 監視 reactive 定義的對象類型 資料，
+			//   1.且默認深度監視
+			//   2.無法關閉深度監視
+			//   3. newValue、oldValue 內容還是一樣，因為沒有修改物件的參考位址值，所以仍一樣
+			// watch 的第一個參數是: 被監視的資料
+			// watch 的第二個參數是: 監視的回調
+			// watch 的第三個參數是: 配置對象額外設定(deep, immediate)
+			const stopWatch = watch(person,(newValue, oldValue)=>{
+			  console.log('person變化了',newValue, oldValue)
+			})
+
+			watch(obj,(newValue, oldValue)=>{
+			  console.log('obj變化了',newValue, oldValue)
+			},{deep:false}) // reactive 無法用 deep:false 關閉深度監視
+
+		</script>
+
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+

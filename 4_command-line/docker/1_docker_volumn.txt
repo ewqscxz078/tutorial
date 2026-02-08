@@ -35,10 +35,10 @@ ref ChatGPT
 
 		寫法二:
 			語法
-				  volumes: - mssql-data:/var/opt/mssql 
+				  volumes: - mssql-data:/var/opt/mssql
 				volumes:
 				  mssql-data:
-			
+
 			說明
 				意思：你告訴 Docker：「幫我建立一個叫 mssql-data 的資料卷」，Docker 會把它存到 Docker 自己管理的地方。
 

@@ -1,0 +1,77 @@
+ref https://www.youtube.com/watch?v=slSOx0xI-CY&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=18
+
+作用: 監視資料的變化
+特點: 監視四種情況
+	1. ref 定義的資料
+	2. reactive 定義的資料
+	3. 函數返回一個值(getter 函數)
+	4. 一個包含上述內容的數組
+
+情況二: ref 定義的 對象類型 資料
+	直接寫數據名，監視的是對象的地址值，若想監視對象內部的數據，要手動開啟深度監視
+	注意:
+		若修改的是 ref 定義的對象中的屬性, newValue 和 oldValue 都是新值，因為他們是同一個對象
+		若修改整個 ref 定義的對象， newValue 是新值，oldValue 是舊值，因為不是同一個對象了
+
+		<template>
+		  <div class="person">
+		    <h1>監視 ref 定義的 對象類型 資料</h1>
+			<h2>姓名: {{ person.name }}</h2>
+			<h2>年齡: {{ person.age }}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="changePerson">修改整個人</button>
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { ref,watch } from 'vue'
+
+			// 資料
+			let person = ref({
+			  name: '張三 ',
+			  age: 18
+			})
+
+			// 方法
+			function changeName(){
+			  person.value.name += '~'
+			}
+
+			function changeAge(){
+			  person.value.age += 1
+			}
+
+			function changePerson(){
+			  person.value = { name:'李四', age: 90 }
+			}
+
+			// 監視, 監視ref 定義的對象類型 資料，若想監視對象內部屬性的變化，需要手動開啟深度監視
+			// watch 的第一個參數是: 被監視的資料
+			// watch 的第二個參數是: 監視的回調
+			// watch 的第三個參數是: 配置對象額外設定(deep, immediate)
+			//	deep : 是否深層監視(for 內部屬性)
+			// 	immediate 是否立即監視(畫面載入就立即監視，不等改變才監視)
+			const stopWatch = watch(person,(newValue, oldValue)=>{
+			  console.log('person變化了',newValue, oldValue)
+			},{deep:true})
+
+		</script>
+
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+

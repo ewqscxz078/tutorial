@@ -249,7 +249,7 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 	* 其他「不在選取名單內」的模組，預設不會建（除非被 -am 拉進來）
 	=> 以 openapi-provider 這個 profile 跑，但只建 sris5-aa-bn-exec 這個模組；
 	如果它需要依賴同 reactor 的其他模組，就把那些依賴模組也一起建（-am）。
-	
+
 	為什麼可以用 :artifactId 這種寫法？
 		-pl 支援幾種「模組座標」寫法，最常見：
 			1.相對路徑
@@ -259,7 +259,7 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 				-pl groupId:artifactId
 				-pl :artifactId（groupId 省略）
 				-pl groupId:（artifactId 省略，較少用）
-		
+
 	這條命令中的 -pl + -am 組合的關鍵
 		-pl :sris5-aa-bn-exec：鎖定目標模組
 		-am：把它 所依賴且也在 reactor 裡的模組 一起建起來（例如 common/lib、parent 以外的實際 jar module）

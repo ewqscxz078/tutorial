@@ -7,14 +7,14 @@ BFF 收到兩個後端 API 的 response JSON 之後，BFF 的責任通常就是�
 
 	後端 A、B 各回一包，你就把它們放進同一個 response 裡。
 		{
-		  "a": { ... }, 
+		  "a": { ... },
 		  "b": { ... }
 		}
-	
+
 	適合：前端頁面真的同時需要兩包資料，而且不想在 BFF 做太多轉換。
 
 2) 轉成「View Model」（最典型的 BFF 做法）
-	
+
 	後端的欄位命名/結構通常是「領域導向」，前端想要的是「畫面導向」。
 
 	BFF 會做：
@@ -32,7 +32,7 @@ BFF 收到兩個後端 API 的 response JSON 之後，BFF 的責任通常就是�
 			  "quotaUsed": 3,
 			  "isVip": true
 			}
-	
+
 		適合：長期維護、前端想要穩定契約（BFF 扛住後端變動）。
 
 3) 主體 + 附加資訊（常見於列表頁）
@@ -46,7 +46,7 @@ BFF 收到兩個後端 API 的 response JSON 之後，BFF 的責任通常就是�
 			"total": 2
 		  }
 		}
-		
+
 		BFF 內部常會用 id 做 join。
 
 4) 分段回傳 + 明確的部分失敗（很實用）
@@ -67,7 +67,7 @@ BFF 收到兩個後端 API 的 response JSON 之後，BFF 的責任通常就是�
 			{ "source": "backendB", "code": "TIMEOUT", "message": "B 暫時不可用" }
 		  ]
 		}
-	
+
 	適合：提升韌性，不想因為次要後端掛掉就整個 endpoint 500。
 
 5) 由 BFF 統一「錯誤語意」與「HTTP 狀態碼」
@@ -81,6 +81,6 @@ BFF 收到兩個後端 API 的 response JSON 之後，BFF 的責任通常就是�
 		* 次要資訊錯誤 → 仍回 200，但帶 partial/errors
 
 		* 後端 validation error → BFF 轉成前端一致的 error format
-	
+
 「BFF 聚合設計原則」
 	BFF response 的 shape 以「前端用起來最省事、最穩定」為主，不以「後端怎麼回」為主。

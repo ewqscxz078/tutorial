@@ -22,7 +22,7 @@
 	(2) 複雜查詢：用 POST /xxx/_search（Body 放查詢條件）
 
 		當 query 參數變得很長、條件巢狀、要傳陣列/群組邏輯（AND/OR）時：
-		
+
 		* POST /orders/_search
 			{
 			  "status": ["PAID", "SHIPPED"],
@@ -36,7 +36,7 @@
 			request schema 穩定、可擴充
 			很好做 OpenAPI/SDK codegen
 			不會遇到 URL 長度限制
-	
+
 	(3) 寫入類：Body 用「命令模型」（Command）
 		寫入/更新建議把 input 變成「業務命令」，避免直接暴露資料表結構：
 
@@ -46,7 +46,7 @@
 			  "items": [{ "sku": "S001", "qty": 2 }],
 			  "note": "..."
 			}
-	
+
 	(4) 更新：PUT vs PATCH 的常見選擇
 		* PUT /orders/{id}：整包替換（通常要傳完整資源）
 
@@ -57,7 +57,7 @@
 			1.JSON Merge Patch（RFC 7386）
 
 			2.自訂 patch DTO（最常見、最好控）
-		
+
 		企業內部我更常見的是：自訂 patch DTO + 明確欄位（比較好驗證與稽核）
 
 2) BN API 的回傳值設計（Response）
@@ -71,15 +71,15 @@
 				例如你只需要告訴 BFF “成功 + 新 id”：
 
 			{ "id": "O12345" }
-	
+
 	(2) 列表回傳：固定分頁格式
 		{
 		  "items": [ ... ],
 		  "page": { "index": 1, "size": 20, "total": 135 }
 		}
-		
+
 		重點是：不要讓不同 BN 各自發明分頁格式，不然 BFF 聚合時會很痛。
-	
+
 3) BN 錯誤回傳：建議統一採用 RFC 7807 Problem Details
 	在 Spring Boot 3/4 其實很適合用 ProblemDetail 這個模型去做一致化（你 BFF 也好接）。
 
@@ -104,13 +104,13 @@
 		* traceId 能一路串起來
 
 4) BN 的 DTO 版本策略：讓 BFF 不容易被「破壞性變更」打爆
-	
+
 	(1) 原則：BN DTO 不是 DB Entity，也不是前端 VM
 		BN Response DTO 建議是「API 合約」：
 			* 欄位命名穩定
 			* 不要為了省事直接把 JPA Entity 透出去
 			* 欄位新增通常是 non-breaking；刪/改型別/必填變更就是 breaking
-	
+
 	(2) 兼容策略（常用）
 		* 新增欄位：OK（前端/BFF 不用改）
 		* 刪欄位：不建議（會 breaking）

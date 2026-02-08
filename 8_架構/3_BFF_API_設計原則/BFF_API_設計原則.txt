@@ -44,7 +44,7 @@
 
 		Body 會是 UI 需要的欄位，不一定等於 BN command：
 			{ "reason": "duplicate", "note": "..." }
-		
+
 		為什麼用 action 命名？
 		因為 BFF 代表 UI 行為，比 REST 資源更符合「畫面事件」。
 
@@ -67,7 +67,7 @@
 			"apiVersion": "2026-02"
 		  }
 		}
-	
+
 	B. 成功（列表 + paging）
 		{
 		  "data": {
@@ -79,7 +79,7 @@
 		  "paging": { "page": 1, "size": 20, "total": 135 },
 		  "meta": { "traceId": "9c1f...", "ts": "..." }
 		}
-	
+
 	C. 失敗（建議搭配正確 HTTP status）
 		{
 		  "error": {
@@ -118,7 +118,7 @@
 			  },
 			  "meta": { "traceId": "...", "ts": "..." }
 			}
-		
+
 		這種設計讓前端「一次拿全」，比叫前端自己打 3~5 支 API 好維護、也更安全（前端少知道後端拓樸）。
 
 6) BFF 的 DTO 命名與分層（維護關鍵）
@@ -143,7 +143,7 @@
 
 	成功：{ data, meta }
 	失敗：{ error, meta }
-	
+
 	就很夠用了。
 
 8) 一套「可直接當規範」的 BFF endpoint 命名慣例

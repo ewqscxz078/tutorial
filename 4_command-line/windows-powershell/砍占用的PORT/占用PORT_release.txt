@@ -4,10 +4,10 @@ powershell 砍 port 占用方式
 	netstat -ano | findstr :9111
 		TCP    0.0.0.0:9111           0.0.0.0:0              LISTENING       2436
 		TCP    [::]:9111              [::]:0                 LISTENING       2436
-	 
+
 2.看 PID 占用的服務名
 	tasklist | findstr 2436
 		javaw.exe                     2436 Console                    1     42,312 K
 
-3.強制刪除 PID 
+3.強制刪除 PID
 	taskkill /PID 2436 /F

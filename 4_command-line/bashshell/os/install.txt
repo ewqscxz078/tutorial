@@ -9,9 +9,9 @@ ubuntu
 	apt
 		列舉安裝清單
 		apt list --installed
-	
+
 	更新
 		sudo apt update
-		
+
 	抓常用套件
 		sudo apt install -y tree
