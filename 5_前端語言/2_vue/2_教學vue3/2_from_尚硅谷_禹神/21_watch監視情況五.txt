@@ -1,0 +1,89 @@
+ref https://www.youtube.com/watch?v=ZrRv5Q4zJxE&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=21
+
+作用: 監視資料的變化
+特點: 監視四種情況
+	1. ref 定義的資料
+	2. reactive 定義的資料
+	3. 函數返回一個值(getter 函數)
+	4. 一個包含上述內容的數組
+
+情況五: 監視 上述多個資料
+
+		<template>
+		  <div class="person">
+			<h2>姓名: {{ person.name }}</h2>
+			<h2>年齡: {{ person.age }}</h2>
+			<h2>汽車: {{ person.car.c1 }}、{{ person.car.c2 }}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="changeC1">修改第一台車</button>
+			<button @click="changeC2">修改第二台車</button>
+			<button @click="changeCar">修改整台車</button>
+
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { reactive,watch } from 'vue'
+
+			// 資料
+			let person = reactive({
+			  name: '張三 ',
+			  age: 18,
+			  car:{
+			    c1: '奔馳',
+				c2: '寶馬'
+			  }
+			})
+
+
+			// 方法
+			function changeName(){
+			  person.name += '~'
+			}
+
+			function changeAge(){
+			  person.age += 1
+			}
+
+			function changeC1(){
+			  person.car.c1 = '奧迪'
+			}
+
+			function changeC1(){
+			  person.car.c2 = '大眾'
+			}
+
+			function changeCar(){
+			  person.car = { c1:'亞迪',c2:'艾瑪'}
+			}
+
+			// 監視多個物件屬性
+			const stopWatch = watch([()=> person.name, ()=>person.car.c1] ,(newValue, oldValue)=>{
+			  console.log('person.car 變化了',newValue, oldValue)
+			},{deep:true})
+
+			// 監視物件屬性、監視物件
+			const stopWatch = watch([()=> person.name, person.car] ,(newValue, oldValue)=>{
+			  console.log('person.car 變化了',newValue, oldValue)
+			},{deep:true})
+
+		</script>
+
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+

@@ -1,0 +1,73 @@
+ref https://www.youtube.com/watch?v=ZrRv5Q4zJxE&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=21
+
+作用:
+	官網: 立即運行一個函數，同時響應式地追蹤其依賴，並在依賴更改時重新執行該函數
+	 watch 對比 watchEffect
+		1.都能監聽響應式資料的變化，不同的監聽資料變化方式不同
+		2.watch: 要明確指出監視的資料
+		3.watchEffect: 不用明確指出監視的資料(函數中用到那些屬性，那就監視那些屬性)
+
+		<template>
+		  <div class="person">
+		    <h2>需求: 當水溫達到60度或水位達到80cm時，給服務器發請求</h2>
+			<h2>當前水溫為: {{ temp }} c</h2>
+			<h2>當前水位為: {{ height }} cm</h2>
+			<button @click="changeTemp">水溫+10</button>
+			<button @click="changeHeight">水位+10</button>
+
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { ref,watch,watchEffect } from 'vue'
+
+			// 資料
+			let temp = ref(10);
+			let height = ref(0);
+
+			// 方法
+			function changeTemp(){
+			  person.name += 10
+			}
+
+			function changeHeight(){
+			  person.age += 10
+			}
+
+			// 監視
+			watch([temp,height],(value)=>{
+			  // console.log(value)
+			  // 從value中獲取最新的水溫、最新的水位
+			  let [newTemp, newHeight] = value
+			  if(newTemp >= 60 || newHeight >= 80){
+			    console.log('給服務器發請求')
+			  }
+			})
+
+			// 監視不指定
+			watchEffect(()=>{
+			  console.log('初始即開始監視')
+			  if(temp.value >= 60 || height.value >= 80){
+			    console.log('給服務器發請求')
+			  }
+			})
+
+		</script>
+
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+

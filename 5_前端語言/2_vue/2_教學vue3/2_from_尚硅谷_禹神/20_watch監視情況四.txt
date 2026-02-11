@@ -1,0 +1,104 @@
+ref https://www.youtube.com/watch?v=GGls6ajsr2w&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=20
+
+作用: 監視資料的變化
+特點: 監視四種情況
+	1. ref 定義的資料
+	2. reactive 定義的資料
+	3. 函數返回一個值(getter 函數)
+	4. 一個包含上述內容的數組
+
+情況四: 監視 ref 或 reactive 定義的 對象類型 資料中的某個屬性，注意如下
+	1. 若該屬性值不是 對象類型，需要寫成函數形式
+	2. 若該屬性值依然是對象類型，可直接編，也可寫成函數，不過建議寫成函數
+
+		<template>
+		  <div class="person">
+			<h2>姓名: {{ person.name }}</h2>
+			<h2>年齡: {{ person.age }}</h2>
+			<h2>汽車: {{ person.car.c1 }}、{{ person.car.c2 }}</h2>
+			<button @click="changeName">修改名字</button>
+			<button @click="changeAge">修改年齡</button>
+			<button @click="changeC1">修改第一台車</button>
+			<button @click="changeC2">修改第二台車</button>
+			<button @click="changeCar">修改整台車</button>
+
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { reactive,watch } from 'vue'
+
+			// 資料
+			let person = reactive({
+			  name: '張三 ',
+			  age: 18,
+			  car:{
+			    c1: '奔馳',
+				c2: '寶馬'
+			  }
+			})
+
+
+			// 方法
+			function changeName(){
+			  person.name += '~'
+			}
+
+			function changeAge(){
+			  person.age += 1
+			}
+
+			function changeC1(){
+			  person.car.c1 = '奧迪'
+			}
+
+			function changeC1(){
+			  person.car.c2 = '大眾'
+			}
+
+			function changeCar(){
+			  person.car = { c1:'亞迪',c2:'艾瑪'}
+			}
+
+			// 監視 person.name
+			const stopWatch = watch(()=>{return person.name},(newValue, oldValue)=>{
+			  console.log('person.name 變化了',newValue, oldValue)
+			})
+			// 或這樣的寫法
+			const stopWatch = watch(()=> person.name ,(newValue, oldValue)=>{
+			  console.log('person.name 變化了',newValue, oldValue)
+			})
+
+			// 監視 person.car，監視不到 整個 car 被修改
+			// const stopWatch = watch(person.car ,(newValue, oldValue)=>{
+			//   console.log('person.car 變化了',newValue, oldValue)
+			// },{deep:true})
+			// 監視 person.car 地址值
+			// const stopWatch = watch(()=> person.car ,(newValue, oldValue)=>{
+			//   console.log('person.car 變化了',newValue, oldValue)
+			// })
+
+			// 建議的最佳寫法，監視地址值與其內部屬性
+			const stopWatch = watch(()=> person.car ,(newValue, oldValue)=>{
+			  console.log('person.car 變化了',newValue, oldValue)
+			},{deep:true})
+
+		</script>
+
+
+
+		<style scoped>
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+
