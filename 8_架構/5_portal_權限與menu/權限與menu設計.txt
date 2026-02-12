@@ -1,0 +1,121 @@
+
+Q: 一般 portal 登入後的使用者有哪些 menu 權限 於後端 db schema 要自己想? 沒有現成可套用?
+
+A: 多數情況「沒有一套大家通用、拿aS 直接拿來套就完事」的 DB schema，因為 Menu 長相、層級、是否多系統、以及權限模型（RBAC/ABAC） 差異太大。不過業界常見的做法其實很固定，你可以用「現成的模型套路」來落地，不必完全自己憑空發明。
+
+	方案 A：最常見（RBAC：User/Role/MenuPermission）
+		適合：大多數企業 Portal，權限以「角色」為主。
+
+		核心表
+
+			* users
+			* roles
+			* user_role（多對多）
+			* menus（樹狀）
+			* role_menu（角色可看到哪些 menu、可做哪些動作）
+			* menus（樹狀）
+
+		欄位建議：
+
+			* id
+			* app_code（portal / featureA / featureB…）
+			* parent_id（null 代表根）
+			* type（FOLDER / PAGE / LINK / ACTION）
+			* title
+			* path（前端 route 或後端 resource key）
+			* external_url（若 type=LINK）
+			* icon
+			* order_no
+			* enabled
+			* visible（有些功能可授權但不顯示在 menu）
+			* meta_json（放一些前端用的額外資訊）
+
+		role_menu（權限）
+
+			欄位建議：
+
+				* role_id
+				* menu_id
+				* perm（bitmask 或多欄位：can_view/can_create/can_update/can_delete）
+
+			優點
+
+				* 很直覺、查詢容易（登入後一次把 menu tree 組出來）
+				* 對 Vue3 動態側欄很友善
+
+			缺點
+
+				* 若你要更細的「資料層級」或條件（例如只能看自己部門資料），這套不夠，需要 ABAC/Policy。
+
+	方案 B：更「正統」的做法（Role + Permission + Resource）
+
+		適合：你想把「顯示 menu」跟「API 權限」拆開，不要綁死在 menu 上。
+
+			核心表
+
+				* users / roles / user_role
+				* permissions（權限點，像 EMPLOYEE_READ, EMPLOYEE_WRITE）
+				* role_permission
+				* menus
+				* menu_permission（一個 menu 需要哪些 permission 才能顯示/啟用）
+
+			permissions 怎麼命名
+
+				常見格式：
+
+				* APP:MODULE:ACTION
+
+					* 例如 PORTAL:REPORT:VIEW
+					* FEATUREA:EMPLOYEE:READ
+
+				menu_permission 的意義
+
+					* menu 是 UI 入口
+
+					* permission 是後端真正的授權依據
+
+					* menu_permission 負責「這個 menu 要顯示，使用者至少要有哪個 permission」
+
+				優點
+
+					* UI 與 API 授權分離，後端可以獨立演進
+
+					* 子系統多時更乾淨（每個 app 的 permission 仍可統一管理）
+
+				缺點
+
+					* 表多一點，但長期可維護性更好
+		
+	方案 C：Policy/ABAC（條件式授權）
+		適合：權限要跟屬性/條件綁定（部門、地區、資料擁有者、金額區間…）。
+
+		你會看到類似：
+
+			* policies
+
+			* policy_rule（JSON / DSL）
+
+			* role_policy 或 user_policy
+
+		現實建議
+
+			* 除非你已經明確有 ABAC 的需求，不然一開始用 A 或 B 會比較穩，之後再加 policy 層（而不是一開始就把系統做很重）。
+
+Portal + 子系統（sub-spa）常見落地建議
+
+	你之前的情境是：portal 登入後左邊有 menu，點了會切到 sub-spa。
+
+	我會建議你至少在 schema 裡加一個概念：
+
+		menus 要有 app_code
+
+			* portal 自己的 menu
+
+			* featureA、featureB 的 menu
+				這樣 portal 可以統一出一棵「跨系統 menu tree」。
+
+		menu 的 path/url 支援兩種
+
+			* 內部路由：/reports
+
+			* 外部子系統：https://subA.xxx.com/... 或 subA:/some/route（讓前端決定如何跳）

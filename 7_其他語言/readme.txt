@@ -23,6 +23,7 @@ ref ChatGPT
 
 簡短範例
 	Mermaid 序列圖： ref https://ikalas.com/app/mermaid-live-editor
+						https://www.min87.com/tools/mermaid/index_zh-TW.html
 		sequenceDiagram
 		  participant C as Controller
 		  participant S as OrderService

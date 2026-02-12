@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pg-dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      # 先用超級使用者初始化（必要）
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: postgres
+
+      # 自訂：要初始化的三個 DB + 對應帳密
+      PORTAL_DB: portaldb
+      PORTAL_USER: portal_user
+      PORTAL_PASSWORD: portal_pwd_123
+
+      FEATUREA_DB: featureA
+      FEATUREA_USER: featurea_user
+      FEATUREA_PASSWORD: featurea_pwd_123
+
+      FEATUREB_DB: featureB
+      FEATUREB_USER: featureb_user
+      FEATUREB_PASSWORD: featureb_pwd_123
+
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  pg-data:
+

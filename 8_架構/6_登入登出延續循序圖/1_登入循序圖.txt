@@ -1,0 +1,52 @@
+「前端不碰 token、BFF 建 session cookie」的登入序列圖（OIDC Authorization Code + PKCE 正統流程）。
+
+sequenceDiagram
+    autonumber
+    actor U as 使用者(瀏覽器)
+    participant SPA as Portal-SPA (Vue3)
+    participant BFF as Portal-BFF (Spring Boot)
+    participant AS as Auth Server (OIDC)
+    participant GW as Gateway
+    participant BN as Portal-BN (Resource Server)
+
+    Note over U,SPA: 前端不持有/不保存 access token，只用 Session Cookie
+
+    %% 1) 使用者點登入
+    U->>SPA: 1. 點「登入」
+    SPA->>BFF: 2. GET /login (或 /oauth2/authorization/portal)
+    Note over BFF: 3. 產生 state + nonce\n產生 PKCE code_verifier/code_challenge\n把 code_verifier、state 存在 BFF server-side (例如 session/快取)
+
+    %% 2) BFF 導向 Auth Server /authorize
+    BFF-->>U: 4. 302 Redirect -> AS /authorize?response_type=code&client_id=...&redirect_uri=...&scope=...&state=...&code_challenge=...&code_challenge_method=S256
+    U->>AS: 5. 瀏覽器前往 /authorize
+
+    %% 3) 使用者在 Auth Server 登入（帳密/MFA 都在這裡）
+    Note over U,AS: 6. 使用者在 Auth Server 登入頁輸入帳密 (+ 2FA 若有)
+    AS->>AS: 7. 驗證帳密/2FA/風控/鎖定等
+
+    %% 4) 授權成功，AS 帶 code 回到 BFF callback
+    AS-->>U: 8. 302 Redirect -> BFF /login/oauth2/code/portal?code=AUTH_CODE&state=...
+    U->>BFF: 9. GET /login/oauth2/code/portal?code=...&state=...
+
+    %% 5) BFF 用 code + PKCE 換 token
+    Note over BFF: 10. 驗證 state\n取出先前保存的 code_verifier
+    BFF->>AS: 11. POST /token (grant_type=authorization_code, code=..., redirect_uri=..., client_id=..., code_verifier=...)
+    AS-->>BFF: 12. 回傳 tokens\n(access_token + 可選 id_token + refresh_token)
+
+    %% 6) BFF 建立自己的 Session，回寫 Cookie 給瀏覽器
+    Note over BFF: 13. 建立/更新 Session\n(存 userId/roles/claims/過期時間/CSRF token 等)\n注意：token 留在 server-side(可選存放/快取)
+    BFF-->>U: 14. 302 Redirect -> SPA 首頁\n並 Set-Cookie: SESSION=...; HttpOnly; Secure; SameSite=Lax
+
+    %% 7) SPA 之後只帶 cookie 呼叫 BFF
+    U->>SPA: 15. 回到 SPA，顯示已登入
+    SPA->>BFF: 16. GET /api/me (自動帶上 SESSION cookie)
+    BFF-->>SPA: 17. 回登入者資訊(從 session 取)
+
+    %% 8) BFF 呼叫後端 BN（經 Gateway）
+    Note over BFF: 18. BFF 呼叫後端時\n使用 access_token (或 token exchange 後的 token)\n前端完全不接觸 token
+    BFF->>GW: 19. 呼叫後端 API (Authorization: Bearer <token>)
+    GW->>BN: 20. 轉送 (Bearer token)
+    BN->>BN: 21. 驗證 JWT / scope / audience / authorities
+    BN-->>GW: 22. 回應資料
+    GW-->>BFF: 23. 回應資料
+    BFF-->>SPA: 24. 回傳資料給前端

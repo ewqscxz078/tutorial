@@ -1,13 +1,13 @@
 https://foreachsam.github.io/book-util-apt/book/content/command/apt/apt-update/
 
 # 取得遠端更新伺服器的套件檔案清單
-	apt update
+	sudo apt update
 
 # 觀看有哪些套件需要更新
-	apt list --upgradable
+	sudo apt list --upgradable
 
 # 更新套件
-	apt upgrade
+	sudo apt upgrade
 
 # 說明：自動清除更新後用不到的舊版本檔案（例如舊的核心程式）
 # 備註：若不定時移除舊核心檔案，容易造成 /boot 空間不足，嚴重時將無法開機

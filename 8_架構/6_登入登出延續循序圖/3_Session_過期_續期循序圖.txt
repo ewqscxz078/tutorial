@@ -1,0 +1,42 @@
+2) Session 過期 / 續期（兩條路：可 refresh 就續，不能就重新登入）
+
+你會遇到：使用者放著不動一段時間，再點功能就 401/302。
+BFF 需要決定：偷偷幫他續期（refresh token）或 要求重新登入。
+
+sequenceDiagram
+  autonumber
+  actor U as 使用者(瀏覽器)
+  participant SPA as Portal-SPA
+  participant BFF as Portal-BFF
+  participant AS as Auth Server
+  participant GW as Gateway
+  participant BN as Portal-BN
+
+  U->>SPA: 1. 使用者點某功能
+  SPA->>BFF: 2. GET /api/feature (帶 SESSION cookie)
+
+  alt Session 還有效
+    BFF->>GW: 3. 呼叫後端 (Bearer access_token)
+    GW->>BN: 4. 轉送
+    BN-->>GW: 5. 回資料
+    GW-->>BFF: 6. 回資料
+    BFF-->>SPA: 7. 回資料
+  else Session 已過期 或 BFF 判定需續期
+    Note over BFF: 3'. Session 找不到/過期\n或 access_token 過期/將過期
+
+    alt BFF 有 refresh_token 且允許續期
+      BFF->>AS: 4'. POST /token (grant_type=refresh_token, refresh_token=...)
+      AS-->>BFF: 5'. 回新 access_token (可能也回新的 refresh_token)
+      Note over BFF: 6'. 更新 session 內容/過期時間\n(可做 refresh token rotation)
+      BFF->>GW: 7'. 重新呼叫後端 (Bearer new access_token)
+      GW->>BN: 8'. 轉送
+      BN-->>GW: 9'. 回資料
+      GW-->>BFF: 10'. 回資料
+      BFF-->>SPA: 11'. 回資料（對前端透明）
+    else 無 refresh_token 或 refresh 失敗（撤銷/過期/rotation 不符）
+      Note over BFF: 4''. 清 session + 清 cookie
+      BFF-->>U: 5''. 401 + 指示需重新登入\n或 302 Redirect 到 /login (看你 API 設計)
+      U->>SPA: 6''. SPA 顯示「登入逾時」並導向登入
+      SPA->>BFF: 7''. 重新走 OIDC Code+PKCE 登入流程(上一張圖)
+    end
+  end

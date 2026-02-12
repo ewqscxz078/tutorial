@@ -1,0 +1,10 @@
+https://foreachsam.github.io/book-util-apt/book/content/command/apt/apt-update/
+
+# 取得遠端更新伺服器的套件檔案清單
+	sudo apt update
+
+# tree
+	sudo apt install -y tree
+
+# nodejs npm
+	sudo apt install -y nodejs npm

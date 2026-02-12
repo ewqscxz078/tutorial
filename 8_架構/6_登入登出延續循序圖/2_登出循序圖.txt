@@ -1,0 +1,28 @@
+1) 登出流程（BFF 清 session + 需要時做 OIDC RP-initiated logout）
+
+sequenceDiagram
+  autonumber
+  actor U as 使用者(瀏覽器)
+  participant SPA as Portal-SPA
+  participant BFF as Portal-BFF
+  participant AS as Auth Server (OIDC)
+
+  Note over SPA,BFF: 前端只持有 SESSION cookie，不持有 token
+
+  U->>SPA: 1. 點「登出」
+  SPA->>BFF: 2. POST /logout (自動帶 SESSION cookie)
+
+  Note over BFF: 3. 使 session 失效(刪 session / invalidate)\n清除 server-side token/快取(若有)\n旋轉/撤銷 CSRF token(若有)
+
+  BFF-->>U: 4. Set-Cookie: SESSION=; Max-Age=0; HttpOnly; Secure; SameSite=Lax
+
+  alt 只做本地登出（常見、簡單）
+    BFF-->>U: 5. 302 Redirect -> SPA /login
+    U->>SPA: 6. 顯示已登出
+  else 同步登出 Auth Server（單一登入/跨系統 SSO 常需要）
+    Note over BFF,AS: 5'. RP-initiated logout\n(例如 end_session_endpoint)\n可帶 id_token_hint + post_logout_redirect_uri
+    BFF-->>U: 6'. 302 Redirect -> AS /logout?... 
+    U->>AS: 7'. 前往 AS 進行登出
+    AS-->>U: 8'. 302 Redirect -> SPA /login (或 BFF 再轉回 SPA)
+    U->>SPA: 9'. 顯示已登出
+  end

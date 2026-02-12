@@ -4,7 +4,8 @@ codex cli
 
 	安裝
 		Windows / Linux
-			npm install -g @openai/codex
+			windows 建議於 powershell cli 執行
+				npm install -g @openai/codex
 
 	安裝完成後可檢查版本
 		codex --version

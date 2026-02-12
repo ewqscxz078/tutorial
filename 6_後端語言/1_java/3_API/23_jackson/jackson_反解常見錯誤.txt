@@ -1,0 +1,74 @@
+Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `myclass` (no Creators, like default constructor, exist): cannot deserialize from Object value (no delegate- or property-based Creator)
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 12, column: 7] (through reference chain: myclass2["myclass"]->java.util.ArrayList[0])
+
+
+Jackson 在反序列化 JSON → myclass 物件時，找不到建構方式（constructor）來建立實體。
+
+Jackson 預設需要以下兩種方式之一來反序列化：
+
+	1.一個 public 無參數建構子（default constructor）
+
+	2.或是標記有 @JsonCreator 且參數有 @JsonProperty 的建構子
+
+		若 myclass 沒有提供上面其中一種方式，就會出現這個錯誤。
+		
+	3.不允許兩個以上 在 多個參數建構子 宣告 @JsonCreator 
+	
+
+	date
+		1.預設會將 java.util.Date 序列化為 timestamp（毫秒 long 值），反之亦然
+		
+
+備註
+	1.若有多個參數建構子方法
+		則僅需要有要 json 轉換用到的才需要宣告 @JsonCreator+ @JsonProperty
+		不需要全部都宣告到
+	2.若有父類別的多參數建構
+		| 類別              | 要加 `@JsonCreator` 和 `@JsonProperty` 嗎？ | 原因                    |
+		| ----------------- | -------------------------------------- | --------------------- |
+		| abstract 類別 `B` | ✅ 要                                    | Jackson 需要知道怎麼建構父類別欄位 |
+		| 子類別 `A`        | ✅ 要                                    | 若你使用建構子方式反序列化，必須明確標註  |
+
+
+🎯 行為規則（簡化版）：
+	如果 Jackson 發現某些屬性：
+
+	不是建構子參數（未被 @JsonProperty 使用）
+
+	但 class 有對應的 setter 或 public field
+
+	👉 那麼這些欄位會在建構完物件之後被「額外設定」
+
+	✅ 這被稱為：
+	🧩 "mixed mode creator + property injection"
+
+	1.Jackson 用建構子建立物件（a 和 b）
+
+	2.然後再找剩下沒處理的屬性（c）
+
+	3.發現有對應的 setter → 呼叫 setC()
+
+	⚠️ 但注意：這不是所有情況都可靠！
+		可能失敗的例子：
+		1.若 c 沒有 setter 且不是 public 欄位 → 就無法設值
+
+		2.若 c 是 final → 也無法再設值
+
+		3.若你用了一些特別設定（例如禁用 field access）→ 也可能失敗
+
+✅ 總結規則：
+	| 屬性類型                     | 建構子沒處理 | 有 setter 或 public field | 會被設值嗎？                    |
+	| ------------------------ | ------ | ----------------------- | ------------------------- |
+	| 普通欄位（非 final）            | ✅ 是    | ✅ 有                     | ✅ 會設值                     |
+	| final 欄位                 | ✅ 是    | ❌ 無法再設值                 | ❌ 不會設值                    |
+	| 無 setter 且非 public field | ✅ 是    | ❌                       | ❌ 不會設值（除非開啟 field access） |
+
+✅ 最後建議
+	✔️ 這個「建構子 + 剩下的自動設定」混合行為是 Jackson 的強大特性之一，但：
+
+	🟡 你仍應明確知道哪些欄位會從哪裡注入，避免混淆或未來維護困難。
+
+	| 類型             | 建議                                     |
+	| -------------- | -------------------------------------- |
+	| 想要全欄位透過建構子初始化  | ✅ 所有欄位都當參數 + `@JsonProperty`           |
+	| 想簡化建構子，部份欄位可後設 | ✅ 建構子處理必要欄位，其餘保留 setter，讓 Jackson 自動補設 |

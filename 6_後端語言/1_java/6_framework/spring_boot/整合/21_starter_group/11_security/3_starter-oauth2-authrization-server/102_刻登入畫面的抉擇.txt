@@ -1,0 +1,96 @@
+
+auth server
+	「刻畫面」有 4 種等級
+
+		🟢 等級 1：用 Spring Security 內建登入頁（最小可行）
+
+			如果你用的是 Spring Authorization Server：
+				直接用 Spring Security 的 預設 login page
+				幾乎不用寫前端
+				就是一個基本帳密表單
+
+			✅ 優點
+				* 最快
+				* 安全性正確
+				* 適合 POC / 內部系統
+
+			❌ 缺點
+				* 很醜
+				* 客製性低
+
+			👉 但：這是「完全正統」的 OIDC 做法
+	
+		🟢 等級 2：Auth Server 是 MVC + Thymeleaf（最常見）
+
+			這是很多企業最後會停在的方案：
+
+				* Auth Server 本身是 Spring Boot MVC
+				* 登入頁用 Thymeleaf / JSP
+				* 就幾頁：
+
+					* login
+					* 2FA
+					* error
+			auth-server
+			 ├─ controllers
+			 ├─ security
+			 └─ templates
+				 ├─ login.html
+				 ├─ mfa.html
+				 └─ error.html
+
+			✅ 優點
+
+				* 不用 SPA、不用 node、不用 npm
+
+				* 好維護
+
+				* 跟 Spring Security 整合最好
+
+			👉 這是「最平衡」的做法
+		
+		🟡 等級 3：Auth Server + 獨立 SPA（較重）
+			有些公司會這樣：
+				* Auth Server 提供 /authorize
+				* 登入畫面是一個 獨立 SPA（login-ui）
+				* 透過 cookie / redirect 跟 Auth Server 配合
+
+			✅ 優點
+				* UI 最漂亮
+				* 可重用
+
+			❌ 缺點
+				* 架構變重
+				* 安全邊界更複雜
+				* 你現在「不需要」
+
+		🔵 等級 4：完全不用你刻（外部 IdP）
+
+			如果你用：
+				* Keycloak
+				* Azure AD
+				* Okta
+				* Auth0
+
+			👉 登入畫面、帳密、2FA 通通不是你的事
+
+			你只要：
+				* 設 client
+				* 設 redirect URI
+				* 設 scope
+
+
+對照你的現況，哪個最適合？
+
+	從你目前的描述來看（Java / Spring / 自建 Auth Server / 想要可控）：
+
+	👉 我會強烈建議你選：
+
+		✅ 等級 2：Auth Server + Spring MVC + 簡單登入頁
+
+	理由：
+
+		* 不用再搞一個前端專案
+		* 不破壞 OIDC 正統模型
+		* 以後加 2FA / 鎖定 / SSO 都合理
+		* 不會污染 Portal-SPA / BFF 的責任
