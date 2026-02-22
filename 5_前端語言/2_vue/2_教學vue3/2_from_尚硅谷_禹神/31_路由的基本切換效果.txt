@@ -1,0 +1,227 @@
+ref https://www.youtube.com/watch?v=Q9ofn3NLhMQ&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=31
+
+1.導航區、展示區
+2.請來路由器
+3.制定路由的具體規則(什麼路徑、對應著什麼元件)
+4.形成 一個一個 ???.vue : Class.vue Subject.vue
+
+安裝路由器
+	npm i vue-router
+
+結構
+	1.main.ts 引用 router 元件
+	2.準備每個路由用的 vue 元件
+		components/a.vue
+		components/b.vue
+		components/c.vue
+	3.準備 路由器對應的每個路由 router/index.ts
+	4.App.vue 準備
+		導航區
+			用 RouterLink 元件輔助處理點擊處理
+		展示區
+			用 RouterView 元件輔助展示
+
+router/
+	index.ts
+	  // 創建一個路由器，並暴露出去
+
+	  // 第一步: 引入createRouter
+	  import {createRouter,createWebHistory} from 'vue-router'
+      // 引入要呈現的組件
+	  import Home from '@/components/Home.vue'
+	  import News from '@/components/News.vue'
+	  import About from '@/components/About.vue'
+
+	  // 第二步: 創建路由器
+	  const router = createRouter({
+	    history: createWebHistory(), // 路由器的工作模式(之後章節講解)
+		routers:[ // 每個路由規則
+		  {
+			path: '/home',
+			component: Home
+		  },
+		  {
+			path: '/news',
+			component: News
+		  },
+		  {
+			path: '/about',
+			component: About
+		  }
+		]
+	  })
+
+	  // 暴露 router
+	  export default router
+
+components/
+	About.vue
+	  <template>
+	    <div class="about">
+		  <h2>大家好，歡迎來到</h2>
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="About">
+	  </script>
+	  <style scoped>
+	    .about {
+		  dispaly: flex;
+		  justify-content: center;
+		  align-items: center;
+		  height: 100%
+		  color: rgb(85,84,84);
+		  font-size: 18px;
+		}
+	  </style>
+
+	Home.vue
+	  <template>
+	    <div class="home">
+		  <img src="http://...../../log.png" alt="">
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="Home">
+	  </script>
+	  <style scoped>
+	    .home{
+		  dispaly: flex;
+		  justify-content: center;
+		  align-items: center;
+		  height: 100%
+		}
+	  </style>
+
+	News.vue
+	  <template>
+	    <div class="news">
+		  <ul>
+		    <li><a href="#">新聞001</a></li>
+			<li><a href="#">新聞002</a></li>
+			<li><a href="#">新聞003</a></li>
+			<li><a href="#">新聞004</a></li>
+		  </ul>
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="News">
+	  </script>
+	  <style scoped>
+	    .news {
+		  padding: 0 20px;
+		  display: flex;
+		  justify-content: space-between;
+		  height: 100%
+		}
+		.news ul {
+		  margin-top: 30px;
+		  list-sytle: none;
+		  text-decroation: none;
+		  color: #64967E;
+		  text-shadow: 0 0 1px rgb(0, 84, 0);
+		}
+		.news-content {
+		  width: 70%;
+		  height: 90%;
+		  border: 1px solid;
+		  margin-top: 20px;
+		  border-radius: 10px;
+		}
+	  </style>
+
+
+
+main.ts
+  // 引入 createApp 用於創建應用
+  import {createApp} from 'vue'
+
+  // 引入 App 根元件
+  import App from './App.vue'
+  // 引入路由器
+  import router from './router'
+
+  // 創建一個應用
+  const app = createApp(App)
+  // 使用路由器
+  app.use(router)
+  // 掛載整個應用到app容器中
+  app.mount('#App')
+
+App.vue
+	<template>
+		<div class="app">
+		  <h2>Vue路由測試</h2>
+		  <!-- 導航區 -->
+		  <div class="navigate">
+		    <!-- <a href="#" class="active">首頁</a> -->
+		    <!-- <a href="#">新聞</a> -->
+		    <!-- <a href="#">關於</a> -->
+
+		    <RouterLink to="/home" active-class="active">首頁</a>
+		    <RouterLink to="/news" active-class="active">新聞</a>
+		    <RouterLink to="/about" active-class="active">關於</a>
+		  </div>
+
+		  <!-- 展示區 -->
+		  <div class ="main-content">
+		    // 此處以後可能要展示各種元件，到底展示哪個元件，需要看路徑
+            <RouterView></RouterView> // 路由採到的規則展現到這裡
+		  </div>
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  // RouterView 路由採到的規則展現到那裡用
+	  // RouterLink 路由點擊採到的動作
+	  import {RouterView,RouterLink} from 'vue-router'
+
+	</script>
+
+	<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+	  /* App */
+	  .title {
+		text-align: center;
+		word-spacing: 5px;
+		margin: 30px 0;
+		height: 70px;
+		line-height: 70px;
+		backaground-image: linear-gradient(45deg, gray, white);
+		border-radius: 10px;
+		box-shadow: 0 0 2px;
+		font-size: 30px;
+	  }
+	  .navigate {
+	    display: flex;
+		justifiy-content: space-around;
+		margin: 0 100px;
+	  }
+	  .navigate a {
+		display: block;
+		text-align: center;
+		width: 90px;
+		height: 40px;
+		line-height: 40px;
+		border-radius: 10px;
+		background-color: gray;
+		text-decoration: none;
+		coloer: white;
+		font-size: 18px;
+		letter-spacing: 5px;
+	  }
+	  .navigate a.active {
+	    background-color: #64967E;
+		color: #ffc268;
+		font-weight: 900;
+		text-shadow: 0 0 1px black;
+		font-family: 微軟雅黑;
+	  }
+	  .main-context {
+	    margin: 0 auto;
+		margin-top: 30px;
+		border-radius: 10px;
+		width: 90%;
+		height: 400px;
+		border: 1px solid;
+	  }
+	</style>

@@ -11,13 +11,13 @@ Jackson 預設需要以下兩種方式之一來反序列化：
 	2.或是標記有 @JsonCreator 且參數有 @JsonProperty 的建構子
 
 		若 myclass 沒有提供上面其中一種方式，就會出現這個錯誤。
-		
-	3.不允許兩個以上 在 多個參數建構子 宣告 @JsonCreator 
-	
+
+	3.不允許兩個以上 在 多個參數建構子 宣告 @JsonCreator
+
 
 	date
 		1.預設會將 java.util.Date 序列化為 timestamp（毫秒 long 值），反之亦然
-		
+
 
 備註
 	1.若有多個參數建構子方法

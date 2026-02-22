@@ -1,0 +1,104 @@
+ref https://www.youtube.com/watch?v=PnJXrVdbXOw&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=25
+
+父子組件如何傳遞物件與屬性，透過 props
+
+types/index.ts
+	// 定義介面，用於限制 person 具體屬性
+	export interface PersonInter {
+	  id:string,
+	  name:string,
+	  age:number,
+	  x?:number // 可選式屬性
+	}
+
+	// 自訂義類型
+	export type Persons = Array<PersonInter>
+
+Person.vue
+		<template>
+		  <div class="person">
+		    // <h2>{{a}}</h2>
+			// <h2>{{list}}</h2>
+			<ul>
+			  <li v-for="p in list" :key="p.id">{{p.name}} -- {{p.age}}</li>
+			</ul>
+
+			// 次要寫法但不建議
+			<ul>
+			  <li v-for="(p,index) in list" :key="index">{{p.name}} -- {{p.age}}</li>
+			</ul>
+
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { type Persons } from '@types' // @代表從 src下看路徑
+			import { defineProps,withDefautls } from 'vue'
+
+			// defineProps、defineExpose 其實可以不用引入，屬於預設載入
+
+			// 接收 a,list，一般使用方式
+			// defineProps(['a', 'list'])
+			// comsole.log(a) 打印不行
+
+			// 只接收 list
+			// defineProps([ 'list' ])
+
+			// 只接收 list + 限制類型
+			// defineProps<{list:Persons}>()
+
+			// 只接收 list + 限制類型 + 限制必要性 + 指定默認值
+			withDefautls(defineProps<{list?:Persons}>(),{
+			  list:() => [{id:'sdfsa01',name='康師父',age:19}]
+			})
+
+			// 接收 a，並將props 保存起來
+			// let x = defineProps(['a','list'])
+			// comsole.log(x)
+
+
+		</script>
+
+
+
+		<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+
+App.vue
+	<template
+	    <!-- 務必看懂下面這行寫法 -->
+	    <h2 a='1+1' :b="1+1" c="x" :d="x" ref="qwe">測試</h2>
+		<Person a='哈哈' b='嘿嘿' :list='personList' />
+
+		<Person a='哈哈' :list='5' /> // 若元件有限制會爆紅
+
+	</template>
+
+	<script lang='ts' setup>
+	  import Person from './compoents/Preson.vue'
+	  import { reactive } from 'vue'
+	  import { type Persons } from '@types'
+
+	  let x = 9
+
+	  let presonList = reactive<Persons>([
+	    {id:'sdfsdf01', name:'張三',age:18},
+	    {id:'sdfsdf02', name:'李四',age:20},
+	    {id:'sdfsdf03', name:'王五',age:22,x:9}
+	  ])
+
+	  console.log(presonList)
+
+	</script>

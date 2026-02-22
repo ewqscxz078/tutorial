@@ -1,0 +1,127 @@
+ref https://www.youtube.com/watch?v=NRNPul3op3w&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=27
+
+人的生命週期
+	時刻			要做的事
+	出生			哭
+	經歷			哭、笑
+	死亡			遺囑
+
+vue 元件生命週期
+	時刻				呼叫特定的函數
+	創建: 創建 vue 元件
+		創建前			beforeCreate
+		創建後			created
+	掛載: 元件掛到瀏覽器 dom 上
+		掛載前			beforeMount
+		掛載後			mounted
+	更新
+		更新前			beforeUpdate
+		更新後			updated
+	銷毀
+		銷毀前			beforeDestroy
+		銷毀後			destroyed
+
+Person.vue
+		<template>
+			<div>
+				<h2>當前求和為: {{ sum }}</h2>
+				<button @click=add>點我sum+1</button>
+			</div>
+		</template>
+
+		<script >
+
+		  export default {
+		    /* eslint-disable */
+			name: 'Person',
+			// 資料
+			data(){
+				return {
+					sum:1
+				}
+			},
+			// 方法
+			methods:{
+			  add(){
+				this.sum += 1
+			  }
+			},
+			beforeCreate(){
+			  console.log('創建前')
+			}
+			created(){
+			  console.log('創建後')
+			},
+			beforeMount(){
+			  console.log('掛載後')
+			  // debugger; // 畫面會停在對應期間
+			},
+			mounted(){
+			  console.log('掛載後')
+			}
+			beforeUpdate(){
+			  console.log('更新前')
+			}
+			updated(){
+			  console.log('更新後')
+			}
+			beforeDestroy(){
+			  console.log('更新前')
+			}
+			destroyed(){
+			  console.log('更新後')
+			}
+
+		  }
+
+		</script>
+
+		<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+
+App.vue
+	<template>
+		<Person v-if="isShow"/>
+		<Person v-show="isShow"/>
+	</template>
+
+	<script lang='ts' >
+	  import Person from './components/Person.vue'
+	  export default {
+		name: 'App'
+		components:{Person},
+		data(){
+		  return {
+		    isShow:true
+		  }
+		}
+	  }
+
+	</script>
+
+	<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+	  person {
+		background-color: skyblue;
+		box-shadow: 0 0 10px;
+		border-radius: 10px;
+		padding: 20px;
+	  }
+	  button {
+	   margin: 0 5px;
+	  }
+	  li {
+		font-size: 20px
+	  }
+	</style>

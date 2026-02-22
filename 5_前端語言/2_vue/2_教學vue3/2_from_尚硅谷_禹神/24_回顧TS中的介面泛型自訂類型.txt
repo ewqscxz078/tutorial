@@ -1,0 +1,90 @@
+ref https://www.youtube.com/watch?v=arbss5QLwjY&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=24
+
+
+types/index.ts
+	// 定義介面，用於限制 person 具體屬性
+	export interface PersonInter {
+	  id:string,
+	  name:string,
+	  age:number
+	}
+
+	export const a = 10
+
+	// 暴露介面方式有三種
+	// 1.默認暴露
+	// 2.分別暴露
+		使用 export
+	// 3.統一暴露
+
+	// 自訂義類型
+	// 寫法1
+	export type Persons = Array<PersonInter>
+	// 寫法2
+	export type Persons = PersonInter[]
+
+Person.vue
+		<template>
+		  <div class="person">
+		    ???
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { ref } from 'vue'
+			import { a, type PersonInter, Persons } from '@types' // @代表從 src下看路徑
+
+			// import { PersonInter } from '@types'
+			// console.log(PersonInter) 使用上一行方式打印會出錯，PersonInter 是個規範是個約束，需要加 type
+			console.log(a); // 是具體值可以打印
+
+			// 資料
+			// let person = {id:'sdfsdf', name:'張三',age:60}
+			// js 問題
+			// 1.呼叫person的屬性打錯沒有提示
+			// 2.person傳給不同元件後，person.之後不會有提示
+
+			// let person:PersonInter = {id:'sdfsdf', nmae:'張三',age:60} // 打錯屬性名字會爆錯
+			let personList:Array<PersonInter> = [
+			  {id:'sdfsdf', name:'張三',age:60},
+			  {id:'sdfsdf', name:'李四',age:18},
+			  {id:'sdfsdf', name:'王五',age:5}
+			]
+
+			// 更進階的寫法
+			let personList:Persons = [
+			  {id:'sdfsdf', name:'張三',age:60},
+			  {id:'sdfsdf', name:'李四',age:18},
+			  {id:'sdfsdf', name:'王五',age:5}
+			]
+
+		</script>
+
+
+
+		<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+
+App.vue
+	<template>
+		<Person ref='ren' />
+
+	</template>
+
+	<script lang='ts' setup>
+	  import Person from './compoents/Preson.vue'
+
+
+	</script>

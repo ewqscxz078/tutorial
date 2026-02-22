@@ -1,4 +1,4 @@
-ref https://www.youtube.com/watch?v=ZrRv5Q4zJxE&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=21
+ref https://www.youtube.com/watch?v=EZlN-rjN_Bo&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=22
 
 作用:
 	官網: 立即運行一個函數，同時響應式地追蹤其依賴，並在依賴更改時重新執行該函數

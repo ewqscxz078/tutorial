@@ -1,0 +1,139 @@
+ref https://www.youtube.com/watch?v=49b150tKIUc&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=29
+
+hooks
+	1.讓功能的 資料、方法放在一起(封裝、模組化)
+	2.命名有講究如 useDog、useTeacher
+	3.才發揮出 vue3 組合式寫法威力
+
+hooks\useDog.ts
+  import {reactive,onMounted} from 'vue'
+  // npm i axios
+  import axios from 'axios'
+
+  export default function(){
+	// 資料
+	let dogList = reactive({
+	  'https://images.dog.ceo/..../xxx.jpg'
+	})
+
+	// 方法
+	async function getDog(){
+	  try{
+		let resutl = await axios.get('https://images.dog.ceo/..../random.jpg')
+		// console.log(result.data.message)
+
+		dogList.push(result.data.message)
+	  } catch(error) {
+	    alert(error)
+	    // 建議使用 axios 專門的攔截器處理例外
+	  }
+    }
+
+	// 鉤子
+	onMounted(()=>{
+	  getDog()
+	})
+
+	// 向外提供東西
+	return {dogList,getDog}
+  }
+
+hooks\useSum.ts
+	import {ref,onMounted,computed} from 'vue'
+	// npm i axios
+	import axios from 'axios'
+
+	export default function(){
+	  // 資料
+	  let sum = ref(0)
+	  let bigSum = computed(()=>{
+	     return sum.value * 10
+	  }
+
+	  // 方法
+	  function add(){
+		sum.value += 1
+	  }
+
+	  // 鉤子
+	  onMounted(()=>{
+	    add()
+	  })
+
+	  // 向外提供東西
+	  return {sum,add,bigSum}
+	}
+
+Person.vue
+		<template>
+			<div>
+				<h2>當前求和為: {{ sum }}, 放大十倍後: {{ bigSum }}</h2>
+				<button @click=add>點我sum+1</button>
+				<hr>
+				<img v-for="(dog,index) indogList" :src="log" :key="index">
+				<br>
+				<button @click="getDog"></button>
+			</div>
+		</template>
+
+		<script lange='ts' setup>
+		  import useSum from '@/hooks/useSum'
+		  import useDog from '@/hooks/useDog'
+
+		  const {sum,add,bigSum} = useSum()
+		  const {dogList,getDog} = useDog()
+		</script>
+
+		<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px;
+		  }
+
+		  image {
+		    height: 100px;
+			margin-right: 10px;
+		  }
+
+		</style>
+
+App.vue
+	<template>
+		<Person v-if="isShow"/>
+		<Person v-show="isShow"/>
+	</template>
+
+	<script lang='ts' >
+	  import Person from './components/Person.vue'
+	  import {ref} from 'vue'
+
+	  let isShow = ref(true)
+
+	  onBeforeMount(()=>{
+		console.log('父---掛載前')
+	  })
+
+	</script>
+
+	<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+	  person {
+		background-color: skyblue;
+		box-shadow: 0 0 10px;
+		border-radius: 10px;
+		padding: 20px;
+	  }
+	  button {
+	   margin: 0 5px;
+	  }
+	  li {
+		font-size: 20px
+	  }
+	</style>

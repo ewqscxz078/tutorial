@@ -1,0 +1,80 @@
+ref https://www.youtube.com/watch?v=40mG6pYE3rw&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=23
+
+作用:
+	用於註冊模板引用
+	* 用在普通 dom 標籤上，獲取的是 dom 節點
+	* 用在元件標籤上，獲取的是元件實例對象
+	1. html 上的 ref ，具有區隔範圍的意思
+	2. 自訂元件 上的 ref，具有區隔範圍的意思 + 若要看到元件裡的而外資訊需要元件有用 defineExpose 暴露出指定的屬性
+
+Person.vue
+		<template>
+		  <div class="person">
+		    <h1>中國</h1>
+			<h2 ref="title">北京</h2>
+			<h3>尚硅谷</h3>
+			<button @click="showLog">點我輸出h2這個元素</button>
+
+		  </div>
+		</template>
+
+		<script lang="ts" setup>
+			import { ref, defineExpose } from 'vue'
+
+			// 資料
+			// 建立 title, 用於儲存ref 標記的內容
+			let title2 = ref();
+			let a = ref(0)
+			let b = ref(1)
+			let c = ref(2)
+
+
+			// 方法
+			function showLog(){
+			  //console.log(document.getElementById('title2'))
+			  console.log(title2.value)
+			}
+
+			defineExpose(a,b,c) // 將 元件裡的屬性往外可引用
+		</script>
+
+
+
+		<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+
+App.vue
+	<template>
+		<h2 ref="title2">你好</h2>
+		<button @click'showLog'>點我輸出h2<button>
+		<Person ref='ren' />
+
+	</template>
+
+	<script lang='ts' setup>
+	  import Person from './compoents/Preson.vue'
+
+	  import { ref } from 'vue'
+
+      let title2 = ref();
+	  let ren =ref()
+
+      // 方法
+      function showLog(){
+        //console.log(title2.value)
+		console.log(ren.value) // 組件有  defineExpose 才會看到暴露的東西
+      }
+
+	</script>

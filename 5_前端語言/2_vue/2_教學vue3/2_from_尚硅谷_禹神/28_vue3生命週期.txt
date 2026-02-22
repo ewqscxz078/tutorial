@@ -1,0 +1,124 @@
+ref https://www.youtube.com/watch?v=MGwG6wNrgw8&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=28
+
+
+通常是子元件先執行生命週期才是父元件
+
+概念: vue 元件實力在創建時要經歷一系列的初始化步驟，在此過程中Vue 會在合適的時機，調用特定的函數
+  ，從而讓開發者有機會在特定階段運行自己的代碼，這些特定的函數統稱為: 生命週期鉤子
+
+規律:
+	生命週期整體分為四個階段，分別是:創建、掛載、更新、銷毀，每個階段都有兩個鉤子，醫前一後
+
+vue2 的生命週期
+
+	創建階段: beforeCreate, created
+	掛載階段: beforeMount, mounted
+	更新階段: beforeUpdate, updated
+	銷毀階段: beforeDestroy, destroyed
+
+vue3 的生命週期
+
+	創建階段: setup
+	掛載階段: onBeforeMount, onMounted
+	更新階段: onBeforeUpdate, onUpdated
+	卸載階段: onBeforeUnmount, onUnmounted
+
+	常用的鉤子: onMounted(掛載完畢)、onUpdated(更新完畢)、		onBeforeUnmount(卸載之前)
+				出生後要做點事情	 畢業、大日子要做點什麼		死亡前要左點事情
+
+Person.vue
+		<template>
+			<div>
+				<h2>當前求和為: {{ sum }}</h2>
+				<button @click=add>點我sum+1</button>
+			</div>
+		</template>
+
+		<script lange='ts' setup>
+		  import {ref,onBeforeMount,onMounted,onBeforeUpdate,onUpdated,onBeforeUnmount,onUumounted} from 'vue'
+
+		  // 資料
+		  let sum = ref(0)
+
+		  // 方法
+		  function add(){
+				sum.value += 1
+			  }
+		  }
+
+		  // 創建
+		  console.log('創建後')
+
+		  // 掛載
+		  onBeforeMount(()=>{
+		    console.log('掛載前')
+		  })
+		  onMounted(()=>{
+		    console.log('掛載後')
+		  })
+		  // 更新
+		  onBeforeUpdate(()=>{
+		    console.log('更新前')
+		  })
+		  onUpdated(()=>{
+		    console.log('更新後')
+		  })
+
+		  // 卸載
+		  onBeforeUnmount(()=>{
+		    console.log('卸載前')
+		  })
+		  onUumounted(()=>{
+		    console.log('卸載後')
+		  })
+
+
+		</script>
+
+		<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+		  person {
+		    background-color: skyblue;
+			box-shadow: 0 0 10px;
+			border-radius: 10px;
+			padding: 20px;
+ 		  }
+		  button {
+		   margin: 0 5px;
+		  }
+		  li {
+		    font-size: 20px
+		  }
+		</style>
+
+App.vue
+	<template>
+		<Person v-if="isShow"/>
+		<Person v-show="isShow"/>
+	</template>
+
+	<script lang='ts' >
+	  import Person from './components/Person.vue'
+	  import {ref} from 'vue'
+
+	  let isShow = ref(true)
+
+	  onBeforeMount(()=>{
+		console.log('父---掛載前')
+	  })
+
+	</script>
+
+	<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+	  person {
+		background-color: skyblue;
+		box-shadow: 0 0 10px;
+		border-radius: 10px;
+		padding: 20px;
+	  }
+	  button {
+	   margin: 0 5px;
+	  }
+	  li {
+		font-size: 20px
+	  }
+	</style>

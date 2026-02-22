@@ -19,7 +19,7 @@ auth server
 				* 客製性低
 
 			👉 但：這是「完全正統」的 OIDC 做法
-	
+
 		🟢 等級 2：Auth Server 是 MVC + Thymeleaf（最常見）
 
 			這是很多企業最後會停在的方案：
@@ -48,7 +48,7 @@ auth server
 				* 跟 Spring Security 整合最好
 
 			👉 這是「最平衡」的做法
-		
+
 		🟡 等級 3：Auth Server + 獨立 SPA（較重）
 			有些公司會這樣：
 				* Auth Server 提供 /authorize

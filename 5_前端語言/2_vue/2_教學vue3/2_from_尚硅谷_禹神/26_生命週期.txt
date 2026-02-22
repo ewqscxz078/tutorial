@@ -1,0 +1,14 @@
+ref https://www.youtube.com/watch?v=1AKiLYFRpF0&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=26
+
+人的生命週期
+	時刻			要做的事
+	出生			哭
+	經歷			哭、笑
+	死亡			遺囑
+
+vue 元件生命週期
+	時刻				呼叫特定的函數
+	出生 : 	創建			created
+	經歷 : 	掛載			mounted
+			更新			updated
+	死亡 : 	銷毀

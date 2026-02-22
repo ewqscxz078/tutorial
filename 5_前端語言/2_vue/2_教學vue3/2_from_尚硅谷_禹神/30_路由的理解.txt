@@ -1,0 +1,15 @@
+ref https://www.youtube.com/watch?v=whrgiZH5wvA&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=30
+
+路由器 : router
+	1.路由就是一組 key-value 的對應關係
+	2.多個路由，需要經過路由器的管理
+
+前端角度的路由 : 對應關係
+	key1 + value1 = 路由 route
+	key2 + value2 = 路由 route
+	key3 + value3 = 路由 route
+	key4 + value4 = 路由 route
+
+	路由規則:
+		/class => xxx 元件
+		/subject => yyy 元件
