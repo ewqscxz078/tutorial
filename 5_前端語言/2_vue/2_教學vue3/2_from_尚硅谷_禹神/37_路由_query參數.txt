@@ -1,0 +1,297 @@
+ref https://www.youtube.com/watch?v=3Srs6dCP78s&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=37
+
+
+1.路由 query 參數
+
+router/
+	index.ts
+	  // 創建一個路由器，並暴露出去
+
+	  // 第一步: 引入createRouter
+	  import {createRouter,createWebHistory,createWebHashHistory} from 'vue-router'
+      // 引入要呈現的組件
+	  import Home from '@/pages/Home.vue'
+	  import News from '@/pages/News.vue'
+	  import About from '@/pages/About.vue'
+	  import Detail from '@/pages/Detail.vue'
+
+	  // 第二步: 創建路由器
+	  const router = createRouter({
+	    history: createWebHashHistory(), // 路由器的工作模式(之後章節講解)
+		routers:[ // 每個路由規則
+		  {
+		    name: 'nhuye',
+			path: '/home',
+			component: Home
+		  },
+		  {
+		    name: 'xinwen',
+			path: '/news',
+			component: News,
+			children:[
+			  {
+			    name:'xiang',
+			    path:'detail',
+				component:Detail
+			  }
+			]
+		  },
+		  {
+		    name: 'guanyu',
+			path: '/about',
+			component: About
+		  }
+		]
+	  })
+
+	  // 暴露 router
+	  export default router
+
+pages/
+	About.vue
+	  <template>
+	    <div class="about">
+		  <h2>大家好，歡迎來到</h2>
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="About">
+	  </script>
+	  <style scoped>
+	    .about {
+		  dispaly: flex;
+		  justify-content: center;
+		  align-items: center;
+		  height: 100%
+		  color: rgb(85,84,84);
+		  font-size: 18px;
+		}
+	  </style>
+
+	Home.vue
+	  <template>
+	    <div class="home">
+		  <img src="http://...../../log.png" alt="">
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="Home">
+	  </script>
+	  <style scoped>
+	    .home{
+		  dispaly: flex;
+		  justify-content: center;
+		  align-items: center;
+		  height: 100%
+		}
+	  </style>
+
+	News.vue
+	  <template>
+	    <div class="news">
+		  <!-- 導航區 -->
+		  <ul>
+		    <li v-for="news in newsList" :key="news.id">
+			  <!-- 第一種寫法 -->
+			  <RouterView :to="`/news/detail?id=${news.id}&title=${news.title}&content=${news.content}`">{{news.title}}</RouterView>
+
+			  <!-- 第二種寫法 -->
+			  <RouterView
+			    :to="{
+				  path:'/xiang/detail',
+				  query:{
+				    id:news.id,
+					title:new.title,
+					content:news.content
+				  }
+				}"
+			  >
+
+
+			    {{news.title}}
+			  </RouterView>
+			</li>
+		  </ul>
+
+		  <!-- 展示區 -->
+		  <div class="news-content">
+		    <RouterView></RouterView>
+		  </div>
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="News">
+	    import { reactive } from 'vue'
+		import { RouterView } from 'vue-router'
+		// 資料
+		const newsList = reactive([
+		  {id:'dfsd01', title:'很好的抗癌食物', content: '稀蘭花' },
+		  {id:'dfsd02', title:'如何一夜暴富', content: '學IT' },
+		  {id:'dfsd03', title:'震驚，萬萬沒想到', content: '明天是周一' },
+		  {id:'dfsd04', title:'好消息', content: '快過年了' }
+		])
+	  </script>
+	  <style scoped>
+	    .news {
+		  padding: 0 20px;
+		  display: flex;
+		  justify-content: space-between;
+		  height: 100%
+		}
+		.news ul {
+		  margin-top: 30px;
+		  /* list-sytle: none; */
+		  text-decroation: none;
+		  color: #64967E;
+		  text-shadow: 0 0 1px rgb(0, 84, 0);
+		}
+		.news-content {
+		  width: 70%;
+		  height: 90%;
+		  border: 1px solid;
+		  margin-top: 20px;
+		  border-radius: 10px;
+		}
+	  </style>
+
+	Detail.vue
+	  <template>
+	    <div class="news-list">
+		  <ul>
+		    <li>編號:{{query.id}}</li>
+			<li>標題:{{query.title}}</li>
+			<li>內容:{{query.content}}</li>
+		    <li>編號:{{route.query.id}}</li>
+			<li>標題:{{route.query.title}}</li>
+			<li>內容:{{route.query.content}}</li>
+		  </ul>
+		</div>
+	  </template>
+
+	  <script setup lang="ts">
+	    import {useRoute} from 'vue-router'
+
+		let route = useRoute()
+		// console.log('@',route)
+		// 響應式解構到另外的變數，則該變數會丟失響應式
+		// 需要用 toRefs 讓被指派的變數也變成響應式
+		let {query} = toRefs(route)
+
+	  </script>
+	  <style scoped>
+	    .news {
+		  padding: 0 20px;
+		  display: flex;
+		  justify-content: space-between;
+		  height: 100%
+		}
+		.news ul {
+		  margin-top: 30px;
+		  list-sytle: none;
+		  text-decroation: none;
+		  color: #64967E;
+		  text-shadow: 0 0 1px rgb(0, 84, 0);
+		}
+		.news-content {
+		  width: 70%;
+		  height: 90%;
+		  border: 1px solid;
+		  margin-top: 20px;
+		  border-radius: 10px;
+		}
+	  </style>
+
+
+main.ts
+  // 引入 createApp 用於創建應用
+  import {createApp} from 'vue'
+
+  // 引入 App 根元件
+  import App from './App.vue'
+  // 引入路由器
+  import router from './router'
+
+  // 創建一個應用
+  const app = createApp(App)
+  // 使用路由器
+  app.use(router)
+  // 掛載整個應用到app容器中
+  app.mount('#App')
+
+App.vue
+	<template>
+		<div class="app">
+		  <h2>Vue路由測試</h2>
+		  <!-- 導航區 -->
+		  <div class="navigate">
+		    <!-- <a href="#" class="active">首頁</a> -->
+		    <!-- <a href="#">新聞</a> -->
+		    <!-- <a href="#">關於</a> -->
+
+		    <RouterLink to="/home" active-class="active">首頁</a>
+		    <RouterLink to="/news" active-class="active">新聞</a>
+		    <RouterLink :to="{path:'/about'}" active-class="active">關於</a>
+		  </div>
+
+		  <!-- 展示區 -->
+		  <div class ="main-content">
+		    // 此處以後可能要展示各種元件，到底展示哪個元件，需要看路徑
+            <RouterView></RouterView> // 路由採到的規則展現到這裡
+		  </div>
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  // RouterView 路由採到的規則展現到那裡用
+	  // RouterLink 路由點擊採到的動作
+	  import {RouterView,RouterLink} from 'vue-router'
+
+	</script>
+
+	<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+	  /* App */
+	  .title {
+		text-align: center;
+		word-spacing: 5px;
+		margin: 30px 0;
+		height: 70px;
+		line-height: 70px;
+		backaground-image: linear-gradient(45deg, gray, white);
+		border-radius: 10px;
+		box-shadow: 0 0 2px;
+		font-size: 30px;
+	  }
+	  .navigate {
+	    display: flex;
+		justifiy-content: space-around;
+		margin: 0 100px;
+	  }
+	  .navigate a {
+		display: block;
+		text-align: center;
+		width: 90px;
+		height: 40px;
+		line-height: 40px;
+		border-radius: 10px;
+		background-color: gray;
+		text-decoration: none;
+		coloer: white;
+		font-size: 18px;
+		letter-spacing: 5px;
+	  }
+	  .navigate a.active {
+	    background-color: #64967E;
+		color: #ffc268;
+		font-weight: 900;
+		text-shadow: 0 0 1px black;
+		font-family: 微軟雅黑;
+	  }
+	  .main-context {
+	    margin: 0 auto;
+		margin-top: 30px;
+		border-radius: 10px;
+		width: 90%;
+		height: 400px;
+		border: 1px solid;
+	  }
+	</style>

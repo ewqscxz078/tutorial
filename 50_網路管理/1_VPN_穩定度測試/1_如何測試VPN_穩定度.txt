@@ -1,0 +1,210 @@
+ref ChatGPT
+
+情境:
+	企業內環境無網路環境用 forticlient vpn 連線到某外部開發區，
+	企業管網路的管理人告知 vpn 相關設定後有連線到，但發現本地傳大檔案到 vpn 區時，
+	很容易 forticlient vpn 斷線，後來告知改成 封包每秒8000後，
+	看起來就比較穩了 後來網路管理人說 設定太大改成 封包每秒4000，
+	並告知我可以測試看看，
+	除了傳大檔案測試外還有什麼建議測試的?
+
+
+典型：
+	VPN 在大流量 / 大量封包時容易斷線 → 調整 PPS（packets per second）後變穩定。
+
+建議:
+	不要只用「傳大檔案」，做多維度測試，
+	因為 VPN 斷線往往與「封包特性」比與「純流量大小」更相關
+
+
+✅ 建議測試面向（比只傳大檔更有代表性）
+	① 穩定性測試（Idle / 長連線）
+
+		VPN 有些問題出在 Keepalive / Session timeout
+
+		測法：
+
+			* 連上 VPN 後完全不操作
+
+			* 放置 30–60 分鐘
+
+			* 觀察是否自動斷線
+
+		👉 可檢查：
+
+			* Idle timeout
+
+			* NAT keepalive 問題
+
+			* Dead Peer Detection (DPD)
+
+	② 持續小流量測試（Low bandwidth / long duration）
+
+		測法：
+			ping <vpn內IP> -t        # Windows
+			ping <vpn內IP>           # Linux/macOS
+
+		觀察：
+
+			* 是否出現 Request timeout
+
+			* RTT 是否突然飆高
+
+			* 是否在幾分鐘後 VPN 重連
+
+		👉 可看出：
+
+			* Tunnel 穩定性
+
+			* 封包遺失
+
+			* 抖動 (jitter)
+
+	③ 高 PPS 壓力測試（不是高頻寬）
+		VPN 常在「大量小封包」下崩潰，而不是大吞吐量。
+
+		建議工具：
+
+			* iperf3
+
+			* 或多執行緒 ping
+
+		例：
+			iperf3 -c <server> -u -b 10M
+			iperf3 -c <server> -P 5
+
+		👉 測試：
+
+			多連線是否導致 VPN reset
+
+			4000 PPS 是否比 8000 PPS 容易觸發不穩
+
+	④ 大流量測試（Throughput / Bulk transfer）
+		建議加上：
+
+			* 單大檔（例如 5GB）
+
+			* 多中檔（例如 50 × 100MB）
+
+			* SCP / SFTP / SMB 各測一次
+
+		👉 因為：
+			不同協定 → 封包行為不同
+
+
+	⑤ 延遲與抖動測試（Latency / Jitter）
+
+		ping <vpn內IP> -n 100
+			觀察：
+
+				* 平均 RTT
+
+				* 最大 RTT
+
+				* 是否有 spike（例如 10ms → 200ms）
+
+			👉 PPS 太高有時會造成：
+
+				* Queueing
+
+				* CPU overload（FortiGate / Client）
+
+	⑥ 封包遺失率測試（Packet loss）
+
+		ping <vpn內IP> -n 500
+
+		👉 VPN 設定不佳時會看到：
+
+			0% → 正常
+
+			1–3% → 可能不穩
+
+			5% → 明顯異常
+
+
+	⑦ 多工測試（Real world usage 模擬）
+		同時做：
+
+			✔ 傳檔案
+			✔ SSH / RDP
+			✔ Web / API call
+
+		👉 檢查：
+
+			* 是否某種流量觸發斷線
+
+			* QoS / shaping 問題
+
+✅ 建議比較方式（4000 vs 8000 PPS）
+	| 指標                 | 看什麼                  |
+	| -------------------- | ----------------------- |
+	| VPN 是否斷線         | 最重要                  |
+	| RTT 穩定度           | 是否 jitter 明顯        |
+	| Packet loss          | 是否增加                |
+	| CPU 使用率（若可看） | FortiClient / Gateway   |
+	| 重傳率（iperf 可看） | Tunnel 品質             |
+
+⚠️ 特別提醒（VPN 大檔常見問題）
+
+	🔸 1. MTU / Fragmentation
+
+		VPN 常因為 MTU 不匹配導致：
+			✔ 慢
+			✔ 重傳多
+			✔ 偶發斷線
+		可測：
+			ping <vpn IP> -f -l 1472   # Windows (測最大不分片)
+			若失敗 → MTU 過大
+
+	🔸 2. 小封包過多（PPS 爆）
+		像：
+
+			✔ Git clone
+			✔ Maven build
+			✔ rsync
+			✔ DB sync
+
+		👉 這些比傳 ISO 更容易炸 VPN
+
+
+	🔸 3. Client / Gateway CPU 滿載
+		PPS 提高時：
+
+			✔ 頻寬可能沒滿
+			✔ 但 CPU 滿了 → Tunnel reset
+
+✅ 實務建議測試組合（簡單版）
+
+	如果你要快速給網管回饋：
+
+	1.Idle 30 分鐘
+	2.ping 500 次
+	3.iperf3 測 TCP + 多連線
+	4.傳 1GB 檔
+	5.同時 SCP + SSH 操作
+
+	各做一次：
+		✔ 4000 PPS
+		✔ 8000 PPS
+
+
+🎯 若 4000 PPS 出現問題可回報重點
+
+	👉 不要只說「比較不穩」，而是：
+
+		✔ 多久斷線
+		✔ 做什麼動作斷線
+		✔ RTT / loss 數據
+		✔ 是否只在大流量發生
+
+	這樣網管才能調：
+
+		QoS / shaping
+
+		DPD / keepalive
+
+		MTU
+
+		IPSec vs SSL VPN tuning
+
+		Session table / CPU
