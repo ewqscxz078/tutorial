@@ -1,0 +1,310 @@
+ref https://www.youtube.com/watch?v=yDDrZcgIJFo&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=39
+
+
+1.路由 props 配置
+  作用: 讓路由元件更方便的收到參數(可以將路由參數作為 props 傳給元件)
+
+
+router/
+	index.ts
+	  // 創建一個路由器，並暴露出去
+
+	  // 第一步: 引入createRouter
+	  import {createRouter,createWebHistory,createWebHashHistory} from 'vue-router'
+      // 引入要呈現的組件
+	  import Home from '@/pages/Home.vue'
+	  import News from '@/pages/News.vue'
+	  import About from '@/pages/About.vue'
+	  import Detail from '@/pages/Detail.vue'
+
+	  // 第二步: 創建路由器
+	  const router = createRouter({
+	    history: createWebHashHistory(), // 路由器的工作模式(之後章節講解)
+		routers:[ // 每個路由規則
+		  {
+		    name: 'nhuye',
+			path: '/home',
+			component: Home
+		  },
+		  {
+		    name: 'xinwen',
+			path: '/news',
+			component: News,
+			children:[
+			  {
+			    name:'xiang',
+			    path:'detail/:id/:title/:content?',
+				component:Detail,
+
+				// 常用
+				// 第一種寫法: 將所有收到的所有params參數作為 props 傳給路由元件
+				// props:true
+
+				// 常用
+				// 第二種寫法: 函數寫法，可以自己決定將什麼作為 props 給路由元件
+				// 以下以 query 參數演示
+				/* props(route){
+				  console.log('~~~~',route)
+				  return route.query
+				} */
+
+				// 第三種寫法: 物件寫法，可以自己決定將什麼作為 props 給路由元件
+				/* props:{
+				  a:100,
+				  b:100,
+				  c:100
+				} */
+
+			  }
+			]
+		  },
+		  {
+		    name: 'guanyu',
+			path: '/about',
+			component: About
+		  }
+		]
+	  })
+
+	  // 暴露 router
+	  export default router
+
+pages/
+	About.vue
+	  <template>
+	    <div class="about">
+		  <h2>大家好，歡迎來到</h2>
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="About">
+	  </script>
+	  <style scoped>
+	    .about {
+		  dispaly: flex;
+		  justify-content: center;
+		  align-items: center;
+		  height: 100%
+		  color: rgb(85,84,84);
+		  font-size: 18px;
+		}
+	  </style>
+
+	Home.vue
+	  <template>
+	    <div class="home">
+		  <img src="http://...../../log.png" alt="">
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="Home">
+	  </script>
+	  <style scoped>
+	    .home{
+		  dispaly: flex;
+		  justify-content: center;
+		  align-items: center;
+		  height: 100%
+		}
+	  </style>
+
+	News.vue
+	  <template>
+	    <div class="news">
+		  <!-- 導航區 -->
+		  <ul>
+		    <li v-for="news in newsList" :key="news.id">
+			  <!-- params 第一種寫法 -->
+			  <RouterView :to="`/news/detail/${news.id}/${news.title}/${news.content}">{{news.title}}</RouterView>
+
+			  <!-- params 第二種寫法 -->
+			  <RouterView
+			    :to="{
+				  name:'/xiang', // 不能用 path
+				  params:{
+				    id:news.id,
+					title:news.title,
+					// content:news.content, 若要用可選選項要在 router 設定那邊補上?
+					// a:[1,2,3,4]  不建議使用陣列格式，會報警告
+				  }
+				}"
+			  >
+				{{news.title}}
+		      </RouterView>
+
+			</li>
+		  </ul>
+
+		  <!-- 展示區 -->
+		  <div class="news-content">
+		    <RouterView></RouterView>
+		  </div>
+		</div>
+	  </template>
+
+	  <script setup lang="ts" name="News">
+	    import { reactive } from 'vue'
+		import { RouterView } from 'vue-router'
+		// 資料
+		const newsList = reactive([
+		  {id:'dfsd01', title:'很好的抗癌食物', content: '稀蘭花' },
+		  {id:'dfsd02', title:'如何一夜暴富', content: '學IT' },
+		  {id:'dfsd03', title:'震驚，萬萬沒想到', content: '明天是周一' },
+		  {id:'dfsd04', title:'好消息', content: '快過年了' }
+		])
+	  </script>
+	  <style scoped>
+	    .news {
+		  padding: 0 20px;
+		  display: flex;
+		  justify-content: space-between;
+		  height: 100%
+		}
+		.news ul {
+		  margin-top: 30px;
+		  /* list-sytle: none; */
+		  text-decroation: none;
+		  color: #64967E;
+		  text-shadow: 0 0 1px rgb(0, 84, 0);
+		}
+		.news-content {
+		  width: 70%;
+		  height: 90%;
+		  border: 1px solid;
+		  margin-top: 20px;
+		  border-radius: 10px;
+		}
+	  </style>
+
+	Detail.vue
+	  <template>
+	    <div class="news-list">
+		  <ul>
+		    <li>編號:{{id}}</li>
+			<li>標題:{{title}}</li>
+			<li>內容:{{content}}</li>
+		  </ul>
+		</div>
+	  </template>
+
+	  <script setup lang="ts">
+	    defineProps(['id','title','content']) // 接收 rout 傳過來的參數
+
+	  </script>
+	  <style scoped>
+	    .news {
+		  padding: 0 20px;
+		  display: flex;
+		  justify-content: space-between;
+		  height: 100%
+		}
+		.news ul {
+		  margin-top: 30px;
+		  list-sytle: none;
+		  text-decroation: none;
+		  color: #64967E;
+		  text-shadow: 0 0 1px rgb(0, 84, 0);
+		}
+		.news-content {
+		  width: 70%;
+		  height: 90%;
+		  border: 1px solid;
+		  margin-top: 20px;
+		  border-radius: 10px;
+		}
+	  </style>
+
+
+main.ts
+  // 引入 createApp 用於創建應用
+  import {createApp} from 'vue'
+
+  // 引入 App 根元件
+  import App from './App.vue'
+  // 引入路由器
+  import router from './router'
+
+  // 創建一個應用
+  const app = createApp(App)
+  // 使用路由器
+  app.use(router)
+  // 掛載整個應用到app容器中
+  app.mount('#App')
+
+App.vue
+	<template>
+		<div class="app">
+		  <h2>Vue路由測試</h2>
+		  <!-- 導航區 -->
+		  <div class="navigate">
+		    <!-- <a href="#" class="active">首頁</a> -->
+		    <!-- <a href="#">新聞</a> -->
+		    <!-- <a href="#">關於</a> -->
+
+		    <RouterLink to="/home" active-class="active">首頁</a>
+		    <RouterLink to="/news" active-class="active">新聞</a>
+		    <RouterLink :to="{path:'/about'}" active-class="active">關於</a>
+		  </div>
+
+		  <!-- 展示區 -->
+		  <div class ="main-content">
+		    // 此處以後可能要展示各種元件，到底展示哪個元件，需要看路徑
+            <RouterView></RouterView> // 路由採到的規則展現到這裡
+		  </div>
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  // RouterView 路由採到的規則展現到那裡用
+	  // RouterLink 路由點擊採到的動作
+	  import {RouterView,RouterLink} from 'vue-router'
+
+	</script>
+
+	<style scoped> <!-- scoped 代表局部樣式，非相同 vue 元件之間不影響 -->
+	  /* App */
+	  .title {
+		text-align: center;
+		word-spacing: 5px;
+		margin: 30px 0;
+		height: 70px;
+		line-height: 70px;
+		backaground-image: linear-gradient(45deg, gray, white);
+		border-radius: 10px;
+		box-shadow: 0 0 2px;
+		font-size: 30px;
+	  }
+	  .navigate {
+	    display: flex;
+		justifiy-content: space-around;
+		margin: 0 100px;
+	  }
+	  .navigate a {
+		display: block;
+		text-align: center;
+		width: 90px;
+		height: 40px;
+		line-height: 40px;
+		border-radius: 10px;
+		background-color: gray;
+		text-decoration: none;
+		coloer: white;
+		font-size: 18px;
+		letter-spacing: 5px;
+	  }
+	  .navigate a.active {
+	    background-color: #64967E;
+		color: #ffc268;
+		font-weight: 900;
+		text-shadow: 0 0 1px black;
+		font-family: 微軟雅黑;
+	  }
+	  .main-context {
+	    margin: 0 auto;
+		margin-top: 30px;
+		border-radius: 10px;
+		width: 90%;
+		height: 400px;
+		border: 1px solid;
+	  }
+	</style>
