@@ -1,0 +1,212 @@
+ref https://www.youtube.com/watch?v=qLRrhNt0eiM&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=47
+
+符合直覺的 狀態管理庫
+	=> 集中式狀態管理
+		vue2 用 vuex
+		vue3 用 pinia(大波羅)
+
+	類似於前端的 session
+	或是後端開發的 jsp+session 方式
+
+	1.pinia 關注分類保存資料方式
+		store
+			Count/count.ts 			// 對應元件放的共用資源
+			LoveTalk/loveTalk.ts 	// 對應元件放的共用資源
+
+	2. components 引入 useXXXXStore
+		Count.vue
+		  import {useCountStore} from '@/store/count'
+		  const countStore = useCountStore()
+		LoveTalk.vue
+		  import {useTalkStore} from '@/store/loveTalk'
+		  const talkStore = useTalkStore()
+
+store
+	count.ts
+		import {defineStore} from 'pinia'
+
+		export const useCountStore = defineStore('count',{
+
+		  // 裡面放置的是一個一個的動作方式，用於響應元件中的動作
+		  actions:{
+		    increment(value){
+			  // console.log('increment被叫了',value)
+
+			  // 修改資料(this 是當前的 store)
+			  // console.log(this.sum)
+
+			  if(this.sum < 10) {
+			    this.sum += value
+			  }
+			}
+		  }
+
+		  // 真正放資料的地方
+		  state(){
+		    return {
+			  sum:6,
+			  school:'sdfsfda',
+			  address:'xxx科技園'
+			}
+		  }
+		});
+
+	loveTalk.ts
+		import {defineStore} from 'pinia'
+
+		export const useTalkStore = defineStore('talk',{
+
+		  // 真正放資料的地方
+		  state(){
+		    return {
+			  talklist:[
+				{id: 'sdf01', title: '今天你有點怪,哪裡怪?怪好看的!' },
+				{id: 'sdf02', title: '草莓、藍莓、蔓越莓、你今天想我了沒' },
+				{id: 'sdf03', title: '心裡給你留了一塊地，我的死心踏地' }
+			  ]
+			}
+		  }
+		});
+
+components/
+	Count.vue
+		<template>
+			<div class="count">
+			  <h2>當前求和為: {{ countStore.sum }}</h2>
+			  <h3>歡迎來到: {{ countStore.school }}, 坐落於{{ countStore.address }}</h3>
+			  <select v-model.number="n">
+			    <option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+			  </select>
+			  <button @click="add">加</button>
+			  <button @click="minus">減</button>
+
+			</div>
+		</template>
+
+		<script lang='ts' setup>
+		  import {ref,reactive} from "vue";
+		  import {useCountStore} from '@/store/count'
+
+		  const countStore = useCountStore()
+
+
+		  let n = ref(1)	// 用戶選擇的數字
+
+		  function add(){
+		    // 第一種修改方式 : 三次修改
+		    // countStore.sum += 1
+			// countStore.school = '尚硅谷'
+			// countStore.address = '北京'
+
+			// 第二種修改方式:當資料很多的時候，工具有提示，僅一次 path 修改
+			countStore.$patch({
+			  sum: 888,
+			  school: '尚硅谷',
+			  address: '北京'
+			})
+
+			// 第三種修改方式:最麻煩，有些情境有其意義(封裝複雜邏輯與復用)
+			countStore.increment(n.value)
+
+		  }
+		  function minus(){
+
+		  }
+		</script>
+
+		<style scoped>
+		  .count {
+		    backgroud-color: skyblue;
+			padding: 10px;
+			bordering: 10px;
+			box-shadow: 0 0 10px;
+		  }
+		  select,button {
+		    margin: 0 5px;
+			height: 25px;
+		  }
+		</style>
+
+
+	LoveTalk.vue
+
+		<template>
+			<div class="talk">
+			  <button @click="getLoveTalk">獲取一句土味情話</button>
+			  <ul>
+			    <li v-for="talk in talkStore.talkList" :key="talk.id">{{talk.title}}</li>
+			  </ul>
+			</div>
+		</template>
+
+		<script lang='ts' setup>
+		  import {reactive} from "vue";
+		  import axios from "axios";
+		  import { nanoid } from 'nanoid' // npm i nanoid
+		  import {useTalkStore} from '@/store/loveTalk'
+
+		  const talkStore = useTalkStore()
+
+		  function getLoveTalk(){
+			// 發請求，下面這寫法是連續解構賦值+重命名
+		    // let {data:{content:title}} = await axios.get('https://api.uomg.com/api.rand.qinghua?format=json')
+			//console.log(result.data.content)
+
+			// 把請求回來的字符串包裝成一個對象
+			// let obj = {id:nanoid(),title}
+			// 放到數組中
+			// talkList.unshift(obj)
+		  }
+		</script>
+
+		<style scoped>
+		  .talk {
+		    backgroud-color: orange;
+			padding: 10px;
+			bordering: 10px;
+			box-shadow: 0 0 10px;
+		  }
+		  select,button {
+		    margin: 0 5px;
+			height: 25px;
+		  }
+		</style>
+
+main.ts
+  import {createApp} from 'vue'
+
+  import App from './App.vue'
+
+  // 第一步 : 引入 pinia
+  import {createPinia} from 'pinia'
+
+  const app = createApp(App))
+
+  // 第二步 : 創建 pinia
+  const pinia = createPinia()
+
+  // 第三步 : 安裝 pinia
+  app.use(pinia)
+
+  app.mount('#App')
+
+
+App.vue
+	<template>
+		<div class="app">
+		  <div>
+			<Count/>
+			<br>
+			<LoveTalk/>
+		  </div>
+
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  import Count from './components/Count.vue'
+	  import LoveTalk from './components/LoveTalk.vue'
+
+	</script>

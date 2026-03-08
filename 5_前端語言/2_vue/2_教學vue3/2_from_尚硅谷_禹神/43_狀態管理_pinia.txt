@@ -1,0 +1,9 @@
+ref https://www.youtube.com/watch?v=cdv1pBmY7DA&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=43
+
+符合直覺的 狀態管理庫
+	=> 集中式狀態管理
+		vue2 用 vuex
+		vue3 用 pinia
+
+	類似於前端的 session
+	或是後端開發的 jsp+session 方式
