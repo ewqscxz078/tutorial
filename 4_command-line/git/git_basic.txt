@@ -106,3 +106,8 @@ https://stackoverflow.com/questions/56867629/how-to-read-file-content-from-git-o
 	git cat-file -p <object name>
 	git ls-tree
 	git ls-files -s
+
+==========================================================================================
+================================== windows update =======================================
+==========================================================================================
+git update-git-for-windows

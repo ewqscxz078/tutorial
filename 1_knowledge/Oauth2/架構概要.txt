@@ -1,4 +1,5 @@
 ref ChatGPT
+	https://ithelp.ithome.com.tw/users/20178099/ironman/8283
 
 OAuth2 授權協議架構
 	🧩 核心角色

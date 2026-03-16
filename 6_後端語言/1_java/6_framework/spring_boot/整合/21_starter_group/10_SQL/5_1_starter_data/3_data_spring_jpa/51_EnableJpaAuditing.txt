@@ -1,0 +1,15 @@
+
+JPA Auditing (稽核) 功能
+	自動添加時間相關欄位內容。要啟用此功能，需要在 Config 中加上 @EnableJpaAuditing 的設
+		@SpringBootApplication
+		@EnableJpaAuditing
+		public class AuthServiceApplication {
+			...
+		}
+	
+	* @CreatedDate
+		在資料首次被新增至資料庫時，自動填入當前的時間。
+		通常會搭配 @Column(updatable = false)，確保這筆紀錄的創建時間永遠不會被更動。
+
+	* @LastModifiedDate
+		在資料每次被更新時，自動填入當前的時間。

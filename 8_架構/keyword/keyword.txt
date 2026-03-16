@@ -1,0 +1,157 @@
+
+kong api gateway + AI
+
+Prometheus 監控硬體
+
+Grafana 收攏硬體 log + ap log 呈現視覺化
+
+OpenTelemetry
+
+一、常見要監控的資料類型
+	這類需求通常不只是一種 log，而是把不同訊號一起收：
+		硬體 / 主機層
+
+			CPU、Memory、Disk、I/O、Network
+
+			OS syslog / Windows Event Log
+
+			伺服器硬體事件、RAID、BMC/IPMI、交換器、防火牆設備日誌
+
+		應用 / API 層
+
+			API access log
+
+			application log
+
+			error log / exception stack trace
+
+			traceId、spanId、request latency、status code
+
+		平台 / 中介層
+
+			Nginx / Apache
+
+			API Gateway
+
+			DB、Kafka、Redis、MQ
+
+			Kubernetes / Docker container logs
+
+		可觀測性訊號
+
+			Logs
+
+			Metrics
+
+			Traces
+		現在主流做法不是只看 log，而是把這三者一起串起來。OpenTelemetry 就是目前很常見的標準化蒐集方式之一。Elastic、Grafana、Datadog 等都支援這類整合。
+
+1. ELK / Elastic Observability
+	典型組成：
+
+		Beats / Elastic Agent：收 logs、metrics
+
+		Logstash / Ingest Pipeline：解析、轉換、清洗
+
+		Elasticsearch：集中儲存與全文檢索
+
+		Kibana：視覺化、Dashboard、查詢
+
+2. Grafana 生態：Loki + Mimir + Tempo + Grafana
+	典型組成：
+
+		Grafana Alloy / OTel Collector：收集與轉送資料
+
+		Loki：logs
+
+		Mimir：metrics
+
+		Tempo：traces
+
+		Grafana：統一視覺化
+
+			Grafana 官方目前明確提供這種 LGTM 路線：
+
+			Loki 用於日誌儲存與查詢
+
+			Tempo 用於 distributed tracing，且可把 traces 與 logs/metrics 串起來
+
+			Mimir 用於 Prometheus / OpenTelemetry metrics
+
+			Alloy 用於收集、處理、輸出 telemetry 資料
+	適合情境
+
+		Kubernetes / container 環境
+
+		偏好開源
+
+		想把 logs / metrics / traces 分層管理
+
+		已經大量使用 Prometheus / Grafana
+
+	優點
+
+		與 Prometheus/Grafana 世界整合好
+
+		成本通常比重型全文檢索方案更可控
+
+		視覺化體驗佳
+
+	注意點
+
+		Loki 查詢模型和 Elasticsearch 不一樣
+
+		若團隊習慣全文檢索語法，初期要適應
+
+3. Datadog
+
+	Datadog 是 SaaS 型整合方案，導入速度快。
+
+	官方文件顯示，它把 Infrastructure Monitoring、Log Management、APM 放在同一平台，並有大量內建整合。Datadog 的 log management 支援日誌收集、處理、封存、探索與監控；Infrastructure Monitoring 可觀察主機、容器、程序；APM 可把應用效能與其他遙測資料放在同一上下文中分析。
+
+	適合情境
+
+		想快速上線
+
+		不想自己維運 Elastic / Loki / Mimir / Tempo
+
+		多雲、多服務、整合需求高
+
+	優點
+
+		SaaS 導入快
+
+		UI 完整
+
+		內建整合很多
+
+	注意點
+
+		長期成本通常不低
+
+		資料是否可上雲，要看公司合規要求
+
+4. Splunk / Splunk Observability Cloud
+	Splunk 傳統上在 SIEM / log analysis 很強，現在也有 Observability Cloud。
+
+	Splunk Observability Cloud 官方文件顯示可做基礎設施監控，並透過整合把資料送入平台；另外，Splunk 也在推 Cloud Platform 與 Observability Cloud 的整合體驗。
+
+	適合情境
+
+		大型企業
+
+		資安 / 稽核 / SIEM 需求強
+
+		原本就有 Splunk 生態
+
+	優點
+
+		企業級能力強
+
+		Log / 安全 / 合規面成熟
+
+	注意點
+
+		成本與治理複雜度通常較高
+
+		若只是單純基礎監控，可能偏重
