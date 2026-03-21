@@ -1,0 +1,280 @@
+ref https://www.youtube.com/watch?v=-_XmCh2aGuQ&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=54
+
+
+元件之間的通信
+	1. mitt
+		任意元件之間的通信 = 第三方提供的自訂事件
+			1.pubsub // 提前訂閱消息
+			2.$bus
+			3.$mitt
+
+		接收資料的: 提前綁訂好事件(提前訂閱消息)
+		提供資料的: 在合適的時候觸發事件(發布消息)
+
+utils/
+	emitter.ts
+		// 引入 mitt
+		import mitt from 'mitt'
+
+		// 調用 mitt 得到 emitter, emitter 能綁事件，觸發事件
+		const emitter = mitt()
+
+		/*
+		// 綁定事件
+		emitter.on('test1',()=>{
+		  console.log('test1被調用了')
+		})
+		emitter.on('test2',()=>{
+		  console.log('test2被調用了')
+		})
+
+		// 觸發事件
+		// setTimeout(()=>{
+		//   emitter.emit('test1')
+		//   emitter.emit('test2')
+		// }, 2000)
+		setInterval(()=>{ // 每隔一秒鐘
+		  emitter.emit('test1')
+		  emitter.emit('test2')
+		}, 1000)
+
+		// 解綁事件
+		setTimeout(()=>{ // 三秒鐘後觸發解綁事件 test1
+		  // emitter.off('test1')
+		  // emitter.off('test2')
+		  emitter.all.clear() // 不指定事件解綁，全清掉方式
+		}, 3000)
+		*/
+
+		// 暴露 emitter
+		export default emitter
+
+pages/
+	03_miitt
+		Father.vue
+			<template>
+				<div class="father">
+				  <h3>父元件</h3>
+				  <Child1/>
+				  <Child2/>
+				</div>
+			</template>
+
+			<script lang='ts' setup>
+			  import Child1 from './Child1.vue'
+			  import Child2 from './Child2.vue'
+
+			  // 資料
+
+			  // 方法
+
+			</script>
+
+			<style scoped>
+			  .father {
+				backgroud-color: rgb(165, 164,164);
+				padding: 20px;
+				border-radius: 10px;
+			  }
+			  .father button {
+
+			  }
+			</style>
+		Child1.vue
+			<template>
+				<div class="child1">
+				  <h3>子元件1</h3>
+				  <h4>玩具:{{ toy }}</h4>
+				  <button @click="emitter.emit('send-toy',toy)">玩具給弟弟</button>
+				</div>
+			</template>
+
+			<script lang='ts' setup>
+			  import {ref} from 'vue'
+			  import emitter from '@/utils/emitter'
+
+			  // 資料
+			  let toy = ref('奧特曼')
+
+			  // 方法
+
+			</script>
+
+			<style scoped>
+			  .child1 {
+			    margin-top: 50px
+				backgroud-color: skyblue;
+				padding: 10px;
+				bordering: 10px;
+				box-shadow: 0 0 10px;
+				border.radius: 10px;
+			  }
+			  .child1 button{
+			    margin-right: 10px
+			  }
+			</style>
+		Child2.vue
+			<template>
+				<div class="child2">
+				  <h3>子元件2</h3>
+				  <h4>電腦:{{ computer }}</h4>
+				  <h4>哥哥給的玩具:{{ toy }}</h4>
+				</div>
+			</template>
+
+			<script lang='ts' setup>
+			  import {ref,onUnmouted} from 'vue'
+			  import emitter from '@/utils/emitter'
+
+			  // 資料
+			  let computer = ref('聯想')
+			  let toy = ref('')
+
+			  // 給 emitter 接收/綁定 send-toy 事件
+			  emitter.on('send-toy',(value)=>{
+			    //console.log('send-toy', value:any)
+				toy.value = value
+			  })
+
+			  // 方法
+			  // 在元件卸載時解綁 send-toy 事件
+			  onUnmounted(()=>{
+			    // 確保對記憶體控制削減避免 emitter 紀錄過多
+			    emitter.off('send-toy')
+			  }
+
+
+			</script>
+
+			<style scoped>
+			  .child2 {
+			    margin-top: 50px
+				backgroud-color: orange;
+				padding: 10px;
+				box-shadow: 0 0 10px;
+				border.radius: 10px;
+			  }
+			</style>
+
+router
+	index.ts
+		import { createRouter, createWebHistory } from 'vue-router'
+		import Props '@/pages/01_props/Father.vue'
+		import Event '@/pages/02_custom-event/Father.vue'
+		import Bus '@/pages/03_mitt/Father.vue'
+		import Model '@/pages/04_v-model/Father.vue'
+		import AttrsListeners '@/pages/05_$attrs/Father.vue'
+		import RefChildrenParent '@/pages/06_$refs-$parent/Father.vue'
+		import ProvideInject '@/pages/07_provide-inject/Father.vue'
+		import Pinia from '@/pages/08_pinia/Father.vue'
+		import Slot from '@/pages/09_slot/Father.vue'
+
+		export default createRouter({
+		  history: crateWebHistory(),
+		  routes: [
+		    {
+			  path: '/props',
+			  component: Props
+			},
+		    {
+			  path: '/event',
+			  component: Event
+			},
+		    {
+			  path: '/mitt',
+			  component: Bus
+			},
+		    {
+			  path: '/model',
+			  component: Model
+			},
+		    {
+			  path: '/attrs',
+			  component: AttrsListeners
+			},
+		    {
+			  path: '/ref-parent',
+			  component: RefChildrenParent
+			},
+		    {
+			  path: '/provide-inject',
+			  component: ProvideInject
+			},
+		    {
+			  path: '/Pinia',
+			  component: Pinia
+			},
+		    {
+			  path: '/slot',
+			  component: Slot
+			},
+		  ]
+		})
+
+index.html
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<link rel="icon" href="/favicon.ico">
+			<meta name="viewport" content="width=divice-width, initial-scale=1.0">
+			<link rel="sytlesheet" href="/css/bootstrap.css"> <!-- 新增重點 -->
+			<title>Vite App<title/>
+		</head>
+		<body>
+			<div id="app"></div>
+			<script type="module" src="/src/main.ts"></script>
+		</body>
+	</html>
+
+main.ts
+  import {createApp} from 'vue'
+  import App from './App.vue'
+  import {createPinia} from 'pinia'
+  import router from './router'
+  // import emitter from '@/utils/emitter' // 測試體驗用
+
+  // 創建應用
+  const app = createApp(App))
+  // 創建 pinia
+  const pinia = createPinia()
+
+  // 安裝 插件 pinia
+  app.use(pinia)
+  // 安裝 插件 路由器
+  app.use(router)
+  // 掛載應用
+  app.mount('#App')
+
+
+App.vue
+	<template>
+		<h1>
+			vue3 元件通信
+		</h1>
+		<div class="row">
+		  <div class="col-xs-3 col-md-3 col-lg-3 col-xl-3">
+		    <!-- 導航區 -->
+			<router-link active-class="active" class="list-group-item" to="/props">1
+			<router-link active-class="active" class="list-group-item" to="/event">2
+			<router-link active-class="active" class="list-group-item" to="/mitt">3
+			<router-link active-class="active" class="list-group-item" to="/model">4
+			<router-link active-class="active" class="list-group-item" to="/attrs">5
+			<router-link active-class="active" class="list-group-item" to="/ref-parent">6
+			<router-link active-class="active" class="list-group-item" to="/provide-inject">7
+			<router-link active-class="active" class="list-group-item" to="/pinia">8
+			<router-link active-class="active" class="list-group-item" to="/slot">9
+		  </div>
+		  <div class="col-xs-9 col-md-9 col-lg-9 col-xl-9">
+		    <div class="panel-body">
+			  <!-- 佔位一個展示區-->
+			  <router-view></router-view>
+			</div>
+		  </div>
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  // import Count from './components/Count.vue'
+
+	</script>

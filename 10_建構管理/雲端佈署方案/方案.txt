@@ -1,0 +1,107 @@
+ref ChatGPT
+
+
+需求其實很常見：本機只負責寫 code，push 到 GitHub；雲端準備一套「模擬整合環境」自動拉程式、建置、啟動。
+
+
+1. 最省事：PaaS / 雲端部署平台
+	適合「不想本機開一堆分散服務」的情境。通常直接連 GitHub repo，push 後自動 build + deploy。
+
+	* Render
+		可以直接接 GitHub，自動部署 web service，也支援 Postgres、Key Value。Render 官方有免費可用的 web service 與部分 datastore，
+		但官方也明講免費方案有限制，不適合正式 production，比較適合測試、side project、驗證流程。
+			ref https://render.com/docs/free?utm_source=chatgpt.com
+
+	* Railway
+		也是很適合做「repo 一推就上」的整合測試環境。官方目前是 先給 30 天 trial 與 5 美元 credits，之後 Free 方案是 $0/月，
+		但平台說明也提到有 subscription / usage 規則，小型服務可以用，但不是那種完全無限制永久免費。
+			ref https://railway.com/pricing?utm_source=chatgpt.com
+
+	* Northflank
+		有免費 sandbox，可部署 2 個 services、2 個 jobs、1 個 addon，很適合小型微服務驗證或 demo。官方也明講免費 tier 不建議拿來當正式 production。
+			ref https://northflank.com/docs/v1/application/billing/pricing-on-northflank?utm_source=chatgpt.com
+
+	* Fly.io
+		偏 VM / app platform 混合型，彈性高，但 2026 看起來已不是「明確 always-free」導向，主要是依資源與流量計價。
+			ref https://fly.io/docs/about/pricing/?utm_source=chatgpt.com
+
+
+2. 最接近真實環境：自己租一台雲端 VM
+	常見作法：
+		* 租 1 台 Linux VM
+		* 裝 Docker / Docker Compose
+		* GitHub push 後用 GitHub Actions SSH 進 VM
+		* git pull、docker compose up -d --build
+
+	這樣你雲端模擬環境幾乎就跟未來實際佈署很像。
+
+	GCP
+		Google Cloud 官方目前仍有 Always Free 的 e2-micro 額度，理論上可以長時間跑一台很小的 VM；另外新用戶通常也有 trial credits。
+			ref https://docs.cloud.google.com/free/docs/free-cloud-features?utm_source=chatgpt.com&hl=zh-tw
+
+	AWS
+		AWS 近年 free tier 方式有調整，新帳號可拿到 最多 200 美元 credits，官方文件也說 free account plan 可讓你做 PoC / 測試，
+		不過要注意期限、額度、服務可用範圍。舊式常見的 EC2 micro 免費概念，現在要以官方當期 free-tier 規則為準。
+			ref https://aws.amazon.com/tw/free/?utm_source=chatgpt.com
+
+
+3. 雲端開發環境，不是部署環境：GitHub Codespaces
+	這個是「雲端開發機」，不是你要的正式模擬部署，但有時很適合拿來替代本機。
+
+	優點：
+
+		開發機在雲端
+		可直接從 GitHub repo 開起來
+		不用本機裝一堆工具
+
+	GitHub 官方目前寫的是個人帳號有免費額度，最多 60 小時/月，超過後才依 compute / storage 計價。
+
+	但它比較像：
+
+		* 雲端 IDE
+		* 雲端 dev container
+		* 臨時開發 / 驗證環境
+
+	不是拿來長期跑一整套多服務模擬環境的最佳解。
+
+
+* 費用怎麼看
+
+	最容易踩雷的是這幾種：
+
+		* VM 本身費用
+		* 磁碟費用
+		* 對外流量費用
+		* DB 託管費用
+		* build minutes / CI minutes
+		* 免費額度用完後自動轉收費
+
+	所以就算平台寫「免費」：
+	也通常只是小額度、低資源、休眠、限時 trial，或不適合正式長期跑。
+	這點 Render、Railway、Northflank 官方都很明確
+
+最實際的入門配置
+
+	若你現在只是要做「雲端模擬整合環境」：
+
+	最便宜起步
+		* GitHub Repo
+		* 1 台 GCP e2-micro 或便宜小 VM
+		* Docker Compose
+		* GitHub Actions 自動 SSH deploy
+
+	最省時間起步
+		* GitHub Repo
+		* Render 或 Railway
+		* 每個服務各自接 repo / subdir / Dockerfile
+		* push 後自動 build / deploy
+
+
+免費有沒有？
+
+	有，但通常是這種型態：
+
+	* GitHub Codespaces：個人帳號每月有免費時數。
+	* GCP：Always Free 的 e2-micro 額度。
+	* AWS：新帳號 credits / free plan。
+	* Render / Northflank / Railway：有免費或試用層，但多半有限制、休眠、低資源、或非長期 production 用。

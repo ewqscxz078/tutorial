@@ -6,7 +6,7 @@ JPA Auditing (稽核) 功能
 		public class AuthServiceApplication {
 			...
 		}
-	
+
 	* @CreatedDate
 		在資料首次被新增至資料庫時，自動填入當前的時間。
 		通常會搭配 @Column(updatable = false)，確保這筆紀錄的創建時間永遠不會被更動。

@@ -1,0 +1,28 @@
+
+基本
+	文字編輯器
+		notepadd++
+
+
+開發相關
+	db
+		postgreSQL by docker
+
+	db client tool
+		DBeaver
+
+	程式碼控管
+		git
+
+	IDE
+		eclipse : for 後端 java
+		vscode : for 前端
+
+環境
+	ssh
+		putty  // for windows
+		muputty // putty 擴充多視窗 + 自動化多執行 putty
+
+教學
+	螢幕畫筆 : 輔助教學用
+		IPEVO Annotator

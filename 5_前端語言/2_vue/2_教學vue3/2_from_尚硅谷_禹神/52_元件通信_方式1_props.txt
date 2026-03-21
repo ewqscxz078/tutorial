@@ -1,0 +1,198 @@
+ref https://www.youtube.com/watch?v=V1KIPygLSWQ&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=52
+
+
+元件之間的通信
+	1. props
+		是使用頻率最告的一種方式，常用 父子之間傳遞
+		* 若 父傳子: 屬性值是非函數
+		* 若 子傳父: 屬性值是函數
+		// 不建議子多層次用 props 傳遞
+
+pages/
+	01_props
+		Child.vue
+			<template>
+				<div class="child">
+				  <h3>子元件</h3>
+				  <h4>玩具:{{ toy }}</h4>
+				  <h4>父給的車:{{ car }}</h4>
+				  <button @click="sendToy(toy)">把玩具給父親</button>
+				</div>
+			</template>
+
+			<script lang='ts' setup>
+			  import {ref} frm 'vue'
+
+			  // 資料
+			  let toy = ref('奧特曼')
+
+			  // 聲明接收 props
+			  defineProps(['car', 'sendToy'])
+
+			  // 方法
+
+			</script>
+
+			<style scoped>
+			  .child {
+				backgroud-color: skyblue;
+				padding: 10px;
+				bordering: 10px;
+				box-shadow: 0 0 10px;
+			  }
+			</style>
+		Father.vue
+			<template>
+				<div class="father">
+				  <h3>父元件</h3>
+				  <h4>汽車:{{ car }}</h4>
+				  <h4 v-show="toy">子給的玩具:{{ toy }}</h4>
+				  <Child :car="car" :sendToy="getToy" />
+				</div>
+			</template>
+
+			<script lang='ts' setup>
+			  import Child from './Child.vue'
+			  import {ref} frm 'vue'
+
+			  // 資料
+			  let car = ref('奔馳')
+			  let toy = ref('')
+
+
+			  // 方法
+			  function getToy(value:string){
+			    //console.log('父',value)
+				toy.value = value
+			  }
+			</script>
+
+			<style scoped>
+			  .father {
+				backgroud-color: rgb(165, 164,164);
+				padding: 20px;
+				border-radius: 10px;
+			  }
+			</style>
+
+router
+	index.ts
+		import { createRouter, createWebHistory } from 'vue-router'
+		import Props '@/pages/01_props/Father.vue'
+		import Event '@/pages/02_custom-event/Father.vue'
+		import Bus '@/pages/03_mitt/Father.vue'
+		import Model '@/pages/04_v-model/Father.vue'
+		import AttrsListeners '@/pages/05_$attrs/Father.vue'
+		import RefChildrenParent '@/pages/06_$refs-$parent/Father.vue'
+		import ProvideInject '@/pages/07_provide-inject/Father.vue'
+		import Pinia from '@/pages/08_pinia/Father.vue'
+		import Slot from '@/pages/09_slot/Father.vue'
+
+		export default createRouter({
+		  history: crateWebHistory(),
+		  routes: [
+		    {
+			  path: '/props',
+			  component: Props
+			},
+		    {
+			  path: '/event',
+			  component: Event
+			},
+		    {
+			  path: '/mitt',
+			  component: Bus
+			},
+		    {
+			  path: '/model',
+			  component: Model
+			},
+		    {
+			  path: '/attrs',
+			  component: AttrsListeners
+			},
+		    {
+			  path: '/ref-parent',
+			  component: RefChildrenParent
+			},
+		    {
+			  path: '/provide-inject',
+			  component: ProvideInject
+			},
+		    {
+			  path: '/Pinia',
+			  component: Pinia
+			},
+		    {
+			  path: '/slot',
+			  component: Slot
+			},
+		  ]
+		})
+
+index.html
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<link rel="icon" href="/favicon.ico">
+			<meta name="viewport" content="width=divice-width, initial-scale=1.0">
+			<link rel="sytlesheet" href="/css/bootstrap.css"> <!-- 新增重點 -->
+			<title>Vite App<title/>
+		</head>
+		<body>
+			<div id="app"></div>
+			<script type="module" src="/src/main.ts"></script>
+		</body>
+	</html>
+
+main.ts
+  import {createApp} from 'vue'
+  import App from './App.vue'
+  import {createPinia} from 'pinia'
+  import router from './router'
+
+  // 創建應用
+  const app = createApp(App))
+  // 創建 pinia
+  const pinia = createPinia()
+
+  // 安裝 插件 pinia
+  app.use(pinia)
+  // 安裝 插件 路由器
+  app.use(router)
+  // 掛載應用
+  app.mount('#App')
+
+
+App.vue
+	<template>
+		<h1>
+			vue3 元件通信
+		</h1>
+		<div class="row">
+		  <div class="col-xs-3 col-md-3 col-lg-3 col-xl-3">
+		    <!-- 導航區 -->
+			<router-link active-class="active" class="list-group-item" to="/props">1
+			<router-link active-class="active" class="list-group-item" to="/event">2
+			<router-link active-class="active" class="list-group-item" to="/mitt">3
+			<router-link active-class="active" class="list-group-item" to="/model">4
+			<router-link active-class="active" class="list-group-item" to="/attrs">5
+			<router-link active-class="active" class="list-group-item" to="/ref-parent">6
+			<router-link active-class="active" class="list-group-item" to="/provide-inject">7
+			<router-link active-class="active" class="list-group-item" to="/pinia">8
+			<router-link active-class="active" class="list-group-item" to="/slot">9
+		  </div>
+		  <div class="col-xs-9 col-md-9 col-lg-9 col-xl-9">
+		    <div class="panel-body">
+			  <!-- 佔位一個展示區-->
+			  <router-view></router-view>
+			</div>
+		  </div>
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  // import Count from './components/Count.vue'
+
+	</script>
