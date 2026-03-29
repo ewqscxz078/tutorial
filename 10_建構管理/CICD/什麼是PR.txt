@@ -1,0 +1,117 @@
+ref ChatGPT
+
+一、PR（Pull Request）到底是什麼？
+	👉 PR = Pull Request（拉取請求）
+		「請求把我的分支，合併進某個目標分支」
+
+		📌 用一句話講清楚
+			PR = 我要把「我的 branch」合併進「主幹（例如 main）」，請你們審核
+
+		📌 誰對誰做什麼？
+			假設你是開發者：
+				你（開發者）
+				   ↓ 發出 PR
+				Git 平台（例如 GitHub / GitLab / Azure DevOps）
+				   ↓
+				團隊 reviewer（同事 / tech lead）
+				   ↓ 審核 OK
+				合併進 main
+
+		📌 實際流程（很重要）
+			1. 你從 main 開一個分支
+			   feature/login-api
+
+			2. 你在這個分支寫 code
+
+			3. 你 push 到遠端
+
+			4. 你建立 PR：
+			   source: feature/login-api
+			   target: main
+
+			5. CI pipeline 觸發（PR pipeline）
+
+			6. 同事 review
+
+			7. 通過後 merge → main
+
+
+二、PR 跟 branch 的關係（重點）
+	👉 PR 不是 branch
+	👉 PR 是「針對 branch 的一個動作 / 事件」
+
+
+三、為什麼 CI/CD 常寫成「PR / feature」？
+	因為 pipeline 觸發來源有兩種：
+		✅ 情境 1：push 到 feature branch
+			git push origin feature/login
+				👉 觸發：
+					* branch pipeline（有些系統會跑）
+					* 或不跑（看設定）
+
+		✅ 情境 2：建立 PR
+			feature/login → main（建立 PR）
+				👉 觸發：
+					PR pipeline（幾乎一定會跑）
+
+四、實務上 PR pipeline 比 branch pipeline 更重要
+	👉 多數公司會：
+		❌ 不在 feature branch push 時跑 pipeline
+		✅ 只在 PR 時跑 pipeline
+
+	原因：
+		PR = 準備要 merge 的「正式檢查點」
+
+五、所以「PR / feature pipeline」正確理解是：
+	👉 不是說「PR = feature」
+
+	👉 而是：
+		針對 feature branch 的 PR 事件，觸發驗證 pipeline
+
+
+六、幫你重新用正確語意寫一次
+	之前看到的：
+		feature/* / PR
+
+	其實應該更精確寫成：
+		feature/* branch + PR event
+
+	或
+		當 PR（來源為 feature/*）時
+
+
+七、CI/CD 視角的分類（最清楚）
+	CI/CD pipeline 觸發來源
+	├─ push event
+	│  ├─ feature/*
+	│  ├─ main
+	│  └─ hotfix/*
+	│
+	├─ pull request event（PR）
+	│  └─ feature/* → main
+	│
+	└─ tag event
+	   └─ v1.2.3
+
+
+八、對應 pipeline 設計（關鍵理解）
+	PR pipeline
+	├─ 觸發條件
+	│  └─ pull request event（不是 branch）
+	│
+	├─ 來源 branch
+	│  └─ feature/* 或 bugfix/*
+	│
+	└─ 目的
+	   └─ 驗證「能不能 merge」
+
+九、實務中最常見設定（你可以直接用）
+	Jenkins / GitLab / Azure 都類似
+		if (PR event)
+		   → 跑 PR pipeline
+
+		if (branch == main)
+		   → 跑 main pipeline
+
+		if (tag == v*)
+		   → 跑 release pipeline

@@ -122,3 +122,25 @@ zgrep for 縮壓檔搜尋
 	# ...
 	# 使用 xargs 讀取每行路徑，並傳遞給 grep 進行搜尋，在另存到檔案 result.list
 	xargs -I {} grep 'your_keyword' {} < file1 > result.list
+
+
+Q1: -r 與 -R 差異?
+A1:
+	| 指令      | 行為                                   |
+	| --------- | -------------------------------------- |
+	| `grep -r` | 遞迴搜尋，但**不會跟隨 symbolic link** |
+	| `grep -R` | 遞迴搜尋，且**會跟隨 symbolic link**   |
+
+	✅ grep -r（recursive）
+		會搜尋目錄底下所有「實體檔案」
+		忽略符號連結（symlink）
+		比較安全（避免無限遞迴）
+
+	👉 適合一般專案搜尋（像你在 codebase 找字串）
+
+		⚠️ grep -R（recursive + follow links）
+			跟 -r 一樣會遞迴
+			會跟隨 symbolic link 指到的內容一起搜尋
+			可能會有風險：
+			無限循環（link 指回父目錄）
+		搜尋範圍爆炸變大（例如 link 到 /）

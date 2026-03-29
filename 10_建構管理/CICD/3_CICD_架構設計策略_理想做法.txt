@@ -1,0 +1,340 @@
+ref ChatGPT
+
+理想做法
+	1. ci-template.repo / ci-platform.repo
+		裡面放：
+			Jenkins shared library
+			各類 pipeline template
+				* java-service-template	pipeline
+				* frontend-template		pipeline
+				* library-template		pipeline
+				* batch-job-template	pipeline
+			共用 shell / python scripts
+			deploy helper
+
+			例如:
+				ci-template-repo
+				 ├─ jenkins-shared-library/
+				 │   ├─ vars/
+				 │   │   ├─ javaServicePipeline.groovy
+				 │   │   ├─ vueFrontendPipeline.groovy
+				 │   │   └─ libraryPipeline.groovy
+				 │   └─ src/...
+				 ├─ scripts/
+				 │   ├─ build-java.sh
+				 │   ├─ build-vue.sh
+				 │   ├─ deploy-helm.sh
+				 │   └─ notify.sh
+				 └─ docs/
+
+	2. svc-xxx.repo : 每個業務服務 repo 放：
+		對應CICD 工具的 比如 : Jenkinsfile（極薄）、azure-pipelines.yml ....
+			| 平台             | Pipeline 定義檔         |
+			| -------------- | ------------------------- |
+			| Jenkins        | `Jenkinsfile`             |
+			| Azure DevOps   | `azure-pipelines.yml`     |
+			| GitHub Actions | `.github/workflows/*.yml` |
+			| GitLab CI      | `.gitlab-ci.yml`          |
+
+		cicd.yml（metadata）  // 可用名稱 cicd.yml、cicd.yml、pipeline.yml，但推薦用 cicd.yml 較直覺
+		Dockerfile (jar => image)
+		deploy 描述檔
+
+		例如:
+			svc-backend-a-repo
+			 ├─ src/
+			 ├─ pom.xml
+			 ├─ Dockerfile
+			 ├─ deploy/
+			 │   └─ helm/backend-a
+			 ├─ cicd.yml
+			 └─ Jenkinsfile
+
+	3. vue-xxx.repo : 每個業務服務之對應前端 repo
+
+		例如:
+			frontend-portal-repo
+			 ├─ src/
+			 ├─ package.json
+			 ├─ Dockerfile
+			 ├─ nginx.conf
+			 ├─ cicd.yml	// 可用名稱 cicd.yml、cicd.yml、pipeline.yml，但推薦用 cicd.yml 較直覺
+			 └─ Jenkinsfile
+
+
+	4. lib-xxx.repo 共用程式碼 repo 自己走 library pipeline
+
+		不要進 deploy 流程
+
+		例如:
+			shared-lib-repo
+			 ├─ common-utils/
+			 ├─ starter-security/
+			 ├─ shared-model/
+			 ├─ cicd.yml
+			 └─ Jenkinsfile
+
+
+很像這樣的運作方式
+	backend repo
+		push code
+		 → Jenkins 讀 Jenkinsfile
+		 → Jenkinsfile 載入 company-ci-lib
+		 → 讀 cicd.yml
+		 → 套 javaServicePipeline
+		 → build/test/image/deploy
+
+	vue repo
+		push code
+		 → Jenkins 讀 Jenkinsfile
+		 → 載入 company-ci-lib
+		 → 讀 cicd.yml
+		 → 套 vueFrontendPipeline
+		 → npm build/image/deploy
+
+	shared library repo
+		push code
+		 → Jenkins 讀 Jenkinsfile
+		 → 載入 company-ci-lib
+		 → 讀 cicd.yml
+		 → 套 javaLibraryPipeline
+		 → build/test/publish artifact
+
+
+一、正確做法
+	第 1 層：平台入口檔（很薄）
+		Jenkinsfile
+			@Library('company-ci-lib') _
+
+			def cfg = readYaml file: 'cicd.yml'
+			javaServicePipeline(cfg)
+
+		azure-pipelines.yml
+			steps:
+			  - script: |
+				  ./ci/run-pipeline.sh cicd.yml
+
+		GitHub Actions
+			jobs:
+			  build:
+				steps:
+				  - run: ./ci/run-pipeline.sh cicd.yml
+
+		👉 你會發現：
+
+			三個平台「長不一樣」，但都只是在呼叫同一個邏輯
+
+	第 2 層：共用 CI template / library（核心）
+		放在：
+
+			👉 ci-template-repo（你前面提的那個）
+
+		內容：
+			build 邏輯
+			docker build
+			push registry
+			deploy（helm / kubectl）
+			approval gate
+			notify
+			version 規則
+
+
+	第 3 層：每個 repo 的 metadata
+		例如：
+			type: java-service
+			service: backend-a
+			build:
+			  tool: maven
+			docker:
+			  image: xxx/backend-a
+			deploy:
+			  chart: deploy/helm/backend-a
+
+二、這樣做的關鍵價值
+	1.CI/CD 不被平台綁死
+
+		今天你用 Jenkins
+		明天改 Azure DevOps
+
+		👉 你只要換「入口檔」
+
+		不用重寫整套 CI/CD 邏輯
+
+	2.多平台共存也可以
+		例如：
+			* backend 用 Jenkins
+			* frontend 用 GitHub Actions
+			* 某些服務在 Azure
+
+		👉 只要共用 template，流程仍一致
+
+	3.規範一致
+		所有服務：
+			* build 流程一致
+			* image naming 一致
+			* deploy 流程一致
+			* approval 一致
+
+三、實務上有三種常見策略
+	策略 A：完全依賴平台 template（較簡單）
+		例如 Azure DevOps：
+			extends:
+			  template: java-service.yml
+
+		👉 優點：
+			* 快
+			* 平台整合好
+
+		👉 缺點：
+			* 被平台綁死
+
+	策略 B：平台 + shared template（推薦） => 目前情境，建議這樣選 B
+		例如：
+			* Jenkins → Shared Library
+			* Azure → YAML template
+			* GitHub → reusable workflow
+
+		👉 優點：
+			* 邏輯集中
+			* 還算可移植
+
+	策略 C：平台只是觸發器（最解耦）
+		例如：
+			steps:
+			  - run: ./ci/run.sh
+
+		真正邏輯在：
+			* shell script
+			* python tool
+			* internal cli
+
+		👉 優點：
+			* 幾乎不被平台綁死
+
+		👉 缺點：
+			* 要自己維護工具
+
+
+四、常見錯誤（提醒你避開）
+
+	❌ 把所有邏輯寫在 Jenkinsfile
+		→ 之後無法移植
+
+	❌ 每個 repo 自己 copy pipeline
+		→ 很快失控
+
+	❌ 一個超級萬能 template
+		→ if/else 爆炸
+
+	❌ template 沒版本控管
+		→ 一改全爆
+
+
+各種CICD 工具 對應的 template 做法
+	jenkins
+		javaServicePipeline.groovy
+		vueFrontendPipeline.groovy
+		libraryPipeline.groovy
+	azure-pipelines
+
+
+QA
+	Q1: ci-template-repo
+		 ├─ jenkins-shared-library/
+		 │   ├─ vars/
+		 │   │   ├─ javaServicePipeline.groovy
+		 │   │   ├─ vueFrontendPipeline.groovy
+		 │   │   └─ libraryPipeline.groovy
+		為何jenkins 後面要叫 shared-library ?
+
+	A1:
+		一、什麼是 Jenkins Shared Library？
+			對應 Jenkins Shared Library 這個機制
+			Jenkins 官方提供一種「共用 pipeline 程式碼」的方式，叫 Shared Library
+
+			把 pipeline 的 Groovy 邏輯抽出來，變成一個可重用的「程式庫」
+
+			用 Shared Library
+				Jenkinsfile 變成：
+					@Library('company-ci-lib') _
+
+					javaServicePipeline(config)
+
+				👉 真正邏輯在：
+					ci-template-repo
+					 └─ jenkins-shared-library/
+						 └─ vars/
+							 └─ javaServicePipeline.groovy
+
+		二、為什麼目錄要叫 jenkins-shared-library/
+			👉 讓人一看就知道這個 repo 是拿來給 Jenkins 當 Shared Library 用的
+
+
+
+		三、Shared Library 的標準目錄結構（重點）
+			📁 Jenkins 標準結構
+				(root repo)
+				 ├─ vars/
+				 │   ├─ javaServicePipeline.groovy   ← 常用（你看到的）
+				 │   └─ vueFrontendPipeline.groovy
+				 │
+				 ├─ src/
+				 │   └─ com/company/...              ← 複雜邏輯用
+				 │
+				 └─ resources/                       ← 可選
+
+		四、vars/ 是幹嘛的？（關鍵）
+			這個最重要。
+
+				👉 放在 vars/ 裡的 Groovy 檔，會變成「pipeline 可直接呼叫的 function」
+
+			範例
+				檔案
+					vars/javaServicePipeline.groovy
+				內容
+					def call(config) {
+						pipeline {
+							stages {
+								stage('Build') {
+									steps {
+										sh config.build.command
+									}
+								}
+							}
+						}
+					}
+
+				Jenkinsfile 就可以這樣用：
+					@Library('company-ci-lib') _
+
+					javaServicePipeline(cfg)
+
+		五、為什麼不用一般 repo，而要用 Shared Library？
+			你可能會想：
+				👉 「那我直接 git clone script 不就好？」
+
+			差別在這裡
+				| 做法             | 問題                          |
+				| ---------------- | ----------------------------- |
+				| shell script     | 不好抽象流程                  |
+				| copy Jenkinsfile | 重複、難維護                  |
+				| Shared Library   | ✅ 官方支援、可抽象、可版本化 |
+
+			Shared Library 的優勢
+				1.可 version control
+					@Library('company-ci-lib@v1.2.0') _
+					👉 pipeline 可鎖版本
+
+				2.可抽象成 DSL（很強）
+					javaServicePipeline {
+						buildTool = 'maven'
+						deploy = 'helm'
+					}
+				3.可集中治理
+					安全掃描
+					approval 流程
+					logging
+					error handling
+				4.可跨 repo 共用
+
+				這就是你現在在設計的重點

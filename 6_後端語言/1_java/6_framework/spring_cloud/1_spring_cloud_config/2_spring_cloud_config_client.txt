@@ -24,6 +24,8 @@ https://docs.spring.io/spring-cloud-config/docs/3.1.9/reference/html/#_spring_cl
 	</dependencies>
 
 2.bootstap.yml
+	從 Spring Boot 2.4 之後。👉 不需要、也不應該再用 bootstrap.yml
+
 	spring
 	  config.import: optional:configserver:http://${your config server}:8888
 	  application:

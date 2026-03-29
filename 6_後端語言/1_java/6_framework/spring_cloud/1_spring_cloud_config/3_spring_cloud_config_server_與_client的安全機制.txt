@@ -1,0 +1,23 @@
+ref ChatGPT
+
+
+spring cloud server
+	與 cloud client
+
+安全的連線機制
+	1.最好是用服務發現方式
+
+
+		| 類型           | 是否內建                   | 建議      |
+		| -------------- | -------------------------- | --------- |
+		| HTTPS          | ✅                         | 必備      |
+		| Basic Auth     | ✅                         | 簡單內網  |
+		| OAuth2 / Token | ✅（透過 Spring Security） | ⭐推薦     |
+		| mTLS           | ✅                         | 高安全環境|
+		| Config 加密    | ✅                         | 保護 Git  |
+
+✔ 最合理組合
+	HTTPS ✅
+	Config Server behind Gateway / LB
+	JWT / OAuth2 保護 Config Server
+	secrets 不放明文（用 {cipher} 或 Vault）

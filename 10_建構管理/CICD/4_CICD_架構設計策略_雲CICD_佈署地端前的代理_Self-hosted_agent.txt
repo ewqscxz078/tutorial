@@ -1,0 +1,429 @@
+ref ChatGPT
+
+https://dev.azure.com
+
+
+azure devOps
+	Self-hosted agent 模式之職責
+		✔ build / test / deploy 全部都在 agent 上
+
+Q1: Self-hosted agent 通常在 deploy 操作到怎樣的程度? 也就是 地端 agent 機器與 地端 佈署的機器群 通常做那些操作
+
+A1:
+	🧭 一句話先講結論
+
+		👉 Self-hosted agent 應該只負責「發起部署」與「執行部署指令」
+		👉 不應該變成「真正跑服務的地方」或「全能跳板」
+
+
+	🔥 核心問題：Agent 到底做到哪？
+		🟢 Level 1（最基本 / 最推薦 👍）
+			👉 Agent = 「指揮官」
+				做的事：
+					* SSH 到目標機
+					* 下指令
+					* 呼叫 deploy script
+				範例：
+					ssh app-server-01 "
+					  cd /app &&
+					  docker-compose pull &&
+					  docker-compose up -d
+					"
+
+				或：
+					kubectl apply -f deployment.yaml
+
+				特點：
+					✔ agent 不跑業務服務
+					✔ agent 不存資料
+					✔ agent 不長期持有 app
+
+				👉 這是最乾淨、最安全的設計
+
+		🟡 Level 2（常見）
+			👉 Agent = 「中控跳板」
+				做的事：
+					* SSH 多台機器
+					* 執行批次部署
+					* 管控版本 rollout
+				範例：
+					for host in app1 app2 app3; do
+					  ssh $host "deploy.sh v1.2.3"
+					done
+
+				特點：
+					✔ 有集中控制
+					✔ 可控多節點
+					⚠️ agent 變成「跳板機」
+
+				👉 這在地端環境很常見
+
+		🔴 Level 3（不太建議）
+			👉 Agent = 「什麼都做」
+				做的事：
+					* build
+					* deploy
+					* 直接跑服務
+					* 存資料
+					* 當 registry
+
+				問題：
+					❌ 單點故障
+					❌ 安全風險超高
+					❌ pipeline = production control
+
+				👉 這是很多 legacy 系統會踩的坑
+
+	🧠 再往下看「deploy 到什麼程度」
+		🅰️ Docker / docker-compose
+			Agent 做：
+			ssh
+			pull image
+			restart container
+
+			👉 例如：
+				docker-compose pull
+				docker-compose up -d
+
+		🅱️ Kubernetes
+			Agent 做：
+			kubectl / helm
+
+			👉 例如：
+				kubectl set image deployment/app app=myapp:v1.2.3
+
+			👉 或：
+				helm upgrade --install
+
+		🅲️ 傳統（jar / war）
+			Agent 做：
+				scp 檔案
+				restart service
+				例如：
+					scp app.jar server:/app/
+					ssh server "systemctl restart app"
+
+	🔐 很重要：Agent 與「部署機器群」的關係
+		👉 Agent 應該：
+			✔ 有「操作權限」
+			❌ 不應該是「服務節點」
+
+		👉 部署機器群：
+			✔ 才是真正跑服務
+			✔ 才有 DB / cache / API
+
+	🔥 企業實務最佳切法
+		👉 建議分三層
+			[ Azure DevOps ]
+					↓
+			[ Self-hosted Agent（部署控制） ]
+					↓
+			[ Deployment Targets（應用機器） ]
+					↓
+			[ Infra（DB / MQ / Cache） ]
+
+	⚠️ 你一定要注意的 3 件事
+		1.Agent 權限不要太大
+
+			👉 很多人會給：
+				* root
+				* 全部機器 SSH key
+				* DB access
+
+			👉 這會變成：
+
+			👉 CI/CD = 超級後門
+
+		2.Agent 不要直接在核心內網
+
+			建議：
+				* 放 DMZ / 跳板區
+				* 或有限制 outbound
+
+		3.deploy 應該「可重複」
+			👉 Agent 做的是：
+
+				idempotent 操作（可重跑）
+				script 化（不要手動）
+
+	💡 給你一個實務判斷法
+
+		你可以問自己👇
+
+		👉 如果 agent 掛了：
+
+			* ❓服務會不會停？
+				👉 不應該停
+			* ❓只是不能 deploy？
+				👉 這才是正常
+
+
+Q2: 最理想 agent 機器 是指擁有 操作 目標機器的 ssh 鑰匙 與 要deploy 的指令而已?
+A2:
+	✅ 核心結論（先講清楚）
+
+		👉 是的，Self-hosted agent 應該只負責：
+			✔ 持有「部署所需的最小權限憑證」（不一定只限 SSH key）
+			✔ 執行 deploy 指令（script / kubectl / API）
+
+		👉 但 ❗ 不應該是「直接持有全部機器 root SSH key」
+
+		🧭 正確說法（更精準）
+			👉 Agent 應該具備的是：
+				「最小必要權限的部署能力」
+				而不是
+				「全系統 root SSH 控制權」
+
+
+	🧱 實務上會分 3 種安全等級（很重要）
+		🟢 Level 1（可接受 / 中小型常見）
+
+			👉 Agent 用 SSH key（但有限制）
+
+			做法：
+				* 專用帳號（例如 deploy-user）
+				* ❌ 不是 root
+				* ✔ 限制 sudo 指令
+					deploy-user ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/systemctl
+
+		🟡 Level 2（企業推薦 👍）
+
+			👉 Agent 不直接用 SSH root key
+
+			做法：
+				用「部署腳本入口」
+					ssh deploy@server "run-deploy.sh v1.2.3"
+
+			👉 而 run-deploy.sh：
+				* 控制可做的事情
+				* 不讓 agent 任意執行指令
+
+			👉 好處：
+				✔ 限制行為
+				✔ 可 audit
+				✔ 比較安全
+
+		🔵 Level 3（進階 / 最安全）
+
+			👉 不用 SSH，改用 API / 平台
+
+				例如：
+					Kubernetes
+						kubectl apply
+
+				或 CD 工具（GitOps）
+					ArgoCD
+					Flux
+
+				👉 Agent 只負責：
+					* 更新 image tag
+					* push config
+
+				👉 cluster 自己 deploy
+
+Q3: ssh deploy@server "run-deploy.sh v1.2.3" 可是看起來還是有用 ssh 不就還是需要 SSH key ?
+A3:
+	1) Level 1 跟 Level 2 的真正差別
+		前面說的 Level 2，不是「不用 SSH key」，而是：
+
+		👉 不是把 SSH key + 任意遠端指令權限直接全部攤開給 agent
+		而是
+		👉 仍然用 SSH 當傳輸通道，但把遠端可做的事情收斂到很小
+
+		ssh deploy@server "run-deploy.sh v1.2.3" 這種模式裡：
+
+			* agent 端通常還是持有 SSH 私鑰
+			* 但那把 key 對應的帳號應該是：
+				* 專用 deploy 帳號
+				* 非 root
+				* 權限受限
+			* 而且遠端最好再限制：
+				* 只能跑特定 script
+				* 或只能進特定目錄
+				* 或只能做特定 sudo 指令
+
+			所以重點不是「有沒有 SSH key」，而是：
+
+			這把 SSH key 拿到後，到底能做多少事。
+
+		agent 一樣有 SSH key，但變成：
+
+			ssh deploy@server "run-deploy.sh v1.2.3"
+
+			差別在於：
+
+				* agent 只負責「叫用固定入口」
+				* 真正部署細節收在 server 端 script
+				* server 端 script 可以自己控管：
+					* 允許哪些參數
+					* 允許哪些 image/tag
+					* 哪些服務能重啟
+					* 哪些路徑能更新
+
+	2) 更安全的做法是什麼
+		1. 用專用帳號，不用 root
+			例如：
+				deploy@server
+
+		2. deploy 帳號只做部署相關事
+			例如：
+				可讀取部署目錄
+				可執行 deploy script
+				可重啟特定 service
+				可操作特定 docker compose
+
+			但不應該：
+				可任意讀 DB 設定
+				可看所有系統檔
+				可任意 sudo 全部指令
+
+		3. 遠端 script 固定化
+
+			例如你的 pipeline 永遠只做：
+				ssh deploy@server "/opt/deploy/run-deploy.sh myapp 1.2.3 dev"
+			而不是在 pipeline 裡拼很多零散命令。
+
+			這樣好處是：
+				* server 端部署邏輯集中
+				* 比較好版控
+				* 比較好審計
+				* 比較好限制輸入參數
+
+		4. sudo 只開白名單
+
+			如果 deploy script 需要重啟服務，可以在 sudoers 只開放特定指令，例如：
+				deploy ALL=(ALL) NOPASSWD: /bin/systemctl restart myapp
+				deploy ALL=(ALL) NOPASSWD: /usr/bin/docker compose -f /opt/myapp/docker-compose.yml up -d
+
+			而不是：
+				deploy ALL=(ALL) NOPASSWD: ALL
+
+			後者幾乎等於半個 root。
+
+	3) 你可以把它想成兩層防線
+		第一層：SSH key
+
+			決定「誰能連進來」
+
+		第二層：deploy 帳號 + run-deploy.sh
+
+			決定「連進來後能做什麼」
+
+			真正安全的是第二層，而不是單純有沒有 SSH key。
+
+	4) 再進一步，甚至可以限制 SSH key 只能做固定事
+		這是更進階但很實用的做法。
+
+		在 authorized_keys 裡，可以對某把公鑰加限制，例如指定：
+			* 只能從特定來源連
+			* 不能 port forward
+			* 不能 tty
+			* 強制執行某個 command
+
+		概念像這樣：
+			command="/opt/deploy/forced-deploy.sh",no-port-forwarding,no-agent-forwarding,no-X11-forwarding ssh-rsa AAAA...
+
+		這代表：
+
+			* 就算 agent 端下的是別的 SSH 指令
+			* 連進來後也只會被強制執行指定 script
+
+		這就比一般 SSH key 更安全。
+
+
+Q4: agent 用的 SSH key 應該放在哪讓 agent 用?
+	放在 遠端部署 CICD 連同一起打包放入?看起來蠻危險
+
+A4:
+	方案 A：放在 agent 主機的受保護檔案系統
+		這是最常見也最容易落地的方式。
+
+		例如：
+			Linux 上某個受限目錄
+			檔案權限 600
+			只有跑 agent 的帳號可讀
+
+		例如：
+			/opt/az-agent/.ssh/deploy_key
+			chmod 600 /opt/az-agent/.ssh/deploy_key
+			chown agentuser:agentuser /opt/az-agent/.ssh/deploy_key
+
+		pipeline 裡用：
+			ssh -i /opt/az-agent/.ssh/deploy_key deploy@server "/opt/deploy/run-deploy.sh myapp 1.2.3 dev"
+
+		優點
+			* 簡單
+			* 好理解
+			* 對地端 self-hosted agent 很常見
+		風險
+			* agent 主機若被入侵，key 可能被偷
+			* 要自己管輪替與權限
+
+	方案 B：放在 CI/CD 的 secret / secure files 機制
+
+		如果你們有用 Azure DevOps 的 secret 管理能力，通常會比直接寫死在 pipeline 或 repo 好很多。
+
+		可用做法通常有兩種思路：
+			1.Secret variable：把 key 內容當秘密變數，執行時寫到暫存檔
+			2.Secure file：把 key 當受保護檔案，在 job 執行時下載到 agent 暫存區
+
+		這種做法的精神是：
+			* key 不進 repo
+			* key 不進 artifact
+			* pipeline 執行時才取出
+
+		優點
+			* 管理集中
+			* 容易輪替
+			* 權限比較清楚
+
+		要注意
+			* pipeline log 不能把 key 印出來
+			* 執行後應刪除暫存檔
+			* 有權限跑該 pipeline 的人，等於間接能用那把 key，要控權
+
+	方案 C：放在專門的祕密管理系統
+		這是更理想的企業做法。
+
+		例如你們若有：
+			* Vault 類型系統
+			* 雲端 Key Vault 類型服務
+			* 內部 secrets manager
+
+		可以讓 pipeline 在執行時動態取 key，甚至取短效憑證。
+
+		優點
+			* 安全性最好
+			* 輪替容易
+			* 不必長期把 key 放在磁碟
+		缺點
+			* 導入較複雜
+			* 需要額外整合
+
+	一個比較健康的流程長這樣
+		Agent 主機上
+		放：
+			deploy script
+			SSH client
+			private key（安全存放）
+			known_hosts
+
+		Pipeline 執行
+		做：
+			1.checkout code
+			2.build / test / package
+			3.取出 key
+			4.SSH 到遠端
+			5.執行固定 deploy script
+			6.清掉暫存敏感檔案
+
+
+	再補一個實務重點：known_hosts 也要管
+
+		很多人只管 private key，忽略 known_hosts。
+
+		建議：
+			* 預先把目標主機指紋放在 agent 的 known_hosts
+			* 不要在 pipeline 裡用 StrictHostKeyChecking=no 當常態
+
+		不然你只是把連線方便，卻把中間人攻擊風險打開。

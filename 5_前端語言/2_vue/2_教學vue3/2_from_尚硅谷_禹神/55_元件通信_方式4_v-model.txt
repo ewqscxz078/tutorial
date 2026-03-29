@@ -1,0 +1,207 @@
+ref https://www.youtube.com/watch?v=OAP7ugll8ys&list=PLmOn9nNkQxJEnGM4Jf0liBcyedAtuQq-O&index=55
+
+
+元件之間的通信
+	1. v-model 父傳子，子傳父
+		用在
+			* 一般很少寫底層元件寫 v-model
+			* UI 元件
+
+		$event 到底是啥? 啥時能 .target
+		對於原生事件, $event 就是事件對象 => 能 .target
+		對於自訂事件, $event 舊式觸發事件時, 所傳遞的資料 => 不能.target
+
+pages/
+	04_v-model
+		AtguiguInput.vue
+			<template>
+				<input
+				  type="text"
+				  :value="modelValue"
+				  @input="emit('update:modelvalue',(<HTMLInputElement>@event.target).value)"
+			    > <!-- 原生元件 之 @event 要再 .target -->
+			</template>
+
+			<script lang='ts' setup>
+			  import {ref} from 'vue'
+
+			  // 資料
+			  defineProps(['modelValue']) // 收到 modelValue
+			  const emit = defineEmits(['update:modelvalue']) // 收到事件名 update:modelvalue
+
+			  // 方法
+
+			</script>
+
+			<style scoped>
+			  input {
+			    border: 2px solid black;
+				backgroud-image: linear-gradient(45deg, red, yellow, green);
+				height: 30px;
+				font-size: 20px;
+				color: white;
+			  }
+			</style>
+		Father.vue
+			<template>
+				<div class="father">
+				  <h3>父元件</h3>
+				  <!-- v-model 用在 html 標籤上 -->
+				  <!-- <input type="text" v-model="username"> -->
+				  <!-- <input type="text" :value="username" @input="username = (<HTMLInputElement>$event.target).value">   等於該行處理 -->
+
+				  <!-- v-model 用在元件標籤上 -->
+				  <AtguiguInput v-model="username"/>
+				  <!-- 等價寫法
+				  <AtguiguInput
+					:modelValue="username"
+					@update:modelValue="username = $event"
+				  /> 自訂元件 之 @event 不用再 .target -->
+
+				</div>
+			</template>
+
+			<script lang='ts' setup>
+			  import {ref} from 'vue'
+			  import AtguiguInput from './AtguiguInput'
+
+			  // 資料
+			  let username = ref('zhansgan')
+
+			  // 方法
+
+			</script>
+
+			<style scoped>
+			  .father {
+				backgroud-color: rgb(165, 164,164);
+				padding: 20px;
+				border-radius: 10px;
+			  }
+			  .father button {
+
+			  }
+			</style>
+
+router
+	index.ts
+		import { createRouter, createWebHistory } from 'vue-router'
+		import Props '@/pages/01_props/Father.vue'
+		import Event '@/pages/02_custom-event/Father.vue'
+		import Bus '@/pages/03_mitt/Father.vue'
+		import Model '@/pages/04_v-model/Father.vue'
+		import AttrsListeners '@/pages/05_$attrs/Father.vue'
+		import RefChildrenParent '@/pages/06_$refs-$parent/Father.vue'
+		import ProvideInject '@/pages/07_provide-inject/Father.vue'
+		import Pinia from '@/pages/08_pinia/Father.vue'
+		import Slot from '@/pages/09_slot/Father.vue'
+
+		export default createRouter({
+		  history: crateWebHistory(),
+		  routes: [
+		    {
+			  path: '/props',
+			  component: Props
+			},
+		    {
+			  path: '/event',
+			  component: Event
+			},
+		    {
+			  path: '/mitt',
+			  component: Bus
+			},
+		    {
+			  path: '/model',
+			  component: Model
+			},
+		    {
+			  path: '/attrs',
+			  component: AttrsListeners
+			},
+		    {
+			  path: '/ref-parent',
+			  component: RefChildrenParent
+			},
+		    {
+			  path: '/provide-inject',
+			  component: ProvideInject
+			},
+		    {
+			  path: '/Pinia',
+			  component: Pinia
+			},
+		    {
+			  path: '/slot',
+			  component: Slot
+			},
+		  ]
+		})
+
+index.html
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<link rel="icon" href="/favicon.ico">
+			<meta name="viewport" content="width=divice-width, initial-scale=1.0">
+			<link rel="sytlesheet" href="/css/bootstrap.css"> <!-- 新增重點 -->
+			<title>Vite App<title/>
+		</head>
+		<body>
+			<div id="app"></div>
+			<script type="module" src="/src/main.ts"></script>
+		</body>
+	</html>
+
+main.ts
+  import {createApp} from 'vue'
+  import App from './App.vue'
+  import {createPinia} from 'pinia'
+  import router from './router'
+  // import emitter from '@/utils/emitter' // 測試體驗用
+
+  // 創建應用
+  const app = createApp(App))
+  // 創建 pinia
+  const pinia = createPinia()
+
+  // 安裝 插件 pinia
+  app.use(pinia)
+  // 安裝 插件 路由器
+  app.use(router)
+  // 掛載應用
+  app.mount('#App')
+
+
+App.vue
+	<template>
+		<h1>
+			vue3 元件通信
+		</h1>
+		<div class="row">
+		  <div class="col-xs-3 col-md-3 col-lg-3 col-xl-3">
+		    <!-- 導航區 -->
+			<router-link active-class="active" class="list-group-item" to="/props">1
+			<router-link active-class="active" class="list-group-item" to="/event">2
+			<router-link active-class="active" class="list-group-item" to="/mitt">3
+			<router-link active-class="active" class="list-group-item" to="/model">4
+			<router-link active-class="active" class="list-group-item" to="/attrs">5
+			<router-link active-class="active" class="list-group-item" to="/ref-parent">6
+			<router-link active-class="active" class="list-group-item" to="/provide-inject">7
+			<router-link active-class="active" class="list-group-item" to="/pinia">8
+			<router-link active-class="active" class="list-group-item" to="/slot">9
+		  </div>
+		  <div class="col-xs-9 col-md-9 col-lg-9 col-xl-9">
+		    <div class="panel-body">
+			  <!-- 佔位一個展示區-->
+			  <router-view></router-view>
+			</div>
+		  </div>
+		</div>
+	</template>
+
+	<script lang='ts' setup>
+	  // import Count from './components/Count.vue'
+
+	</script>

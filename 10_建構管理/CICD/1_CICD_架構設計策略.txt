@@ -1,0 +1,679 @@
+ref ChatGPT
+
+一、結論
+	主流做法是：
+		👉 微服務 CI/CD 原則：
+			Each service builds and deploys itself independently
+
+		👉 每個服務（module）有自己的 CI/CD pipeline（分散式）
+
+		👉 但部署目標（雲端）是統一的平台（集中式）
+
+		也就是：
+			🔹 Build 分散
+				每個服務各自 pipeline（沒問題）
+
+			🔹 Deploy 不共用 pipeline，但可以共用「平台」或「機制」（K8s / 雲平台）
+				deploy 通常也是分散的（不是共用同一條 pipeline）
+				統一是指
+					1.統一 Infra（最重要）
+						例如：
+							Kubernetes cluster
+							AWS ECS / GCP Cloud Run
+							👉 所有服務 deploy 到同一平台
+					2.統一規範（不是 pipeline）
+						例如：
+							docker image naming
+							version 規則
+							deploy 流程
+
+					3.統一 pipeline template（這才是關鍵）
+						👉 很多人誤會「分散 = 每個 pipeline 都不一樣」
+						其實是：
+							✔ pipeline 邏輯統一
+							✔ 但執行是各自 repo trigger
+
+						例如：
+							GitHub Actions 共用 reusable workflow
+							Jenkins shared library
+
+		[service-A repo]
+			   ↓
+			CI/CD A
+			   - build
+			   - docker build
+			   - push image
+			   - deploy A
+
+		[service-B repo]
+			   ↓
+			CI/CD B
+			   - build
+			   - docker build
+			   - push image
+			   - deploy B
+
+		每個可獨立上線的服務，要有獨立 CI/CD。
+			因為：
+				Maven multi-module 的 common-utils
+				shared-model
+				starter
+			這些雖然也是 module，但不一定要自己 deploy。
+
+二、兩種模式對比
+
+	🏢 傳統模式
+		dev → push code → CI/CD機器 → build → deploy到機器
+
+		特點：
+			* CI/CD 是「中央控制」
+			* 所有專案共用一台或一組 CI/CD
+			* 部署通常是 VM / 實體機
+
+		👉 問題：
+			* pipeline 容易互相影響
+			* scale 不好
+			* multi-service 很痛苦
+
+	☁️ 雲端現代模式（主流）
+
+		模式 A：每服務一條 CI/CD（推薦）
+			service-A repo → CI/CD A → build image → push registry → deploy
+			service-B repo → CI/CD B → build image → push registry → deploy
+
+			👉 特點：
+				✔ 每個服務獨立
+				✔ 可各自 release
+				✔ 不互相影響
+
+			👉 搭配：
+				container registry（ECR / GCR / Harbor）
+				Kubernetes / ECS / Cloud Run
+
+		模式 B：集中式 CI/CD（較少用）
+			monorepo → 單一 CI/CD → build所有服務 → deploy
+
+			👉 適合：
+				monorepo
+				小團隊
+
+			👉 問題：
+				pipeline 很複雜
+				build 時間長
+				release 綁死
+
+CI/CD 劃分對照表
+	| 架構型態                   | 程式結構                                           | 部署單位 | CI/CD 建議                                                             | 適合情境                 | 備註                      |
+	| -------------------------- | ---------------------------------------------- | ---- | ------------------------------------------------------------------------------ | ------------------------ | ------------------------- |
+	| 單體系統                   | 1 個 repo，1 個主程式                                | 1 個  | 1 條 pipeline                                                           | 傳統系統、小型專案       | 最單純                    |
+	| 多模組單體                 | 1 個 repo，多個 module，但最後組成 1 個 app               | 1 個  | 1 條主 pipeline                                                    | 共用程式很多、仍一起上線 | module 不需各自 deploy    |
+	| 多模組多服務               | 1 個 repo，多個 module，且各自可打包成獨立服務                 | 多個   | 每個服務各自 pipeline，或 monorepo 下依路徑觸發不同 pipeline | 中大型系統               | 雖然同 repo，但部署已分離 |
+	| 微服務 / 分散式            | 多個 repo 或 monorepo 多服務                         | 多個   | 每個服務各自 build + deploy                                            | 雲端原生、服務獨立擴充   | 最符合現代主流            |
+	| 前後端分離 + BFF + Gateway | frontend / bff / gateway / auth / backend 各自服務 | 多個   | 各自 pipeline                                                            | 你目前這種架構很常見     | 建議標準化模板            |
+
+
+👉 最佳實務架構
+	Repo
+		* 每服務一 repo（或 logical 分開）
+	CI/CD
+		* 每服務一 pipeline
+	Artifact
+		* Docker image
+		* Deploy
+		* Kubernetes（或雲平台）
+	Config
+		* Vault + env + Secret
+
+怎麼判斷要不要獨立 CI/CD
+	最實用的判斷不是看它叫不叫 module，而是看這 4 件事：
+		1. 能不能獨立部署
+			例如：
+
+				gateway 可以自己上版
+				auth-server 可以自己上版
+				backend-A 可以自己上版
+
+			這種就適合獨立 pipeline。
+
+		2. 能不能獨立回滾
+			如果某服務壞掉時，你希望只回滾它自己，不影響別人，
+			那它就應該獨立 deploy。
+
+		3. 發版頻率是否不同
+
+			例如：
+				BFF 常改
+				Auth Server 很少改
+				Gateway 偶爾改
+
+			這種就很適合分開。
+
+		4. 團隊責任是否不同
+
+			如果不同人維護不同服務，
+			通常也要各自 CI/CD，比較清楚。
+
+以常提的系統來看，大概會像這樣：
+	| 元件                | 是否建議獨立 build           | 是否建議獨立 deploy | 原因                       |
+	| ------------------- | ---------------------------- | ------------------- | -------------------------- |
+	| Frontend SPA        |                 是           |             是      | 前端通常獨立發版           |
+	| Portal BFF          |                 是           |             是      | 與前端、後端節奏不同       |
+	| API Gateway         |                 是           |             是      | 路由與安全策略常需獨立控管 |
+	| Auth Server         |                 是           |             是      | 身分驗證層高敏感，適合獨立 |
+	| Backend A           |                 是           |             是      | 業務服務應可獨立上線       |
+	| Backend B           |                 是           |             是      | 同上                       |
+	| 共用 library module | 是，但屬於被引用時一起 build |             否      | 它不是獨立部署單位         |
+
+實務上最常見的做法 : repo 對應 pipeline
+	做法 A：每服務一個 repo，一條 pipeline
+
+		例如：
+			gateway-repo → gateway pipeline
+			auth-server-repo → auth pipeline
+			bff-repo → bff pipeline
+			backend-a-repo → backend-a pipeline
+
+		這是最直觀的方式。
+
+	做法 B：monorepo，但依目錄觸發不同 pipeline
+
+		例如同一 repo 內有：
+
+		/gateway
+		/auth-server
+		/bff
+		/backend-a
+
+		然後設定：
+
+			改到 /gateway/** 才跑 gateway pipeline
+			改到 /backend-a/** 才跑 backend-a pipeline
+
+		這樣雖然 repo 同一個，但 CI/CD 還是分散的。
+
+
+共用元件／共用套件的建置處理模式
+  比如
+	* common-utils
+	* shared-model
+	* starter
+
+	模式 A：跟主服務一起 build，不獨立發版 :
+
+		適合：
+			只給同一個 repo 內的服務用
+			變動頻率低
+			不需要跨 repo 共用
+
+	模式 B：獨立當成共用 library 發版 => 看起來跨 repo 適合
+
+		適合：
+			多個服務／多個 repo 都會用
+			需要版本控管
+			需要讓別的 pipeline 可單獨引用
+
+	一、它們本質上是什麼
+		1. common-utils
+
+			通常是：
+				* 字串工具
+				* 日期工具
+				* 共用 exception
+				* 共用 helper
+				* 共用 util class
+
+			這種本質上是 library，不是 service。
+			所以它通常：
+				* 需要 build
+				* 需要 publish artifact
+				* 不需要 deploy 到雲端執行
+
+		2. shared-model
+
+			通常是：
+				* DTO
+				* VO
+				* enum
+				* request / response model
+				* 共用常數
+
+			這也是 library。
+			如果多個服務共用同一批 model，就常會獨立成 jar。
+
+			但這種要很小心，因為它很容易變成：
+				* 一改一個欄位，全部服務都得跟著升版
+
+			所以 shared-model 雖然常見，但也最容易造成耦合。
+
+		3. starter
+
+			通常是：
+
+				* Spring Boot autoconfigure
+				* 共用 security config
+				* 共用 logging config
+				* 共用 exception handler
+				* 共用 redis / datasource / oauth 包裝
+
+			這個本質也是 library / framework module，
+			不是上線服務。
+
+			所以它也是：
+				* build 出 jar
+				* 發到 Maven repository / artifact repository
+				* 讓別的服務引用
+
+放到 CI/CD 架構圖裡，大概是這樣
+	第 1 層：共用元件層
+		* common-utils
+		* shared-model
+		* starter
+
+		這層做的是：
+			* compile
+			* unit test
+			* publish jar
+
+		不做 deploy
+
+	第 2 層：應用服務層
+		* auth-server
+		* gateway
+		* bff
+		* backend-a
+		* backend-b
+
+		這層做的是：
+			* build app
+			* build docker image
+			* push image
+			* deploy to cloud
+
+
+	想成兩條不同的流水線
+		A. Library pipeline
+			code
+			 → test
+			 → package jar
+			 → publish to maven repo
+
+		B. Service pipeline
+			code
+			 → test
+			 → build app
+			 → docker build
+			 → push image
+			 → deploy
+
+正式環境常見的 pipeline 長相
+	一條 service pipeline
+		1. Build
+		2. Unit Test
+		3. Package
+		4. Build Image
+		5. Push Image
+		6. Deploy Dev
+		7. Promote to SIT
+		8. Promote to UAT
+		9. Wait for PROD Approval
+		10. Deploy PROD
+		11. Smoke Test
+		12. Notify
+
+		其中第 9 步就是人工卡點。
+
+	* approval 通常核准的是什麼
+
+		approval 前，通常會顯示：
+			服務名稱
+			版本號
+			git commit
+			image tag
+			變更單號
+			UAT 通過紀錄
+			測試結果摘要
+
+		正式環境不應該核准「重新 build」這件事，
+		而應該核准：
+			把某個已存在、已驗證的版本 promote 到正式環境
+
+		例如核准的是：
+			* image tag：backend-a:1.2.5
+			* git tag：release-2026.03.28.1
+			* helm chart version：3.4.2
+
+		這很重要，因為正式環境應該避免：
+			UAT 驗證的是 A，正式上線卻又重新 build 成 B
+
+		所以比較正確的是：
+			SIT / UAT 驗證過某個 artifact
+			PROD approval 核准同一個 artifact 上線
+
+		正式環境常見還會多加什麼
+			1. 變更單 / 工單綁定
+				approval 前要求填：
+					* change ticket id
+					* 發版單號
+					* 維護窗口資訊
+
+				這樣之後可追溯。
+
+			2. 雙人核准
+				有些正式環境不是一人按就好，而是：
+					* 開發主管核准
+					* 業務承辦或維運核准
+
+				然後才 deploy。
+
+			3. 維護時間窗限制
+
+				即使有人按 approval，也可能只允許在：
+
+				* 週三 20:00-22:00
+				* 假日維護窗
+
+				內執行。
+
+			4. 自動 smoke test
+				正式部署後自動做：
+					* health endpoint 檢查
+					* login / API 基本驗證
+					* DB migration 是否成功
+					* 錯誤率是否異常
+
+			5. 自動通知
+				例如寄信或發 Teams / Slack：
+					* 誰核准
+					* 何時上線
+					* 哪個版本
+					* 成功或失敗
+					* 若失敗是否已回滾
+
+
+如果是甲乙方場景，建議的正式流程
+	CI build
+	→ 產出 image / artifact
+	→ Deploy SIT
+	→ 驗證
+	→ Promote UAT（指定版本）
+	→ 甲方驗證通過
+	→ 等待承辦 / 管理者 approval
+	→ Deploy PROD
+	→ Smoke Test
+	→ 通知結果
+
+	重點是：
+		SIT 可多版本混合
+		UAT / PROD 都用指定版本
+		PROD 不重 build，只 promote 同一版
+
+QA
+	Q1: 若要往 真正 per-service CI/CD ，會有個困擾是每個微服務多的話pipeline 會點到死
+	A1:
+		服務一多，Jenkins / GitLab / GitHub Actions 上的 pipeline 數量會爆炸，看起來很難管。
+		但這個問題通常不是靠「回到大一統 pipeline」解，而是
+			=> 靠分層治理、模板化、入口整理來解。
+
+		先講結論
+
+			如果微服務很多，確實不能變成：
+				* 每個服務一條完全不同的 pipeline
+				* 每個 pipeline 都人工進去點
+				* 每個 pipeline 都靠人肉找
+
+			那一定會痛苦。
+
+			真正成熟的 per-service CI/CD 不是：
+
+				* pipeline 變很多，然後人去一條一條點
+
+			而是：
+
+				* pipeline 雖多，但大多是自動觸發、統一模板、用服務維度管理
+
+			也就是說：
+
+				* 數量變多是正常
+				* 但操作成本不該跟著線性增加
+
+		一、擔心的點是什麼
+
+			「會點到死」，通常其實是下面幾個問題的綜合：
+
+			1. pipeline 清單太多
+				畫面上幾十條、幾百條 job。
+
+			2. 人要自己判斷該點哪一條
+				例如修了 A，不確定要點：
+					build-a
+					deploy-a-dev
+					deploy-a-sit
+					image-a
+					release-a
+
+			3. 每條 pipeline 長得不太一樣
+				所以每次都要重新理解。
+
+			4. 服務多之後查找困難
+				尤其 Jenkins 傳統 job view 很容易亂。
+
+		二、真正 per-service CI/CD 不是靠「人工點」
+			這個觀念最重要。
+
+			現代作法通常是：
+
+			1. code push 自動觸發 build
+				例如：
+					* push 到 service-a
+					* 自動跑 service-a pipeline
+
+			2. merge 到特定 branch 自動觸發 deploy
+				例如：
+					* merge 到 main
+					* 自動 deploy dev
+					* 打 tag 才 deploy sit / prod
+
+			3. 平常根本不用人工逐條去點
+				只有少數情況才手動：
+					* rerun
+					* rollback
+					* hotfix
+					* 指定環境補部署
+
+			所以如果你的想像還是：
+
+				每個服務都有一條 pipeline，所以人每天要進 Jenkins 點很多次
+
+			那這通常表示設計還停在手動驅動型 CI/CD，不是成熟的 per-service 模式。
+
+		三、要解這個問題，靠的是「模板化 + 分群 + 自動觸發」
+			作法 1：共用 pipeline template
+
+				雖然有很多服務，但 pipeline 不要各寫各的。
+
+				例如所有 Spring Boot 服務都共用一個模板：
+					build
+					→ test
+					→ package
+					→ docker build
+					→ push image
+					→ deploy
+
+				差異只用參數帶入：
+					* serviceName
+					* dockerImage
+					* deployTarget
+					* helmChartPath
+
+				這樣雖然有 50 個服務，
+				本質上不是 50 種 pipeline，
+				而是：
+
+					1 套模板 + 50 個服務實例
+
+				所以維護成本不會真的爆炸。
+
+			作法 2：以資料夾 / 資料夾樹狀管理 pipeline
+				如果還在 Jenkins，通常要做 folder 化，例如：
+					Services/
+					  Gateway/
+						build
+						deploy-dev
+						deploy-sit
+					  Auth/
+						build
+						deploy-dev
+						deploy-sit
+					  BFF/
+						build
+						deploy-dev
+					  Backend/
+						Service-A/
+						Service-B/
+						Service-C/
+
+				或更進一步直接做到：
+					Services/
+					  service-a
+					  service-b
+					  service-c
+
+			作法 3：把 build / deploy 合成單一 service pipeline
+
+				你以前可能是：
+
+					* 一條編譯 pipeline
+					* 一條 image pipeline
+					* 一條 deploy pipeline
+
+				但 per-service 後，通常更常見的是：
+
+				每個服務一條主 pipeline
+
+				例如 service-a-pipeline 內含：
+
+					* build
+					* unit test
+					* package
+					* docker
+					* deploy dev
+
+				必要時再拆出：
+
+					* release pipeline
+					* rollback pipeline
+
+				這樣使用者面向的入口反而可能更少。
+
+				也就是：
+
+					不是 pipeline 更多到不能用，而是改成以服務為中心整理入口
+
+			作法 4：自動觸發，不靠手動點
+
+				例如：
+
+					* PR 建立 → 自動驗證
+					* merge main → 自動 build + deploy dev
+					* release tag → 自動 deploy sit / prod
+
+				真正需要人手動點的只剩：
+
+					* rollback
+					* promote
+					* re-run failed job
+
+				所以你「點到死」的痛點，
+				常常不是因為 per-service 本身，
+				而是因為還沒把流程自動化到夠完整。
+
+			作法 5：做總覽入口，不是做總控大 pipeline
+
+				這點很重要。
+
+				可以有「總覽」或「入口頁」，但不要再回到「中央總控流程」。
+
+				例如：
+
+					* 一個 dashboard 看所有服務狀態
+					* 一個 release board 看哪些服務版本已到 dev/sit/prod
+					* 一個查詢頁可搜尋服務名
+
+				這樣是集中看板，不是集中耦合 pipeline。
+
+				這是兩回事。
+
+		四、所以未來不是沒有「集中」，而是集中在這些地方
+
+			真正 per-service 後，仍然會集中管理，但集中的是：
+
+			1. 模板集中
+
+				共用 Jenkins shared library / reusable workflow。
+
+			2. 規範集中
+
+				統一命名、tag、分支策略、部署策略。
+
+			3. 觀測集中
+
+				統一 dashboard、log、release status。
+
+			4. 權限集中
+
+				誰能 deploy prod、誰能 rollback。
+
+			而不是：
+
+				❌ 所有服務都綁在同一條大 deploy pipeline
+
+			這才是關鍵差異。
+
+		五、如果服務真的很多，實務上怎麼避免「滿天 pipeline」
+			方案 A：Monorepo + path trigger
+
+				同一個 repo 裡多個服務，但依目錄異動只觸發對應服務 pipeline。
+
+				好處：
+
+					* repo 少
+					* 邏輯還是 per-service
+
+				壞處：
+
+					* monorepo 本身管理也有代價
+
+			方案 B：多 repo + 標準化 naming
+
+				例如 pipeline 名稱固定：
+
+				svc-auth
+				svc-gateway
+				svc-bff-portal
+				svc-order
+				svc-user
+
+				這樣搜尋和管理容易很多。
+
+			方案 C：環境 promote 機制
+
+				不要每個環境都一堆獨立 pipeline 亂飛。
+				可以做成：
+
+					* CI pipeline：build + image + deploy dev
+					* CD promote：把既有 image 往 SIT / UAT / PROD 升
+
+				這樣不會每個服務有 10 條 pipeline。
+
+			方案 D：改用 GitOps
+
+				如果 deploy 交給 Argo CD / Flux 這類工具，
+				CI pipeline 只做：
+
+					* build
+					* push image
+					* 更新部署設定
+
+				真正套用到 K8s 由平台完成。
+
+				這樣 Jenkins 那邊的 pipeline 數量與複雜度會再下降。

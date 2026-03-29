@@ -70,7 +70,7 @@ Spring Cloud Config Server features:
 
 3.spring cloud config server : application.properties/yml
 	server.port: 8888
-	spring.cloud.config.server:
+	spring.cloud.config.server: # ref JGitEnvironmentProperties
 	  accept-empty: false # 代表當 {application} 找不到則 config server 回應 HTTP status 404；預設為true，會回應空的配置檔
 		# debug 用
 	  default-label: master #不然預設會先用 main branch 搜尋，找不到會有洗 deubg log 後再嘗試用 master branch 找 ，決定使用哪個 {label}
@@ -96,7 +96,7 @@ Spring Cloud Config Server features:
 					{application} => organization(_)application.
 
 	    skipSslValidation: true # 略過 http git 驗證；預設false
-		timeout: 4 # 特別設定 http git connection timeout seconds
+		timeout: 4 # 特別設定 http git connection timeout seconds (單位秒，預設五秒)
 
 
 

@@ -1,0 +1,431 @@
+ref ChatGPT
+
+pipeline template
+
+	服務獨立的是
+		* 觸發時機
+		* 版本
+		* 產出 image
+		* 部署目標
+		* 發版節奏
+		* 共用的是
+		* build 流程
+		* test 流程
+		* image 打包流程
+		* deploy 步驟框架
+		* approval gate 邏輯
+		* 通知格式
+		* rollback 規則
+
+	也就是：
+
+		* 服務獨立，流程模板共用。
+
+
+	一、這其實才是成熟 per-service CI/CD 的常態
+
+		1. 一份共用 template / shared library
+
+			定義標準流程
+
+		2. 每個服務只提供自己的 metadata
+
+			例如：
+				service name
+				build tool
+				artifact path
+				dockerfile path
+				deploy type
+				namespace
+				helm chart path
+				是否需要 approval gate
+
+	二、可以怎麼分層
+		第 1 層：共用 pipeline template
+			例如定義標準 stages：
+				1.checkout
+				2.unit test
+				3.package
+				4.build image
+				5.push image
+				6.deploy dev
+				7.promote sit
+				8.promote uat
+				9.approval prod
+				10.deploy prod
+				11.smoke test
+				12.notify
+			這層是共用的。
+
+		第 2 層：服務設定
+			每個服務只寫自己的差異，例如：
+				serviceName: auth-server
+				buildTool: maven
+				javaVersion: 21
+				branch policy :  # 依據走哪種分支模型，設計 policy
+					branchPolicy:
+					  pr:
+						patterns:
+						  - "feature/*"
+						  - "bugfix/*"
+						stages:
+						  - checkout
+						  - unitTest
+						  - package
+
+					  develop:
+						patterns:
+						  - "develop"
+						stages:
+						  - checkout
+						  - unitTest
+						  - package
+						  - buildImage
+						  - pushImage
+						  - deployDev
+						  - smokeTest
+						  - notify
+
+					  main:
+						patterns:
+						  - "main"
+						stages:
+						  - checkout
+						  - unitTest
+						  - package
+						  - buildImage
+						  - pushImage
+						  - deploySit
+						  - smokeTest
+						  - notify
+
+					  releaseTag:
+						patterns:
+						  - "v*"
+						stages:
+						  - checkout
+						  - unitTest
+						  - package
+						  - buildImage
+						  - pushImage
+						  - promoteSit
+						  - promoteUat
+						  - approvalProd
+						  - deployProd
+						  - smokeTest
+						  - notify
+
+				artifactPath: target/app.jar
+				dockerfilePath: Dockerfile
+				deployType: helm
+				helmChart: deploy/auth-server
+				namespaceDev: dev
+				namespaceSit: sit
+				namespaceProd: prod
+				requiresProdApproval: true
+
+		第 3 層：服務 pipeline 入口
+			每個服務只用非常薄的一層呼叫 template。
+
+			概念上像：
+
+				servicePipeline(config: readYaml('cicd.yml'))
+
+			或：
+				@Library('company-cicd-lib') _
+				javaServicePipeline(
+				  serviceName: 'backend-a',
+				  buildTool: 'maven',
+				  deployType: 'helm'
+				)
+
+	三、哪些差異適合做成參數，哪些不適合硬塞模板
+		適合參數化的
+			* service name
+			* build tool（maven / gradle / npm）
+			* artifact path
+			* docker image name
+			* deploy namespace
+			* chart path
+			* 是否啟用 prod approval
+			* 是否執行 DB migration
+			* 是否啟用 smoke test
+
+		不適合硬塞同一模板的
+
+		如果差異已經太大，例如：
+
+			* 有些是 Java
+			* 有些是 Node.js
+			* 有些是 Python
+			* 有些 deploy 到 K8s
+			* 有些 deploy 到 VM
+			* 有些是 library，不 deploy
+
+		那就不要硬塞一個超級萬能模板。
+		比較好的做法是：
+
+			一類服務一種模板
+
+		例如：
+			* java-service-template	pipeline
+			* frontend-template		pipeline
+			* library-template		pipeline
+			* batch-job-template	pipeline
+
+		這樣比較健康。
+
+
+	四、比較推薦的模板策略
+		建議不是「一套打天下」，而是：
+
+		模板分族群
+			1. Java 微服務模板
+				給 Spring Boot / API service 用
+
+			2. Frontend 模板
+				給 Vue / React 用
+
+			3. Library 模板
+				給 common-utils / starter / shared-model 用
+
+			4. Batch / Worker 模板
+				給排程或背景處理服務用
+
+		這樣既能共用，又不會過度抽象。
+
+
+
+比較實務的 branch-to-stage 對照表
+
+	給你一個很常用、也比較容易落地的版本。
+
+	方案一：微服務常用簡化版（推薦）
+
+		分支：
+			* feature/*
+			* main
+			* hotfix/*
+			* tag v*
+
+		對應：
+			feature/* 或 PR
+
+			跑：
+				* checkout
+				* unit test
+				* package
+				* optional code scan
+					* 靜態掃描 / SAST / dependency scan
+					* contract test
+				* 不做 deploy
+
+			main
+				跑：
+					* checkout
+					* unit test
+					* package
+					* build image
+					* push image
+					* deploy dev
+					* smoke test
+					* notify
+
+			tag v*
+				跑：
+					checkout
+					build/package
+					build image
+					push image
+					promote sit
+					promote uat
+					approval prod
+					deploy prod
+					smoke test
+					notify
+
+			hotfix/*
+				跑：
+					checkout
+					unit test
+					package
+					build image
+					optional deploy hotfix-dev
+
+				最後還是建議：
+					* merge 回 main
+					* 打正式 tag
+					* 用 tag pipeline 上 prod
+
+				這是最穩的。
+
+	方案二：傳統企業環境分支版
+		分支：
+			feature/*
+			develop
+			release/*
+			main
+
+		對應：
+			feature/*
+				跑：
+					checkout
+					unit test
+					package
+
+			develop
+				跑：
+					checkout
+					unit test
+					package
+					build image
+					push image
+					deploy dev
+					smoke test
+
+			release/*
+				跑：
+					checkout
+					unit test
+					package
+					build image
+					push image
+					deploy sit
+					promote uat
+					smoke test
+
+			main
+			跑：
+				approval prod
+				deploy prod
+				smoke test
+				notify
+
+		但這種模型缺點是：
+
+			* 分支多
+			* merge 路徑複雜
+			* 容易發生某個 release branch 跟 main / develop 漂移
+
+	所以如果你們是新設計，我通常比較偏向：
+		PR 驗證 + main 整合 + tag 發版
+
+
+Q1: 所謂 feature/PR 只驗證 是驗證什麼?
+A1:
+	核心目的只有一件事：
+		👉 確認「這段程式碼 合併進主幹後不會壞掉」
+
+		實務上通常會分成以下幾類驗證（由輕 → 重）：
+			一、最基本：編譯 + 單元測試（一定要有）
+				這是最低門檻，也是你 pipeline 必備的。
+
+				✔ 驗證內容
+					* Java code compile 成功（mvn package / gradle build）
+					* 單元測試（unit test）全部通過
+					* 沒有 syntax / classpath / dependency 問題
+				✔ 能抓到什麼問題？
+					* 少 import、class 不存在
+					* 方法 signature 改了但沒同步
+					* 邏輯錯誤（被 unit test 抓到）
+
+				👉 這層其實就是在回答：
+					* 「這段 code 至少在開發者自己的世界是能跑的嗎？」
+
+			二、靜態分析 / Code Quality（強烈建議）
+				✔ 驗證內容
+					* Code style（Checkstyle / Spotless）
+					* Bug pattern（SpotBugs / PMD）
+					* 安全弱點（SAST）
+
+				常見工具：
+					* SonarQube
+					* SpotBugs
+
+				✔ 能抓到什麼問題？
+					* NullPointerException 風險
+					* 沒關 resource
+					* SQL injection / XSS 風險
+					* coding 規範不一致
+
+				👉 這層在回答：
+					「這段 code 有沒有潛在地雷？」
+
+			三、依賴安全掃描（越來越重要）
+				✔ 驗證內容
+					* 你用的 Maven / Gradle dependency 是否有漏洞
+
+				工具：
+					* OWASP Dependency-Check
+					* Snyk
+				✔ 能抓到什麼問題？
+					* 使用到有 CVE 的 library
+					* 已知漏洞（例如 log4j 那種）
+
+				👉 這層在回答：
+					「你有沒有把炸彈帶進來？」
+
+			四、Contract / API 相容性（BFF / 微服務很重要）
+
+				你之前有提到 OpenAPI / BFF，這層對你特別關鍵。
+
+				✔ 驗證內容
+					* API 有沒有 breaking change
+					* request / response schema 是否相容
+
+				例如：
+					* 刪掉欄位
+					* 改型別
+					* 改 endpoint
+
+				工具：
+					* openapi-diff
+					* contract test
+				✔ 能抓到什麼問題？
+					* BFF 還沒改，後端 API 已經壞掉
+					* 前端呼叫會爆
+
+				👉 這層在回答：
+					「這次修改會不會害死別的服務？」
+
+			五、輕量整合測試（可選，但很有價值）
+				✔ 驗證內容
+					* Spring Boot 啟動成功
+					* 基本 API 可用（Mock DB / TestContainer）
+
+				例如：
+					* 啟動 context
+					* call /actuator/health
+					* call 一兩個關鍵 API
+
+				✔ 能抓到什麼問題？
+					* Spring Bean wiring 錯誤
+					* config 沒設好
+					* DB schema mismatch
+
+				👉 這層在回答：
+					「這個 service 至少能活著啟動嗎？」
+
+			六、（可選）build image，但不進正式流程
+
+				有些團隊會在 PR 也 build Docker image：
+					* 確認 Dockerfile 沒壞
+					* 確認 build context OK
+
+				但通常：
+					* 不 push 正式 registry
+					* 或只 push temporary tag
+
+		❗ 重點：PR pipeline「刻意不做的事」
+
+			這很關鍵，因為這才是為什麼它叫「只驗證」。
+
+			❌ 不做 deploy（通常）
+				* 不 deploy dev / sit / uat / prod
+			❌ 不做 promote
+				* 不進任何正式環境流程
+			❌ 不做 approval
+				* PR review 才是 approval
+
+			👉 原因很簡單：
+				* PR 還沒 merge，不應該影響任何共享環境
