@@ -1,0 +1,44 @@
+ref ChatGTP
+
+🔍 npx playwright test 在找什麼？
+	它會去找：
+
+		👉 符合命名規則的測試檔
+
+
+	📂 預設搜尋位置
+		tests/
+
+		也就是：
+			your-project/
+			 ├─ tests/
+			 │   ├─ example.spec.ts   ✅
+			 │   ├─ login.spec.js     ✅
+			 │   └─ xxx.test.ts       ✅
+
+	🧾 預設檔名規則
+		Playwright 會抓：
+			*.spec.ts
+			*.spec.js
+			*.test.ts
+			*.test.js
+
+			👉 只要符合這些，就會被執行
+
+	🧪 什麼內容才算 test？
+		裡面要有：
+			import { test, expect } from '@playwright/test';
+
+			test('我的測試', async ({ page }) => {
+			  await page.goto('https://example.com');
+			});
+
+		👉 test() 就是入口
+
+
+	⚙️ 可以自訂搜尋規則
+		在 playwright.config.ts：
+			export default {
+			  testDir: './my-tests',   // 改資料夾
+			  testMatch: '**/*.e2e.ts' // 改命名規則
+			};

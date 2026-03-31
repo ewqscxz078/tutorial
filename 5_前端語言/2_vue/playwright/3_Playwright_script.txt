@@ -1,0 +1,185 @@
+ref ChatGPT
+
+
+Playwright script
+
+	1.撰寫 monitor.js
+		ESM 寫法
+			package.json 要有：
+				{
+				  "type": "module"
+				}
+
+
+		若是 HTTP Basic Auth
+			import { chromium } from 'playwright';
+
+			(async () => {
+			  let browser;
+			  try {
+				  const browser = await chromium.launch();
+
+				  const context = await browser.newContext({
+					httpCredentials: {
+					  username: process.env.BASIC_USER,,
+					  password: process.env.BASIC_PASS
+					}
+				  });
+
+				  const page = await context.newPage();
+				  await page.goto(process.env.TARGET_URL);
+
+				  await page.screenshot({ path: 'result.png' });
+
+				console.log('完成');
+			  } catch (error) {
+				console.error('執行失敗:', error);
+			  } finally {
+				if (browser) {
+				  await browser.close();
+				}
+			  }
+
+			})();
+
+
+		如果是一般表單登入
+			const { chromium } = require('playwright');
+
+			(async () => {
+			  const browser = await chromium.launch({
+				headless: false
+			  });
+
+			  const context = await browser.newContext();
+			  const page = await context.newPage();
+
+			  await page.goto('https://你的登入頁');
+
+			  await page.fill('#username', '你的帳號');
+			  await page.fill('#password', '你的密碼');
+			  await page.click('button[type="submit"]');
+
+			  await page.waitForLoadState('networkidle');
+
+			  await page.screenshot({ path: 'login-success.png', fullPage: true });
+
+			  await browser.close();
+			})();
+
+
+		建議專案結構
+			your-project/
+			├─ node_modules/
+			├─ package.json
+			├─ screenshots/
+			├─ scripts/
+			│  ├─ monitor.js
+			│  ├─ login.js
+			│  └─ capture.js
+			└─ .env
+
+		建議加上 npm script
+			在 package.json 裡加：
+				{
+				  "scripts": {
+					"monitor": "node scripts/monitor.js"
+				  }
+				}
+
+			之後就能跑：
+				npm run monitor
+
+	2.執行
+		node monitor.js
+
+
+	npm install dotenv
+
+		.env
+			BASIC_USER=abc123
+			BASIC_PASS=secret123
+			TARGET_URL=https://你的網址
+
+
+
+之後你會常用的幾個動作
+	等元素出現
+		await page.waitForSelector('#username');
+
+	點擊
+		await page.click('#searchBtn');
+
+	輸入
+		await page.fill('#keyword', 'error');
+
+	取文字
+		const text = await page.textContent('.result');
+		console.log(text);
+
+
+	取多筆資料
+		const items = await page.locator('.row').allTextContents();
+		console.log(items);
+
+	存 PDF 或截圖
+		await page.screenshot({ path: 'page.png', fullPage: true });
+
+
+
+一個比較像監控 agent 的範例
+	import 'dotenv/config';
+	import fs from 'fs';
+	import path from 'path';
+	import { fileURLToPath } from 'url';
+	import { chromium } from 'playwright';
+
+	// ESM 沒有 __dirname，要自己轉
+	const __filename = fileURLToPath(import.meta.url);
+	const __dirname = path.dirname(__filename);
+
+	let browser;
+
+	try {
+	  const screenshotDir = path.join(__dirname, 'screenshots');
+	  if (!fs.existsSync(screenshotDir)) {
+		fs.mkdirSync(screenshotDir, { recursive: true });
+	  }
+
+	  browser = await chromium.launch({
+		headless: true
+	  });
+
+	  const context = await browser.newContext({
+		httpCredentials: {
+		  username: process.env.BASIC_USER,
+		  password: process.env.BASIC_PASS
+		}
+	  });
+
+	  const page = await context.newPage();
+	  page.setDefaultTimeout(30000);
+
+	  await page.goto(process.env.TARGET_URL, { waitUntil: 'networkidle' });
+
+	  const title = await page.title();
+	  console.log('頁面標題:', title);
+
+	  const fileName = `capture-${Date.now()}.png`;
+	  const filePath = path.join(screenshotDir, fileName);
+
+	  await page.screenshot({
+		path: filePath,
+		fullPage: true
+	  });
+
+	  console.log('截圖完成:', filePath);
+
+	} catch (error) {
+	  console.error('監控失敗:', error);
+	  process.exitCode = 1;
+	} finally {
+	  if (browser) {
+		await browser.close();
+	  }
+	}

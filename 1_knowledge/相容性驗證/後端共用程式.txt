@@ -1,0 +1,318 @@
+ref ChatGPT
+
+
+Q1:
+	java 跨模組共用程式如何確保微服務引用某版本時不會異常
+
+	指的是像 openapi 生成json 驗證開閉原則，對新增開放、修改關閉的驗證
+
+	java 跨模組共用程式有類似的驗證嗎？
+
+A1:
+	Java 跨模組共用程式 比 OpenAPI 更需要做「相容性驗證」，只是驗證面向不太一樣。
+
+	OpenAPI 驗證，比較像是在驗證：
+		* API contract 有沒有破壞既有 consumer
+		* 是否符合「新增開放、修改關閉」
+
+	Java 共用模組，通常要驗證的是這幾類相容性：
+		1.Binary compatibility（二進位相容）
+			舊版使用者不重新編譯，直接換新 jar 會不會炸
+			例如：
+				* public method 被刪掉
+				* method signature 改掉
+				* class 搬 package
+				* constructor 改掉
+
+		2.Source compatibility（原始碼相容）
+			consumer 重新編譯時會不會失敗
+			例如：
+				* interface 新增 abstract method，舊實作 class 沒補上
+				* generic type 改變
+				* checked exception 改掉
+
+		3.Behavior compatibility（行為相容）
+			編得過、跑得起，但邏輯結果變了
+				例如：
+					* 預設值變更
+					* timeout、cache、排序規則改變
+					* null handling 改變
+					* security 規則變嚴導致既有流程失敗
+
+		有類似驗證，但通常要多層一起做，不是只靠單一工具。
+
+
+	一、最像 OpenAPI breaking change 驗證的做法
+		最接近的是：
+			* japicmp
+			* Revapi
+			這兩類工具會比較：
+				* 舊版本 jar
+				* 新版本 jar
+
+			然後檢查 public/protected API 是否有破壞性變更。
+
+		可抓到的典型問題
+			例如：
+				* 刪除 public class / method / field
+				* method 參數型別改變
+				* return type 改變
+				* final / abstract 修飾改變
+				* interface 變更導致實作者不相容
+			這就很像：
+				OpenAPI diff 用來檢查 API contract breaking change
+				japicmp / Revapi 用來檢查 Java library public contract breaking change
+
+	二、但 Java library 不只要看 API diff
+		因為 Java 共用模組很常出問題的，不是只有 method 被改掉，而是：
+
+			* Spring AutoConfiguration 行為變了
+			* 預設 bean 名稱變了
+			* application.yml key 改了
+			* annotation 預設值改了
+			* Jackson 序列化格式改了
+			* 例外型別或錯誤碼改了
+
+		這些 API diff 工具不一定抓得到。
+
+		所以實務上要搭配下面幾層。
+
+	三、建議建立的驗證層次
+		1. Public API 相容性檢查
+
+			用來守住「修改關閉」。
+
+			做法：
+				* CI 比對上一版 release jar 與目前 jar
+				* 若有 breaking change 就 fail build
+				* 只有 major version 升版時才允許 breaking
+
+			適合工具：
+				japicmp
+				Revapi
+
+		2. Consumer compatibility test
+			這層非常重要。
+
+			做法是：
+
+				* 準備幾個真正會用到該共用模組的 consumer 專案
+				* 在 CI 中用「新 library 版本」去跑 consumer 的：
+					* compile
+					* unit test
+					* integration test
+
+			這很像你之前講的 OpenAPI classifier + codegen 驗證，只是這次驗證對象換成：
+
+				共用 jar 升版後，實際微服務能不能正常編譯與跑測試
+
+			這一層可以抓到：
+
+				* source incompatible
+				* Spring context 啟不來
+				* bean 衝突
+				* config key 改壞
+				* auto configuration 行為變更
+
+		3. Behavioral contract test
+
+			這層是在驗證「雖然 API 沒壞，但行為不能偷偷變」。
+
+			例如共用模組提供：
+
+				* Token 驗證元件
+				* WebClient starter
+				* exception handling starter
+				* logging starter
+				* redis/session starter
+
+			那就要替 library 本身定義 contract tests，例如：
+
+				* 傳入某種 header，應產生哪些 MDC
+				* 某種 exception 應轉成哪個 ProblemDetail
+				* 某個 annotation 應註冊哪些 bean
+				* 某種設定缺省時預設值應為何
+
+			也就是把「對外承諾」寫成測試，而不是只寫文件。
+
+		4. Dependency convergence / BOM 驗證
+
+			跨模組共用程式很常不是 API 壞，而是 依賴版本衝突。
+
+			例如：
+
+				library A 用 spring boot 3.2
+				consumer 用 3.5
+				starter 偷帶舊版 jackson / servlet / httpclient
+				同一 class 來自不同版本 jar
+
+			所以要加：
+
+				* Maven Enforcer
+				* dependency convergence
+				* require upper bound deps
+				* 禁止不該暴露的 transitive dependencies
+
+			並且最好：
+
+				* 由平台方提供 BOM
+				* consumer 盡量只吃 BOM 管控版本
+				* 共用模組避免亂鎖死第三方版本
+
+		5. Deprecated policy + 移除節奏
+
+			OpenAPI 常見做法是先 deprecated，再下一個 major 才移除。
+
+			Java 共用模組也應該一樣：
+
+				* 先標 @Deprecated
+				* 文件寫替代方式
+				* 至少保留一段版本週期
+				* major 版再刪除
+
+			這樣才真的接近你說的：
+
+				對新增開放、對修改關閉
+
+			因為很多時候不是完全不能改，而是 不能直接破壞既有 consumer。
+
+	四、Java 共用模組最常見的 breaking change 類型
+
+		你可以把它整理成檢查清單：
+
+		API 層
+			* 刪除 public class / method / field
+			* 改 method signature
+			* 改 constructor
+			* package rename
+			* interface 增加未預設的方法
+
+		Spring / Framework 層
+			* bean name 改變
+			* @ConditionalOn... 條件改變
+			* auto configuration 載入順序改變
+			* 預設 @Primary 改變
+			* configuration properties key 改名
+			* starter 不再自動註冊某 bean
+
+		資料格式層
+			* DTO 欄位刪除/改名
+			* enum 值改變
+			* JSON format 改變
+			* 日期格式改變
+			* 錯誤回應結構改變
+
+		行為層
+			* timeout 預設值變更
+			* retry 次數改變
+			* cache key 改變
+			* null/empty 處理改變
+			* security 驗證變嚴
+
+	五、實務上怎麼落地
+
+		會建議你把「跨模組共用程式」分成三種，驗證策略不同。
+
+		A. 純工具類 library
+
+			例如：
+
+				* util
+				* domain helper
+				* parser
+				* crypto helper
+
+			重點：
+
+				* API diff
+				* unit test
+				* backward compatibility test
+
+		B. Spring starter / autoconfigure 類
+
+			例如：
+
+				* logging starter
+				* security starter
+				* redis starter
+				* web starter
+
+			重點：
+
+				* API diff
+				* Spring context 啟動測試
+				* sample app integration test
+				* configuration properties 相容性測試
+
+		C. 平台 contract 類 library
+
+			例如：
+
+				* 共用 DTO
+				* 共用 error model
+				* 共用 client sdk
+				* auth model
+
+			重點：
+
+				* API diff
+				* serialization compatibility
+				* consumer compile test
+				* contract test
+
+	六、推薦的 CI/CD 驗證組合
+
+		可以參考這個組合：
+
+			library repo pipeline
+				1.ompile
+				2.unit test
+				3.API compatibility check（對比上一個 release）
+				4.integration test
+				5.sample consumer test
+				6.發布 snapshot / release
+			consumer repo pipeline
+				1.引用指定 BOM / library version
+				2.compile
+				3.unit test
+				4.integration test
+				5.smoke test
+			平台治理規則
+				* patch：只能修 bug，不可 breaking
+				* minor：可新增 API，不可 breaking
+				* major：可 breaking，但需 migration guide
+
+	七、若你想要「像 openapi diff 一樣」的治理感
+
+		可以直接把 Java 共用模組也做成一套「相容性守門機制」：
+
+		守門條件
+			* API 沒有 breaking change
+			* consumer sample 專案可正常 compile
+			* 關鍵行為 contract test 全過
+			* dependency tree 無衝突
+			* deprecated 項目未提前刪除
+
+		這樣就很接近：
+
+			Java library 版的 contract governance
+
+	八、簡化結論
+
+		有，Java 跨模組共用程式確實有類似 OpenAPI breaking change 驗證的做法，但通常不是單靠一個工具。
+
+		最核心可這樣看：
+			* OpenAPI 世界：用 openapi diff 驗證 HTTP contract
+			* Java library 世界：用 japicmp / Revapi 驗證 public API contract
+			* 再加上 consumer integration test、behavior contract test、dependency/BOM 管控，才能真的降低微服務升版異常
+
+	九、我給你的實務建議
+
+		若你現在是在建立「微服務共用模組治理」，最值得先做的是這四件事：
+
+			1.所有共用 jar 建立 semantic version 規則
+			2.CI 加入 japicmp 或 Revapi
+			3.建立 1~3 個代表性 consumer sample 專案做升版驗證
+			4.對 starter / DTO / error model 補 contract tests
+
+		這四件先做，效果就會很明顯。

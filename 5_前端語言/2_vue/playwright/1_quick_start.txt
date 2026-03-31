@@ -1,0 +1,118 @@
+ref ChatGPT
+
+環境確認
+	node -v   # 確認 Node.js
+	npm -v
+
+專案快速建置
+	1.cd 目錄
+	2.npm init playwright@latest
+		√ Do you want to use TypeScript or JavaScript? · TypeScript
+		√ Where to put your end-to-end tests? · tests
+		√ Add a GitHub Actions workflow? (Y/n) · false
+
+		√ Install Playwright browsers (can be done manually via 'npx playwright install')? (Y/n) · true
+
+		安裝完後會顯示
+
+			Inside that directory, you can run several commands:
+
+			  npx playwright test
+				Runs the end-to-end tests.
+
+			  npx playwright test --ui
+				Starts the interactive UI mode.
+
+			  npx playwright test --project=chromium
+				Runs the tests only on Desktop Chrome.
+
+			  npx playwright test example
+				Runs the tests in a specific file.
+
+			  npx playwright test --debug
+				Runs the tests in debug mode.
+
+			  npx playwright codegen
+				Auto generate tests with Codegen.
+
+			We suggest that you begin by typing:
+
+				npx playwright test
+
+			And check out the following files:
+			  - .\tests\example.spec.ts - Example end-to-end test
+			  - .\playwright.config.ts - Playwright Test configuration
+
+			Visit https://playwright.dev/docs/intro for more information. ✨
+
+			Happy hacking! 🎭
+
+	3.npx playwright test // 測試執行
+
+看報告
+	🔍 1.最推薦：開 HTML Report（最清楚）
+		Playwright 會自動產生報告，你只要打：
+			npx playwright show-report
+				👉 會開一個網頁，內容包含：
+					* 每個 test case
+					* 執行時間
+					* 成功 / 失敗
+					* 截圖（如果有）
+					* trace（如果有開）
+
+	🎥 2.用 UI 模式（最直覺）
+		剛開始要完善時使用 UI 模式
+			npx playwright test --ui
+
+			👉 會開一個互動介面，你可以：
+
+				* 點某個 test
+				* 看每一步（click / fill / navigation）
+				* 看 DOM snapshot
+				* replay 整個流程（像錄影）
+
+	🧠 3️.看 trace（進階 debug，超強）
+		如果你想看「到底每一步做了什麼」，可以開 trace：
+
+		設定（playwright.config.ts）
+			use: {
+			  trace: 'on'
+			}
+
+		或：
+			trace: 'on-first-retry'
+
+		執行後打開：
+
+			npx playwright show-trace trace.zip
+				👉 你會看到：
+					* 每個 step timeline
+					* network request
+					* DOM 狀態
+					* 點擊位置
+					* console log
+
+				👉 這個根本是「瀏覽器黑盒破解神器」
+
+	🖼️ 4.如果你想看截圖
+		加
+			await page.screenshot({ path: 'test.png' });
+
+		或 config：
+			use: {
+			  screenshot: 'on'
+			}
+
+		📂 檔案在哪？
+			playwright-report/
+			test-results/
+
+⚠️ 一個你一定會遇到的點
+	如果你覺得：
+
+		🤨「怎麼都沒有畫面？」
+
+	因為預設是 headless 模式（沒開瀏覽器 UI）
+		use: {
+		  headless: false
+		}

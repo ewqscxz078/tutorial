@@ -1,0 +1,31 @@
+ref ChatGPT
+
+ESM 寫法
+	👉 ESM（ECMAScript Modules）就是用 import / export 的模組寫法
+
+	📦 Node.js 其實有兩種模組系統
+		| 類型           | 語法                       | 歷史             |
+		| -------------- | -------------------------- | ---------------- |
+		| CommonJS（舊） | `require / module.exports` | Node 原本的      |
+		| ESM（新）      | `import / export`          | JavaScript 標準  |
+
+
+	🔍 差異直接看範例
+		🟦 CommonJS
+			const { chromium } = require('playwright');
+			匯出：
+				module.exports = myFunction;
+
+
+		🟩 ESM（現在主流）
+			import { chromium } from 'playwright';
+
+			匯出：
+				export function myFunction() {}
+
+🎯 一句話結論
+
+	👉 ESM = 用 import/export 的新模組系統
+	👉 CommonJS = 用 require/module.exports 的舊方式
+
+	👉 新專案推薦 ESM，但可以先用 require 快速上手
