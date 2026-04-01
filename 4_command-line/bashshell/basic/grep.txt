@@ -124,6 +124,9 @@ zgrep for 縮壓檔搜尋
 	xargs -I {} grep 'your_keyword' {} < file1 > result.list
 
 
+       // 抓 mail in java file 範例
+       egrep -nR --color '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' --include=*.java
+
 Q1: -r 與 -R 差異?
 A1:
 	| 指令      | 行為                                   |

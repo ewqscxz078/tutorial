@@ -1,0 +1,3 @@
+
+Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead config，不影響線上正在跑的)
+	nginx -s reload
