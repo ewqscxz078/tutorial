@@ -1,0 +1,167 @@
+elk 做 exception log pattern 正規化
+
+	✔ ELK 可以做 exception log 正規化
+	✔ 而且通常是在 ingest pipeline / Logstash filter 做
+	✔ 最後會產出：
+
+		normalized_message
+		fingerprint
+		error.group
+
+	讓你在 Kibana 直接聚合
+
+🧠 架構上怎麼放（很重要）
+	理解 ELK 的處理點：
+		App → (Filebeat) → Logstash / Ingest Pipeline → Elasticsearch → Kibana
+
+	👉 正規化最佳位置：
+		✔ 選項 1（推薦）
+			Elasticsearch Ingest Pipeline
+				* 不用多一層 Logstash
+				* 效能好
+				* 管理集中
+			
+		✔ 選項 2
+			Logstash filter
+				* 比較彈性（grok、ruby、mutate）
+				* 較適合複雜邏輯
+	
+🔧 怎麼做（核心三步）
+	① 建立 normalized_message
+		用 regex 把變動值替換掉
+
+		例如 ingest pipeline：
+			{
+			  "processors": [
+				{
+				  "gsub": {
+					"field": "message",
+					"pattern": "\\d+",
+					"replacement": "<NUM>"
+				  }
+				},
+				{
+				  "gsub": {
+					"field": "message",
+					"pattern": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}",
+					"replacement": "<DATETIME>"
+				  }
+				}
+			  ]
+			}
+		👉 但實務上你會：
+			copy message → normalized_message
+			再處理 normalized_message
+
+	② 萃取 exception class（很關鍵）
+		例如：
+			java.lang.NullPointerException
+			org.springframework.dao.DataAccessException
+		
+		可以用 grok：
+			{
+			  "grok": {
+				"field": "message",
+				"patterns": ["%{JAVACLASS:error.class}: %{GREEDYDATA:error.message}"]
+			  }
+			}
+	
+	③ 建 fingerprint（重點🔥）
+		用 fingerprint processor：
+			{
+			  "fingerprint": {
+				"fields": ["error.class", "normalized_message"],
+				"target_field": "error.fingerprint",
+				"method": "SHA-1"
+			  }
+			}
+
+	👉 這樣 Kibana 就能：
+		terms aggregation
+		看 Top error pattern
+
+	你可以直接做：
+		Top 10 error.fingerprint
+		error.fingerprint over time
+		某 fingerprint → 看原始 log
+
+		👉 這會變成：
+			NullPointerException at OrderService → 1200 次
+			SQLTimeoutException → 300 次
+			FeignException 503 → 180 次
+	
+	
+	🧪 更進階
+		有些差異無法移除
+			👉 那你要做的是「部分正規化 + 結構抽取」
+		
+		🔹 stack trace 處理（超關鍵）
+			建議：
+
+			只取：
+
+				* 第一行 exception
+				* 前 1~3 個「自己系統的 class」
+
+			例如：
+				com.xxx.OrderService.createOrder
+			
+			👉 可以用 grok 或 script：
+				{
+				  "script": {
+					"source": """
+					  if (ctx.message != null) {
+						def lines = ctx.message.split('\\n');
+						if (lines.length > 1) {
+						  ctx.error_top_frame = lines[1];
+						}
+					  }
+					"""
+				  }
+				}
+		
+		🔹 pattern key 建議（實務最穩）
+			建議你：
+				error.group =
+				exception class
+				+ normalized_message
+				+ top_frame（可選）
+	
+	
+	⚠️ 常見坑（你一定會踩）
+		❌ 1. 全部用 regex 替換
+			會壞掉（over-normalize）
+				👉 例如：
+					Order 123 failed
+					Order 456 failed
+						OK
+
+				但：	
+					Error code 500
+					Error code 404
+					👉 你可能不想合併！
+		
+		❌ 2. stack trace 全吃
+			會變每筆都不同
+		
+		❌ 3. 只用 message 做 fingerprint
+			容易不同 service 混在一起
+
+
+🥇 第一步（馬上可做）
+
+	在 ingest pipeline：
+
+		* 建 normalized_message
+		* 建 error.class
+		* 建 fingerprint
+
+🥈 第二步
+	補：
+		top_frame
+		service name
+		env
+
+🥉 第三步（進階）
+	慢慢把：
+		Java log → 結構化（MDC / key=value）

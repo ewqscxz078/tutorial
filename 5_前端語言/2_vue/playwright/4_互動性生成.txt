@@ -1,0 +1,7 @@
+	npx playwright codegen https://stage1.mydata.nat.gov.tw/elk
+	npx playwright codegen https://stage1.mydata.nat.gov.tw/elk -o elk.ts
+		// 生成語法到 elk.ts
+	
+	git bash
+	Windows PowerShell / CMD	
+		產出碼視窗會被吃掉

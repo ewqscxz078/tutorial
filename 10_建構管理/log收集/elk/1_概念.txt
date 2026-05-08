@@ -1,0 +1,10 @@
+🏗️ 整體資料流（觀念）
+	Log 產生（App）
+			↓
+	Filebeat / Agent
+			↓
+	Ingest Pipeline（這裡可以加工🔥）
+			↓
+	Elasticsearch（已儲存）
+			↓
+	Kibana Discover（查詢 / 過濾）

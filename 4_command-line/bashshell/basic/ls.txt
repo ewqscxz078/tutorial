@@ -26,3 +26,33 @@ https://stackoverflow.com/questions/1795976/can-the-unix-list-command-ls-output-
 	stat -c '%a %n' *
 	stat -c '%a %n' /tmp /usr/bin/sudo
 	find . -printf "%m:%f\n"
+
+
+===================================================================
+========================= 常用使用情境 ============================
+===================================================================
+
+✅ 只看最近幾筆（例如前 10 筆）
+	ls -lt | head -n 10
+
+✅ 如果檔案很多（建議用這個，比較穩）
+	find . -type f -printf '%TY-%Tm-%Td %TT %p\n' | sort -r | head -n 10
+
+	說明：
+
+		* -printf：印出時間 + 檔案
+		* sort -r：由新到舊
+		* head：取前幾筆
+
+	👉 這個在「大量檔案」時比 ls 更準
+
+✅ 只看某個目錄（不含子目錄）
+	ls -lt /your/path | head -n 10
+
+
+✅ 如果你是在 Git 專案內（更精準：看 git commit 修改）
+	如果你其實是想看「最近被 Git 修改過的檔案」，建議用：
+		git log --name-only --pretty=format: | sort | uniq
+	
+	或最近幾筆 commit：
+		git log -n 5 --name-only

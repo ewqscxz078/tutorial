@@ -1,0 +1,84 @@
+分支調整 commit 順序方式
+	git checkout your-branch
+	git fetch origin
+	// 備份到 local temp/your-branch
+	// => git branch  backup/your-branch
+	// rebase 玩壞還可以還原
+	// => git reset --hard backup/your-branch
+	
+
+	方法一: 砍掉遠端分支再用 git rebase
+	
+		# 1. 刪除遠端 branch
+		git push origin --delete your-branch
+
+		# 2. 本地做 rebase 調整 commit 順序
+		git rebase -i <format_commit前一個commit>
+
+			編輯畫面會看到類似：
+				pick B xxxx
+				pick C yyyy
+				pick F format commit
+				pick D zzzz
+				pick E target commit
+			把你要移動的 commit 搬到 format commit 前面：
+				pick B xxxx
+				pick C yyyy
+				pick E target commit
+				pick F format commit
+				pick D zzzz
+
+		# 3. 解衝突（若有）
+		// git checkout --theirs ${filePath} 
+		// git checkout --ours ${filePath}
+		// git add ${filePath}
+		git rebase --continue
+
+		# 4. 重新 push
+		git push origin your-branch
+
+		優點：
+			心理上比較不像「強推」
+			避免 force push 權限限制
+
+		缺點：
+			GitLab/GitHub PR 可能被關閉
+			branch 討論可能消失
+			CI pipeline 歷史可能中斷
+			reviewer comment 有時會亂掉
+		
+	
+	方法二: 砍掉遠端分支再用 git rebase
+
+		# 1. 本地做 rebase 調整 commit 順序
+		git rebase -i <format_commit前一個commit>
+
+			編輯畫面會看到類似：
+				pick B xxxx
+				pick C yyyy
+				pick F format commit
+				pick D zzzz
+				pick E target commit
+			把你要移動的 commit 搬到 format commit 前面：
+				pick B xxxx
+				pick C yyyy
+				pick E target commit
+				pick F format commit
+				pick D zzzz
+
+		# 2. 解衝突（若有）
+		// git checkout --theirs ${filePath} 
+		// git checkout --ours ${filePath}
+		// git add ${filePath}
+		git rebase --continue
+
+		# 3. 重新 push
+		git push --force-with-lease origin your-branch
+		
+		優點：
+
+			* 不會刪除 remote branch metadata
+			* PR/MR 通常還在
+			* CI 紀錄通常還在
+			* branch 保護設定不會受影響
+			* 比較標準 Git 流程

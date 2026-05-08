@@ -45,3 +45,18 @@
 查看當前 branch 名稱
 	https://stackoverflow.com/questions/6245570/how-to-get-the-current-branch-name-in-git
 	git rev-parse --abbrev-ref HEAD
+
+
+==========================================================================================
+==================================== 改 branch 名稱 ======================================
+==========================================================================================
+改 branch 名稱
+	✅ 改目前所在 branch 名稱
+		git branch -m 新名稱
+			例如：
+			git branch -m feature-new
+	
+	✅ 改其他 branch 名稱
+		git branch -m 舊名稱 新名稱
+			例如：
+				git branch -m feature-old feature-new

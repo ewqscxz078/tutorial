@@ -1,0 +1,76 @@
+Q: 在 local branch ，我有個之前修改的 commit b紀錄，後來發現少改一個檔案，如何將少改的一個檔案紀錄整併到既有的 commit b ?
+
+A:
+	補修改到上一個 commit
+		✅ 最簡單情境（commit b 是最後一筆）
+			A --- B (HEAD)
+			
+			你現在想把「少改的檔案」補進 B
+
+			步驟：
+				# 1. 修改檔案後加入 staging
+				git add <漏掉的檔案>
+
+				# 2. 把變更補進上一個 commit
+				git commit --amend --no-edit
+
+			行為：
+				* Git 會把目前 staged 的內容 合併進 B
+				* B 會被「重寫」（commit hash 會變）
+				* 預設會開 editor 讓你改 commit message（可不改）
+					如果你不想改 message：
+						git commit --amend --no-edit
+			
+			⚠️ 注意（很重要）
+				這其實是 改寫歷史（rewrite history）
+			
+			👉 如果這個 commit 已經 push 到遠端
+				你需要：
+					git push --force
+				
+				但這會有風險（可能影響別人）
+			
+	補修改到某個 commit	
+		❗ 如果 commit b 不是最後一筆
+			例如：
+				A --- B --- C --- D (HEAD)
+			
+			你想改 B
+				👉 就不能用 --amend，要用：
+					git rebase -i
+			
+			步驟：
+				git rebase -i HEAD~3   # 假設 B 在 3 筆之前
+			
+			然後把：
+				pick B
+				pick C
+				pick D
+			改成：
+				edit B
+				pick C
+				pick D
+			接著：
+				# 補檔案
+				git add <漏掉的檔案>
+
+				# amend B
+				git commit --amend
+
+				# 繼續 rebase
+				git rebase --continue
+
+	🧠 小結（你應該這樣判斷）
+		| 情境       | 做法                   |
+		| -------- | -------------------- |
+		| B 是最後一筆  | `git commit --amend` |
+		| B 不是最後一筆 | `git rebase -i`      |
+		| 已 push   | 要考慮 `--force` 風險     |
+
+	🚀 額外建議（實務）
+		這種情境其實很常見，可以考慮：
+			* commit 前用：
+				git status
+				git diff --staged
+
+			* 或設定 pre-commit hook 檢查

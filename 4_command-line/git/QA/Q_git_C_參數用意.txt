@@ -1,0 +1,54 @@
+Q: git -C 的 參數 -C 用意是?
+
+A: 用途其實很單純，但在寫 script 或批次操作 repo 時非常好用。
+	經驗
+		* 適合單行操作
+		* 若切換到 repo 有多段操作就不太適合，可讀性差，若漏一個 -C 就危險了
+		
+	🔹 核心概念
+		-C <path> 的意思是：
+			👉 先切換到指定目錄，再執行 git 指令
+	
+		等價於：
+			cd <path> && git <command>
+	
+	🔹 範例說明
+		1.查某個 repo 的 branch（不用 cd）
+			git -C my-project branch
+			
+			等價於：
+				cd my-project
+				git branch
+		
+		2.查當前 branch
+			git -C "$repo" branch --show-current
+				👉 很適合 loop 多個 repo 時用
+		
+		3.在多 repo 批次操作
+			for d in */.git; do
+			  repo=$(dirname "$d")
+			  git -C "$repo" pull
+			done
+			
+			👉 不需要進出資料夾，程式更乾淨
+	
+	🔹 可以連續用多個 -C（進階）
+		git -C dir1 -C dir2 status
+		👉 等價於：
+			cd dir1/dir2 && git status
+	
+	🔹 為什麼重要（實務）
+		寫的這類 script：
+			cd "$repo"
+			git reset --hard
+			git clean -fd
+		
+		其實可以改成：
+			git -C "$repo" reset --hard
+			git -C "$repo" clean -fd
+
+		👉 好處：
+
+			不會污染當前 shell 工作目錄
+			不用擔心 cd 失敗造成錯誤
+			script 更安全（尤其有 subshell 時）

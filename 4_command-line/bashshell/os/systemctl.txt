@@ -47,3 +47,88 @@ https://blog.gtwang.org/linux/linux-basic-systemctl-systemd-service-unit-tutoria
 	systemctl show sshd.service
 
 	systemctl show sshd.service -p <特定設定值名稱>
+
+
+一般修改 service 後如何重啟動
+	systemctl daemon-reload
+	systemctl restart <service_name>
+
+🔎 如何確認真的生效
+	方法1：看 systemd 記錄的 env
+		systemctl show <service_name> --property=Environment
+	
+	方法2：看 Java process（比較準）
+		ps eww $(pgrep -f xxx.jar)
+
+🧾 一、查看「已啟動服務清單」
+	目前正在運行的 service
+		✅ 最常用的（只看 active）
+			systemctl list-units --type=service --state=running
+
+		✅ 所有 service（包含沒啟動）
+			systemctl list-units --type=service
+		
+		✅ 開機自動啟動的服務
+			systemctl list-unit-files --type=service | grep enabled
+		
+		✅ 查某個服務狀態
+			systemctl status <service_name>
+
+⚙️ 二、常見操作（你會每天用的）
+	▶️ 啟動 / 停止 / 重啟
+		systemctl start <service_name>
+		systemctl stop <service_name>
+		systemctl restart <service_name>
+	
+	🔄 reload（不重啟）
+		systemctl reload <service_name>
+			👉 前提：你的 service 有支援 reload（Spring Boot 通常沒有）
+	
+	♻️ 重新讀取 systemd 設定
+		systemctl daemon-reload
+			👉 改 .service 一定要跑這個
+
+🚀 三、開機啟動控制
+	啟用（開機自動）
+		systemctl enable <service_name>
+
+	取消開機啟動
+		systemctl disable <service_name>
+	
+	啟用 + 立即啟動
+		systemctl enable --now <service_name>
+
+🔍 四、查設定 / debug
+	查看 service 定義（含 Environment）
+		systemctl show <service_name>
+	
+		👉 常用搭配：
+			systemctl show xxx --property=Environment
+	
+	看 service 檔實際內容
+		systemctl cat <service_name>
+			👉 比直接去 /etc/systemd/system 看更準（包含 override）
+
+🧰 五、找服務 / 排錯
+	找服務名稱
+		systemctl list-units | grep xxx
+	
+	查看失敗的服務
+		systemctl --failed
+	
+	看開機啟動時間（分析慢在哪）
+		systemd-analyze blame
+
+
+🧠 六、進階（工程常用）
+	修改 service（不用手動找檔案）
+		systemctl edit <service_name>
+			👉 會建立 override：
+				/etc/systemd/system/xxx.service.d/override.conf
+	
+	重新載入 + 重啟（標準套路）
+		systemctl daemon-reload
+		systemctl restart <service_name>
+	
+	kill service（必要時）
+		systemctl kill <service_name>

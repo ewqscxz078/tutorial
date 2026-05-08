@@ -11,4 +11,67 @@ Privacy Violation
 
 
 		改善方式
-			不要印 log
+			方向
+				* 不印原值
+				* 改印事件名稱
+				* 改印 traceId / requestId
+				* 真的要輔助除錯，就印長度、格式是否通過、hash、分類結果，而不是原文
+			具體作法
+				1.不要印 log
+				2.使用遮罩api，將要打印的 敏感 log 遮罩部分資訊
+					public static String maskEmail(String email) {
+						if (email == null || !email.contains("@")) {
+							return "***";
+						}
+						int at = email.indexOf("@");
+						if (at <= 1) {
+							return "***" + email.substring(at);
+						}
+						return email.substring(0, 1) + "***" + email.substring(at);
+					}
+					public static String mask(String value) {
+						if (value == null || value.isBlank()) {
+							return "***";
+						}
+						if (value.length() <= 4) {
+							return "***";
+						}
+						return value.substring(0, 2) + "***" + value.substring(value.length() - 2);
+					}
+				3.敏感路徑不打印
+					LOGGER.error("Invalid subPath detected, traceId={}", traceId);
+					LOGGER.debug("Invalid subPath pattern detected");
+
+
+			建議使用共用的 Log Sanitizer / Mask Utility
+				比如 MaskingUtils、SafeLogUtils、PrivacySanitizer
+					public final class SafeLogUtils {
+
+						private SafeLogUtils() {}
+
+						public static String safe(Object value) {
+							if (value == null) {
+								return "null";
+							}
+							String s = String.valueOf(value);
+							if (s.length() <= 4) {
+								return "***";
+							}
+							return s.substring(0, 2) + "***" + s.substring(s.length() - 2);
+						}
+
+						public static String safePath(String path) {
+							if (path == null || path.isBlank()) {
+								return "***";
+							}
+							return "[masked-path]";
+						}
+
+						public static String safeEmail(String email) {
+							if (email == null || !email.contains("@")) {
+								return "***";
+							}
+							int at = email.indexOf("@");
+							return email.substring(0, 1) + "***" + email.substring(at);
+						}
+					}

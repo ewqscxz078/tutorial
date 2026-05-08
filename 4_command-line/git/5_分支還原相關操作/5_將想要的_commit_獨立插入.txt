@@ -4,3 +4,70 @@
 
 通常是把已發布的分支修正 bug 之後，把同一個 bug 也在其他分支中修復(不想merge時用，小bug修復同步用，不然一般應該是用 merge)
 	git cherry-pick <sha1>
+
+	?? 基本用法
+
+		假設：
+
+			來源 branch：a
+			目標 branch：b
+				想要的 commit：abc123
+		
+		操作步驟：
+			# 切到目標 branch
+				git checkout b
+
+			# 套用指定 commit
+				git cherry-pick abc123
+				
+			這樣就會把 abc123 這個 commit 的變更「複製一份」套用到 b 上。
+
+	?? 背後概念（這點很重要）
+		
+		cherry-pick 不是 merge
+			| 行為          | 說明                 |
+			| ----------- | ------------------ |
+			| merge       | 把整個 branch 的歷史合併   |
+			| cherry-pick | 只拿某一個 commit 的變更內容 |
+			
+			?? 本質是「重新打一個 commit」，不是共用原本 commit
+	
+	?? 常見情境
+		1.有衝突
+			git cherry-pick abc123
+			# 出現 conflict
+		
+			解法：
+				# 解衝突後
+				git add .
+				git cherry-pick --continue
+		
+		2.想一次挑多個 commit
+			git cherry-pick abc123 def456 ghi789
+			
+			或一段範圍：
+			
+			git cherry-pick abc123^..ghi789
+	
+	?? 你要注意的坑（實務很常踩）
+		? 1. 重複套用
+			如果同一個 commit 被 cherry-pick 多次
+				?? 會變成不同 commit（hash 不同）
+		
+		? 2. 相依 commit
+			如果 abc123 依賴前面的 commit
+				?? 你只 pick 它可能會壞掉
+		
+		? 3. merge commit 不建議直接 pick
+			如果是 merge commit，需要：
+				git cherry-pick -m 1 <merge-commit>
+			
+			但這通常不太直覺，容易出問題
+
+	?? 你這個需求在實務上的用途
+
+		你這種問法其實很典型：
+
+			hotfix 從 prod 拿某個 commit 回補到 dev
+			feature 部分功能只想挑幾個 commit
+			vendor 提供 patch（你之前提到的場景很像）

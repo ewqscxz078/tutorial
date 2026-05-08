@@ -1,0 +1,127 @@
+Q: 有 local branch 若要 push 到遠端，應該確認什麼才下 git push ?
+	✅ push 前應確認的重點
+		1.你現在所在的 branch 是誰
+
+			先確認你真的在要 push 的分支：
+				git branch
+			
+			或
+				git status
+
+		👉 重點：
+
+			* 在哪一個 branch
+			有沒有不小心還在 main / master
+	
+		2.有沒有 upstream（遠端對應分支）
+			git branch -vv
+			
+			👉 看這種：
+				feature-a 123abc [origin/feature-a]
+			如果沒有 [origin/xxx]
+			代表你這個 branch 還沒綁遠端
+				👉 第一次要用：
+					git push -u origin feature-a
+					git push --set-upstream origin feature-a
+		
+		3️.commit 是否正確（避免把不該的東西送上去）
+			git log --oneline
+			👉 檢查：
+				有沒有奇怪 commit（debug code / test）
+				commit message OK 嗎
+		
+		4.有沒有漏 commit
+			git status
+			
+			👉 如果看到：
+				Changes not staged for commit
+				Untracked files
+
+			代表：
+				👉 你 push 不會包含這些
+		
+		5.有沒有落後遠端（很重要）
+			git fetch
+			git status
+			
+			或：
+				git log HEAD..origin/branch-name
+				
+				👉 如果看到：
+					Your branch is behind 'origin/xxx'
+			⚠️ 表示：
+				👉 別直接 push
+				👉 先 pull / rebase
+		
+		6️.有沒有衝突風險（建議做）
+			git pull --rebase
+			👉 好處：
+				讓 commit 線性
+				提前解衝突（不要等 CI 爆）
+
+		7.diff 看一下你到底要送什麼
+			👉 超重要但很多人沒做：
+				git diff origin/branch-name
+			
+			👉 或（更直覺）：
+				git diff --stat origin/branch-name
+			👉 可以快速看到：
+
+				改了哪些檔案
+				改多少行
+		
+		8️.確認 push 目標（避免推錯 repo）
+			👉 常見雷：
+				push 到 fork
+				push 到 production repo 😅
+		
+		
+		9️.是否需要 force push（危險操作）
+			如果你做過：
+				git rebase
+			
+			👉 push 會失敗，需要：
+				git push --force-with-lease
+			
+			⚠️ 千萬不要用：
+				git push --force
+			
+			👉 --force-with-lease 比較安全
+		
+		10.CI / 分支策略確認
+			這個比較偏團隊規範：
+
+			👉 你要確認：
+
+				這個 branch 可以直接 push 嗎？
+				還是要 PR / MR？
+			
+			常見策略：
+				| 分支          | 行為             |
+				| ------------- | ---------------- |
+				| main / master | ❌ 禁止直接 push |
+				| develop       | ⚠️ 看規範        |
+				| feature/*     | ✅ 可 push       |
+	
+	🧠 一個實務安全流程（推薦）
+		通常會這樣做：
+			git status
+			git branch -vv
+			git fetch
+			git pull --rebase
+			git diff --stat origin/branch-name
+			git log --oneline
+			git push
+
+	⚠️ 常見踩雷整理
+		❌ push 到錯 branch
+		👉 feature 改到 main
+		
+		❌ 把 local 測試 code push 上去
+		👉 debug log / test config
+		
+		❌ 沒 pull 就 push
+		👉 覆蓋別人 commit（尤其 force）
+
+		❌ push 不該公開的東西
+		👉 金鑰、密碼、設定檔

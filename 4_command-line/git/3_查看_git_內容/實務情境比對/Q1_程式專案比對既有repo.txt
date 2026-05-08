@@ -1,0 +1,74 @@
+Q:
+	收到一個沒有git的專案，已知從某個專案 commit 分支出來，但我不知道是哪個commit 複製出來的，
+	我如何將兩個專案diff 出差異，才了解到它改了什麼？
+
+A:
+	✅ 方法一（最準）：把「無 git 專案」變成一個 commit，再去比對再去比對
+		步驟
+			1. 在無 git 專案初始化 repo
+				cd your-copied-project
+				git init
+				git add .
+				git commit -m "import external project"
+			
+			2.加入原始 repo
+				git remote add origin <原始repo網址>
+				git fetch origin
+			
+			3.找「最接近的 commit」
+				git log origin/main --pretty=format:"%H" | while read commit; do
+				  git diff --quiet $commit HEAD || echo "diff with $commit"
+				done
+			
+			👉 這個會很慢（但概念是：逐個 commit 試 diff）
+			
+			👉 實務優化（推薦）
+				用 git diff --stat 觀察差異量：
+					git diff origin/main...HEAD --stat
+				
+				或直接指定 branch：
+					git diff origin/main HEAD
+				
+			
+	✅ 方法二（實務最常用）：直接資料夾 diff
+		只是想知道「改了什麼」，不用找 commit
+			Linux / Git Bash
+				diff -ruN original-project copied-project
+			
+			或用 git：
+				git diff --no-index original-project copied-project
+
+	✅ 方法三（進階）：用 git hash 比對找 base commit
+		想找「是從哪個 commit 複製」
+		
+		做法：
+			在 copied 專案：
+				find . -type f -exec sha1sum {} \; | sort > copied.txt
+			
+			在原 repo（每個 commit）：
+				git ls-tree -r <commit> --name-only | while read file; do
+				  sha1sum "$file"
+				done
+
+			👉 比對 hash 重合度最高的 commit = 最接近來源
+
+			（這是 forensic 等級玩法）
+
+	✅ 方法四（更聰明）：用 git graft / replace（少用）
+		猜到某個 commit 很接近，可以：
+			git diff <suspected-commit> HEAD
+
+
+	🧠 實務建議（重點）
+		真正要的通常是：
+			👉「改了什麼」而不是「從哪個 commit 來」
+		
+		⭐ 最快解法
+			git diff --no-index 原始專案 複製專案
+	
+	
+	實際我使用將複製的專案覆蓋到 repo 相應的 branch 基底
+		將差異的部分 commit 到 分支比對
+			git branch temp-xxx
+			git add --all
+			git commit -m "first copy project"
