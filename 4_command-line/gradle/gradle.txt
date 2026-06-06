@@ -86,7 +86,7 @@ in build.gradle 增加以下內容，將會指定編譯類型輸出成一個檔�
 			./gradle.properties
 		全域：
 			C:\Users\你的帳號\.gradle\gradle.properties
-		
+
 		比如加入
 			org.gradle.jvmargs=-Dfile.encoding=UTF-8
 
@@ -99,7 +99,7 @@ in build.gradle 增加以下內容，將會指定編譯類型輸出成一個檔�
 ======================================================================================
 ======================================================================================
 Q1: git bash 下指令 ./gradlew bootRun 後會卡在這終端機，
-	我是用 ctrl+c 關閉 
+	我是用 ctrl+c 關閉
 	這樣我還要下 ./gradlew --stop 嗎?
 
 A1: Ctrl + C 停掉 bootRun ≠ Gradle daemon 停掉
@@ -111,17 +111,17 @@ A1: Ctrl + C 停掉 bootRun ≠ Gradle daemon 停掉
 
 				* Gradle Client（前景）
 				* Gradle Daemon（背景 JVM）
-		
+
 		當你：
 			Ctrl + C
-		
+
 		👉 只會發生：
 			✔ 停掉 bootRun（Spring Boot process）
 			✔ 結束前景 gradle client
 
 		但：
 			❗ Gradle daemon 還活著（背景）
-	
+
 	🧠 為什麼這很重要？
 		因為 daemon 會「記住」：
 
@@ -134,27 +134,27 @@ A1: Ctrl + C 停掉 bootRun ≠ Gradle daemon 停掉
 			明明改了 encoding，但還是亂碼
 
 		👉 因為你還在用舊 daemon
-	
+
 	✅ 正確關閉方式（建議）
 		🟢 平常開發（快速啟動）
 			./gradlew bootRun
 			Ctrl + C
-			
+
 			👉 ✔ OK，不用每次 stop
 			👉 ❗ 但要知道 daemon 還在
-		
+
 		🟡 有改環境 / encoding / JVM 參數
 			👉 一定要：
 				./gradlew --stop
-			
+
 			再重新：
 				./gradlew bootRun
-	
+
 	🔴 想完全乾淨（debug encoding / 奇怪問題）
 		./gradlew --stop
 		./gradlew bootRun --no-daemon
 		👉 這個最乾淨（但比較慢）
-	
+
 	🔧 你可以用這個確認 daemon
 		./gradlew --status
 		會看到：
@@ -170,8 +170,8 @@ Q2: git bash 下 ./gradlew bootRun console 顯示中文亂碼
 A2: 若 C:\Users\你的帳號\.gradle\gradle.properties
 		設定 org.gradle.jvmargs=-Dfile.encoding=UTF-8
 	且 eclipse run as by gradle console 中文顯示正常
-	
-	git bash 
+
+	git bash
 		chcp.com 65001
 	先於 windows powershell 下
 		確認
@@ -179,7 +179,7 @@ A2: 若 C:\Users\你的帳號\.gradle\gradle.properties
 			// 使用中的字碼頁: 950
 		修改成65001
 			chcp.com 65001
-	
+
 	但這只會影響當前 console
 	建議
 		放到 Git Bash 啟動檔

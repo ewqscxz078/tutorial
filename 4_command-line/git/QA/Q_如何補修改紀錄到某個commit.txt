@@ -4,7 +4,7 @@ A:
 	補修改到上一個 commit
 		✅ 最簡單情境（commit b 是最後一筆）
 			A --- B (HEAD)
-			
+
 			你現在想把「少改的檔案」補進 B
 
 			步驟：
@@ -20,28 +20,28 @@ A:
 				* 預設會開 editor 讓你改 commit message（可不改）
 					如果你不想改 message：
 						git commit --amend --no-edit
-			
+
 			⚠️ 注意（很重要）
 				這其實是 改寫歷史（rewrite history）
-			
+
 			👉 如果這個 commit 已經 push 到遠端
 				你需要：
 					git push --force
-				
+
 				但這會有風險（可能影響別人）
-			
-	補修改到某個 commit	
+
+	補修改到某個 commit
 		❗ 如果 commit b 不是最後一筆
 			例如：
 				A --- B --- C --- D (HEAD)
-			
+
 			你想改 B
 				👉 就不能用 --amend，要用：
 					git rebase -i
-			
+
 			步驟：
 				git rebase -i HEAD~3   # 假設 B 在 3 筆之前
-			
+
 			然後把：
 				pick B
 				pick C

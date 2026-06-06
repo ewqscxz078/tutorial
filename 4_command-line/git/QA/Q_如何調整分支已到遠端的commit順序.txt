@@ -5,10 +5,10 @@
 	// => git branch  backup/your-branch
 	// rebase 玩壞還可以還原
 	// => git reset --hard backup/your-branch
-	
+
 
 	方法一: 砍掉遠端分支再用 git rebase
-	
+
 		# 1. 刪除遠端 branch
 		git push origin --delete your-branch
 
@@ -29,7 +29,7 @@
 				pick D zzzz
 
 		# 3. 解衝突（若有）
-		// git checkout --theirs ${filePath} 
+		// git checkout --theirs ${filePath}
 		// git checkout --ours ${filePath}
 		// git add ${filePath}
 		git rebase --continue
@@ -46,8 +46,8 @@
 			branch 討論可能消失
 			CI pipeline 歷史可能中斷
 			reviewer comment 有時會亂掉
-		
-	
+
+
 	方法二: 砍掉遠端分支再用 git rebase
 
 		# 1. 本地做 rebase 調整 commit 順序
@@ -67,14 +67,14 @@
 				pick D zzzz
 
 		# 2. 解衝突（若有）
-		// git checkout --theirs ${filePath} 
+		// git checkout --theirs ${filePath}
 		// git checkout --ours ${filePath}
 		// git add ${filePath}
 		git rebase --continue
 
 		# 3. 重新 push
 		git push --force-with-lease origin your-branch
-		
+
 		優點：
 
 			* 不會刪除 remote branch metadata

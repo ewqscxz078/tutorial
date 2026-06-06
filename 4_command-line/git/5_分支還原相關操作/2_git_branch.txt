@@ -55,7 +55,7 @@
 		git branch -m 新名稱
 			例如：
 			git branch -m feature-new
-	
+
 	✅ 改其他 branch 名稱
 		git branch -m 舊名稱 新名稱
 			例如：

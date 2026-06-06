@@ -169,9 +169,9 @@ https://www.itread01.com/p/192065.html
 若要找資料夾下所有不重複的 副檔名有哪些該怎麼下
 	✅ 只抓「真的有副檔名」的：
 		find . -type f -name '*.*' | sed 's/.*\.//' | sort -u
-	
+
 	✅ 如果你想包含「無副檔名」也列出
 		find . -type f | awk -F. 'NF>1 {print $NF} NF==1 {print "(no_ext)"}' | sort -u
-	
+
 	✅ 如果你想順便統計數量（實用）
 		find . -type f -name '*.*' | sed 's/.*\.//' | sort | uniq -c | sort -nr

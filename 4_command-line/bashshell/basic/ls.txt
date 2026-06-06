@@ -53,6 +53,6 @@ https://stackoverflow.com/questions/1795976/can-the-unix-list-command-ls-output-
 ✅ 如果你是在 Git 專案內（更精準：看 git commit 修改）
 	如果你其實是想看「最近被 Git 修改過的檔案」，建議用：
 		git log --name-only --pretty=format: | sort | uniq
-	
+
 	或最近幾筆 commit：
 		git log -n 5 --name-only

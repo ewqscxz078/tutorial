@@ -1,0 +1,6 @@
+ref
+	https://www.youtube.com/watch?v=W5ymBPi53Tw
+
+
+1.工作範圍
+	點選專案下設定 本機指定的資料夾

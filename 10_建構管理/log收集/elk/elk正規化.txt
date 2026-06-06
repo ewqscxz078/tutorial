@@ -20,12 +20,12 @@ elk 做 exception log pattern 正規化
 				* 不用多一層 Logstash
 				* 效能好
 				* 管理集中
-			
+
 		✔ 選項 2
 			Logstash filter
 				* 比較彈性（grok、ruby、mutate）
 				* 較適合複雜邏輯
-	
+
 🔧 怎麼做（核心三步）
 	① 建立 normalized_message
 		用 regex 把變動值替換掉
@@ -57,7 +57,7 @@ elk 做 exception log pattern 正規化
 		例如：
 			java.lang.NullPointerException
 			org.springframework.dao.DataAccessException
-		
+
 		可以用 grok：
 			{
 			  "grok": {
@@ -65,7 +65,7 @@ elk 做 exception log pattern 正規化
 				"patterns": ["%{JAVACLASS:error.class}: %{GREEDYDATA:error.message}"]
 			  }
 			}
-	
+
 	③ 建 fingerprint（重點🔥）
 		用 fingerprint processor：
 			{
@@ -89,12 +89,12 @@ elk 做 exception log pattern 正規化
 			NullPointerException at OrderService → 1200 次
 			SQLTimeoutException → 300 次
 			FeignException 503 → 180 次
-	
-	
+
+
 	🧪 更進階
 		有些差異無法移除
 			👉 那你要做的是「部分正規化 + 結構抽取」
-		
+
 		🔹 stack trace 處理（超關鍵）
 			建議：
 
@@ -105,7 +105,7 @@ elk 做 exception log pattern 正規化
 
 			例如：
 				com.xxx.OrderService.createOrder
-			
+
 			👉 可以用 grok 或 script：
 				{
 				  "script": {
@@ -119,15 +119,15 @@ elk 做 exception log pattern 正規化
 					"""
 				  }
 				}
-		
+
 		🔹 pattern key 建議（實務最穩）
 			建議你：
 				error.group =
 				exception class
 				+ normalized_message
 				+ top_frame（可選）
-	
-	
+
+
 	⚠️ 常見坑（你一定會踩）
 		❌ 1. 全部用 regex 替換
 			會壞掉（over-normalize）
@@ -136,14 +136,14 @@ elk 做 exception log pattern 正規化
 					Order 456 failed
 						OK
 
-				但：	
+				但：
 					Error code 500
 					Error code 404
 					👉 你可能不想合併！
-		
+
 		❌ 2. stack trace 全吃
 			會變每筆都不同
-		
+
 		❌ 3. 只用 message 做 fingerprint
 			容易不同 service 混在一起
 
