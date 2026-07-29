@@ -5,7 +5,7 @@ HTTPS **雙向驗證（mTLS / Two-way TLS）**意思是：
 具體互動流程
 	以「我方系統打對方 API」為例：
 		我方 Client  ---- HTTPS ---->  對方 Server
-	
+
 	TLS 握手大致是：
 		1. Client 連線到 Server
 		2. Server 回自己的伺服器憑證
@@ -41,15 +41,15 @@ HTTPS **雙向驗證（mTLS / Two-way TLS）**意思是：
 			1. keystore 跟 truststore 角色不同
 				keystore   = 我拿來證明「我是誰」
 				truststore = 我拿來判斷「我信任誰」
-			
+
 				我方打對方時：
 					我方 keystore   放我方 client 私鑰憑證
 					我方 truststore 放對方 server 憑證鏈或 CA
-				
+
 				對方 Server：
 					對方 keystore   放對方 server 私鑰憑證
 					對方 truststore 放我方 client 憑證鏈或 CA
-			
+
 			2. alias 名稱通常不影響對方驗證
 				alias 主要是 keystore/truststore 內部識別名稱。
 				你把對方給的 CA 憑證匯入 JKS 時 alias 改名，通常不影響 TLS 驗證。
@@ -60,20 +60,20 @@ HTTPS **雙向驗證（mTLS / Two-way TLS）**意思是：
 					KeyUsage / ExtendedKeyUsage
 					SAN / CN
 					簽發 CA 是否可信
-			
+
 			3. truststore 不一定要放「對方葉憑證」
 				通常建議放：
 					Root CA
 					Intermediate CA
 				而不是只放對方 leaf/server cert。
 				放 CA 的好處是對方 server 憑證更新但仍由同 CA 簽發時，我方不一定要重匯。
-			
+
 			4. Server hostname 仍然會驗證
 				我方打：
 					https://api.example.com
 				對方 Server 憑證的 SAN/CN 要包含：
 					api.example.com
-				
+
 				不然即使 truststore 有憑證，也可能報 hostname verification failed。
 
 程式關鍵檢查清單
@@ -97,7 +97,7 @@ HTTPS **雙向驗證（mTLS / Two-way TLS）**意思是：
 		5. server cert 是否有 Server Authentication 用途
 		6. 是否有中繼憑證鏈缺漏
 		7. 是否有 LB / Nginx / API Gateway 終止 TLS，真正驗證位置在哪
-	
+
 	常見錯誤對應
 		PKIX path building failed
 		=> truststore 不信任對方憑證鏈
@@ -122,7 +122,7 @@ HTTPS **雙向驗證（mTLS / Two-way TLS）**意思是：
 		Client 用 truststore 驗 Server；
 		Server 用 truststore 驗 Client；
 		雙方都驗過，HTTPS 才成立。
-	
+
 	在 Java 程式上最核心就是：
 		loadKeyMaterial  = 我拿什麼憑證證明自己
 		loadTrustMaterial = 我信任哪些對方憑證/CA

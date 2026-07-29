@@ -1,0 +1,30 @@
+ref https://www.youtube.com/watch?v=aR97E7aKEgg
+	作者: MattPocock
+		re https://github.com/mattpocock/skills
+		* AI 工作流
+			類似的人氣框架
+				* Get Shit Done
+				* Spec-Kit
+				* Superpowers
+		* 有一整套到skill
+			* 寫規格
+			* 拆任務
+			* 寫測試
+			* grill-me // 拷問我弄出計畫書 = AI 反過來拷問你
+
+
+		mattPocock
+			skill/
+				productivity/
+					grill-me
+					writing-great-skill
+				engineering/
+					to-spec
+					implement
+					tdd
+					code-review
+
+
+		各自獨立的 skill
+		底層邏輯核心
+		相對比較 Superpowers skill

@@ -56,7 +56,7 @@ pom.xml 引入
 				// 注意：
 					jasypt-spring-boot-starter 是 4.0.4，
 					Maven Plugin 最新仍是 3.0.5，這是正常的。
-		
+
 		例如你的 DB 密碼是
 			MyDbPassword123!
 		你的主密碼（Master Password）
@@ -72,33 +72,33 @@ pom.xml 引入
 			-Djasypt.encryptor.password=<MasterPassword> \
 			-Djasypt.plugin.value="<DB Password>" \
 			-Dspring.profiles.active=local
-			
+
 			./mvnw jasypt:encrypt-value \
 			--activate-profiles jasyptGen \
 			-Djasypt.encryptor.password=<MasterPassword> \
 			-Djasypt.plugin.value="<DB Password>" \
-            -Dspring.profiles.active=local			
+            -Dspring.profiles.active=local
 
 		範例執行
 			mvn jasypt:encrypt-value \
 			  -Djasypt.encryptor.password=my-secret-key \
 			  -Djasypt.plugin.value="MyDbPassword123!"
-			
+
 			./mvnw -Pdev clean package
-			
+
 		會得到類似
 			ENC(FwY5S2M2D5Q6M2....)
-		
+
 		放到 application.yml
 			spring:
 			  datasource:
 				password: ENC(FwY5S2M2D5Q6M2....)
-		
+
 		啟動時再提供
 			JASYPT_ENCRYPTOR_PASSWORD=my-secret-key
-	
+
 	方法二：寫一支 Java 小工具（也很常見）
-		
+
 		JasyptEncryptorConfigurationProperties
 		@Slf4j
 		@ActiveProfiles("test")
@@ -109,12 +109,12 @@ pom.xml 引入
 			  void testGen() {
 					StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
 					SimpleStringPBEConfig config = new SimpleStringPBEConfig();
-					
+
 					// 1. Set your master private password/secret key
-					config.setPassword("your_secret_master_key"); // 
+					config.setPassword("your_secret_master_key"); //
 
 					// 2. Set the algorithm (Jasypt Starter 3.x+ defaults ref JasyptEncryptorConfigurationProperties)
-					config.setAlgorithm("PBEWITHHMACSHA512ANDAES_256"); 
+					config.setAlgorithm("PBEWITHHMACSHA512ANDAES_256");
 					config.setKeyObtentionIterations(1000);
 					config.setPoolSize(1);
 					config.setSaltGeneratorClassName("org.jasypt.salt.RandomSaltGenerator");
@@ -122,7 +122,7 @@ pom.xml 引入
 					encryptor.setConfig(config);
 
 					// 3. Encrypt your plain-text secret
-					String plainText = "my_password"; // 
+					String plainText = "my_password"; //
 					String encryptedText = encryptor.encrypt(plainText);
 
 					log.debug("Plain Text: {}", plainText);

@@ -8,7 +8,7 @@
 		sudo nmcli connection modify ens192 ipv4.dns "10.66.142.1 10.66.142.2"
 	啟用設定
 		sudo nmcli connection up ens192
-	
+
 	確認修改後
 		nmcli connection show ens192 | grep ipv4
 		cat /etc/resolv.conf
@@ -20,5 +20,4 @@
 				dns=none
 			然後 systemctl reload NetworkManager
 		之後修改 /etc/resolv.conf 檔案後不會因為重開機觸發 NetworkManager 還原機制問題
-		
-		
+

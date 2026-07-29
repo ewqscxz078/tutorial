@@ -21,7 +21,7 @@ Java 專案其實沒有一個百分之百可靠的方法可以直接知道第三
 				<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			</license>
 		</licenses>
-	
+
 	例如
 		mvn dependency:get \
 		  -Dartifact=org.apache.commons:commons-lang3:3.17.0
@@ -50,13 +50,13 @@ Java 專案其實沒有一個百分之百可靠的方法可以直接知道第三
 			<groupId>org.codehaus.mojo</groupId>
 			<artifactId>license-maven-plugin</artifactId>
 		</plugin>
-	
+
 	執行
 		mvn license:download-licenses
-	
+
 	會產生
 		target/generated-resources/licenses/
-	
+
 	甚至
 		THIRD-PARTY.txt
 

@@ -82,18 +82,18 @@ https://dotblogs.com.tw/wasichris/2017/09/19/014354
 			 * [new branch]      develop    -> origin/develop
 			 * [new branch]      issue/7    -> origin/issue/7
 			error: cannot update the ref 'refs/remotes/origin/develop': there are still logs under '.git/logs/refs/remotes/origin/develop'
-	
-	A5: 
+
+	A5:
 		一般修復方式
 			rm -rf .git/refs/remotes/origin
 			rm -rf .git/logs/refs/remotes/origin
-			
+
 			重新抓：
 				git fetch origin
-			=> 
+			=>
 				Git 會重新建立所有 remote tracking branches。
 				這種做法不會刪除你的 local branch，也不會刪除 commit，只是重建 origin/* 的追蹤資訊，因此通常是安全的。
-		
+
 		或者先 prune
 			如果只是遠端 branch 已刪除
 				git remote prune origin

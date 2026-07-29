@@ -6,8 +6,8 @@
   → mvn package / gradle build
   → 從 Azure Artifacts 下載指定版本 jar
   → build 成可部署 jar/war
- 
- 
+
+
 
 | 功能                | 用途                            |
 | ----------------- | ----------------------------- |
@@ -19,11 +19,11 @@ PublishPipelineArtifact 是什麼
 	  inputs:
 		targetPath: 'target-cicd'
 		artifact: 'app-package'
-	
+
 	=>
 		把 target-cicd/ 上傳到 Azure Pipeline Artifact Storage
 		名稱叫 app-package
-		
+
 		Azure 會保存：
 			target-cicd/
 			  dist/app.jar
@@ -36,7 +36,7 @@ DownloadPipelineArtifact 是什麼
 		  inputs:
 			artifact: 'app-package'
 			path: '$(Pipeline.Workspace)/download'
-	
+
 		=>
 			從剛剛 build 保存的 artifact
 			下載到：
@@ -48,25 +48,25 @@ DownloadPipelineArtifact 是什麼
 
 	1. Azure 原生支援
 		Azure deployment history 會知道：
-	
+
 	2. 不污染 Git
 		Git 不適合： binary。
 			jar
 			war
 			zip
 			tar.gz
-	
+
 	3. retention policy
 		Azure 可自動清：
 			保留 30 天
 			保留最近 20 次
-			
+
 			不用自己清 branch。
-	
+
 	4. build/deploy 對應清楚
 		Build #20260528.3
 		artifact = app-package
-		
+
 		Deploy 時直接對應。
 			不像 git branch：
 

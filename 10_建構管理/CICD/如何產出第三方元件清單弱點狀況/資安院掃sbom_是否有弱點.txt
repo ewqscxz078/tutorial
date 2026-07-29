@@ -1,4 +1,4 @@
-資安院 
+資安院
 	sbom
 		https://www.nics.nat.gov.tw/core_business/digital_resilience/SBOM_Resources/
 			=>
@@ -53,7 +53,7 @@
 				比如
 					D:\no_sync_oneDrive\green_tools\other_tools\osv-scanner
 						// has osv-scanner_windows_amd64.exe
-			
+
 			3.git bash
 				$ osv-scanner --version
 				osv-scanner version: 2.4.0
@@ -77,7 +77,7 @@
 						   ├── ✔ Executables                     [0 executables]
 						   ├── ✔ File metadata                   [0 locations]
 						   └── ✔ File digests                    [0 files]  [0000]  WARN no explicit name and version provided for directory source, deriving artifact ID from the given path (which
-		
+
 		全部 repo dir
 			SYFT_FORMAT_PRETTY=true syft /d/no_sync_oneDrive/MYDATA_CODE/origin -o spdx-json=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/all_repo_syft.spdx.json
 				 ✔ Indexed file system                                                                                                              D:\no_sync_oneDrive\MYDATA_CODE\origin
@@ -86,14 +86,14 @@
 				   ├── ✔ Executables                     [4 executables]
 				   ├── ✔ File metadata                   [0 locations]
 				   └── ✔ File digests                    [0 files]  [0000]  WARN no explicit name and version provided for directory source, deriving artifact ID from the given path (which
-		
+
 2. 從 SBOM 檔案產生報告
 	* 使用 Grype 掃描 SBOM 檔案 // 因為跟 syft 同一家公司
-		
+
 	* 使用 OSV-Scanner 掃描 SBOM 檔案 // 政府推薦
 		語法
 			osv-scanner scan -L ./path/to/sbom/file --format=table --output-file=report.txt
-			
+
 		範例 of table(default)
 			單一 repo dir
 				osv-scanner scan -L /d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/mydata-backend-113_syft.spdx.json --format=table --output-file=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/report_cvs.txt
@@ -119,4 +119,3 @@
 	該報告會分比較細，會說第三方套件版本於哪個版本修了那些 CVE，
 		* 一般沒意外是直接升到對應的最新，但也有可能沒有辦法升版對應到最新，比如彼此之間的依賴傳遞狀況
 		* 比較糟糕的是有弱點但沒有版本可修正要另外找對應替代方案
-	

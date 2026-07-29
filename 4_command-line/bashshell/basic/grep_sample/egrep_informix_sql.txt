@@ -20,20 +20,20 @@ scp -r /home/sriscm/WORKSPACE/temp/* ewqscxz078@t2srv:/home/ewqscxz078/temp/
 		all_pattern 減去 透過 real_patterns 聯集結果 剩下的為假的 patern 結果 // fake_pattern
 		用 fake_pattern 透過 all_pattern  驗證是否都是不要的若都是則這些pattern才算Ok
 		則 merge 的結果即為需要的
-	
+
 	方法二: 模糊不符合的多時適用
 		嘗試找出該 pattern 符合類型	   // all_pattern
 		依據 pattern 列舉不要的pattern // fake_pattern
 		all_pattern 減去 fake_pattern 聯集結果為剩下的為真的 patern 結果 // real_pattern => remain
 		依據 remain 驗證是否都是要的，若都是則這些pattern才算Ok
 		則 remain 的結果即為需要的
-===============================================================================================================================================================		
+===============================================================================================================================================================
 outer [join table] ok
 	=> left join [join table] on a.columnName = b.columnName
-		
-		all:	
+
+		all:
 			egrep -inR --color "[ =,\(\"]outer[ =,\(\"]" --include=*.{java,xml,properties} --exclude-dir=".*" >	all_outer.txt
-		排除		
+		排除
 			right|left outer (rd 有三個sql有問題)
 				egrep -iR --color ": *.*(right|left) outer" all_outer.txt > exclude_right_left.txt
 			*
@@ -44,83 +44,83 @@ outer [join table] ok
 				egrep -iR --color "Generate outer table" all_outer.txt > exclude_key_word.txt
 			<!--
 				egrep -iR --color ":.*<\!--" all_outer.txt > exclude_xml_mark.txt
-			outer++	
-				egrep -iR --color ":.*outer\+\+" all_outer.txt > exclude_java_add.txt		
+			outer++
+				egrep -iR --color ":.*outer\+\+" all_outer.txt > exclude_java_add.txt
 			outer title
 				egrep -iR --color ":.*outer title" all_outer.txt > exclude_other_match.txt
-			: outer :	
+			: outer :
 				egrep -iR --color ":(\s|\t)*outer(\s|\t)*:" all_outer.txt > exclude_other_match2.txt
-			//  
+			//
 				java的註解
 				egrep -iR --color ":(\t|\s)*//(\t|\s)*.*" all_outer.txt | egrep -v "//(|\t|\s)+\*" | grep -v "Generate outer table" > exclude_real_java_mark.txt
 				egrep -iR --color=always ":(\t|\s)*//(\t|\s)*.*" all_outer.txt | egrep -v "//(|\t|\s)\*" | grep -v "Generate outer table" | less -R
-			
+
 		取交集
 			sort exclude*.txt | uniq > merge.txt
 		取非交集 / 去交集
 			cat all_outer.txt merge.txt | sort | uniq -u > remain.txt
-===============================================================================================================================================================			
+===============================================================================================================================================================
 trim	OK
 	trim(leading
 		ex: trim(leading '0' FROM rldf064m.notice_first_yyymmdd)=''
 		all:
 			egrep -inR --color "[ ,=\(]trim *\( *leading *" --include=*.{java,xml,properties} --exclude-dir=".*" > all_trim_leading.txt
 		排除
-			//  
+			//
 				java的註解
 				egrep -iR --color=always ":(|\t|\s)*//(|\t|\s)*.*" all_trim_leading.txt | egrep -v "//(|\t|\s)\*" > exclude_trim_leading_real_java_mark.txt
-		
+
 	trim(trailing
-		all:		
+		all:
 			egrep -inR --color "[ ,=\(]trim *\( *trailing *" --include=*.{java,xml,properties} --exclude-dir=".*" > all_trim_trailing.txt
 		略
 	trim(both
-		all:		
-			egrep -inR --color "[ ,=\(]trim *\( *both *" --include=*.{java,xml,properties} --exclude-dir=".*" > all_trim_both.txt		
-		略	
+		all:
+			egrep -inR --color "[ ,=\(]trim *\( *both *" --include=*.{java,xml,properties} --exclude-dir=".*" > all_trim_both.txt
+		略
 ===============================================================================================================================================================
 char_length( // 略，因為無結果
 	=> len(
-	all:		
+	all:
 		egrep -inR --color "char_length[ ]*\(" --include=*.{java,xml,properties} --exclude-dir=".*"	> all
-		
-===============================================================================================================================================================			
+
+===============================================================================================================================================================
 length( // 略，由於大部分用於非中文欄位所以暫時判斷無誤
 	=> datalength(
-	all:		
+	all:
 		egrep -inR --color "[ ,\(]length *\(.+\)" --include=*.{java,xml,properties} --exclude-dir=".*"	> all_length.txt
-	排除	
-		//  
+	排除
+		//
 			java的註解
 			egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_length.txt | egrep -v "//(|\t|\s)\*" > exclude_real_java_mark.txt
 		*
 			egrep -iR --color ": *\*.*" all_length.txt > exclude_java_mark.txt
 		java length
 			egrep -iR --color ":(\s|\t)*public.*length *\(final" all_length.txt > exclude_java_length.txt
-		return length	
+		return length
 			egrep -iR --color ":(\s|\t)*return.*length *\(" all_length.txt > exclude_return_length.txt
-		.length	
-			egrep -iR --color ":.*\.length *\(" all_length.txt > exclude_java_length2.txt			
-		java api	
+		.length
+			egrep -iR --color ":.*\.length *\(" all_length.txt > exclude_java_length2.txt
+		java api
 			egrep -iR --color ":.*int.*length *\(" all_length.txt > exclude_java_api.txt
-			
+
 	取交集
 		sort exclude*.txt | uniq > merge.txt
 	取非交集 / 去交集
 		cat all_length.txt merge.txt | sort | uniq -u > remain.txt
 ===============================================================================================================================================================
 len // 略，欄位值有中文時的判斷長度才會有議題
-	all:	
-		egrep -inR --color " len *\(" --include=*.{java,xml,properties} --exclude-dir=".*"					
-			
-===============================================================================================================================================================			
+	all:
+		egrep -inR --color " len *\(" --include=*.{java,xml,properties} --exclude-dir=".*"
+
+===============================================================================================================================================================
 字串擷取	OK
 	=> substring left right
 	[] // array substr
-		=> op_datetime[7,8] -> substring(op_datetime,7,2)  // 8-7+1=2		
+		=> op_datetime[7,8] -> substring(op_datetime,7,2)  // 8-7+1=2
 		java:	(?i)\w\[ *[0-9] *, *[0-9] *\]
-		all:		
-			egrep -inR --color "\w\[ *[0-9] *, *[0-9] *\]" --include=*.{java,xml,properties} --exclude-dir=".*"	// all_array_substr.txt				
+		all:
+			egrep -inR --color "\w\[ *[0-9] *, *[0-9] *\]" --include=*.{java,xml,properties} --exclude-dir=".*"	// all_array_substr.txt
 		排除
 			#
 				egrep -iR --color ":\#" all_array_substr.txt > exclude_shorpe.txt
@@ -130,17 +130,17 @@ len // 略，欄位值有中文時的判斷長度才會有議題
 				egrep -iR --color ": *Assert.*" all_array_substr.txt > exclude_java_assert.txt
 			//
 				egrep -iR --color ":.*//.*\w\[ *[0-9] *, *[0-9] *\]" all_array_substr.txt > exclude_java_mark.txt
-			debug 
+			debug
 				egrep -iR --color ": *.*(logger\.debug|logger.error).*" all_array_substr.txt > exclude_java_debug_message.txt
-			-- 	
+			--
 				egrep -iR --color ": *.*--.*\w\[ *[0-9] *, *[0-9] *\]" all_array_substr.txt > exclude_sql_mark.txt
-			this.	
+			this.
 				egrep -iR --color ": *.*this\..*\w\[ *[0-9] *, *[0-9] *\]" all_array_substr.txt > exclude_this.txt
 		取交集
 			sort exclude*.txt | uniq > merge.txt
 		取非交集 / 去交集
 			cat all_array_substr.txt merge.txt | sort | uniq -u > remain.txt
-===============================================================================================================================================================				
+===============================================================================================================================================================
 字串擷取 OK
 	=> substring left right
 	[] // array substr(array_substr_only_array)
@@ -151,17 +151,17 @@ len // 略，欄位值有中文時的判斷長度才會有議題
 				egrep -iR --color ":.*//.*" all_array_substr_only_array.txt > exclude_java_mark.txt
 			*
 				egrep -iR --color ": *\*.*" all_array_substr_only_array.txt > exclude_java_doc_mark.txt
-			debug 
+			debug
 				egrep -iR --color ":.*(.debug).*" all_array_substr_only_array.txt > exclude_java_debug_message.txt
 			other
 				egrep -iR --color ": *[^A-Z]\[ *[0-9] *, *[0-9] *\]$" all_array_substr_only_array.txt > exclude_other.txt
-				
-				
+
+
 		取交集
 			sort exclude*.txt | uniq > merge.txt
 		取非交集 / 去交集
 			cat all_array_substr_only_array.txt merge.txt | sort | uniq -u > remain.txt
-===============================================================================================================================================================				
+===============================================================================================================================================================
 字串擷取 OK
 	=> substring left right
 	[] // array substr(array_substr_only_one)
@@ -175,42 +175,42 @@ len // 略，欄位值有中文時的判斷長度才會有議題
 			substr(CAST(100+MONTH(TODAY) AS CHAR(3)),-2)
 			substr(a.sch_code,0,6)
 		java:	(?i)substr[ ]*(
-		all:	
+		all:
 			egrep -inR --color "substr[ ]*\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_substr.txt
 		排除
-			//				
+			//
 				egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_substr.txt > exclude_java_mark.txt
 			*
 				egrep -iR --color ": *\*.*" all_substr.txt > exclude_java_doc_mark.txt
-				
+
 		取交集
 			sort exclude*.txt | uniq > merge.txt
 		取非交集 / 去交集
 			cat all_substr.txt merge.txt | sort | uniq -u > remain.txt
-===============================================================================================================================================================		
+===============================================================================================================================================================
 字串擷取 OK
 	substring(xldfs042.lost_yyymmdd from 1 for 3)
 		=> subString(source,start,length)
 		java	(?i)substring[ ]*(.+from.+for.+)
-		all:	
+		all:
 			egrep -inR --color "substring[ ]*\(.+from.+for.+\)" --include=*.{java,xml,properties} --exclude-dir=".*" > all_substring.txt
 		排除
-			//				
+			//
 				egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_substring.txt > exclude_java_mark.txt
 		取交集
 			sort exclude*.txt | uniq > merge.txt
 		取非交集 / 去交集
 			cat all_substring.txt merge.txt | sort | uniq -u > remain.txt
-===============================================================================================================================================================			
+===============================================================================================================================================================
 字串相加 // string add OK
 	=> +
-	all:	
+	all:
 		egrep -inR --color "\|\|" --include=*.{java,xml,properties} --exclude-dir=".*" | egrep -v "if *\(" > all_stringAdd.txt
-	包含 				
+	包含
 		egrep -iR --color "addColumn.+\|\|" all_stringAdd.txt > include_addColumn.txt
 		egrep -iR --color ", \".+and.+\|\|.+\"" all_stringAdd.txt	> include_and.txt
 		egrep -iR --color "^.*: +\.append\(\".*\|\|.*\\n\"\)" all_stringAdd.txt > include_append.txt
-		egrep -iR --color "\.append\(\".*(when|then).+\|\|.*\"\);" all_stringAdd.txt > include_append_wheh_or_then.txt	
+		egrep -iR --color "\.append\(\".*(when|then).+\|\|.*\"\);" all_stringAdd.txt > include_append_wheh_or_then.txt
 		egrep -iR --color " +buffer\.append\(.+\|\|.+[\|| ]\"\);$" all_stringAdd.txt > include_buffer_append.txt
 		egrep -iR --color "case when.+\|\|"  all_stringAdd.txt > include_case_when.txt
 		egrep -iR --color "clause.+\|\|" all_stringAdd.txt > include_clause.txt
@@ -231,33 +231,33 @@ len // 略，欄位值有中文時的判斷長度才會有議題
 		egrep -iR --color " +\".*\|\|.*\+ \/\/" all_stringAdd.txt > include_middle_sql.txt
 		egrep -iR --color "^.*: +(//)* +(sb|sql)\.append\(.+\|\|.*\"\);*" all_stringAdd.txt > include_sb_append.txt
 		egrep -iR --color "^.*:.*select.+\|\|.+as" all_stringAdd.txt > include_select_as.txt
-		egrep -iR --color "^.*: +.+\|\|.+select max.+" all_stringAdd.txt > include_select_max.txt			
-		egrep -iR --color "where .+\|\|" all_stringAdd.txt > include_where.txt			
+		egrep -iR --color "^.*: +.+\|\|.+select max.+" all_stringAdd.txt > include_select_max.txt
+		egrep -iR --color "where .+\|\|" all_stringAdd.txt > include_where.txt
 		egrep -iR --color "^.*: +(sbr|joinCondition|sb|sqlBuf|this\.firstCol|sqlScript|sql1Str|sql2Str|sqlSb)\.append\(.+\|\|.+(\"\);|,\"\);|\\n\"\);)$" all_stringAdd.txt | grep -v " var"  // include_x_append
-		
+
 		egrep -iR --color "^.*:.*cast\(.+\|\|.+\"\);*$" all_stringAdd.txt > include_cast.txt
 		egrep -iR --color "^.*:.*this.appendCondition\(.+\|\|.+\"\);$" all_stringAdd.txt > include_appendCondition.txt
 		egrep -iR --color "^.*: +\".+\|\|.+(\\n)*\"\);$" all_stringAdd.txt > include_other.txt
-		
+
 	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_stringAdd.txt merge.txt merge.txt | uniq -u > diff.txt
-		
-	排除	
-		//			
+
+	排除
+		//
 		egrep -iR --color "^.*:(\t|\s)*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude*.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 group by OK
 	number
-		all	
+		all
 			egrep -inR --color "group by \w*.[1-9]{1,}\w*" --include=*.{java,xml,properties} --exclude-dir=".*"	> all_group_by.txt
 		包含
-			開頭數字					
+			開頭數字
 				sh:		egrep -inR --color "group by [1-9]{1,},*" all_group_by.txt > include_start.txt
-			中間	
+			中間
 				sh:		egrep -inR --color "group by .+ *,+ *[1-9]{1} *,+" all_group_by.txt > all_group_by_middle_number.txt
 	聯集
 		sort include*.txt | uniq > merge.txt
@@ -265,33 +265,33 @@ group by OK
 	a-b差集 / 去差集
 		sort all_group_by.txt merge.txt merge.txt | uniq -u > diff.txt
 
-	排除	
-		//		
+	排除
+		//
 			egrep -iR --color "^.*:.*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
-		
-===============================================================================================================================================================			
+
+===============================================================================================================================================================
 select first OK
 	=> select top
-	all:	
+	all:
 		egrep -inR --color "select first[ \(\"]" --include=*.{java,xml,properties} --exclude-dir=".*" > all_select_first.txt
 	排除
-		//				
+		//
 			egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_select_first.txt > exclude_real_java_mark.txt
 		*
 			egrep -iR --color ": *\*.*" all_select_first.txt > exclude_java_doc_mark.txt
-			
+
 	取交集
 		sort exclude*.txt | uniq > merge.txt
 	取非交集 / 去交集
-		cat all_select_first.txt merge.txt | sort | uniq -u > remain.txt	
+		cat all_select_first.txt merge.txt | sort | uniq -u > remain.txt
 ===============================================================================================================================================================
 skip first OK
-	all:		 
+	all:
 		egrep -inR --color "skip .+ first" --include=*.{java,xml,properties} --exclude-dir=".*" > all_skip_first.txt
 	排除
-		//				
+		//
 			egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_skip_first.txt > exclude_java_mark.txt
 		*
 			egrep -iR --color ": *\*.*" all_skip_first.txt > exclude_java_doc_mark.txt
@@ -301,70 +301,70 @@ skip first OK
 		cat all_skip_first.txt merge.txt | sort | uniq -u > remain.txt
 ===============================================================================================================================================================
 select limit ok
-	=> select top	
-	all:		
+	=> select top
+	all:
 		egrep -inR --color "[ =,\(\"]limit[ =,\)\"]" --include=*.{java,xml,properties} --exclude-dir=".*" > all_select_limit.txt
 	包含
 		egrep -iR --color "\.append\(.*[ =,\(\"]limit[ =,\)\"]" all_select_limit.txt > include_append.txt
 		egrep -iR --color "select limit " all_select_limit.txt > include_only.txt
 		egrep -iR --color "select skip.+limit.+" all_select_limit.txt > include_skip.txt
-				
-	聯集			
+
+	聯集
 		sort include*.txt | uniq > merge.txt
 
 	a-b差集 / 去差集
-		sort all_select_limit.txt merge.txt merge.txt | uniq -u > diff.txt	
-	
-	排除	
-		//		
+		sort all_select_limit.txt merge.txt merge.txt | uniq -u > diff.txt
+
+	排除
+		//
 			egrep -iR --color "^.*:(|\t|\s)*//(|\t|\s)*.*" merge.txt > exclude_java_mark.txt
 		*
 			egrep -iR --color ":(\t|\s)+\*(\t|\s)+[^.]*" merge.txt > exclude_java_doc_mark.txt
-			
-	去交集		
+
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 		cat merge.txt exclude_java_doc_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 rowId ok
-	all:	
+	all:
 		egrep -inR --color "[ =,\(\"]rowid[ =,\)\"]" --include=*.{java,xml,properties} --exclude-dir=".*" > all_rowId.txt
 	包含
 		egrep -iR --color "(select.+rowid[, ]|order.+by.+rowid|\+.+\"and.+rowid)" all_rowId.txt	> include_select.txt // |\!\"rowid\".equals
-	聯集			
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_rowId.txt merge.txt merge.txt | uniq -u > diff.txt
-===============================================================================================================================================================		
+===============================================================================================================================================================
 rpad OK
 	java:	(?i)rpad\(
-	all:	
+	all:
 		egrep -inR --color "rpad[ ]*\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_rpad.txt
-	包含	
+	包含
 		egrep -iR --color "append\(.*rpad[ ]*\(" all_rpad.txt > include_append.txt
 		egrep -iR --color "select.*rpad *\(" all_rpad.txt > include_select.txt
-	聯集			
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_rpad.txt merge.txt merge.txt | uniq -u > diff.txt
-	排除	
+	排除
 		//
 			egrep -iR --color "^.*:(|\t|\s)*//(|\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 lpad OK
 	=>
 	java:	(?i)lpad\(
-	all:	
+	all:
 		egrep -inR --color "lpad[ ]*\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_lpad.txt
-	排除	
-		public		
+	排除
+		public
 			egrep -iR --color ":(|\t|\s)*public.*lpad\(.*$" all_lpad.txt > exclude_public.txt
-		//				
-			egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_lpad.txt > exclude_java_mark.txt		
+		//
+			egrep -iR --color ":(|\t|\s)*//(|\t|\s)*.*" all_lpad.txt > exclude_java_mark.txt
 		*
 			egrep -iR --color ":(\t|\s)+\*(\t|\s)+[^.]*" all_lpad.txt > exclude_java_doc_mark.txt
-			
+
 	取交集
 		sort exclude*.txt | uniq > merge.txt
 	取非交集 / 去交集
@@ -373,14 +373,14 @@ lpad OK
 nvl\( OK
 	=> isnull(不是 ANSI SQL-92 標準) or coalesce(ANSI SQL-92 標準)
 	java: 	 (?i)nvl\(
-	all:		
+	all:
 		egrep -inR --color "nvl *\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_nvl.txt
 	排除
-		//				
+		//
 			egrep -iR --color "^.*:(\t|\s)*//(\t|\s)*.*" all_nvl.txt > exclude_java_mark.txt
 		*
 			egrep -iR --color ":(\t|\s)+\*(\t|\s)+[^.]*" all_nvl.txt > exclude_java_doc_mark.txt
-			
+
 	取交集
 		sort exclude*.txt | uniq > merge.txt
 	取非交集 / 去交集
@@ -390,7 +390,7 @@ trunc // find by lpad 略
 	=> cast(-1.002 as int)
 	all:
 		egrep -inR --color "trunc *\(" --include=*.{java,xml,properties} --exclude-dir=".*"	> all_trunc.txt
-	排除		
+	排除
 		*
 			egrep -iR --color ":(\t|\s)+\*(\t|\s)+[^.]*" all_trunc.txt > exclude_java_doc_mark.txt
 	取交集
@@ -399,40 +399,40 @@ trunc // find by lpad 略
 		cat all_trunc.txt merge.txt | sort | uniq -u > remain.txt
 ===============================================================================================================================================================
 ceil // find by lpad ok
-	=> CEILING	
-	all: 	
+	=> CEILING
+	all:
 		egrep -inR --color "ceil *\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_ceil.txt
-	包含		
+	包含
 		egrep -iR --color "[ (]ceil *\(." all_ceil.txt > include_ceil.txt
-	聯集			
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_ceil.txt merge.txt merge.txt | uniq -u > diff.txt
 ===============================================================================================================================================================
 decode ok
 	=> case when ?? then ?? else ?? end
-	all: 	
+	all:
 		egrep -inR --color " decode *\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_decode.txt
 	包含
 		egrep -iR --color "^.*:.*(.*[ \|(\"]decode *\(.*'{1,}.*|sum.+decode).*$" all_decode.txt > include_decode.txt
-	聯集			
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_decode.txt merge.txt merge.txt | uniq -u > diff.txt
-		
-	排除	
-		//		
+
+	排除
+		//
 			egrep -iR --color "^.*:(|\t|\s)*//(|\t|\s)*.*" merge.txt > exclude_java_mark.txt
 		*
 			egrep -iR --color ":(\t|\s)+\*(\t|\s)+[^.]*" merge.txt > exclude_java_doc_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 		cat merge.txt exclude_java_doc_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 to_number ok
 	=> CONVERT (NUMERIC , string) 或 CAST (string AS NUMERIC)
 		ex: select CONVERT (NUMERIC , age), CAST(age as NUMERIC), age from rscdz001
-	all: 	
+	all:
 		egrep -inR --color "to_number *\(" --include=*.{java,xml,properties} --exclude-dir=".*"	> all_to_number.txt
 	排除
 		//
@@ -444,7 +444,7 @@ to_number ok
 ===============================================================================================================================================================
 to_char ok
 	=> CONVERT (CHAR , number) | CAST (number AS CHAR)
-		ex: 
+		ex:
 	all:
 		egrep -inR --color "to_char *\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_to_char.txt
 	排除
@@ -456,102 +456,102 @@ to_char ok
 		cat all_to_char.txt merge.txt | sort | uniq -u > remain.txt
 ===============================================================================================================================================================
 current OK
-	=> current_timestamp	
-	all: 	
+	=> current_timestamp
+	all:
 		egrep -inR --color "[ =,\(\"]current[ =,\)\"]" --include=*.{java,xml,properties} --exclude-dir=".*"	> all_current.txt
-	包含		
+	包含
 		egrep -iR --color "(update.+set.+current[, ]|insert.+into.+current|byClause.+current|addColumn.*\(.+current[\" \)]|sql\.append\(.+current[, ]|where.+[ \(\"]current[, ])" all_current.txt > include_current.txt
 		egrep -iR --color "^.*: *\+ *.*\".*current.*$" all_current.txt > include_add.txt
 		egrep -iR --color "select.+current.+from" all_current.txt > include_select_from.txt
-		
-	聯集			
+
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_current.txt merge.txt merge.txt | uniq -u > diff.txt
-	排除	
-		//		
+	排除
+		//
 			egrep -iR --color "^.*:(\t|\s)*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 today ok
-	=> getdate()	
+	=> getdate()
 	all:
 		egrep -inR --color "[ =,\(\"]today[ =,\)\"]" --include=*.{java,xml,properties} --exclude-dir=".*" > all_today.txt
-	包含		
+	包含
 		egrep -iR --color "(select.+distinct.+today|update.+set.+today|sql\..+today|where.+today|\+ \" AND.+today|case.+when.+today)" all_today.txt > include_today.txt
 		egrep -iR --color "sb\.append\(.+today.+\"\);$" all_today.txt > include_sb_append.txt
-		
-	聯集			
+
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_today.txt merge.txt merge.txt | uniq -u > diff.txt
-	排除	
-		//		
+	排除
+		//
 			egrep -iR --color "^.*:(\t|\s)*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
-			
+
 ===============================================================================================================================================================
 to_date OK
 	=>  SELECT CONVERT(DATETIME, '2012-06-30');
-	all: 	
+	all:
 		egrep -inR --color "to_date" --include=*.{java,xml,properties} --exclude-dir=".*" > all_to_date.txt
-	包含 	
+	包含
 		egrep -iR --color "to_date[ ]*\(" all_to_date.txt > include_to_date.txt
-	聯集			
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_to_date.txt merge.txt merge.txt | uniq -u > diff.txt
-	排除	
-		//		
+	排除
+		//
 			egrep -iR --color "^.*:(\t|\s)*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 extend	// 調整 datetime 或 date 表示式的精準度 OK
 	=> ??
-	all:	
+	all:
 		egrep -inR --color "extend[ ]*\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_extend.txt
-	包含		
+	包含
 		egrep -iR --color ".*[ \|(\"]extend[ ]*\(" all_extend.txt > include_extend.txt
-	聯集			
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_extend.txt merge.txt merge.txt | uniq -u > diff.txt
-	排除	
-		//		
+	排除
+		//
 			egrep -iR --color "^.*:(\t|\s)*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 INTERVAL(n) MONTH TO MONTH // find by lpad 	x to x OK
 		day to day
 		month to month
 		year to year
-	all:	
+	all:
 		egrep -inR --color "(hour|minute|second|day|month|year) to (hour|minute|second|day|month|year)" --include=*.{java,xml,properties} --exclude-dir=".*" > all_x_to_x.txt
 	包含
 		egrep -iR --color "interval\([0-9]\) (hour|minute|second|day|month|year) to (hour|minute|second|day|month|year)" all_x_to_x.txt > include_interval.txt
 		egrep -iR --color "(hour|minute|second|day|month|year) to (hour|minute|second|day|month|year)" all_x_to_x.txt > include_need.txt
-		
-	聯集			
+
+	聯集
 		sort include*.txt | uniq > merge.txt
 	a-b差集 / 去差集
 		sort all_x_to_x.txt merge.txt merge.txt | uniq -u > diff.txt
-		
-	排除	
-		//		
+
+	排除
+		//
 			egrep -iR --color "^.*:.*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
 		*
-			egrep -iR --color "^.*:(\t|\s)+\*(\t|\s)+[^.]*" merge.txt > exclude_java_doc_mark.txt	
-	去交集		
+			egrep -iR --color "^.*:(\t|\s)+\*(\t|\s)+[^.]*" merge.txt > exclude_java_doc_mark.txt
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 		cat merge.txt exclude_java_doc_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 mdy // find by lpad ok
-	ex:WHERE %2$s >= MDY(MONTH(TODAY), 1, YEAR(TODAY))	
-	all:	
+	ex:WHERE %2$s >= MDY(MONTH(TODAY), 1, YEAR(TODAY))
+	all:
 		egrep -inR --color "mdy[ ]*\(" --include=*.{java,xml,properties} --exclude-dir=".*" > all_mdy.txt
 
 	 + N units day
@@ -562,69 +562,69 @@ mdy // find by lpad ok
 		 units minute
 		 units second
 		=> dateadd(day, 1, d.end_date)
-	略 // 因為沒有符合		
+	略 // 因為沒有符合
 		egrep -inR --color "(units day|units year|units day|units hour|units minute|units second)" --include=*.{java,xml,properties} --exclude-dir=".*" // mdy_need
 ===============================================================================================================================================================
 matches OK
 	=> likes
 	https://www.ibm.com/support/knowledgecenter/en/SSGU8G_12.1.0/com.ibm.sqls.doc/ids_sqs_1386.htm
-	all:	
+	all:
 		egrep -inR --color "[ =,\(\"]matches[ =,\)\"]" --include=*.{java,xml,properties} --exclude-dir=".*"	> all_matches.txt
 	包含
 		egrep -iR --color "(select.+)*from.+where.+[ =,\(\"]matches[ =,\)\"]" all_matches.txt > include_select.txt
 		egrep -iR --color "buf\.append\(.+[ =,\(\"]matches[ =,\)\"]" all_matches.txt > include_buf_append.txt
-		
+
 		egrep -iR --color "[ =,\(\"]matches[ =,\)\"]'{1,}.+ (or|and) " all_matches.txt > include_need.txt
-	
+
 	聯集
-		sort include*.txt | uniq > merge.txt 
+		sort include*.txt | uniq > merge.txt
 	a-b差集
 		sort all_matches.txt merge.txt merge.txt | uniq -u > diff.txt
-	排除	
-		//		
+	排除
+		//
 			egrep -iR --color "^.*:.*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 connect by // prior ok
 	all
 		egrep -inR --color "connect by" --include=*.{java,xml,properties} --exclude-dir=".*" > all_connect_by.txt
-	包含	
+	包含
 		egrep -iR --color "connect by" all_connect_by.txt > include_connect_by.txt
-		
+
 	聯集
 		sort include*.txt | uniq > merge.txt
-	a-b差集	
+	a-b差集
 		sort all_connect_by.txt merge.txt merge.txt | uniq -u > diff.txt
-		
-	排除	
-		//		
+
+	排除
+		//
 			egrep -iR --color "^.*:.*//(\t|\s)*.*" merge.txt > exclude_java_mark.txt
-	去交集		
+	去交集
 		cat merge.txt exclude_java_mark.txt | sort | uniq -u > merge.txt
 ===============================================================================================================================================================
 start with
 	all
-		egrep -inR --color "start with" --include=*.{java,xml,properties} --exclude-dir=".*" > all_start_with.txt	
+		egrep -inR --color "start with" --include=*.{java,xml,properties} --exclude-dir=".*" > all_start_with.txt
 	排除
 		*
 			egrep -iR --color ": *\*.*" all_start_with.txt > exclude_java_doc_mark.txt
 		//
 			egrep -iR --color ": *//.*" all_start_with.txt > exclude_mark.txt
-		// java 
-			egrep -iR --color "^.*:(\t|\s)*//.*(select.+from|sb\.append\().+[ =,\(\"]start with[ =,\)\"]" all_start_with.txt > exclude_java_mark.txt							
+		// java
+			egrep -iR --color "^.*:(\t|\s)*//.*(select.+from|sb\.append\().+[ =,\(\"]start with[ =,\)\"]" all_start_with.txt > exclude_java_mark.txt
 		Note:
 			egrep -iR --color ": *Note:" all_start_with.txt > exclude_note.txt
 		Example:
 			egrep -iR --color ": *Example:" all_start_with.txt > exclude_example.txt
 		#
 			egrep -iR --color ":\#" all_start_with.txt > exclude_shorpe.txt
-		<br/>	
+		<br/>
 			egrep -iR --color ": *.+<br/>" all_start_with.txt > exclude_br.txt
-			
-	取交集	
+
+	取交集
 		sort exclude*.txt | uniq > merge.txt
-	
+
 	取非交集 / 去交集
 		cat all_start_with.txt merge.txt | sort | uniq -u > remain.txt
 ===============================================================================================================================================================

@@ -21,7 +21,7 @@ ref ChatGPT
 			代表
 				* Name Service 找得到
 				* DNS 或 hosts 至少有一個成功
-	
+
 	(二) IP 是否符合預期
 		例如應該要解析成
 			10.10.1.50
@@ -34,12 +34,12 @@ ref ChatGPT
 			* Split DNS
 				都有可能。
 		所以不能只有看「有 IP」。
-	
+
 	(三) 是否沒有任何輸出
 		getent hosts app.internal.local
 		=>
 			沒有任何東西
-		
+
 		Exit Code
 			echo $?
 			2
@@ -49,7 +49,7 @@ ref ChatGPT
 						* DNS 查不到
 						* hosts 沒設定
 						* DNS Server 無法連線
-	
+
 	(四) 是否解析到 IPv6
 		例如
 			2001:db8::10 app.internal.local
@@ -90,7 +90,7 @@ ref ChatGPT
 	查看
 		cat /etc/nsswitch.conf
 			例如 hosts: files dns
-	
+
 	代表流程：
 		getent hosts
 				│

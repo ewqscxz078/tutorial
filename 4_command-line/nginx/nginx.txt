@@ -1,13 +1,13 @@
 1. 檢查設定語法
 	sudo nginx -t
-	
+
 	或指定設定檔：
 		sudo nginx -t -c /etc/nginx/nginx.conf
-	
+
 	正常會看到：
 		nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 		nginx: configuration file /etc/nginx/nginx.conf test is successful
-	
+
 	若有錯誤則會指出檔案與行號：
 		nginx: [emerg] unexpected "}" in /etc/nginx/conf.d/my.conf:25
 
@@ -28,7 +28,7 @@
 	或
 		// Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead config，不影響線上正在跑的)
 		sudo nginx -s reload
-	
+
 4. 確認 nginx 狀態
 	sudo systemctl status nginx
 	查看：

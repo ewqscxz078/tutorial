@@ -7,7 +7,7 @@
 
 顯示 commit 特定檔案的修改完整紀錄
 	git show [commid] [file]
-	
+
 顯示 commit 特定檔案的修改差異紀錄
 	git show [commid] -- path/to/file
 

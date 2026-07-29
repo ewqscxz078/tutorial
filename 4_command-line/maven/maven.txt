@@ -290,7 +290,7 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 指定lib 連同「相依套件 (Dependencies)」一起抓下來，但僅抓 jar
 	步驟 1：先將檔案下載到本地 Maven 本地倉庫
 		mvn dependency:get -Dartifact=com.alibaba.fastjson2:fastjson2:2.0.43
-	
+
 	步驟 2：利用 copy-dependencies 輸出到指定目錄
 		這個步驟需要臨時借用一個乾淨的 pom.xml，或者直接在專案目錄下執行：
 			mvn dependency:copy-dependencies -DoutputDirectory=/Users/username/my_libs/
@@ -305,7 +305,7 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 		，並透過 grep + sed + awk 輸出清單 repo-paths.txt
 	3.透過執行 dependency:get + Dtransitive 取得相關 lib
 	4.最後透過 cp --parents 參考 repo-paths.txt 複製到指定資料夾下 local-offline-repo
-	
+
 		cd /d/no_sync_oneDrive/temp_jar
 			mkdir assertj-core
 			cd assertj-core
@@ -328,11 +328,11 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 		cd /d/no_sync_oneDrive/temp_jar/assertj-core
 		mkdir offline-ref-jar
 		mvn dependency:tree
-		
+
 		mvn dependency:get \
 		  -Dartifact=org.assertj:assertj-core:3.27.7 \
 		  -Dtransitive=true
-		
+
 		cd ~/.m2/repository
 		cp --parents org/assertj/assertj-core/3.27.7/assertj-core-3.27.7.{jar,jar.sha1,pom,pom.sha1} /d/no_sync_oneDrive/temp_jar/assertj-core/offline-ref-jar/
 		cp --parents net/bytebuddy/byte-buddy/1.18.3/byte-buddy-1.18.3.{jar,jar.sha1,pom,pom.sha1} /d/no_sync_oneDrive/temp_jar/assertj-core/offline-ref-jar/
@@ -340,14 +340,14 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 ================================================================================
 ========================= 重新下載所有 Dependency ================================
 ================================================================================
-接近 eclipse maven update 
+接近 eclipse maven update
 	Update Maven Project 並勾選 Force Update of Snapshots/Releases
 	Update project configuration from pom.xml 	// 沒有 CLI 對應。m2e (Eclipse Plugin) 的功能
 	Refresh workspace resources from local filessystem	// 沒有 CLI 對應。Eclipse Workspace 的功能。
 	clean projects 效果	// mvn clean 會刪除 target/
-	=> 
+	=>
 		// -U 代表 Force Update of Snapshots/Releases
-		mvn -U clean install	
+		mvn -U clean install
 		mvn -U clean package
 
 重新下載所有 Dependency

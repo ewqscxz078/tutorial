@@ -6,19 +6,19 @@
 			node_modules/
 				axios/
 					package.json
-		
+
 		裡面有
 			{
 				"name": "axios",
 				"license": "MIT"
 			}
-	
+
 	方法二（npm registry）
 		例如
 			https://registry.npmjs.org/axios
 			https://registry.npmjs.org/@floating-ui%2Fcore
 			https://www.npmjs.com/package/@floating-ui/core?activeTab=code
-		
+
 		可以看到
 			license: MIT
 		或
