@@ -1,0 +1,50 @@
+原理說明
+	方法一: 正向表列多時適用
+		嘗試找出該 pattern 符合類型				// all_pattern
+		依據 pattern 列舉應該要找的 真正pattern // real_pattern => merge
+		all_pattern 減去 透過 real_patterns 聯集結果 剩下的為假的 patern 結果 // fake_pattern
+		用 fake_pattern 透過 all_pattern  驗證是否都是不要的若都是則這些pattern才算Ok
+		則 merge 的結果即為需要的
+	
+	方法二: 模糊不符合的多時適用
+		嘗試找出該 pattern 符合類型	   // all_pattern
+		依據 pattern 列舉不要的pattern // fake_pattern
+		all_pattern 減去 fake_pattern 聯集結果為剩下的為真的 patern 結果 // real_pattern => remain
+		依據 remain 驗證是否都是要的，若都是則這些pattern才算Ok
+		則 remain 的結果即為需要的
+===============================================================================================================================================================		
+mail
+	all:
+		grep -RniE "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}" --include=*.java --exclude-dir=digital_wallet > all_mail.txt
+
+	節錄要的
+		@riease.com
+			egrep -iR --color "@riease.com" all_mail.txt > include_riease_com.txt
+			
+		@gmail.com
+			egrep -iR --color "@gmail.com" all_mail.txt > include_gmail_com.txt
+			
+		@udngroup.com.tw
+			egrep -iR --color "@udngroup.com.tw" all_mail.txt > include_udngroup_com_tw.txt
+			
+		@moda.gov.tw
+			egrep -iR --color "@moda.gov.tw" all_mail.txt > include_moda_gov_tw.txt
+	排除
+		mydata@moda.gov.tw
+			egrep -iR --color "mydata@moda.gov.tw" all_mail.txt > exclude_mydata_moda.txt
+		
+		mydata_system@moda.gov.tw
+			egrep -iR --color "mydata_system@moda.gov.tw" all_mail.txt > exclude_mydata_system_moda.txt
+		
+	取交集
+		sort exclude*.txt include*.txt | uniq > merge.txt
+	取非交集 / 去交集
+		cat all_mail.txt merge.txt | sort | uniq -u > remain.txt
+
+===============================================================================================================================================================
+針對 moda 取得非 mydata@moda.gov.tw、mydata_system@moda.gov.tw
+
+	取交集
+		sort exclude_mydata_moda.txt exclude_mydata_system_moda.txt | uniq > merge_exclude_moda.txt
+	取非交集 / 去交集
+		cat include_moda_gov_tw.txt merge_exclude_moda.txt | sort | uniq -u > remain_moda.txt

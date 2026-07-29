@@ -1,0 +1,90 @@
+
+
+Java 專案其實沒有一個百分之百可靠的方法可以直接知道第三方 Library 的 License，而是需要依照 Maven Metadata、Jar 內容、原始碼 Repository 等資訊綜合判斷。
+
+如果是政府機關做第三方元件清冊，我會建議依照可信度由高到低採用下面的方法。
+
+	| 方法                            | 準確度         | 建議程度   |
+	| ------------------------------- | ------------ | ------ |
+	| Maven POM `<licenses>`          | ⭐⭐⭐⭐⭐  | 最佳     |
+	| Jar 內 LICENSE/NOTICE           | ⭐⭐⭐⭐    | 很好     |
+	| 官方 GitHub LICENSE              | ⭐⭐⭐⭐    | 很好     |
+	| Maven Central                   | ⭐⭐⭐⭐    | 很好     |
+	| mvnrepository                   | ⭐⭐⭐      | 僅參考    |
+	| 掃描工具 (CycloneDX、ORT、Syft...) | ⭐⭐⭐⭐⭐  | 大量盤點最佳 |
+
+方法一：看 pom.xml（最推薦）
+	每個 Maven Artifact 都可以有
+		<licenses>
+			<license>
+				<name>Apache License, Version 2.0</name>
+				<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			</license>
+		</licenses>
+	
+	例如
+		mvn dependency:get \
+		  -Dartifact=org.apache.commons:commons-lang3:3.17.0
+	下載後
+		~/.m2/repository/org/apache/commons/commons-lang3/3.17.0/
+	裡面有
+		commons-lang3-3.17.0.pom
+
+	搜尋 <licenses> 即可。
+	例如
+		<license>
+			<name>Apache License, Version 2.0</name>
+		</license>
+
+
+方法五：使用 Maven Plugin（大量盤點）
+	例如
+		license-maven-plugin
+	可直接輸出
+		Library
+		Version
+		License
+		URL
+	例如
+		<plugin>
+			<groupId>org.codehaus.mojo</groupId>
+			<artifactId>license-maven-plugin</artifactId>
+		</plugin>
+	
+	執行
+		mvn license:download-licenses
+	
+	會產生
+		target/generated-resources/licenses/
+	
+	甚至
+		THIRD-PARTY.txt
+
+方法六：產生 SBOM（目前最推薦）
+	若是政府稽核，現在越來越建議直接產生
+	CycloneDX SBOM
+		org.cyclonedx:cyclonedx-maven-plugin
+
+	產生
+		bom.xml
+		bom.json
+
+	裡面就包含
+		Library
+		Version
+		Supplier
+		License
+		PURL
+		Hash
+	例如
+		{
+		  "name":"commons-lang3",
+		  "version":"3.17.0",
+		  "licenses":[
+			  {
+				"license":{
+				   "id":"Apache-2.0"
+				}
+			  }
+		  ]
+		}

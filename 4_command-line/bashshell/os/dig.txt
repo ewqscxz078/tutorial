@@ -1,0 +1,115 @@
+判斷 DNS 解析是否正常
+	dig <internal-domain>
+	dig <external-domain>
+
+1. Status 是否為 NOERROR（最重要）
+	| Status   | 意義              | 是否正常 |
+	| -------- | --------------- | ---- |
+	| NOERROR  | 成功解析            | ✅    |
+	| NXDOMAIN | 網域不存在           | ❌    |
+	| SERVFAIL | DNS Server 發生錯誤 | ❌    |
+	| REFUSED  | DNS Server 拒絕查詢 | ❌    |
+	| TIMEOUT  | DNS Server 沒有回應 | ❌    |
+
+2. ANSWER SECTION 是否有資料
+	ANSWER SECTION:
+
+	mydata.nat.gov.tw. 63 IN A 172.65.90.67
+	mydata.nat.gov.tw. 63 IN A 172.65.90.66
+
+	代表：
+		* DNS 有成功回傳 A Record
+		* 而且還有兩筆 IP（負載平衡很常見）
+
+3. QUERY 與 ANSWER 數量
+	您看到：
+		QUERY: 1
+		ANSWER: 2
+	意思：
+		查詢 1 個 Domain
+		回來 2 個 IP
+
+	非常正常。
+
+4. SERVER 是否符合預期
+	SERVER:
+	10.66.142.1#53
+		代表：
+			目前真正替您解析 DNS 的是
+				10.66.142.1
+	
+	這也代表：
+		Machine
+			│
+			▼
+		10.66.142.1 DNS
+			│
+			▼
+		Cloudflare DNS
+	
+	如果規定就是走
+		10.66.142.1
+			那就是正常。
+	如果突然變成
+		8.8.8.8
+		或
+		1.1.1.1
+		就可能代表 DNS 設定跑掉了。
+
+5. Query time
+	範例
+		Query time: 22 msec
+		Query time: 9 msec
+	
+	通常：
+		| 時間       | 判斷  |
+		| -------- | --- |
+		| <10ms    | 非常快 |
+		| 10~50ms  | 正常  |
+		| 50~100ms | 可接受 |
+		| >300ms   | 偏慢  |
+		| Timeout  | 異常  |
+
+6. 回傳 IP 是否符合預期（最重要）
+	例如：
+		172.65.90.67
+		172.65.90.66
+	
+	以及
+		104.18.12.188
+		104.18.13.188
+
+	如果：
+		這就是 Cloudflare Anycast IP
+		或是公司預期的 VIP
+	
+	如果突然解析成：
+		10.x.x.x
+		192.168.x.x
+		或
+		完全陌生 IP
+
+
+7. TTL 是否合理
+	例如：
+		63
+	或
+		300
+	表示：
+		63 秒
+		300 秒
+
+		DNS 可以快取多久。
+
+		TTL 大小不是判斷正常與否的主要依據，但若：
+			TTL = 0
+
+SOP 的檢查方式，可整理成
+	| 檢查項目       | 正常判斷                      | 異常代表                              |
+	| ---------- | ------------------------- | --------------------------------- |
+	| status     | NOERROR                   | NXDOMAIN、SERVFAIL、REFUSED、TIMEOUT |
+	| ANSWER     | ≥1 筆 Record               | 0 筆                               |
+	| SERVER     | 為公司指定 DNS（如 10.66.142.1）  | 非預期 DNS                           |
+	| Query time | 一般 <50ms                  | 過高或 Timeout                       |
+	| A Record   | IP 為預期（Cloudflare/F5/VIP） | 非預期 IP                            |
+	| TTL        | 合理值（如 60、300）             | 異常或不合理變動                          |

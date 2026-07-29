@@ -1,3 +1,52 @@
+1. 檢查設定語法
+	sudo nginx -t
+	
+	或指定設定檔：
+		sudo nginx -t -c /etc/nginx/nginx.conf
+	
+	正常會看到：
+		nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+		nginx: configuration file /etc/nginx/nginx.conf test is successful
+	
+	若有錯誤則會指出檔案與行號：
+		nginx: [emerg] unexpected "}" in /etc/nginx/conf.d/my.conf:25
 
-Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead config，不影響線上正在跑的)
-	nginx -s reload
+2. 查看完整載入後的設定（很實用）
+	有時 include 很多檔案，不知道實際生效內容。
+	sudo nginx -T
+	會輸出：
+		* nginx.conf
+		* conf.d/*.conf
+		* sites-enabled/*
+		* 所有 include 的內容
+	可搭配搜尋：
+		sudo nginx -T | grep server_name
+
+3. 驗證通過後重新載入
+	systemd // 建議優先用： 因為較符合 systemd 管理模式。
+		sudo systemctl reload nginx
+	或
+		// Graceful Restart(不會中斷現用的已經開啟的連線，若跑完則reRead config，不影響線上正在跑的)
+		sudo nginx -s reload
+	
+4. 確認 nginx 狀態
+	sudo systemctl status nginx
+	查看：
+		Active: active (running)
+
+
+常用組合
+	sudo nginx -t && sudo systemctl reload nginx
+		如果 nginx -t 成功
+		才執行 reload
+
+如果是反向代理專案
+	修改完後通常還會順手驗證：
+		curl -I http://localhost
+		或
+		curl -I https://your-domain
+
+	檢查：
+		HTTP Status
+		Location Redirect
+		Server Header

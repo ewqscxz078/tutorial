@@ -1,0 +1,122 @@
+資安院 
+	sbom
+		https://www.nics.nat.gov.tw/core_business/digital_resilience/SBOM_Resources/
+			=>
+			https://material.nics.nat.gov.tw/material/maintainable/Guide_to_SBOM_and_OSV_Tools/
+
+	1.Syft 掃描專案產生 SBOM 檔案
+		可列出
+			包含的所有函式庫與元件的清單，還會列出版本號、原始碼來源和關聯資訊
+
+0. window 安裝
+	for 掃描出 sbom : syft
+		指令安裝方式
+			in powershell 終端機
+				winget source update
+				winget source reset --force // if winget source update fail
+
+				winget search syft // check
+
+				winget install Anchore.Syft
+
+		zip 人工安裝方式
+			1. 先到 https://github.com/anchore/syft/releases
+				將 Assets 展開
+					點擊 syft_*_windows_amd64.zip 下載
+
+			2.解壓縮後取得：
+				syft.exe
+
+			3.Windows PATH 加入
+				比如
+					D:\no_sync_oneDrive\green_tools\other_tools\syft_1.46.0_windows_amd64
+						// has syft.exe
+			4.git bash
+				syft version
+					比如有出現資訊
+						Application:   syft
+						Version:       1.46.0
+						BuildDate:     2026-06-26T09:36:01Z
+						GitCommit:     b15c5dbfe2bb21c9d73002c1056a829c8c411c75
+						GitDescription: v1.46.0
+						Platform:      windows/amd64
+						GoVersion:     go1.26.3
+						Compiler:      gc
+						SchemaVersion: 16.1.5
+
+	for 掃描 sbom 產出弱點 : osv-scanner
+		zip 人工安裝方式
+			1. 先到 https://github.com/google/osv-scanner/releases
+				將 Assets 展開
+
+			2.Windows PATH 加入
+				比如
+					D:\no_sync_oneDrive\green_tools\other_tools\osv-scanner
+						// has osv-scanner_windows_amd64.exe
+			
+			3.git bash
+				$ osv-scanner --version
+				osv-scanner version: 2.4.0
+				osv-scalibr version: 0.4.5
+				commit: b56b5191101d5f27d4787d5583d8d01e9518a7af
+				built at: 2026-06-18T12:55:27Z
+
+
+1. syft 操作方式產生 SBOM 檔案
+	語法
+		SYFT_FORMAT_PRETTY=true syft ./path/to/repo_dir -o spdx-json=./output_dir/syft.spdx.json
+
+	案例
+		單一 repo dir
+			SYFT_FORMAT_PRETTY=true syft /d/no_sync_oneDrive/MYDATA_CODE/origin/mydata-backend-113 -o spdx-json=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/mydata-backend-113_syft.spdx.json
+				執行後會產出如下資訊
+					spdx.json
+						 ✔ Indexed file system                                                                                           D:\no_sync_oneDrive\MYDATA_CODE\origin\mydata-backend-113
+						 ✔ Cataloged contents                                                                                     f24282cc95c3b6e2bc67c6c83b19651fb49bc269802fa707d332624c7965df0d
+						   ├── ✔ Packages                        [626 packages]
+						   ├── ✔ Executables                     [0 executables]
+						   ├── ✔ File metadata                   [0 locations]
+						   └── ✔ File digests                    [0 files]  [0000]  WARN no explicit name and version provided for directory source, deriving artifact ID from the given path (which
+		
+		全部 repo dir
+			SYFT_FORMAT_PRETTY=true syft /d/no_sync_oneDrive/MYDATA_CODE/origin -o spdx-json=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/all_repo_syft.spdx.json
+				 ✔ Indexed file system                                                                                                              D:\no_sync_oneDrive\MYDATA_CODE\origin
+				 ✔ Cataloged contents                                                                                     e841a30c0d42bc16679efac8806665e0a130d7d1c53a7dc9eafd79b45df45534
+				   ├── ✔ Packages                        [3,179 packages]
+				   ├── ✔ Executables                     [4 executables]
+				   ├── ✔ File metadata                   [0 locations]
+				   └── ✔ File digests                    [0 files]  [0000]  WARN no explicit name and version provided for directory source, deriving artifact ID from the given path (which
+		
+2. 從 SBOM 檔案產生報告
+	* 使用 Grype 掃描 SBOM 檔案 // 因為跟 syft 同一家公司
+		
+	* 使用 OSV-Scanner 掃描 SBOM 檔案 // 政府推薦
+		語法
+			osv-scanner scan -L ./path/to/sbom/file --format=table --output-file=report.txt
+			
+		範例 of table(default)
+			單一 repo dir
+				osv-scanner scan -L /d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/mydata-backend-113_syft.spdx.json --format=table --output-file=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/report_cvs.txt
+
+			全部 repo dir
+				// table
+				osv-scanner scan -L /d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/all_repo_syft.spdx.json --format=table --output-file=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/report_all_repo_cvs.txt
+
+				// html
+				osv-scanner scan -L /d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/all_repo_syft.spdx.json --format=html --output-file=/d/no_sync_oneDrive/MYDATA_CODE/sbom/20260702/report_all_repo_cvs.html
+
+
+1.使用 syft(目前最新1.46.0) 掃描專案(分支:env-production) 產生 sbom
+
+2.使用 OSV-Scanner(目前最新v2.4.0) 針對 sbom 生成有弱點結果
+
+初步了解工具部分限制
+	專案內自行
+		* 放入 local jar 引用，掃描工具掃不出來
+		* 放入 第三方js(非 webjars 模式) 然後於 html/xhtml 裡引用，掃描工具辨識不太出來
+	    * 於 html/xhtml 裡引用 第三方外部 CDN url js，SBOM 工具通常不會把 CDN 引用納入，所以就沒有報告
+
+	該報告會分比較細，會說第三方套件版本於哪個版本修了那些 CVE，
+		* 一般沒意外是直接升到對應的最新，但也有可能沒有辦法升版對應到最新，比如彼此之間的依賴傳遞狀況
+		* 比較糟糕的是有弱點但沒有版本可修正要另外找對應替代方案
+	

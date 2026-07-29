@@ -272,3 +272,94 @@ mvn -Popenapi-provider -pl :artifactId -am -DskipTests clean verify
 			mvn ... -pl ... -am -DskipTests clean verify -X
 		或至少：
 			mvn ... -pl ... -am -DskipTests clean verify -Dstyle.color=never
+
+================================================================================
+========================= 抓取指定 jar ==========================================
+================================================================================
+要將 Maven 專案中的特定 Library（指定版本）抓取並下載到指定的目錄，
+	最快且最乾淨的方法是使用 mvn dependency:get 指令，搭配 dependency:copy 插件。
+
+只抓指定lib
+	格式
+		mvn dependency:get \
+		  -Dartifact={GroupId}:{ArtifactId}:{Version} \
+		  -Ddest={目標目錄的路徑}
+	範例
+		mvn dependency:get -Dartifact=junit:junit:4.13.2 -Ddest=./libs/
+
+指定lib 連同「相依套件 (Dependencies)」一起抓下來，但僅抓 jar
+	步驟 1：先將檔案下載到本地 Maven 本地倉庫
+		mvn dependency:get -Dartifact=com.alibaba.fastjson2:fastjson2:2.0.43
+	
+	步驟 2：利用 copy-dependencies 輸出到指定目錄
+		這個步驟需要臨時借用一個乾淨的 pom.xml，或者直接在專案目錄下執行：
+			mvn dependency:copy-dependencies -DoutputDirectory=/Users/username/my_libs/
+				注意： 步驟 2 預設會導出該專案 pom.xml 裡設定的所有依賴。
+
+實務於有網路的機器
+	1.幫我建立一個 {ArtifactId} 資料夾並建立暫時的 pom.xml for 該lib
+	2.以利執行
+		mvn dependency:list \
+			-DincludeScope=compile \
+			-DoutputFile=deps.txt
+		，並透過 grep + sed + awk 輸出清單 repo-paths.txt
+	3.透過執行 dependency:get + Dtransitive 取得相關 lib
+	4.最後透過 cp --parents 參考 repo-paths.txt 複製到指定資料夾下 local-offline-repo
+	
+		cd /d/no_sync_oneDrive/temp_jar
+			mkdir assertj-core
+			cd assertj-core
+			vi pom.xml
+				<project>
+				  <modelVersion>4.0.0</modelVersion>
+
+				  <groupId>temp</groupId>
+				  <artifactId>offline-fetch</artifactId>
+				  <version>1.0.0</version>
+
+				  <dependencies>
+					<dependency>
+					  <groupId>org.assertj</groupId>
+					  <artifactId>assertj-core</artifactId>
+					  <version>3.27.7</version>
+					</dependency>
+				  </dependencies>
+				</project>
+		cd /d/no_sync_oneDrive/temp_jar/assertj-core
+		mkdir offline-ref-jar
+		mvn dependency:tree
+		
+		mvn dependency:get \
+		  -Dartifact=org.assertj:assertj-core:3.27.7 \
+		  -Dtransitive=true
+		
+		cd ~/.m2/repository
+		cp --parents org/assertj/assertj-core/3.27.7/assertj-core-3.27.7.{jar,jar.sha1,pom,pom.sha1} /d/no_sync_oneDrive/temp_jar/assertj-core/offline-ref-jar/
+		cp --parents net/bytebuddy/byte-buddy/1.18.3/byte-buddy-1.18.3.{jar,jar.sha1,pom,pom.sha1} /d/no_sync_oneDrive/temp_jar/assertj-core/offline-ref-jar/
+
+================================================================================
+========================= 重新下載所有 Dependency ================================
+================================================================================
+接近 eclipse maven update 
+	Update Maven Project 並勾選 Force Update of Snapshots/Releases
+	Update project configuration from pom.xml 	// 沒有 CLI 對應。m2e (Eclipse Plugin) 的功能
+	Refresh workspace resources from local filessystem	// 沒有 CLI 對應。Eclipse Workspace 的功能。
+	clean projects 效果	// mvn clean 會刪除 target/
+	=> 
+		// -U 代表 Force Update of Snapshots/Releases
+		mvn -U clean install	
+		mvn -U clean package
+
+重新下載所有 Dependency
+
+	mvn -U dependency:resolve
+	mvn -U dependency:go-offline
+
+如果懷疑 Local Repository 壞掉
+	mvn dependency:purge-local-repository
+	mvn dependency:purge-local-repository -DreResolve=true
+
+	它會：
+		* 清掉目前 Project 用到的 Dependency
+		* 再重新下載
+		這比直接刪整個 .m2/repository 快很多。

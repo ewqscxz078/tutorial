@@ -21,3 +21,5 @@ jq --version
 		-c 是 --compact-output 的縮寫，會輸出壓縮過的一行 JSON，而不是預設的格式化好看的版本。
 		. 表示整個 JSON 文件的根元素。
 
+spring actuator
+	curl  -u "帳號:密碼" http://localhost:8099/${contextPath}/actuator/configprops/$prefix | jq

@@ -1,0 +1,92 @@
+Q: git 我會有本地端與 公司 server 端的 remote 
+	我會有個狀況是 git 要push 到 遠端 第三方的 git url 
+	這樣是要再設定另外的 remote 意思嗎?
+
+A: 
+	Git 一個 repo 可以同時有多個 remote，不一定只有 origin（公司 server）。
+	例如：
+
+		origin → 公司 Azure DevOps / GitLab
+		thirdparty → 第三方 Git server
+		upstream → 原始官方 repo
+	
+	先看目前有哪些 remote：
+		git remote -v
+	
+	可能看到：
+		origin  https://dev.azure.com/xxx/project/_git/myrepo (fetch)
+		origin  https://dev.azure.com/xxx/project/_git/myrepo (push)
+	
+	情境 1：新增另一個 remote（最常見）
+		假設第三方 URL：
+			https://git.thirdparty.com/team/myrepo.git
+		
+		新增：
+			git remote add thirdparty https://git.thirdparty.com/team/myrepo.git
+		
+		確認：
+			git remote -v
+		
+		會變：
+			origin      https://dev.azure.com/... (fetch)
+			origin      https://dev.azure.com/... (push)
+			thirdparty  https://git.thirdparty.com/team/myrepo.git (fetch)
+			thirdparty  https://git.thirdparty.com/team/myrepo.git (push)
+		
+		push 時指定：
+			git push thirdparty main
+			
+			或：
+			
+			git push thirdparty your-branch
+	
+	
+	情境 2：只想把 push 改到另一個地方（fetch 仍公司）
+		如果你希望：
+			git fetch origin 還是公司 repo
+			但 git push origin 改推第三方
+		
+		可以設定 push URL：
+			git remote set-url --push origin https://git.thirdparty.com/team/myrepo.git
+		
+		看結果：
+			git remote -v
+		
+		會變：
+			origin https://dev.azure.com/... (fetch)
+			origin https://git.thirdparty.com/... (push)
+		
+		這樣：
+			git pull origin main
+			從公司抓
+		
+		但：
+			git push origin main
+			會推第三方
+	
+	情境 3：同時 push 到兩個地方（mirror）
+		如果你想一次 push 到公司 + 第三方：
+			git remote set-url --add --push origin https://dev.azure.com/xxx/project/_git/myrepo
+			git remote set-url --add --push origin https://git.thirdparty.com/team/myrepo.git
+		
+		之後：
+			git push origin main
+			會同時推兩邊。
+		
+		看設定：
+			git remote show origin
+
+	比較建議
+
+		情境（公司 repo + 偶爾 push 第三方）最乾淨是：
+
+			新增第二個 remote
+			例如：
+				git remote add vendor https://third-party.git/repo.git
+			
+			使用時明確：
+				git push origin main
+				git push vendor main
+
+		這樣不容易誤推。
+		尤其公司 repo / 第三方 repo 權限與 branch policy 常不同。

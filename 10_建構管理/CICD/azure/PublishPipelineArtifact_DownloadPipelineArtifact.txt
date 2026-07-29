@@ -1,0 +1,85 @@
+共用 lib repo pipeline
+  → mvn deploy / gradle publish
+  → 發佈 jar 到 Azure Artifacts
+
+業務系統 repo pipeline
+  → mvn package / gradle build
+  → 從 Azure Artifacts 下載指定版本 jar
+  → build 成可部署 jar/war
+ 
+ 
+
+| 功能                | 用途                            |
+| ----------------- | ----------------------------- |
+| Azure Artifacts   | Maven/NPM/NuGet dependency 倉庫 |
+| Pipeline Artifact | build 產物暫存                    |
+
+PublishPipelineArtifact 是什麼
+	- task: PublishPipelineArtifact@1
+	  inputs:
+		targetPath: 'target-cicd'
+		artifact: 'app-package'
+	
+	=>
+		把 target-cicd/ 上傳到 Azure Pipeline Artifact Storage
+		名稱叫 app-package
+		
+		Azure 會保存：
+			target-cicd/
+			  dist/app.jar
+			  system/
+			  deploy.sh
+
+DownloadPipelineArtifact 是什麼
+	後面 deploy stage：
+		- task: DownloadPipelineArtifact@2
+		  inputs:
+			artifact: 'app-package'
+			path: '$(Pipeline.Workspace)/download'
+	
+		=>
+			從剛剛 build 保存的 artifact
+			下載到：
+
+			$(Pipeline.Workspace)/download
+
+好處
+	比 git branch artifact 好很多：
+
+	1. Azure 原生支援
+		Azure deployment history 會知道：
+	
+	2. 不污染 Git
+		Git 不適合： binary。
+			jar
+			war
+			zip
+			tar.gz
+	
+	3. retention policy
+		Azure 可自動清：
+			保留 30 天
+			保留最近 20 次
+			
+			不用自己清 branch。
+	
+	4. build/deploy 對應清楚
+		Build #20260528.3
+		artifact = app-package
+		
+		Deploy 時直接對應。
+			不像 git branch：
+
+實務上最常見架構
+	Build
+		→ PublishPipelineArtifact
+
+	Deploy
+		→ DownloadPipelineArtifact
+		→ rsync/scp
+		→ systemctl restart
+
+	若是 container：
+		Build image
+			→ push registry
+			→ deploy pull image

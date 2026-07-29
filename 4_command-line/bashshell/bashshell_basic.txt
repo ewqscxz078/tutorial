@@ -470,6 +470,44 @@ in script
 		set -x
 	於某行結束關閉 debug
 		set +x
+		
+任何指令失敗
+立即結束 script
+	set -e
+
+	例如：
+		cp abc.txt test/
+		rm xyz.txt
+		echo done
+		
+	若：
+		cp abc.txt test/ 失敗則後面不會執行
+
+使用未定義變數時直接報錯
+	set -u
+	
+	例如：
+		echo "$ABC"
+	若：
+		ABC 未定義
+	則：
+		unbound variable
+
+管線處理機制
+	grep xxx test.txt | sort
+
+		預設
+			只看最後一個指令： sort
+		
+			成功： exit code = 0 ；
+			即使： grep 失敗。
+	
+	set -o pipefail
+		則：
+			grep 失敗
+			整個 pipeline 失敗
+	
+	
 ===================================================================
 ======================== File test operators ======================
 ===================================================================

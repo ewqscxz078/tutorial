@@ -1,0 +1,25 @@
+那 License 從哪裡來？
+	方法一（最準確）⭐⭐⭐⭐⭐
+
+		每個 npm package 都有自己的 package.json。
+		例如：
+			node_modules/
+				axios/
+					package.json
+		
+		裡面有
+			{
+				"name": "axios",
+				"license": "MIT"
+			}
+	
+	方法二（npm registry）
+		例如
+			https://registry.npmjs.org/axios
+			https://registry.npmjs.org/@floating-ui%2Fcore
+			https://www.npmjs.com/package/@floating-ui/core?activeTab=code
+		
+		可以看到
+			license: MIT
+		或
+			licenses

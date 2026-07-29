@@ -38,7 +38,12 @@
 				樹狀結構呈現
 			--color=always
 				顏色呈現
-
+		
+		增加 commit 時間點資訊
+			git log --graph --decorate --color=always \
+			  --date=iso \
+			  --pretty=format:'%C(auto)%h %d %ad %s'
+		
 
 	查看兩個commit或tags之間
 		https://stackoverflow.com/questions/5863426/get-commit-list-between-tags-in-git/5863452#

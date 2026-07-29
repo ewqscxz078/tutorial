@@ -1,0 +1,153 @@
+HTTPS **雙向驗證（mTLS / Two-way TLS）**意思是：
+	一般 HTTPS 只驗證「Server 是誰」；
+	雙向驗證則是 Server 驗證 Client，Client 也驗證 Server。
+
+具體互動流程
+	以「我方系統打對方 API」為例：
+		我方 Client  ---- HTTPS ---->  對方 Server
+	
+	TLS 握手大致是：
+		1. Client 連線到 Server
+		2. Server 回自己的伺服器憑證
+		3. Client 用 truststore 驗證 Server 憑證可信
+		4. Server 要求 Client 提供憑證
+		5. Client 從 keystore 拿自己的私鑰憑證送給 Server
+		6. Server 用 truststore 驗證 Client 憑證可信
+		7. 雙方驗證都通過，才建立 HTTPS 連線
+		8. 後續 HTTP API request/response 才開始傳
+
+		=> 所以雙向驗證不是 HTTP header，也不是 token，而是在 HTTPS/TLS 握手階段完成。
+
+	兩邊各自要準備什麼
+		我方作為 Client 打對方
+			我方程式通常要設定：
+				keystore    = 放我方 client certificate + private key
+				truststore  = 放對方 server certificate 的 Root CA / Intermediate CA / 或對方憑證
+
+			Java 關鍵通常是：
+				sslContextBuilder
+					.loadKeyMaterial(clientKeyStore, keyPassword)   // 我方私鑰憑證，給對方驗我方身份
+					.loadTrustMaterial(trustStore, null);           // 我方信任誰，用來驗對方 Server
+
+		對方作為 Server 接我方
+			對方 Server 通常要設定：
+				server certificate + private key
+				truststore = 放我方 client certificate 的 Root CA / Intermediate CA / 或我方 client 憑證
+				clientAuth = require / need
+				=>
+					意思是：對方 Server 必須要求 Client 出示憑證，且能驗證我方 Client 憑證
+
+		最容易搞混的重點
+			1. keystore 跟 truststore 角色不同
+				keystore   = 我拿來證明「我是誰」
+				truststore = 我拿來判斷「我信任誰」
+			
+				我方打對方時：
+					我方 keystore   放我方 client 私鑰憑證
+					我方 truststore 放對方 server 憑證鏈或 CA
+				
+				對方 Server：
+					對方 keystore   放對方 server 私鑰憑證
+					對方 truststore 放我方 client 憑證鏈或 CA
+			
+			2. alias 名稱通常不影響對方驗證
+				alias 主要是 keystore/truststore 內部識別名稱。
+				你把對方給的 CA 憑證匯入 JKS 時 alias 改名，通常不影響 TLS 驗證。
+				真正影響的是：
+					憑證內容
+					憑證鏈
+					有效期限
+					KeyUsage / ExtendedKeyUsage
+					SAN / CN
+					簽發 CA 是否可信
+			
+			3. truststore 不一定要放「對方葉憑證」
+				通常建議放：
+					Root CA
+					Intermediate CA
+				而不是只放對方 leaf/server cert。
+				放 CA 的好處是對方 server 憑證更新但仍由同 CA 簽發時，我方不一定要重匯。
+			
+			4. Server hostname 仍然會驗證
+				我方打：
+					https://api.example.com
+				對方 Server 憑證的 SAN/CN 要包含：
+					api.example.com
+				
+				不然即使 truststore 有憑證，也可能報 hostname verification failed。
+
+程式關鍵檢查清單
+	我方 Client 要注意：
+		1. keystore 內是否有 PrivateKeyEntry
+		2. PrivateKeyEntry 是否含完整 client certificate chain
+		3. truststore 是否有對方 server 的 CA / intermediate / cert
+		4. keystore password / key password 是否正確
+		5. TLS 版本是否相容，例如 TLSv1.2 / TLSv1.3
+		6. cipher suites 是否相容
+		7. 對方 URL hostname 是否符合憑證 SAN
+		8. client cert 是否過期
+		9. server cert 是否過期
+		10. Java trust manager / key manager 是否真的有套到 HttpClient
+
+	對方 Server 要注意：
+		1. server keystore 是否有 Server PrivateKeyEntry
+		2. 是否啟用 clientAuth=require/need
+		3. truststore 是否信任我方 client 憑證或其 CA
+		4. 我方 client cert 是否有 Client Authentication 用途
+		5. server cert 是否有 Server Authentication 用途
+		6. 是否有中繼憑證鏈缺漏
+		7. 是否有 LB / Nginx / API Gateway 終止 TLS，真正驗證位置在哪
+	
+	常見錯誤對應
+		PKIX path building failed
+		=> truststore 不信任對方憑證鏈
+
+		bad_certificate
+		=> Server 不接受 Client 憑證，或 Client 沒送憑證
+
+		handshake_failure
+		=> TLS 版本、cipher、憑證用途、clientAuth 設定可能不合
+
+		No subject alternative names matching
+		=> URL hostname 與 server cert SAN 不符
+
+		Empty client certificate chain
+		=> Client 沒有送出 client certificate，通常 keystore/loadKeyMaterial 沒設好
+
+		certificate expired
+		=> 憑證過期
+
+一句話總結
+	mTLS 雙向驗證就是：
+		Client 用 truststore 驗 Server；
+		Server 用 truststore 驗 Client；
+		雙方都驗過，HTTPS 才成立。
+	
+	在 Java 程式上最核心就是：
+		loadKeyMaterial  = 我拿什麼憑證證明自己
+		loadTrustMaterial = 我信任哪些對方憑證/CA
+
+正確理解意思
+	Client truststore 的目的不是儲存 Server 的葉憑證，而是儲存自己信任的 CA
+	（通常是 Root CA，必要時也包含 Intermediate CA）。TLS 握手時，Server 送出自己的葉憑證與憑證鏈，
+	Java 會檢查這張葉憑證是否能一路建立到 truststore 中信任的 CA，
+	同時也會驗證憑證有效期、用途、SAN、簽章等內容。只要整條信任鏈成立，
+	通常就不需要把 Server 的葉憑證預先匯入 truststore。
+
+幾個例外：
+	| 情境                                    | 對方是否可能要放我方葉憑證          |
+	| ------------------------------------- | ---------------------- |
+	| 我方 client cert 是公開/內部 CA 簽發           | 通常不用                   |
+	| 我方 client cert 是 self-signed          | 需要                     |
+	| 對方做 certificate pinning               | 可能需要                   |
+	| 對方只允許特定一張憑證，不只信任 CA                   | 可能需要                   |
+	| 對方要求白名單綁定 fingerprint / serial number | 不一定放 truststore，但會另外檢查 |
+
+
+mTLS truststore 模式
+	一般 ：
+		* 放 CA 即可
+
+	嚴格 ：
+		* 嚴格白名單 / pinning：
+			可能放葉憑證，或另外比對 SHA256 / Serial Number

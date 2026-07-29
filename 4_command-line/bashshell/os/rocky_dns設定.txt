@@ -1,0 +1,24 @@
+
+使用 NetworkManager(by nmcli 設定) 修改 dns 正確方式
+	檢查修改前
+		nmcli connection show ens192 | grep ipv4
+		cat /etc/resolv.conf
+
+	設定
+		sudo nmcli connection modify ens192 ipv4.dns "10.66.142.1 10.66.142.2"
+	啟用設定
+		sudo nmcli connection up ens192
+	
+	確認修改後
+		nmcli connection show ens192 | grep ipv4
+		cat /etc/resolv.conf
+
+若要手動設定不想讓 NetworkManager 管理
+	則要特別於
+		/etc/NetworkManager/ 下的增加不使用 NetworkManager 管理設定
+			比如 conf.d/90-dns-none.conf
+				dns=none
+			然後 systemctl reload NetworkManager
+		之後修改 /etc/resolv.conf 檔案後不會因為重開機觸發 NetworkManager 還原機制問題
+		
+		

@@ -1,0 +1,158 @@
+Q: azure pipelines parameters: - name: 跟 variables: - name: 用法的差異?
+
+A: 
+	1. 最核心差異
+		| 項目                 | parameters                                | variables                          |
+		| ------------------- | --------------------------------------------- | ------------------------------- |
+		| 評估時機              | Pipeline 開始解析 YAML 時                      | Pipeline 執行時                  |
+		| 可否被修改            | 不可（類似 readonly）                           | 可以                            |
+		| 型別                 | 有型別（string, boolean, object, stepList...） | 幾乎都是 string                   |
+		| 適合用途              | 控制 pipeline 結構                             | 傳遞執行時資料                    |
+		| 語法                 | `${{ parameters.xxx }}`                       | `$(xxx)` 或 `variables['xxx']`  |
+		| 可否用在 template if  | 可以                                          | 不適合                           |
+		| Secret 支援          | 不適合                                         | 可以                            |
+	
+	2. parameters 用法
+		parameters:
+		- name: runTests
+		  type: boolean
+		  default: true
+		
+		使用：
+			- script: echo "runTests=${{ parameters.runTests }}"
+		或控制流程：
+			- ${{ if eq(parameters.runTests, true) }}:
+			  - script: ./gradlew test
+
+		這是 YAML 展開時就決定了。
+			意思是：
+				如果 runTests=false
+
+				最後 pipeline 實際展開後會變：
+					# test step 根本不存在
+				=> 不是 skip，而是直接沒有。
+		
+		適合場景
+			適合 template
+				steps-build-maven.yml
+
+				parameters:
+				- name: targetProjectDir
+				  type: string
+				  default: '.'
+
+				- name: buildCommand
+				  type: string
+				  default: './mvnw clean package -DskipTests'
+			 
+				引用：
+					cd ./$(Build.Repository.Name)/${{ parameters.targetProjectDir }}
+				
+					這種就是典型 parameter。
+					因為：
+						這是 template 設計時決定的配置，不是 runtime 動態值。
+	
+	3. variables 用法
+		variables:
+		- name: JAVA_HOME
+		  value: /usr/lib/jvm/java-21
+		
+		使用：
+			- script: echo $(JAVA_HOME)
+			
+			或 bash：
+				echo "$JAVA_HOME"
+			Azure 會注入成 environment variable。
+		
+		runtime 可改
+			- script: |
+				echo "##vso[task.setvariable variable=artifactName]app.jar"
+			
+			後面：
+				- script: echo $(artifactName)
+			
+			結果：
+				app.jar
+			
+			這是 parameter 做不到的。
+	
+	4. 最大實務差異（很重要）
+		parameters 可控制 YAML 結構
+			可以：
+				${{ if eq(parameters.useNode, true) }}:
+				- template: steps-install-node.yml
+			
+			variables 不行：
+				${{ if eq(variables.useNode, true) }}
+
+				通常會踩坑。
+				因為：
+					variables 是 runtime 才有值，
+					但 ${{ }} 是 compile time。
+				時機不同。
+	
+	5. 型別差異
+		parameters：
+			parameters:
+			- name: deployTargets
+			  type: object
+			  default:
+				- vm1
+				- vm2
+			
+			可以：
+				- ${{ each target in parameters.deployTargets }}:
+				  - script: echo ${{ target }}
+		
+		variables：
+			variables:
+			- name: deployTargets
+			  value: vm1,vm2
+			
+			這只是字串：
+				"vm1,vm2"
+				不能直接 each
+	
+	6. secret 差異
+		variables：
+			variables:
+			- group: prod-secrets
+
+			可放：
+				DB password
+				token
+				API key
+		
+		parameter 不適合：
+			parameters:
+			- name: dbPassword
+
+			原因：
+				parameter 會直接展開進 YAML
+				容易曝光。
+	
+	7. queue 時輸入
+		parameters 可以在手動執行 pipeline 時讓使用者選：
+			parameters:
+			- name: environment
+			  type: string
+			  values:
+				- dev
+				- sit
+				- prod
+			
+			執行時 UI 可選。
+		
+		variables 也能 override：
+			variables:
+			- name: env
+			  value: dev
+			 
+			 但體驗較差，也沒型別驗證。
+			 
+	一句話判斷
+		問自己：
+			這個值是「決定 pipeline 長怎樣」還是「pipeline 執行時才知道」？
+		若是：
+			決定 pipeline 結構 → parameters
+			執行時資料 → variables

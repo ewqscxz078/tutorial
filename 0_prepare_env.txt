@@ -128,7 +128,7 @@ once
 		alias grep="grep --color=always" >> ~/.bashrc
 		alias now='date "+%Y-%m-%d %H:%M:%S.%s"' >> ~/.bashrc
 		alias npp="${你的 notepadd ++ 路徑}" >> ~/.bashrc
-		alias jq="${你的 jq 路徑}" >> ~/.bashrc
+		// alias jq="${你的 jq 路徑}" >> ~/.bashrc ，裝在 C:\Program Files\Git\usr\bin 下即可不用 alias
 
 		重啟置入 alias
 			重新開啟終端機或 source ~/.bashrc

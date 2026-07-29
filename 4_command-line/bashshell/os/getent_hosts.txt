@@ -1,0 +1,113 @@
+ref ChatGPT
+
+測試 Linux 系統是否真的能將名稱解析成 IP（會經過 Name Service Switch，可能包含 /etc/hosts、DNS、LDAP 等）
+
+	getent hosts <domain>
+
+
+1. 正常情況
+	getent hosts mydata.nat.gov.tw
+	輸出：
+	210.65.xxx.xxx  mydata.nat.gov.tw
+
+	代表：
+		✅ 有成功解析
+		✅ 回傳 IP
+		✅ 回傳主機名稱
+
+2. 判斷是否正常
+	(一) 有回傳 IP
+		10.10.1.50 app.internal.local
+			代表
+				* Name Service 找得到
+				* DNS 或 hosts 至少有一個成功
+	
+	(二) IP 是否符合預期
+		例如應該要解析成
+			10.10.1.50
+		結果卻是
+			10.20.30.40
+		代表
+			* DNS 指錯
+			* hosts 檔覆蓋
+			* DNS Cache
+			* Split DNS
+				都有可能。
+		所以不能只有看「有 IP」。
+	
+	(三) 是否沒有任何輸出
+		getent hosts app.internal.local
+		=>
+			沒有任何東西
+		
+		Exit Code
+			echo $?
+			2
+				代表
+					找不到。
+					通常代表：
+						* DNS 查不到
+						* hosts 沒設定
+						* DNS Server 無法連線
+	
+	(四) 是否解析到 IPv6
+		例如
+			2001:db8::10 app.internal.local
+		有時候程式只支援 IPv4。
+
+		若預期應該：
+			10.1.2.3
+		卻得到
+			2001:...
+		可能就是問題。
+
+3. 與 dig 比較
+	例如：
+		dig app.internal.local
+			得到
+				10.1.2.3
+	但
+		getent hosts app.internal.local
+			得到
+				10.9.9.9
+	代表什麼？
+
+	通常表示
+		/etc/hosts
+			  │
+			  ▼
+		10.9.9.9
+
+	覆蓋了 DNS。
+
+	因為 getent 遵守 /etc/nsswitch.conf
+		hosts: files dns
+	代表
+		先查 /etc/hosts
+		再查 DNS
+
+4. 如何確認來源
+	查看
+		cat /etc/nsswitch.conf
+			例如 hosts: files dns
+	
+	代表流程：
+		getent hosts
+				│
+				▼
+		   /etc/hosts
+				│
+				▼
+			 DNS Server
+		若
+			hosts: dns files
+				則會先查 DNS。
+
+5. 建議的檢查方式（SOP）
+	| 檢查項目               | 正常判斷                       | 異常代表                                      |
+	| ------------------ | -------------------------- | ----------------------------------------- |
+	| 有無輸出               | 有回傳 IP 與 Hostname          | DNS 或 hosts 查不到                           |
+	| IP 是否符合預期          | 與設計文件一致                    | DNS 設定錯誤、hosts 覆蓋                         |
+	| IPv4 / IPv6 是否符合預期 | 符合系統需求                     | 可能造成應用程式連線異常                              |
+	| Exit Code          | `0`                        | 非 `0` 表示解析失敗                              |
+	| 是否與 `dig` 一致       | 通常應一致（除非刻意使用 `/etc/hosts`） | 可能是 `/etc/hosts`、`nsswitch.conf` 或 DNS 差異 |

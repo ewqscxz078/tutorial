@@ -1,26 +1,37 @@
 ==========================================================================================
 ========================================== tag操作 =======================================
 ==========================================================================================
-所有標籤
-	git tag
 
-列出全部的tag清單 to get tag_name
-	git tag -l [option_tag_filter]
+查詢 tag
+	所有標籤
+		git tag
 
-於當前 local branch tag
-	git tag [tag_name]
+	列出全部的tag清單 to get tag_name
+		git tag -l [option_tag_filter]
 
-於當前 local branch tag 註解的標籤
-	git tag -a <tag_name> -m "your message"
+	列出 tag 的 建立日期排序
+		git tag --sort=-creatordate
 
-顯示標籤所在的提交資訊
-	git show <tag_name>
+	顯示標籤所在的提交資訊
+		git show <tag_name>
 
-到某個commit 補標籤
-	git tag -a <tag_name> <commit_id>
+於目標 tag
+	於當前 local branch tag
+		git tag [tag_name]
 
-分享 local 指定標籤到遠端
-	git push origin <tag_name>
+	於當前 local branch tag 註解的標籤
+		git tag -a <tag_name> -m "your message"
 
-分享 local 所有標籤不存在遠端的到遠端
-	git push origin --tags
+切換 tag
+	到某個 commit 補標籤
+		git tag -a <tag_name> <commit_id>
+
+	（Detached HEAD）
+		git switch --detach <tag_name>
+
+推 tag
+	分享 local 指定標籤到遠端
+		git push origin <tag_name>
+
+	分享 local 所有標籤不存在遠端的到遠端
+		git push origin --tags
