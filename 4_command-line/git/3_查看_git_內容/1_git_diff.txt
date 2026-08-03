@@ -4,24 +4,27 @@
 ==========================================================================================
 https://www.shellhacks.com/git-diff-staged-unstaged-files/
 
-# 顯示所有異動檔案路徑
-	git diff --name-only
+常見額外參數
 
-# 顯示所有異動 (等於 git status)
-	git diff --name-only HEAD
+	# 顯示所有異動檔案路徑
+		git diff --name-only
 
-# 顯示工作目錄的所有檔案狀態(新增、修改、刪除)
-	git diff --name-status
+	# 顯示所有異動 (等於 git status)
+		git diff --name-only HEAD
 
-# 針對特定的異動
-	僅顯示 unstaged files of red (工作目錄的異動)
-		git diff
+	# 顯示工作目錄的所有檔案狀態(新增、修改、刪除)
+		git diff --name-status
 
-	僅顯示 staged files of green (暫存區的異動)
-		git diff --cached
-		git diff --staged
+	# 針對特定的異動
+		僅顯示 unstaged files of red (工作目錄的異動)
+			git diff
 
+		僅顯示 staged files of green (暫存區的異動)
+			git diff --cached
+			git diff --staged
 
+	# 輸出不分頁而可以直接dump
+		git diff --no-pager
 
 ==========================================================================================
 ==========================================差異操作========================================
@@ -50,6 +53,69 @@ git diff [branchName] --exit-code
 
 git diff --name-status origin/master origin/issue/[redmineId]
 
+
+更方便看關鍵差異 : 適合 Code Review、重構(refactor)、程式搬移
+	1. -w // 忽略所有空白變化
+		包括
+			* space
+			* tab
+			* 換多少格
+			* 行尾空白
+		git diff A B -w
+			// 若只有改上述情況，則不會有實際差異，常見 IDE Formatter
+	2. --color-moved // Git 2.18 開始新增
+		辨識
+			=> 這段不是新增，而是搬家。
+		原本
+			void A(){}
+
+			void B(){}
+
+			void C(){}
+		改成
+			void C(){}
+
+			void A(){}
+
+			void B(){}
+		git diff --color-moved
+			Git 會知道 這是 moved code
+			顏色不同。
+			Code Review 非常舒服。
+
+		--color-moved=no
+		--color-moved=plain				// 只有告訴你這段搬了
+		--color-moved=blocks			// 同一塊搬移，同一顏色
+		--color-moved=zebra				// 不同搬移區塊交錯顏色。
+			例如
+				第一塊
+					藍色
+				第二塊
+					青色
+				第三塊
+					藍色
+			=> 方便知道哪一段對哪一段。
+		--color-moved=dimmed-zebra		// （推薦）
+			除了 zebra 外
+			沒有變動的搬移內容
+			還會變暗。
+			例如
+				搬過來
+				│
+				├─ 真正修改
+				├─ 真正修改
+				└─ 沒修改（淡色）
+				因此眼睛只會注意真正改動。
+				Git 官方目前也很推薦。
+		--color-moved=default
+
+	3. --color-moved-ws
+		Git 要判斷 是不是 moved 需要比較文字。
+		如果搬動同時 又改縮排，Git 有可能判斷失敗。
+		所以有該項目可調整
+
+		--color-moved-ws=allow-indentation-change
+			// 即使縮排不同，只要內容一樣，也視為搬移。
 
 ==========================================================================================
 ======================================== 不使用 Git repository 的索引比對 ================

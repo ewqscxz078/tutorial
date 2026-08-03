@@ -1,0 +1,66 @@
+git worktree
+	最大的差異不是 Git 流程改變，而是「同一個 Repository 可以同時有多個工作目錄 (Working Directory)
+
+
+==========================================================================================
+========================================= 操作 ===========================================
+==========================================================================================
+
+
+worktree 可以讓同一個 Repository 長成：
+	repo/
+		.git
+
+	repo-feature-a/
+		src/
+		pom.xml
+
+	repo-feature-b/
+		src/
+		pom.xml
+
+	例如：
+		git worktree add ../repo-feature-a feature-a
+
+	再：
+		git worktree add ../repo-feature-b feature-b
+	變成
+		repo-feature-a
+			HEAD -> feature-a
+
+		repo-feature-b
+			HEAD -> feature-b
+
+
+搭配 Codex CLI 更適合
+	您前面提到希望：
+
+		* AI 修改 local branch
+		* 不影響自己的開發
+		* 可以 Code Review
+		* 可以驗證
+		* 最後再決定是否 merge
+
+	worktree 非常符合這個需求，例如：
+		repo-main
+				↑
+			  自己開發
+
+		repo-ai
+				↑
+			Codex CLI 修改
+
+		repo-release
+				↑
+		   查看 Release Tag
+
+
+與一般 branch 的比較
+	| 項目                   | 一般 branch | git worktree |
+	| ---------------------- | ----------- | ------------ |
+	| 同時開多個 branch      | ❌ 不行     | ✅ 可以       |
+	| 需要一直 `git switch`  | ✅           | ❌           |
+	| 未提交修改影響切換     | ✅ 常發生    | ❌ 幾乎沒有  |
+	| 可同時開多個 IDE       | ❌           | ✅           |
+	| Git Commit/Push/Pull   | 相同        | 相同         |
+	| 適合 AI Coding Agent   | 普通        | **非常適合** |
