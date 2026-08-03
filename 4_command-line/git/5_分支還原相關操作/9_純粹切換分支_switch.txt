@@ -1,0 +1,36 @@
+Git 2.23（2019）新增的指令，將原本 git checkout 的功能拆分成兩個指令：
+	git switch：專門處理分支切換
+	git restore：專門處理檔案還原
+
+	因此：
+		git switch ≒ git checkout 的「切換分支」那一部分。
+		git restore ≒ git checkout 的「還原檔案」那一部分。
+
+===============================================================================
+============================ git switch =======================================
+===============================================================================
+
+1.切分支
+	git switch develop
+	
+2.建立並切換新分支
+	git switch -c feature/login
+
+3.切到某個 Commit 或 Tag
+	git switch --detach abc1234
+
+4. 還原某個檔案
+	git restore pom.xml
+
+
+常用對照表
+	| 舊寫法 (`checkout`)             | 新寫法                               |
+	| ------------------------------- | ------------------------------------ |
+	| `git checkout develop`          | `git switch develop`                 |
+	| `git checkout -b feature`       | `git switch -c feature`              |
+	| `git checkout master`           | `git switch master`                  |
+	| `git checkout -`                | `git switch -`                       |
+	| `git checkout <commit>`         | `git switch --detach <commit>`       |
+	| `git checkout <tag>`            | `git switch --detach <tag>`          |
+	| `git checkout -- file.txt`      | `git restore file.txt`               |
+	| `git checkout HEAD -- file.txt` | `git restore --source=HEAD file.txt` |
