@@ -3,9 +3,8 @@ git worktree
 
 
 ==========================================================================================
-========================================= 操作 ===========================================
+========================================= 概念理解 =======================================
 ==========================================================================================
-
 
 worktree 可以讓同一個 Repository 長成：
 	repo/
@@ -64,3 +63,161 @@ worktree 可以讓同一個 Repository 長成：
 	| 可同時開多個 IDE       | ❌           | ✅           |
 	| Git Commit/Push/Pull   | 相同        | 相同         |
 	| 適合 AI Coding Agent   | 普通        | **非常適合** |
+
+==========================================================================================
+========================================= 空間差異 =======================================
+==========================================================================================
+一般 Git Repository 的空間
+	假設：
+		my-repo/
+		├── .git/                1.5GB
+		├── src/                 300MB
+		├── node_modules/        900MB
+		├── target/              500MB
+		└── ...
+	總共：
+		3.2GB
+
+worktree 後
+	git worktree add ../my-repo-feature feature/test
+
+	my-repo/
+		.git/
+
+	my-repo-feature/
+		src/
+		pom.xml
+		...
+		.git  ← 很小，只是一個指向
+
+
+真正節省多少？
+	Repository
+		.git            2GB
+		src             300MB
+		target          500MB
+
+	對比
+		clone 三份
+			2GB
+			300MB
+			500MB
+			= 8.4GB
+
+		worktree 三份
+			.git          2GB (只有一份)
+
+			main
+			src           300MB
+			target        500MB
+
+			feature-a
+			src           300MB
+			target        500MB
+
+			feature-b
+			src           300MB
+			target        500MB
+
+		總共：
+			2GB
+			+900MB
+			+1.5GB
+
+			≈4.4GB
+
+==========================================================================================
+========================================= 操作 ===========================================
+==========================================================================================
+
+1. 查看目前有哪些 Worktree（最常用）
+	git worktree list
+		例如：
+			D:/MYDATA_CODE/my-repo                  4b3c2d1 [main]
+			D:/MYDATA_CODE/my-repo-feature-wallet   a123456 [feature/wallet]
+			D:/MYDATA_CODE/my-repo-feature-auth     b987654 [feature/auth]
+			D:/MYDATA_CODE/my-repo-release          c135790 (detached HEAD)
+
+		可以知道：
+			哪些 worktree
+			對應哪個 branch
+			是否為 detached HEAD（Tag）
+
+
+2. 建立新的 Worktree（最常用）
+	假設已有：
+		my-repo/
+			目前在 main
+
+	建立新的 feature：
+		git worktree add ../my-repo-feature feature/login
+		如果： feature/login 不存在，Git 會提示錯誤。
+
+	建立新 Branch 並建立 Worktree（推薦）
+		通常比較常用：
+			git worktree add -b feature/login ../my-repo-feature
+
+			等同：git switch -c feature/login + 再建立 worktree。
+
+3. 建立 Tag 的 Worktree（您很常用）
+	git worktree add ../my-repo-stage stage/2026-07-29-R_1
+
+4. 刪除 Worktree（很常用）
+	git worktree remove ../my-repo-feature
+		資料夾會一起刪掉。
+
+		但是： Branch 不會刪。
+
+		如果要：git branch -d feature/login 要另外下。
+
+5. 修復失效的 Worktree
+	git worktree prune
+	例如：
+		有人手動把：my-repo-feature 刪掉。
+
+		Git 還記得：
+			.git/worktrees/
+				有它。
+		此時：
+			git worktree prune
+			就會清乾淨
+
+
+6. 鎖定 Worktree （比較少用）
+	git worktree lock ../my-repo-release
+		避免誤刪。
+
+	解除：
+		git worktree unlock ../my-repo-release
+
+7. 搬移 Worktree
+	git worktree move \
+		../my-repo-feature \
+		../my-repo-feature-old
+
+8. 查看 Worktree 詳細資訊
+	git worktree list --porcelain
+		輸出
+			worktree D:/repo
+			HEAD ...
+			branch refs/heads/main
+
+	通常 Script 會用。
+
+
+9. 在 Worktree 裡操作 Git
+	之後和平常完全一樣。
+
+
+10. Worktree 不能做什麼？
+	一個 Branch 同時間只能被一個 Worktree 使用。
+
+
+最常用
+	| 功能                 | 指令                                                       |
+	| -------------------- | ---------------------------------------------------------- |
+	| 查看所有 worktree    | `git worktree list`                                        |
+	| 建立新 feature       | `git worktree add -b feature/xxx ../my-repo-feature-xxx`   |
+	| 查看 Release Tag     | `git worktree add ../my-repo-release stage/2026-07-29-R_1` |
+	| 移除已完成的 feature | `git worktree remove ../my-repo-feature-xxx`               |
+	| 清除失效紀錄         | `git worktree prune`                                       |

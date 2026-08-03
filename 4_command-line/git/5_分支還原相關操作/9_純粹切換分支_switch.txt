@@ -12,7 +12,7 @@ Git 2.23（2019）新增的指令，將原本 git checkout 的功能拆分成兩個指令：
 
 1.切分支
 	git switch develop
-	
+
 2.建立並切換新分支
 	git switch -c feature/login
 
