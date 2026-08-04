@@ -1,0 +1,111 @@
+-parameters 的作用
+
+	它會把 方法與建構子的參數名稱 保留在 .class 檔中。
+		例如：
+			public UserService(UserRepository repository,
+							   MailService mailService) {
+			}
+		若有 -parameters：
+			repository
+			mailService
+			=> 這些名稱會被保留到 bytecode。
+		沒有 -parameters：
+			arg0
+			arg1
+	
+	為什麼 Spring Boot 需要它？
+		Spring Framework 6 / Spring Boot 3 很多地方都會利用參數名稱，例如：
+			1. Constructor Injection
+				public UserService(UserRepository repository) {
+				}
+				=> 一般依型別注入，不一定需要。
+				但是若有多個 Bean：
+					@Bean
+					UserRepository mysqlRepository() { ... }
+
+					@Bean
+					UserRepository oracleRepository() { ... }
+				Spring 可以利用參數名稱：
+					public UserService(UserRepository mysqlRepository) {
+					}
+				配合 -parameters 取得真正名稱。
+
+			2. @PathVariable
+				以前很多人會寫：
+					@GetMapping("/{id}")
+					public User get(@PathVariable Long id)
+				沒有指定 "id"。
+				Spring 就需要知道參數名稱叫 id。
+
+			3. @RequestParam
+				@GetMapping
+				public List<User> search(@RequestParam String keyword)
+				沒有寫：
+					@RequestParam("keyword")
+				也是依靠 -parameters。
+			
+			4. @ConfigurationProperties
+				public record DatabaseProperties(
+					String url,
+					String username,
+					String password
+				) {}
+				Spring 要知道 constructor 的參數名稱。
+
+如何確認有沒有開啟？ 待驗證確認
+	./gradlew compileJava --debug
+		通常可以看到：
+			-parameters
+	
+	mvn clean compile -X
+		觀察 maven-compiler-plugin 的輸出，若看到：
+			-parameters
+	
+若為
+	gradle project
+		從 Spring Boot 3.x 開始，只要使用
+			plugins {
+				id("org.springframework.boot") version "3.2.5"
+			}
+			Spring Boot Gradle Plugin 會自動替 JavaCompile 加上 -parameters，因此通常不需要自己設定
+
+		等同於：
+			tasks.withType<JavaCompile> {
+				options.compilerArgs.add("-parameters")
+			}
+	
+	
+	maven project
+		情況一：Spring Boot 3.x + spring-boot-starter-parent（建議）
+			如果你的 pom.xml 是：
+				<parent>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-parent</artifactId>
+					<version>3.2.5</version>
+				</parent>
+				通常不需要自己設定 -parameters
+				Spring Boot Parent 已經幫你設定好 maven-compiler-plugin，其中包含：
+					<parameters>true</parameters>
+		
+		情況二：沒有使用 Spring Boot Parent
+			<dependencyManagement>
+				<dependencies>
+					<dependency>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-dependencies</artifactId>
+						<version>3.2.5</version>
+						<type>pom</type>
+						<scope>import</scope>
+					</dependency>
+				</dependencies>
+			</dependencyManagement>
+			或是完全沒有使用 Spring Boot Parent。
+			這時候就建議自己設定：
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<parameters>true</parameters>
+					</configuration>
+				</plugin>
+				它會等同於： javac -parameters
