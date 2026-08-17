@@ -1,0 +1,948 @@
+
+架構寫法指引 / Coding Guideline
+	* 分層 → Bean → DTO → 交易 → Exception → API → DB → 設定 → Security → Log → Test
+
+	一、基本分層建議
+		最常見：
+			Controller
+				↓
+			Service
+				↓
+			Repository
+				↓
+			Database
+
+		com.example.user
+		├─ controller
+		│   └─ UserController.java
+		├─ service
+		│   ├─ UserService.java
+		│   └─ impl
+		│       └─ UserServiceImpl.java
+		├─ repository
+		│   └─ UserRepository.java
+		├─ entity
+		│   └─ UserEntity.java
+		├─ dto
+		│   ├─ UserRequest.java
+		│   └─ UserResponse.java
+		└─ exception
+
+		src/main/java/com/example/project/
+		├── controller/        # 放置 Controller 類別
+		├── service/           # 放置 Service 介面與實作 (或 impl 子資料夾)
+		├── repository/        # 放置 DAO / Repository 介面
+		├── model/             # 放置資料物件
+		│   ├── entity/        # 對應資料庫表格的 Entity
+		├── dto/               # 傳輸用的 DTO / Request / Response 物件
+		├── exception/         # 全域例外處理
+		└── config/            # 系統設定檔（如 Security, Swagger 等）
+
+		大型專案反而比較建議 依 Domain / Feature 分包：
+			com.example
+			├─ user
+			│   ├─ controller
+			│   ├─ service
+			│   ├─ repository
+			│   ├─ dto
+			│   └─ entity
+			│
+			├─ order
+			│   ├─ controller
+			│   ├─ service
+			│   ├─ repository
+			│   ├─ dto
+			│   └─ entity
+			│
+			└─ common
+
+		而不是：
+			controller
+			   ├─ UserController
+			   ├─ OrderController
+			   ├─ PaymentController
+			   ├─ ...
+			service
+			   ├─ UserService
+			   ├─ OrderService
+			   ├─ ...
+
+			因為系統大之後，依功能聚合通常比依技術類型聚合更容易維護。
+
+	二、Controller 要薄
+		這算 Spring Boot 非常重要的一條。
+
+			不建議：
+				@PostMapping("/users")
+				public UserResponse create(@RequestBody UserRequest request) {
+
+					UserEntity entity = new UserEntity();
+					entity.setName(request.getName());
+
+					if (repository.existsByName(request.getName())) {
+						throw new RuntimeException("duplicate");
+					}
+
+					repository.save(entity);
+
+					// 一堆商業邏輯...
+
+					return response;
+				}
+
+			建議：
+				@PostMapping("/users")
+				public UserResponse create(
+						@Valid @RequestBody UserRequest request) {
+
+					return userService.create(request);
+				}
+
+			Controller 主要負責：
+				HTTP Request
+				↓
+				Parameter / Validation
+				↓
+				呼叫 Service
+				↓
+				HTTP Response
+
+			不要負責：
+				* 商業邏輯
+				* DB操作
+				* 交易控制
+				* 大量資料轉換
+				* 第三方API流程
+
+	三、Repository 不要承擔商業邏輯
+		Repository：
+			public interface UserRepository
+					extends JpaRepository<UserEntity, Long> {
+
+				Optional<UserEntity> findByAccount(String account);
+
+			}
+		Repository 的責任是：「資料怎麼取得」
+
+		Service 的責任是：「取得資料後要做什麼」
+
+		例如不要慢慢變成：
+			repository.findUserAndCheckPermissionAndUpdateStatusAndSendNotification();
+				這種 method 名通常就是架構開始失控的警訊。
+
+	四、Entity 不要直接當 API Request / Response
+		列成強制規範的一條。
+			不要：
+				@PostMapping
+				public UserEntity create(@RequestBody UserEntity entity)
+
+			否則：
+				API Contract
+					↓
+				直接綁
+					↓
+				Database Schema
+
+			未來 Entity：
+				@Column
+				private String password;
+
+				@Column
+				private Boolean deleted;
+
+			就可能不小心被：
+				{
+				  "password": "...",
+				  "deleted": false
+				}
+
+			建議：
+				UserRequest
+				UserResponse
+				UserEntity
+
+				=> 各自分開。
+
+			例如：
+				public record CreateUserRequest(
+					@NotBlank String account,
+					@NotBlank String name
+				) {}
+
+				public record UserResponse(
+					Long id,
+					String account,
+					String name
+				) {}
+
+	五、Service 要定義清楚 Transaction Boundary
+
+		例如：
+			@Transactional
+			public void createOrder(CreateOrderRequest request) {
+
+				orderRepository.save(...);
+
+				inventoryService.reserve(...);
+
+				paymentService.create(...);
+			}
+
+		常見原則：
+			讀取：
+				@Transactional(readOnly = true)
+				public UserResponse find(...)
+
+			異動：
+				@Transactional
+				public void update(...)
+
+			特別注意 Spring Transaction 常見陷阱
+				這種：
+					public void methodA() {
+						methodB();
+					}
+
+					@Transactional
+					public void methodB() {
+					}
+
+				如果：
+					methodA
+					↓
+					同一個 class
+					↓
+					methodB
+				* 通常不會經過 Spring Proxy，所以 @Transactional 可能沒有如預期生效。
+				* 這是 Spring 很常見的坑。
+
+	六、不要到處 new Service
+		不要：
+			UserService service = new UserService();
+
+		而應交給 Spring 管理：
+			@Service
+			public class UserService {
+			}
+
+		搭配 Constructor Injection：
+			@Service
+			public class UserService {
+
+				private final UserRepository repository;
+
+				public UserService(UserRepository repository) {
+					this.repository = repository;
+				}
+			}
+
+		或者 Lombok：
+			@RequiredArgsConstructor
+			@Service
+			public class UserService {
+
+				private final UserRepository repository;
+			}
+
+		不太建議：
+			@Autowired
+			private UserRepository repository;
+
+			=> 也就是 Field Injection。
+
+			Constructor Injection 比較容易：
+				* 看出依賴
+				* 測試
+				* 保證 immutable dependency
+				* 避免 hidden dependency
+
+	七、Exception 統一處理
+		不要 Controller 裡每一支都：
+			try {
+
+			} catch (Exception e) {
+
+			}
+
+		建議：
+			@RestControllerAdvice
+			public class GlobalExceptionHandler {
+
+				@ExceptionHandler(UserNotFoundException.class)
+				public ResponseEntity<ApiError> handle(
+						UserNotFoundException e) {
+
+					...
+				}
+			}
+
+			Service：
+				throw new UserNotFoundException(userId);
+					Controller 不需要知道怎麼轉 HTTP Status。
+						例如統一：
+							{
+							  "code": "USER_NOT_FOUND",
+							  "message": "User not found",
+							  "traceId": "..."
+							}
+
+	八、不要隨便 catch Exception
+		這種非常常見：
+			try {
+				...
+			} catch (Exception e) {
+				log.error("error");
+			}
+			最大問題：
+				Exception 被吃掉了。
+
+			結果上層以為成功。
+
+		至少：
+			catch (Exception e) {
+				log.error("Create user failed", e);
+				throw e;
+			}
+
+		但如果沒有真正處理 Exception 的能力：通常乾脆不要 catch。
+			讓：
+				Service
+				↓
+				GlobalExceptionHandler
+			統一處理即可。
+
+	九、Optional 的使用位置
+		Repository 很適合：
+			Optional<UserEntity> findByAccount(String account);
+
+		Service：
+			UserEntity user = repository.findByAccount(account)
+				.orElseThrow(() -> new UserNotFoundException(account));
+
+			但是不建議到處：
+				Optional<String>
+				Optional<Integer>
+				Optional<List<User>>
+
+			尤其 DTO field：
+				class UserRequest {
+					Optional<String> name;
+				}
+
+				通常沒有必要。
+
+			Optional 最適合：method return value 表示「可能不存在」。
+
+	十、不要使用魔法值
+		不要：
+			if (status.equals("1")) {
+			}
+		或：
+			if (type == 3) {
+			}
+
+		建議：
+			enum UserStatus {
+				ACTIVE,
+				DISABLED,
+				LOCKED
+			}
+		然後：
+			if (status == UserStatus.ACTIVE) {
+			}
+
+		如果 DB 是：
+			1
+			2
+			3
+		可以額外處理轉換。
+
+	十一、日期時間要統一
+		不太建議新系統繼續大量使用：
+			* Date
+			* Calendar
+			* Timestamp
+
+		建議 Java Time API：
+			Instant
+			LocalDate
+			LocalDateTime
+			OffsetDateTime
+			ZonedDateTime
+
+		通常：
+			DB / 系統內部
+				→ Instant / UTC
+
+			顯示
+				→ Asia/Taipei
+
+		例如：
+			Instant createdAt;
+
+		而不是系統各處自行：
+			LocalDateTime.now()
+		尤其跨系統整合時很容易發生時區問題。
+
+	十二、Configuration 不要寫死
+		不要：
+			String url = "https://prod.example.com/api";
+
+		建議：
+			external:
+			  api:
+				url: ${EXTERNAL_API_URL}
+
+		搭配：
+			@ConfigurationProperties(prefix = "external.api")
+			public record ExternalApiProperties(
+				String url
+			) {}
+
+			比大量： @Value("${xxx}")
+				更適合大型專案。
+
+		也就是偏向：
+			ConfigurationProperties
+			>
+			@Value 到處散落
+
+	十三、密碼、Token、Secret 不可以進 Git
+		非常基本但仍常出問題：
+			spring:
+			  datasource:
+				password: abc123
+
+			api:
+			  token: 12345678
+
+			不要 commit。
+
+		應改：
+			password: ${DB_PASSWORD}
+
+		來源可以是：
+			環境變數
+				Docker Secret
+				Kubernetes Secret
+				Vault
+				Azure Key Vault
+				AWS Secrets Manager
+
+	十四、Log 不要用 System.out.println
+		不要：
+			System.out.println("user=" + user);
+
+		應：
+			log.info("Create user, userId={}", userId);
+
+		而不是：
+			log.info("Create user userId=" + userId);
+
+		Parameterized logging：
+			log.info("userId={}", userId);
+
+			效能與結構都比較恰當。
+
+		另外一定避免：
+			password
+			JWT
+			Authorization header
+			身分證字號
+			完整個資
+			信用卡
+			Session ID
+
+			=> 直接寫入 log。
+
+	十五、Log Level 要有規則
+		通常會建議：
+			ERROR
+				真正需要處理的程式異常
+
+			WARN
+				非預期，但系統仍能繼續
+
+			INFO
+				重要業務流程 / 狀態
+
+			DEBUG
+				開發除錯資訊
+
+			TRACE
+				極細節追蹤
+
+		例如：
+			log.info(
+				"Order created, orderId={}, userId={}",
+				orderId,
+				userId
+			);
+
+			而不是每個 method：
+				log.info("enter method");
+				log.info("step1");
+				log.info("step2");
+				log.info("step3");
+
+				否則 production log 很快失控。
+
+	十六、API URL 應使用 Resource-oriented 設計
+		建議：
+			GET    /users
+			GET    /users/{id}
+			POST   /users
+			PUT    /users/{id}
+			DELETE /users/{id}
+
+		避免：
+			/getUser
+			/createUser
+			/updateUser
+			/deleteUser
+
+		因為 HTTP Method 已經表達動作。
+
+		特殊行為才考慮：
+			POST /users/{id}/activate
+			POST /orders/{id}/cancel
+
+	十七、HTTP Status 要合理
+		例如：
+			200 OK
+				查詢 / 修改成功
+
+			201 Created
+				建立成功
+
+			204 No Content
+				成功但無 body
+
+			400 Bad Request
+				Request 格式問題
+
+			401 Unauthorized
+				尚未驗證
+
+			403 Forbidden
+				已驗證但無權限
+
+			404 Not Found
+				資源不存在
+
+			409 Conflict
+				資料狀態衝突
+
+			500 Internal Server Error
+				程式非預期異常
+
+		尤其：
+			401 ≠ 403
+			這在企業系統非常容易混用。
+
+	十八、Validation 應該放在 Request DTO
+		例如：
+			public record CreateUserRequest(
+
+				@NotBlank
+				@Size(max = 50)
+				String account,
+
+				@NotBlank
+				@Size(max = 100)
+				String name
+
+			) {}
+
+		Controller：
+			@PostMapping
+			public UserResponse create(
+				@Valid @RequestBody CreateUserRequest request) {
+			}
+			不要全靠：
+				if (request.getName() == null) ...
+				if (request.getAccount() == null) ...
+
+		但：
+			Bean Validation 適合「格式驗證」，商業規則仍然應放 Service。
+
+			例如：
+				@NotBlank
+				→ DTO validation
+
+				帳號是否重複
+				→ Service
+
+	十九、不要濫用 static
+		這種：
+			public class UserService {
+
+				public static User findUser(...) {
+				}
+			}
+
+		會破壞：
+			Dependency Injection
+			Mock
+			AOP
+			@Transactional
+			Spring Bean Lifecycle
+
+		Utility 類才比較適合 static：
+			StringUtils
+			HashUtils
+			DateUtils
+
+		甚至 Utility 也不要無限制增生。
+
+	二十、避免「萬能 CommonUtils」
+		專案最後常出現：
+			CommonUtils
+			CommonService
+			BaseUtils
+			SystemUtils
+			AppUtils
+			ToolUtils
+
+		=> 裡面 3,000 行：
+			sendMail()
+			parseDate()
+			decrypt()
+			copyBean()
+			generateExcel()
+			callApi()
+
+		這是一個非常典型的 maintenance smell。
+
+		應依責任拆：
+			CryptoService
+			MailService
+			ExcelExporter
+			DateTimeUtils
+			ApiClient
+
+	二十一、Service 不宜越來越肥
+		很常出現：
+			UserService.java
+
+		最後：
+			5,000 行
+			80 個 method
+
+		代表 Domain responsibility 已經混在一起。
+		例如可以拆：
+			UserQueryService
+			UserRegistrationService
+			UserAuthenticationService
+			UserProfileService
+
+		比：
+			UserService
+				什麼都做更清楚。
+
+	二十二、第三方 API 建議再抽 Client 層
+		例如不要：
+			Controller
+			 ↓
+			Service
+			 ↓
+			WebClient
+		=> 全部塞 Service。
+
+		可以：
+			UserService
+				↓
+			GovernmentApiClient
+
+		例如：
+			@Component
+			public class GovernmentApiClient {
+
+				private final WebClient webClient;
+
+				public GovernmentResponse verify(...) {
+					...
+				}
+			}
+
+		Service：
+			governmentApiClient.verify(...);
+
+			這樣：
+				業務邏輯
+				與
+				HTTP Integration
+
+			就不會綁死。
+
+	二十三、Entity relationship 要謹慎
+		JPA 最容易踩坑之一：
+			@OneToMany(fetch = FetchType.EAGER)
+			不要隨便用 EAGER。
+
+		尤其：
+			User
+			 └ Order
+				 └ OrderItem
+					└ Product
+
+		如果全部 EAGER：
+			一查 User 可能整串全部查出來。
+		一般比較安全：
+			FetchType.LAZY
+			然後依 Use Case 決定：
+				fetch join
+				EntityGraph
+				Projection
+				DTO query
+
+	二十四、注意 N+1 Query
+		例如：
+			List<Order> orders = repository.findAll();
+
+			for (Order order : orders) {
+				order.getUser().getName();
+			}
+
+		可能：
+			1 次查 Order
+			+
+			100 次查 User
+
+		這就是：
+			N + 1
+
+		通常 production DB 效能問題，很常就是這類問題。
+
+
+	二十五、不要在迴圈中一直查 DB
+		不要：
+			for (Long id : ids) {
+				repository.findById(id);
+			}
+
+		如果可以：
+			repository.findAllById(ids);
+
+		概念是：
+			100次 SQL
+			↓
+			盡可能改
+			↓
+			1~數次 SQL
+
+	二十六、Pagination 要建立成規範
+		不要：
+			repository.findAll();
+
+		然後一次回：
+			50萬筆
+
+		API 查詢通常：
+			Pageable
+			Page<T>
+
+		例如：
+			GET /users?page=0&size=20
+
+		而且最好限制：
+			max page size = 100 / 500
+
+		避免有人：
+			?size=999999999
+
+	二十七、更新資料注意 Lost Update
+		例如兩個 request：
+			Request A
+				讀 version 1
+
+			Request B
+				讀 version 1
+
+			A 更新
+				→ version 2
+
+			B 更新
+				→ 把 A 蓋掉
+
+		重要資料可考慮：
+			@Version
+			private Long version;
+
+		也就是 Optimistic Locking。
+
+	二十八、外部 API 不要把 Transaction 開太久
+		這種很危險：
+			@Transactional
+			public void process() {
+
+				repository.save(...);
+
+				externalApi.call(); // 等10秒
+
+				repository.save(...);
+			}
+
+		因為 Transaction / DB connection 可能被持有很久。
+		尤其外部服務：
+			* timeout
+			* retry
+			* 網路問題
+		都會放大 DB 問題。
+
+		通常要仔細規劃 Transaction Boundary。
+
+	二十九、Retry 不是所有 Exception 都 Retry
+		例如：
+			Connection timeout
+			→ 可能適合 retry
+
+			HTTP 503
+			→ 可能適合 retry
+
+			HTTP 400
+			→ Retry 100 次也不會成功
+
+			帳號密碼錯
+			→ 不應 retry
+
+		另外 POST：
+			建立訂單
+			扣款
+			建立交易
+
+		更要注意：
+			Retry 是否會造成重複執行。
+			所以通常還牽涉：
+				Idempotency
+
+	三十、不要忽略 Timeout
+		第三方 HTTP、DB、Redis 等都應該明確設定：
+			* connect timeout
+			* read timeout
+			* response timeout
+			* connection pool timeout
+		而不是無限等待。
+
+		這個在 production 非常重要。
+
+	三十一、Security 應該採「預設拒絕」
+		比起：
+			* 全部 permit
+			* 只有幾支 deny
+
+		更建議：
+			明確 permit
+			剩下 authenticated
+
+		例如概念：
+			.requestMatchers("/public/**").permitAll()
+			.requestMatchers("/actuator/health").permitAll()
+			.anyRequest().authenticated()
+
+		不要讓新增 API 不小心自動變成公開 API。
+
+	三十二、不要相信前端送來的資料
+		例如：
+			{
+			  "userId": "admin",
+			  "roles": ["ADMIN"]
+			}
+
+		後端不能因為前端傳 ADMIN 就相信它。
+
+		身份、權限應該來自：
+			* JWT
+			* Session
+			* SecurityContext
+			* 可信 Gateway Header
+		而不是一般 Request Body。
+
+	三十三、測試至少分三層
+		通常建議：
+			Unit Test
+				Service business logic
+
+			Slice Test
+				@WebMvcTest
+				@DataJpaTest
+
+			Integration Test
+				@SpringBootTest
+
+		但不要所有測試全部：
+			@SpringBootTest
+
+		因為啟動整個 Spring Context：
+			慢
+			耦合高
+			難定位問題
+
+
+	三十四、版本管理交給 BOM / Dependency Management
+		Spring Boot 專案若已經：
+			<parent>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-parent</artifactId>
+				...
+			</parent>
+
+		很多 Spring 生態依賴不要自行亂指定版本。
+			例如：
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-web</artifactId>
+				</dependency>
+
+			通常不要：
+				<version>...</version>
+
+			否則很容易自己組出：
+				Boot A版本
+				Spring Framework B版本
+				Jackson C版本
+				Tomcat D版本
+
+			最後相容性出問題。
+
+	我會把整份 Spring Boot Guideline 濃縮成這 15 條
+		如果是你要拿去當「團隊開發規範」，我會優先要求：
+			| #  | 規範                                            |
+			| -- | --------------------------------------------- |
+			| 1  | Controller 不寫商業邏輯                             |
+			| 2  | Service 管理 Use Case / Transaction             |
+			| 3  | Repository 只負責 Data Access                    |
+			| 4  | Entity 不直接作為 API DTO                          |
+			| 5  | 強制 Constructor Injection                      |
+			| 6  | Request 使用 Bean Validation                    |
+			| 7  | Exception 使用 `@RestControllerAdvice` 統一處理     |
+			| 8  | 禁止 `System.out.println`                       |
+			| 9  | 敏感資料禁止寫 Log                                   |
+			| 10 | Configuration 外部化                             |
+			| 11 | 日期時間策略統一                                      |
+			| 12 | JPA 預防 N+1、EAGER、無限制查詢                        |
+			| 13 | 外部 API 設定 Timeout，Retry 要考慮 Idempotency       |
+			| 14 | Authentication / Authorization 不相信 Client 傳入值 |
+			| 15 | Dependency Version 優先遵循 Spring Boot BOM       |
+
+	如果是「架構師角度」，我尤其會盯這幾條
+		做 Spring Boot 專案時，我認為最值得優先建立的其實不是排版、變數名稱這種 Coding Style，而是：
+							┌─ DTO Boundary
+			Controller ─────┤
+							↓
+						 Service        ← Transaction Boundary
+							│
+					┌───────┴────────┐
+					↓                ↓
+			   Repository        External Client
+					↓                ↓
+				   DB          HTTP / MQ / Other Service
+
+		然後橫切統一：
+			Security
+			Exception Handling
+			Logging / TraceId
+			Validation
+			Configuration
+			Observability
+			Testing
