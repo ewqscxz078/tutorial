@@ -1,0 +1,430 @@
+
+git 類型
+	framework_repo.git 目錄範例 (讓打包成 jar 依賴的 git)
+		1個 parent pom.xml、1個 root aggregator(reactor modules) pom.xml、其他專案僅要專注其自己相關依賴
+			framework_repo/
+			├─ pom.xml            ← 唯一主要 reactor aggregator
+			├─ PARENT/
+			├─ CORE/
+			├─ SDK/
+			├─ MODULE/
+			└─ STARTER/
+
+		root pom.xml 直接宣告全部：
+			<modules>
+				<module>PARENT/my-spring-boot-parent</module>
+
+				<module>CORE/my-spring-boot</module>
+				<module>CORE/my-spring-boot-starter</module>
+				<module>CORE/my-spring-boot-starter-autoconfigure</module>
+
+				<module>SDK/my-logback</module>
+				<module>SDK/my-security</module>
+				<module>SDK/my-system</module>
+
+				<module>MODULE/my-logback-mdc-spring-boot</module>
+				<module>MODULE/my-security-spring-boot</module>
+				<module>MODULE/my-system-spring-boot</module>
+
+				<module>STARTER/my-logback-mdc-spring-boot-starter</module>
+				<module>STARTER/my-security-spring-boot-starter</module>
+				<module>STARTER/my-system-spring-boot-starter</module>
+			</modules>
+
+
+	application_repo/目錄範例 (會包成 jar 佈署的 spring boot 專案 git)
+		application_repo/
+		├─ xxx_service/
+		├─ yyy_service/
+		└─ zzz_service/
+		其中 ???_service 會引用 framework_repo
+		該repo 不需要有 aggregator(reactor modules) pom.xml，因為彼此之間不相關
+
+過程
+	dependency_repo
+		→ 產出「被別人依賴」的 Maven artifacts
+		→ deploy 到 Nexus / Artifactory / Azure Artifacts
+
+	jar_repo
+		→ 產出「實際部署」的 Spring Boot application jar
+		→ dependency 到 dependency_repo 產出的 artifact
+
+Redmine 一張單，不建議限制「只能改一個 Git」
+	一張 Redmine 單可以涵蓋多 repo，但每個 repo 各自有自己的 branch / PR / CI。
+	例如 Redmine：
+		issue/12345
+		自動建立：
+			dependency_repo
+				issue/12345
+
+			jar_repo
+				issue/12345
+
+		如果最後 dependency_repo 沒有修改：
+			dependency_repo/issue/12345
+			→ 沒 commit
+			→ 不需要 PR
+
+			沒關係。
+
+		如果兩邊都有修改：
+			dependency_repo/issue/12345
+			jar_repo/issue/12345
+
+			就形成同一張單底下的兩個 change set。
+
+	一張 issue 修改兩邊時，CI 應該知道：
+		dependency_repo
+			  │
+			  │ build + publish
+			  ▼
+		 Maven Repository
+			  │
+			  │ artifact version
+			  ▼
+		  jar_repo
+			  │
+			  │ build
+			  ▼
+		 application jar
+
+		也就是：
+			先產 dependency artifact，application 才有東西可以吃。
+
+			這才是跨 repo CI orchestration 真正需要解決的地方。
+
+CICD Pipeline 分成三層
+	① dependency_repo pipeline
+		dependency_repo
+			│
+			├─ Maven reactor
+			│
+			├─ compile
+			├─ test
+			├─ package
+			└─ deploy
+				 │
+				 ▼
+		   Maven Repository
+
+		指令可以非常標準：
+			./mvnw clean deploy
+
+		如果要 incremental：
+			./mvnw clean deploy \
+			  -pl :my-security-spring-boot \
+			  -am
+
+		不要 CI 自己再解 Maven dependency graph。
+
+	② jar_repo pipeline
+		正常情況：
+			jar_repo
+				│
+				├─ compile
+				├─ test
+				├─ package
+				└─ artifact
+
+		其中 dependency：
+			<properties>
+				<my-framework.version>1.5.0</my-framework.version>
+			</properties>
+			<dependency>
+				<groupId>xxx</groupId>
+				<artifactId>my-security-spring-boot-starter</artifactId>
+				<version>${my-framework.version}</version>
+			</dependency>
+
+	③ Cross-Repo Orchestrator
+		只有遇到：
+			同一張 issue 同時改 dependency_repo + jar_repo
+			才需要它。
+
+		Redmine #12345
+				│
+				▼
+		 Orchestrator Pipeline
+				│
+				├── dependency_repo/issue/12345
+				│          │
+				│          ▼
+				│       Build
+				│          │
+				│          ▼
+				│   publish temporary version
+				│
+				│          │
+				│          ▼
+				└── jar_repo/issue/12345
+						   │
+						   ▼
+					  使用該版本
+						   │
+						   ▼
+						 Build
+						   │
+						   ▼
+					  Integration Test
+
+		這裡才是真正的「跨 repo 協調」。
+
+最重要的是：跨 repo 測試版本怎麼處理
+	假設正式版本是：
+		my-security-spring-boot-starter:1.5.0
+	
+	Redmine #12345 修改 framework。
+		你不能還沒 merge 正式版就直接發布：
+			1.5.1
+		然後 production artifact repository 被一堆測試版本污染。
+		我會考慮 issue build version，例如：
+			1.5.1-12345-SNAPSHOT、1.5.1-issue.12345-SNAPSHOT
+		
+		dependency pipeline：
+			dependency_repo/issue/12345
+					↓
+			1.5.1-issue.12345-SNAPSHOT
+					↓
+			Maven Repository
+		
+		jar repo issue branch：
+			xxx_service/issue/12345
+					↓
+			my-framework.version
+					↓
+			1.5.1-issue.12345-SNAPSHOT
+	
+	所以整個測試環境是：
+		dependency issue branch
+				│
+				▼
+		issue-specific artifact
+				│
+				▼
+		application issue branch
+				│
+				▼
+		integration build
+		
+		=>
+			正式 merge 後才變：
+				1.5.1
+			
+			application 再正式切到：
+				1.5.1
+
+	這樣 lifecycle 會比較乾淨。
+	
+	甚至 application POM 不一定要真的改版本
+		如果你不希望為了 CI 測試，在 framework_repo commit：
+			<my-framework.version>1.5.1-issue.12345-SNAPSHOT</my-framework.version>
+		可以把版本 property 做成可由 command line override。
+			<properties>
+				<my-framework.version>1.5.0</my-framework.version>
+			</properties>
+		
+		CI：
+			./mvnw clean package \
+			  -Dmy-framework.version=1.5.1-issue.12345-SNAPSHOT
+		
+		這樣：
+			Git POM
+				↓
+			仍然保持正式 baseline 版本 1.5.0
+
+			CI issue build
+				↓
+			暫時 override 成 issue artifact
+
+		我很推薦這個概念。
+		否則你會常看到這種無意義 commit：
+			commit A: 1.5.0 → 1.5.1-SNAPSHOT
+			commit B: feature
+			commit C: 1.5.1-SNAPSHOT → 1.5.1
+		
+		CI 能處理的東西，不一定要污染 source code。
+
+CI orchestration 可以長這樣
+                        Redmine
+                           │
+                     Issue #12345
+                           │
+                           ▼
+                    Changed Repos
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+              ▼                         ▼
+       framework_repo              application_repo
+       issue/12345                  issue/12345
+              │                         │
+              ▼                         │
+         Maven Reactor                  │
+              │                         │
+              ▼                         │
+      Build / Unit Test                 │
+              │                         │
+              ▼                         │
+       Deploy Snapshot                  │
+              │                         │
+              └────────────┐            │
+                           ▼            ▼
+                       Maven Repo
+                           │
+                           ▼
+                    application_repo Build
+                           │
+                  override dependency
+                           │
+                           ▼
+                    Unit / Integration
+                           │
+                           ▼
+                       Package Jar
+                           │
+                           ▼
+                      Deploy DEV
+                           │
+                           ▼
+                   Functional Test
+
+等 issue 完成：
+	dependency_repo PR
+			│
+			▼
+	merge main
+			│
+			▼
+	publish Release Artifact
+			│
+			▼
+	jar_repo PR
+			│
+			▼
+	正式 dependency version
+			│
+			▼
+	merge main
+
+CICD 流程方式
+						 Root POM
+							│
+				   宣告所有 <modules>
+							│
+							↓
+					  Maven Reactor
+							│
+				 dependency graph 唯一來源
+							│
+		   ┌────────────────┴─────────────────┐
+		   │                                  │
+		 Local                               CI
+		   │                                  │
+	mvn clean install               git diff 找 changed module
+											  │
+											  ↓
+									 mvn -pl xxx,yyy -am
+									而且傾向省略
+										./mvnw clean install \
+										  -pl :my-logback,:my-security,:my-system \
+										  -am
+
+
+	1.root POM 宣告完整 module graph
+	2.Maven reactor 當 dependency/build-order 的唯一事實來源
+	3.CI 只處理 changed module detection，不要再自行實作 Maven dependency resolution。
+
+
+
+Q1: 如果有個模組是另外一個 B repo ，不就沒法包含在該 A repo 下的聚合子模組 pom ?
+
+A1: 如果某個模組實際上在另一個 B repository，那它就不能直接當成 A repo root POM 的一般 <module>，
+	因為 Maven <modules> 指的是： 目前這個 reactor build 裡，檔案系統上可直接找到的 Maven project。
+
+	例如
+		A_repo.git：
+			  pom.xml
+			  CORE/
+			  SDK/
+
+		B_repo.git：
+			  my-external-module/
+				pom.xml
+
+		那 A_repo 的 pom.xml 不能合理地這樣寫：
+			<modules>
+				<module>../my-external-module</module>
+			</modules>
+
+		技術上只要路徑存在，有些情境可能能跑，但這會把 A 的 build 綁死在特定 checkout 目錄結構，不適合 CI，也不算好的 repo 邊界設計
+
+	比較正統的是
+		A repo
+		  ↓
+		正常 dependency 到 B repo 產出的 artifact
+		  ↓
+		B repo 先 publish 到 Maven repository
+
+		* 例如 A：
+			<dependency>
+				<groupId>com.mycompany</groupId>
+				<artifactId>my-external-module</artifactId>
+				<version>${my.external.version}</version>
+			</dependency>
+
+		* B repo 自己 CI：
+			./mvnw clean deploy
+			// 發布到 Nexus / Artifactory / Azure Artifacts 之類。
+
+		* 然後 A repo：
+			./mvnw clean install
+
+			就把 B 當成外部 dependency。
+			這也代表前面講的： -pl xxx -am
+
+			只會處理 同一個 reactor 裡的 module。
+
+	如果：
+		A1
+		  ↓
+		B1（另一個 repo）
+
+		那：
+			mvn -pl :A1 -am
+
+			不會跑去 Git clone B repo，也不會 build B repo。
+
+			它只會：
+				找 local/remote Maven repository 裡的 B1 artifact
+
+	所以多 repo 情境可以理解成：
+              Maven Repository
+             /                \
+            /                  \
+        Repo B                 Repo A
+       build B1               build A1
+          │                      │
+          └──── deploy B1 ───────┘
+                                  ↓
+                         dependency B1
+
+	因此你們 CI 真正需要額外解決的是：
+
+		跨 repository dependency
+
+	如果 B repo 更新後，要自動觸發 A repo rebuild，這部分才是 CI orchestration 的責任，例如：
+
+		Repo B 發版
+		   ↓
+		deploy artifact
+		   ↓
+		觸發 Repo A pipeline
+		   ↓
+		A 使用新的 B version build
+
+	所以我會把責任切成：
+		同 repo dependency
+			→ Maven reactor / modules / -pl / -am
+
+		跨 repo dependency
+			→ Maven repository + version management + CI orchestration

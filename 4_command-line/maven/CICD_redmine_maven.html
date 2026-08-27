@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maven 多模組與跨 Repository CI/CD 架構整理</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+            line-height: 1.7;
+            margin: 40px;
+            color: #222;
+        }
+
+        h1, h2, h3 {
+            margin-top: 1.4em;
+        }
+
+        h1 {
+            border-bottom: 3px solid #333;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            border-bottom: 1px solid #aaa;
+            padding-bottom: 6px;
+        }
+
+        code, pre {
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        pre {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #bbb;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .note {
+            border-left: 4px solid #666;
+            padding: 10px 16px;
+            background: #f8f8f8;
+            margin: 16px 0;
+        }
+
+        .recommend {
+            border-left: 4px solid #2c7;
+            padding: 10px 16px;
+            background: #f4fff8;
+            margin: 16px 0;
+        }
+
+        .warning {
+            border-left: 4px solid #d88;
+            padding: 10px 16px;
+            background: #fff8f8;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Maven 多模組與跨 Repository CI/CD 架構整理</h1>
+
+<h2>1. 整體 Repository 分類</h2>
+
+<p>
+建議將 Git Repository 依照「可被其他專案依賴的 Framework/Library」與
+「實際可部署的 Spring Boot Application」分成兩大類。
+</p>
+
+<h3>1.1 Framework / Dependency Repository</h3>
+
+<pre>
+framework_repo/
+├─ pom.xml
+├─ PARENT/
+├─ CORE/
+├─ SDK/
+├─ MODULE/
+└─ STARTER/
+</pre>
+
+<p>
+此 Repository 主要產出 Maven artifacts，供其他 Spring Boot Application 引用。
+</p>
+
+<ul>
+    <li>PARENT：統一 Maven parent 設定</li>
+    <li>CORE：整個自訂 Spring Boot Framework 共用核心</li>
+    <li>SDK：可獨立使用的 SDK / Library</li>
+    <li>MODULE：Spring Boot 整合模組</li>
+    <li>STARTER：提供 Application 直接引用的 Starter</li>
+</ul>
+
+<h3>1.2 Application / Service Repository</h3>
+
+<pre>
+service_repo/
+├─ xxx_service/
+├─ yyy_service/
+└─ zzz_service/
+</pre>
+
+<p>
+此 Repository 主要產出可部署的 Spring Boot Jar。
+各 Service 會透過 Maven Repository 引用 framework_repo 所發布的 artifacts。
+</p>
+
+<div class="recommend">
+<strong>命名建議：</strong><br>
+比起 dependency_repo / jar_repo，更建議採用：
+<pre>
+framework_repo
+service_repo
+</pre>
+或：
+<pre>
+spring-platform
+spring-services
+</pre>
+因為兩邊實際上都可能會產生 jar。
+</div>
+
+
+<h2>2. 同一 Git Repository 的 Maven Reactor 設計</h2>
+
+<p>
+同一個 Git Repository 內，如果這些 Maven modules 屬於同一組產品、
+一起維護，而且本來就具有 Maven dependency 關係，
+建議由最上層 root pom 統一宣告所有 modules。
+</p>
+
+<pre>
+framework_repo/
+├─ pom.xml     ← 唯一主要 Reactor Aggregator
+├─ PARENT/
+├─ CORE/
+├─ SDK/
+├─ MODULE/
+└─ STARTER/
+</pre>
+
+<p>例如：</p>
+
+<pre>
+&lt;packaging&gt;pom&lt;/packaging&gt;
+
+&lt;modules&gt;
+    &lt;module&gt;PARENT/my-spring-boot-parent&lt;/module&gt;
+
+    &lt;module&gt;CORE/my-spring-boot&lt;/module&gt;
+    &lt;module&gt;CORE/my-spring-boot-starter&lt;/module&gt;
+    &lt;module&gt;CORE/my-spring-boot-starter-autoconfigure&lt;/module&gt;
+
+    &lt;module&gt;SDK/my-logback&lt;/module&gt;
+    &lt;module&gt;SDK/my-security&lt;/module&gt;
+    &lt;module&gt;SDK/my-system&lt;/module&gt;
+
+    &lt;module&gt;MODULE/my-logback-mdc-spring-boot&lt;/module&gt;
+    &lt;module&gt;MODULE/my-security-spring-boot&lt;/module&gt;
+    &lt;module&gt;MODULE/my-system-spring-boot&lt;/module&gt;
+
+    &lt;module&gt;STARTER/my-logback-mdc-spring-boot-starter&lt;/module&gt;
+    &lt;module&gt;STARTER/my-security-spring-boot-starter&lt;/module&gt;
+    &lt;module&gt;STARTER/my-system-spring-boot-starter&lt;/module&gt;
+&lt;/modules&gt;
+</pre>
+
+<div class="note">
+CORE / SDK / MODULE / STARTER 比較適合當「目錄分類」，
+不一定要再各自建立一層 aggregator pom。
+</div>
+
+
+<h2>3. 不建議用 Profile 來代表模組分類</h2>
+
+<p>
+原先可能設計：
+</p>
+
+<pre>
+-Pparent
+-Pcore
+-Psdk
+-Pmodule
+-Pstarter
+-Pfull
+</pre>
+
+<p>
+但若這些模組本來就是同一套 Framework 的完整 Reactor，
+則不建議把 module 是否加入 build graph 交給 Profile。
+</p>
+
+<p>
+更自然的方式是：
+</p>
+
+<pre>
+./mvnw clean install
+</pre>
+
+<p>
+即代表完整 Reactor Build。
+</p>
+
+<p>
+局部 build 則使用 Maven Reactor 原生功能：
+</p>
+
+<pre>
+./mvnw clean install \
+  -pl :my-security-spring-boot-starter \
+  -am
+</pre>
+
+<p>
+其中：
+</p>
+
+<ul>
+    <li><code>-pl</code>：指定要 build 的 project</li>
+    <li><code>-am</code>：自動一起 build 該 project 所需要的 upstream modules</li>
+</ul>
+
+<p>
+如此 Maven 會依 dependency graph 自行判斷：
+</p>
+
+<pre>
+my-security-spring-boot-starter
+        ↓
+my-security-spring-boot
+        ↓
+my-security
+        ↓
+my-spring-boot
+</pre>
+
+<div class="recommend">
+<strong>建議原則：</strong><br>
+目錄負責分類、POM dependency 負責依賴關係、
+Maven Reactor 負責 build order，
+不要用 Profile 再重新描述一次模組關係。
+</div>
+
+
+<h2>4. CI/CD 不應自行重算 Maven Dependency Graph</h2>
+
+<p>
+如果 CI/CD Script 現在會：
+</p>
+
+<pre>
+讀取每個 pom
+→ 找 dependency
+→ 判斷是否同 repo
+→ Recursive 找 dependency
+→ 去重
+→ 計算 build order
+→ 再呼叫 Maven
+</pre>
+
+<p>
+這等於在 CI/CD 裡重新實作一套不完整的 Maven Reactor。
+</p>
+
+<p>
+此做法常會逐漸遇到：
+</p>
+
+<ul>
+    <li>parent</li>
+    <li>dependencyManagement</li>
+    <li>BOM</li>
+    <li>property version</li>
+    <li>optional dependency</li>
+    <li>scope</li>
+    <li>profile</li>
+    <li>relativePath</li>
+    <li>plugin dependency</li>
+</ul>
+
+<p>
+模組越多，Script 越慢且維護成本越高。
+</p>
+
+<h3>建議責任切分</h3>
+
+<pre>
+Git Diff
+   ↓
+判斷 Changed Module
+   ↓
+------------------------------
+以上由 CI/CD 負責
+------------------------------
+   ↓
+Maven Reactor
+   ↓
+dependency graph
+   ↓
+build order
+   ↓
+------------------------------
+以上由 Maven 負責
+------------------------------
+</pre>
+
+<p>
+例如 CI 只需要算出：
+</p>
+
+<pre>
+:my-security
+:my-system-spring-boot
+</pre>
+
+<p>
+然後：
+</p>
+
+<pre>
+./mvnw clean install \
+  -pl :my-security,:my-system-spring-boot \
+  -am
+</pre>
+
+
+<h2>5. 跨 Repository Dependency 的處理方式</h2>
+
+<p>
+如果 B module 位於另一個 Git Repository，
+它就不屬於 A Repository 的 Maven Reactor。
+</p>
+
+<p>
+不建議使用：
+</p>
+
+<pre>
+&lt;module&gt;../repo-b/my-module&lt;/module&gt;
+</pre>
+
+<p>
+因為這會把 build 綁定特定 checkout 目錄結構。
+</p>
+
+<p>
+正確方式是：
+</p>
+
+<pre>
+framework_repo
+     ↓
+mvn deploy
+     ↓
+Maven Repository
+     ↓
+service_repo
+     ↓
+dependency artifact
+</pre>
+
+<p>
+例如 Application：
+</p>
+
+<pre>
+&lt;dependency&gt;
+    &lt;groupId&gt;com.mycompany&lt;/groupId&gt;
+    &lt;artifactId&gt;my-security-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;${my-framework.version}&lt;/version&gt;
+&lt;/dependency&gt;
+</pre>
+
+<div class="recommend">
+<strong>責任界線：</strong>
+<pre>
+同 Repo Dependency
+→ Maven Reactor
+
+跨 Repo Dependency
+→ Maven Repository + Version Management + CI/CD Orchestration
+</pre>
+</div>
+
+
+<h2>6. Redmine Issue 與 Git Branch 的關係</h2>
+
+<p>
+不建議限制：
+</p>
+
+<pre>
+一張 Redmine Issue
+只能修改一個 Git Repository
+</pre>
+
+<p>
+因為實際需求很可能同時需要修改 Framework 與 Application。
+</p>
+
+<p>例如：</p>
+
+<pre>
+Redmine #12345
+    │
+    ├─ framework_repo
+    │    └─ issue/12345
+    │
+    └─ service_repo
+         └─ issue/12345
+</pre>
+
+<p>
+因此建議：
+</p>
+
+<ul>
+    <li>一張 Issue 可以跨多個 Repository</li>
+    <li>每個 Repository 各自建立對應 Branch</li>
+    <li>每個 Repository 各自有 Commit / PR / CI</li>
+    <li>由 Issue ID 串起跨 Repo 的 Change Set</li>
+</ul>
+
+<p>
+若該 Repository 沒有實際修改，則不需要產生 PR。
+</p>
+
+
+<h2>7. 建議 Redmine 增加 Affected Repositories</h2>
+
+<p>
+若 Redmine 已經會自動建立 Branch，
+可增加欄位：
+</p>
+
+<pre>
+Affected Repositories
+
+☑ framework_repo
+☑ service_repo
+</pre>
+
+<p>
+例如只改 Application：
+</p>
+
+<pre>
+☐ framework_repo
+☑ service_repo
+</pre>
+
+<p>
+則只建立：
+</p>
+
+<pre>
+service_repo/issue/12345
+</pre>
+
+<p>
+如果兩邊都需要修改：
+</p>
+
+<pre>
+☑ framework_repo
+☑ service_repo
+</pre>
+
+<p>
+則建立：
+</p>
+
+<pre>
+framework_repo/issue/12345
+service_repo/issue/12345
+</pre>
+
+
+<h2>8. CI/CD Pipeline 分層</h2>
+
+<p>
+建議分成三種責任：
+</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Pipeline</th>
+        <th>主要責任</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Framework Repo Pipeline</td>
+        <td>Build、Test、Deploy Maven Artifact</td>
+    </tr>
+    <tr>
+        <td>Service Repo Pipeline</td>
+        <td>Build、Test、Package Spring Boot Jar</td>
+    </tr>
+    <tr>
+        <td>Cross-Repo Orchestrator</td>
+        <td>協調 Framework 與 Service 的先後順序</td>
+    </tr>
+    </tbody>
+</table>
+
+
+<h2>9. Framework Repo Pipeline</h2>
+
+<pre>
+framework_repo
+      │
+      ▼
+Maven Reactor
+      │
+      ▼
+Compile
+      │
+      ▼
+Unit Test
+      │
+      ▼
+Package
+      │
+      ▼
+Deploy
+      │
+      ▼
+Maven Repository
+</pre>
+
+<p>
+完整 Build：
+</p>
+
+<pre>
+./mvnw clean deploy
+</pre>
+
+<p>
+局部 Build：
+</p>
+
+<pre>
+./mvnw clean deploy \
+  -pl :my-security-spring-boot \
+  -am
+</pre>
+
+
+<h2>10. Service Repo Pipeline</h2>
+
+<pre>
+service_repo
+     │
+     ▼
+Resolve Framework Dependency
+     │
+     ▼
+Compile
+     │
+     ▼
+Unit Test
+     │
+     ▼
+Package
+     │
+     ▼
+Spring Boot Jar
+     │
+     ▼
+Deploy
+</pre>
+
+
+<h2>11. Cross-Repo Orchestrator Pipeline</h2>
+
+<p>
+當同一張 Redmine Issue 同時修改 Framework 與 Service 時，
+由 Orchestrator 負責順序。
+</p>
+
+<pre>
+Redmine #12345
+        │
+        ▼
+Cross-Repo Orchestrator
+        │
+        ├─ framework_repo/issue/12345
+        │          │
+        │          ▼
+        │        Build
+        │          │
+        │          ▼
+        │   Publish Temporary Artifact
+        │
+        │          │
+        │          ▼
+        └─ service_repo/issue/12345
+                   │
+                   ▼
+             Resolve Artifact
+                   │
+                   ▼
+                 Build
+                   │
+                   ▼
+            Integration Test
+                   │
+                   ▼
+               Package Jar
+</pre>
+
+
+<h2>12. Issue 專用 Snapshot Version</h2>
+
+<p>
+跨 Repo 開發時，不建議直接發布正式版本。
+</p>
+
+<p>
+可採 Issue-specific Snapshot，例如：
+</p>
+
+<pre>
+1.5.1-issue.12345-SNAPSHOT
+</pre>
+
+<p>
+流程：
+</p>
+
+<pre>
+framework_repo/issue/12345
+        │
+        ▼
+1.5.1-issue.12345-SNAPSHOT
+        │
+        ▼
+Maven Repository
+        │
+        ▼
+service_repo/issue/12345
+        │
+        ▼
+Build / Integration Test
+</pre>
+
+<p>
+正式 Merge 後再發布：
+</p>
+
+<pre>
+1.5.1
+</pre>
+
+
+<h2>13. Service POM 不一定要 Commit Snapshot Version</h2>
+
+<p>
+Application POM 可以保持正式 baseline：
+</p>
+
+<pre>
+&lt;properties&gt;
+    &lt;my-framework.version&gt;1.5.0&lt;/my-framework.version&gt;
+&lt;/properties&gt;
+</pre>
+
+<p>
+Issue Build 時由 CI Override：
+</p>
+
+<pre>
+./mvnw clean package \
+  -Dmy-framework.version=1.5.1-issue.12345-SNAPSHOT
+</pre>
+
+<p>
+如此可以避免大量只有版本變更的暫時性 Commit。
+</p>
+
+
+<h2>14. 跨 Repo Merge 順序</h2>
+
+<p>
+如果 dependency direction 是：
+</p>
+
+<pre>
+framework_repo
+       ↓
+service_repo
+</pre>
+
+<p>
+則正式 Merge 順序建議：
+</p>
+
+<pre>
+1. Merge framework_repo
+        ↓
+2. Publish正式 Maven Artifact
+        ↓
+3. service_repo 切換正式 Framework Version
+        ↓
+4. Build / Test
+        ↓
+5. Merge service_repo
+</pre>
+
+<div class="warning">
+不建議讓 service_repo 先 Merge，
+否則 main branch 可能引用一個尚未發布的 Framework Version，
+造成正式分支 Build 失敗。
+</div>
+
+
+<h2>15. 建議最終架構</h2>
+
+<pre>
+                        Redmine
+                           │
+                      Issue #12345
+                           │
+                    Affected Repos
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+             ▼                           ▼
+      framework_repo                service_repo
+      issue/12345                   issue/12345
+             │                           │
+             ▼                           │
+        Maven Reactor                    │
+             │                           │
+             ▼                           │
+      Build / Unit Test                  │
+             │                           │
+             ▼                           │
+      Publish Snapshot                   │
+             │                           │
+             └──────────────┐            │
+                            ▼            ▼
+                       Maven Repository
+                            │
+                            ▼
+                     Service Build
+                            │
+                            ▼
+                    Integration Test
+                            │
+                            ▼
+                       Package Jar
+                            │
+                            ▼
+                         Deploy
+</pre>
+
+
+<h2>16. 各元件責任界線</h2>
+
+<table>
+    <thead>
+    <tr>
+        <th>元件</th>
+        <th>責任</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Directory</td>
+        <td>原始碼與職責分類</td>
+    </tr>
+    <tr>
+        <td>Root Aggregator POM</td>
+        <td>定義同一 Repo 的 Maven Reactor</td>
+    </tr>
+    <tr>
+        <td>Maven Dependency</td>
+        <td>定義 Module 之間的依賴關係</td>
+    </tr>
+    <tr>
+        <td>Maven Reactor</td>
+        <td>決定 Build Graph 與 Build Order</td>
+    </tr>
+    <tr>
+        <td>Maven Repository</td>
+        <td>處理跨 Repository Artifact Boundary</td>
+    </tr>
+    <tr>
+        <td>Redmine</td>
+        <td>定義需求與 Change ID</td>
+    </tr>
+    <tr>
+        <td>Git Branch</td>
+        <td>各 Repository 的實際 Change Set</td>
+    </tr>
+    <tr>
+        <td>Repo Pipeline</td>
+        <td>單一 Repository 的 Build/Test/Package</td>
+    </tr>
+    <tr>
+        <td>Cross-Repo Orchestrator</td>
+        <td>協調多 Repository 的 Build 與 Artifact 先後順序</td>
+    </tr>
+    <tr>
+        <td>Deployment Pipeline</td>
+        <td>環境部署、驗證與 Rollback</td>
+    </tr>
+    </tbody>
+</table>
+
+
+<h2>17. 最終建議摘要</h2>
+
+<ol>
+    <li>
+        同一個 Git Repository 內，建立一份主要 Root Aggregator POM，
+        統一宣告所有 Maven Modules。
+    </li>
+    <li>
+        CORE、SDK、MODULE、STARTER 保持為目錄與職責分類，
+        除非真的有獨立 Build Lifecycle，否則不必另外建立 Aggregator POM。
+    </li>
+    <li>
+        不建議使用 Maven Profile 模擬 CORE / SDK / MODULE / STARTER 的 dependency graph。
+    </li>
+    <li>
+        同 Repo 的 dependency/build order 應交給 Maven Reactor 處理。
+    </li>
+    <li>
+        CI/CD 只需負責找出 Changed Module，
+        再搭配 <code>-pl</code> / <code>-am</code>。
+    </li>
+    <li>
+        跨 Repository 的依賴透過 Maven Repository 與 Artifact Version 管理。
+    </li>
+    <li>
+        一張 Redmine Issue 可以同時修改多個 Repository。
+    </li>
+    <li>
+        各 Repository 各自有 Branch / PR / CI，
+        但使用同一 Issue ID 串聯。
+    </li>
+    <li>
+        跨 Repo 的 Build 順序交由 Orchestrator Pipeline 協調。
+    </li>
+    <li>
+        跨 Repo Issue 測試可使用 Issue-specific Snapshot Version。
+    </li>
+    <li>
+        正式 Merge 時應遵守 Dependency First：
+        Framework 先發布，Service 再切正式 Version 並 Merge。
+    </li>
+</ol>
+
+
+<h2>18. 一句話總結</h2>
+
+<div class="recommend">
+<strong>
+同 Repo 的依賴關係交給 Maven Reactor，
+跨 Repo 的依賴關係交給 Maven Repository，
+需求關聯交給 Redmine，
+跨 Repo 的先後順序交給 CI/CD Orchestrator。
+</strong>
+</div>
+
+</body>
+</html>

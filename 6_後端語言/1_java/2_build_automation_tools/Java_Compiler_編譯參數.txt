@@ -12,7 +12,7 @@
 		沒有 -parameters：
 			arg0
 			arg1
-	
+
 	為什麼 Spring Boot 需要它？
 		Spring Framework 6 / Spring Boot 3 很多地方都會利用參數名稱，例如：
 			1. Constructor Injection
@@ -43,7 +43,7 @@
 				沒有寫：
 					@RequestParam("keyword")
 				也是依靠 -parameters。
-			
+
 			4. @ConfigurationProperties
 				public record DatabaseProperties(
 					String url,
@@ -56,11 +56,11 @@
 	./gradlew compileJava --debug
 		通常可以看到：
 			-parameters
-	
+
 	mvn clean compile -X
 		觀察 maven-compiler-plugin 的輸出，若看到：
 			-parameters
-	
+
 若為
 	gradle project
 		從 Spring Boot 3.x 開始，只要使用
@@ -73,8 +73,8 @@
 			tasks.withType<JavaCompile> {
 				options.compilerArgs.add("-parameters")
 			}
-	
-	
+
+
 	maven project
 		情況一：Spring Boot 3.x + spring-boot-starter-parent（建議）
 			如果你的 pom.xml 是：
@@ -86,7 +86,7 @@
 				通常不需要自己設定 -parameters
 				Spring Boot Parent 已經幫你設定好 maven-compiler-plugin，其中包含：
 					<parameters>true</parameters>
-		
+
 		情況二：沒有使用 Spring Boot Parent
 			<dependencyManagement>
 				<dependencies>
