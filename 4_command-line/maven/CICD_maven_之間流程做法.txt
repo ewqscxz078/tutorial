@@ -172,28 +172,28 @@ CICD Pipeline 分成三層
 最重要的是：跨 repo 測試版本怎麼處理
 	假設正式版本是：
 		my-security-spring-boot-starter:1.5.0
-	
+
 	Redmine #12345 修改 framework。
 		你不能還沒 merge 正式版就直接發布：
 			1.5.1
 		然後 production artifact repository 被一堆測試版本污染。
 		我會考慮 issue build version，例如：
 			1.5.1-12345-SNAPSHOT、1.5.1-issue.12345-SNAPSHOT
-		
+
 		dependency pipeline：
 			dependency_repo/issue/12345
 					↓
 			1.5.1-issue.12345-SNAPSHOT
 					↓
 			Maven Repository
-		
+
 		jar repo issue branch：
 			xxx_service/issue/12345
 					↓
 			my-framework.version
 					↓
 			1.5.1-issue.12345-SNAPSHOT
-	
+
 	所以整個測試環境是：
 		dependency issue branch
 				│
@@ -205,16 +205,16 @@ CICD Pipeline 分成三層
 				│
 				▼
 		integration build
-		
+
 		=>
 			正式 merge 後才變：
 				1.5.1
-			
+
 			application 再正式切到：
 				1.5.1
 
 	這樣 lifecycle 會比較乾淨。
-	
+
 	甚至 application POM 不一定要真的改版本
 		如果你不希望為了 CI 測試，在 framework_repo commit：
 			<my-framework.version>1.5.1-issue.12345-SNAPSHOT</my-framework.version>
@@ -222,11 +222,11 @@ CICD Pipeline 分成三層
 			<properties>
 				<my-framework.version>1.5.0</my-framework.version>
 			</properties>
-		
+
 		CI：
 			./mvnw clean package \
 			  -Dmy-framework.version=1.5.1-issue.12345-SNAPSHOT
-		
+
 		這樣：
 			Git POM
 				↓
@@ -241,7 +241,7 @@ CICD Pipeline 分成三層
 			commit A: 1.5.0 → 1.5.1-SNAPSHOT
 			commit B: feature
 			commit C: 1.5.1-SNAPSHOT → 1.5.1
-		
+
 		CI 能處理的東西，不一定要污染 source code。
 
 CI orchestration 可以長這樣

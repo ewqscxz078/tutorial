@@ -1,0 +1,275 @@
+ref ChatGPT
+
+Q1:
+	使用 AI 目前感受最大的瓶頸在于團隊合作時，有人會用 openai 、有人會用claude code、有人會用google gemini 、有人會用 copilot
+	含有對應不同使用的互動方式(web、桌機cli、桌機ui)，太多種類型，不方便團隊整合合作
+
+A1:
+	真正需要統一的不是 AI 品牌，而是「AI 怎麼參與軟體工程流程」。
+
+		OpenAI、Claude Code、Gemini、Copilot 未來一定還會持續變動。如果團隊規範寫成「大家統一用某一套 AI」，很容易幾個月後又得重來。
+
+		比較好的方向是建立一層 AI Engineering Interface / AI Development Convention。
+
+		可以把它想成：
+						   ┌─ OpenAI / Codex
+						   ├─ Claude Code
+			工程師 ────────┼─ Gemini
+						   ├─ GitHub Copilot
+						   └─ 未來其他 Coding Agent
+								 │
+								 ▼
+					┌──────────────────────────┐
+					│ 團隊共同 AI Engineering  │
+					│       Convention         │
+					├──────────────────────────┤
+					│ AGENTS.md / 指令規範     │
+					│ coding standards         │
+					│ architecture rules       │
+					│ build / test commands    │
+					│ security rules           │
+					│ review rules             │
+					└────────────┬─────────────┘
+								 │
+								 ▼
+						   Git Repository
+								 │
+						feature / AI branch
+								 │
+						  Build / Test
+								 │
+						   AI Review
+								 │
+							  PR/MR
+								 │
+						   Human Review
+
+
+	第一層：不要統一 AI，先統一 Git 產出
+		例如團隊規定：
+			不管你使用：
+				Codex
+				Claude Code
+				Gemini
+				Copilot
+				IDE Agent
+				CLI Agent
+
+			最後都必須：
+				需求/Issue
+				   ↓
+				建立 branch / worktree
+				   ↓
+				AI 修改
+				   ↓
+				compile
+				   ↓
+				test
+				   ↓
+				static analysis
+				   ↓
+				git diff
+				   ↓
+				AI review
+				   ↓
+				產生修改摘要
+				   ↓
+				PR/MR
+				   ↓
+				人工 Review
+
+			這樣工程師 A 用 Claude Code，工程師 B 用 Codex，其實沒那麼重要。
+
+			Git + CI/CD + PR/MR 才是團隊共同協定。
+
+	第二層：把「Prompt」從聊天內容變成 Repository 資產
+		這個很重要。
+
+		現在最容易出現：
+			工程師 A：
+			「我跟 Claude 說要這樣寫」
+
+			工程師 B：
+			「可是我跟 ChatGPT 討論結果不一樣」
+
+			工程師 C：
+			「Copilot 自己幫我改成另外一種」
+
+		最後根本不知道誰的 AI 被餵了什麼規則。
+
+		比較成熟的做法是把規則放回 Git：
+			project/
+			├── README.md
+			├── AGENTS.md
+			├── docs/
+			│   ├── architecture.md
+			│   ├── coding-standard.md
+			│   ├── security-standard.md
+			│   └── testing-standard.md
+			├── ai/
+			│   ├── review.md
+			│   ├── refactor.md
+			│   └── migration.md
+			└── src/
+
+		例如 AGENTS.md：
+			# Project Instructions
+
+			## Java
+				- Java 21
+				- Spring Boot 3.5.x
+				- Constructor injection only
+				- 禁止 field injection
+
+			## Architecture
+				Controller
+				↓
+				Service
+				↓
+				Repository
+
+				Controller 不得直接呼叫 Repository。
+
+			## Exception
+				所有 REST exception 必須經由
+				@RestControllerAdvice 統一處理。
+
+			## Testing
+				修改完成後必須執行：
+
+				./mvnw clean verify
+
+			## Security
+				不得：
+				- hardcode password
+				- hardcode token
+				- log access token
+				- log personal information
+
+			## Completion
+				完成任務前必須：
+					1. build
+					2. test
+					3. review git diff
+					4. 列出修改檔案
+					5. 說明風險
+
+		不同 AI 對共同規範檔案的原生支援程度會不同，因此必要時可以另外維護很薄的 vendor adapter；但真正的規則來源只有一份。
+
+					  Team AI Rules
+						   │
+					   AGENTS.md
+						   │
+			  ┌────────────┼────────────┐
+			  ▼            ▼            ▼
+		   Codex       Claude Code    Gemini
+			  │            │            │
+			  └────────────┼────────────┘
+						   ▼
+						  Git
+
+			這其實很像你熟悉的 Java interface。
+
+			不是要求：
+				ClaudeCodeService
+				CodexService
+				GeminiService
+
+			每個實作都自己決定規格。
+
+			而是先定義：
+				interface CodingAgent {
+					implement();
+					build();
+					test();
+					review();
+					report();
+				}
+
+				誰來實作可以替換。
+
+	第三層：再統一「AI 可執行的標準命令」
+		這一層我甚至認為比 Prompt 更重要。
+
+		例如所有專案規定：
+			./mvnw clean verify
+
+			是 Java 驗證入口。
+
+		或者進一步包成：
+			scripts/
+			├── ai-build.sh
+			├── ai-test.sh
+			├── ai-lint.sh
+			├── ai-review.sh
+			└── ai-verify.sh
+
+		AI 不需要理解公司 Jenkins/Azure DevOps 裡面一大堆特殊細節。
+
+			只告訴 Agent：
+				完成修改後執行：
+
+				./scripts/ai-verify.sh
+
+			而 ai-verify.sh 裡面由團隊維護：
+				compile
+				   ↓
+				unit test
+				   ↓
+				integration test
+				   ↓
+				checkstyle
+				   ↓
+				dependency scan
+				   ↓
+				其他公司規範
+
+		這就開始形成真正的 Agent-friendly Repository。
+
+
+	第四層：建立統一 AI Review Output
+		例如不論用哪個 AI，都要求最後交付：
+			## Change Summary
+				修改：
+					- UserService.java
+					- UserRepository.java
+
+				目的：
+					修正 transaction boundary。
+
+			## Verification
+				Build: PASS
+				Unit Test: PASS
+				Integration Test: PASS
+
+			## Risk
+				Medium
+				原因：
+					修改 transaction propagation。
+
+			## AI Review
+				Critical: 0
+				High: 0
+				Medium: 1
+				Low: 2
+
+			## Human Review Required
+				- Transaction boundary
+				- rollback behavior
+
+		這樣你作為 reviewer 根本不用在意：
+
+			「這份程式是 Claude 寫的還是 Codex 寫的？」
+
+		你看到的是標準化工程結果。
+
+
+	第五層：最後才考慮 MCP / AI Gateway / Workflow
+
+		很多人一開始會想到：
+
+			那是不是弄一個公司 AI 平台，把 OpenAI、Claude、Gemini 全包起來？
+
+		可以，但我不建議第一步就做這麼重。
+
+		你可以把成熟度想成：
