@@ -92,6 +92,13 @@ https://reflectoring.io/spring-boot-conditionals/
 				// Caused by: java.lang.ArrayStroreException: sun.reflect.annotation.TypeNotPresentExceptionProxy 問題
 				// ref https://blog.csdn.net/kingwinstar/article/details/132979588
 				@ConditionalOnClass(name = { "xxx.yyy.className" })
+			
+			方針
+				一定存在的 dependency
+					@ConditionalOnClass(Xxx.class)
+
+				optional / consumer 不一定存在的 dependency
+					@ConditionalOnClass(name = "完整 package.Xxx")
 
 		2.@ConditionalOnMissingClass
 			通常會宣告在其 XXXXAutoConfiguration 限制哪些類別有不存在 classpath 才生效其配置

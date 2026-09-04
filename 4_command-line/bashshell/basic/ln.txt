@@ -1,0 +1,133 @@
+Linux / Unix 用來建立「連結（link）」的指令
+理解成：
+	讓另一個路徑指向同一份檔案或目錄，常用在
+		* 共用設定
+		* 版本切換 
+		* Git hooks
+		* 部署目錄
+	等情境
+
+===================================================================
+========================= 常用方式 =================================
+===================================================================
+
+1. ln -s：Symbolic Link，最常用 // 符號連結 / 軟連結
+	ln -s <來源> <連結名稱>
+	
+	之後：
+		/opt/myapp/current/application.yml
+				↓
+		/opt/myapp/config/application.yml
+	
+	可以用：
+		ls -l /opt/myapp/current/application.yml
+		看到類似：
+			application.yml -> /opt/myapp/config/application.yml
+
+2. ln：Hard Link // 硬連結
+	ln <來源> <連結名稱>
+	這時：
+		file-a.txt ─┐
+					├─ 同一個 inode / 同一份實際資料
+		file-b.txt ─┘
+		
+		兩個名稱其實指向同一份檔案資料。
+
+		可以這樣觀察：
+			ls -li file-a.txt file-b.txt
+		例如：
+			123456 -rw-r--r-- 2 user user 100 Sep 4 13:30 file-a.txt
+			123456 -rw-r--r-- 2 user user 100 Sep 4 13:30 file-b.txt
+
+	前面的 inode 123456 相同。
+
+	Hard Link 有比較多限制，例如通常不能跨 filesystem，也不適合拿來連結目錄，所以實務上你看到 ln 的使用情境，ln -s 通常更多。
+
+
+3. 常用參數
+	寫 Bash Script 時比較常碰到：
+		ln -s SOURCE LINK
+	
+	建立 symbolic link。
+		ln -sf SOURCE LINK
+		
+		-f = force，如果目標已存在就強制處理。
+	
+	不過 Script 中我更建議：
+		ln -sfn SOURCE LINK
+
+		其中：
+			-s：symbolic link
+			-f：強制覆蓋既有 link
+			-n：如果目的地本身是指向目錄的 symlink，不要把它當成真正目錄處理
+		
+		例如部署：
+			ln -sfn /opt/myapp/releases/20260904 /opt/myapp/current
+		
+		形成：
+			/opt/myapp/current
+				↓
+			/opt/myapp/releases/20260904
+		
+		下一版部署：
+			ln -sfn /opt/myapp/releases/20260905 /opt/myapp/current
+		
+		就可以把：
+			current -> releases/20260904
+		切換成：
+			current -> releases/20260905
+		
+		這是 ln 在部署 Script 很典型的用途。
+
+4. 來源可以使用絕對路徑或相對路徑
+	例如：
+		ln -s /opt/shared/config.yml config.yml
+	
+	這是絕對路徑：
+		config.yml -> /opt/shared/config.yml
+	
+	也可以：
+		ln -s ../shared/config.yml config.yml
+	變成：
+		config.yml -> ../shared/config.yml
+
+	要特別注意：symlink 的相對路徑是相對於「link 所在目錄」解析，不是相對於你執行 ln 時所在的目錄。
+
+	這是 Bash Script 裡很容易踩到的地方。
+
+5. 怎麼確認 Link？
+	最基本：
+		ls -l
+	
+	例如：
+		hooks -> /opt/git-common/hooks
+	
+		如果想知道最終實際指到哪裡：
+			readlink hooks
+		或：
+			readlink -f hooks
+	
+	例如：
+		$ readlink hooks
+		/opt/git-common/hooks
+
+		$ readlink -f hooks
+		/opt/git-common/hooks
+
+6. 刪除 symbolic link
+	假設：
+		hooks -> /opt/git-common/hooks
+
+		只想刪除 link：
+			rm hooks
+		或：
+			unlink hooks
+	
+	不會刪掉 /opt/git-common/hooks 真正的內容。
+		例如：
+			rm hooks
+		只是：
+			hooks -> /opt/git-common/hooks
+			^^^^^
+			刪這個
+		來源仍存在。

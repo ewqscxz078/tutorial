@@ -129,6 +129,8 @@ worktree 後
 ==========================================================================================
 ========================================= 操作 ===========================================
 ==========================================================================================
+建議 
+	* worktree 目錄名稱直接帶出「repo + branch 用途」，看到目錄就知道它對應哪個分支。
 
 1. 查看目前有哪些 Worktree（最常用）
 	git worktree list
@@ -149,11 +151,11 @@ worktree 後
 		my-repo/
 			目前在 main
 
-	建立新的 feature：
+	僅建立新的 Worktree 在既有分支上：(不建立分支)
 		git worktree add ../my-repo-feature feature/login
 		如果： feature/login 不存在，Git 會提示錯誤。
 
-	建立新 Branch 並建立 Worktree（推薦）
+	建立新 Worktree 並建立 Branch（推薦）
 		通常比較常用：
 			git worktree add -b feature/login ../my-repo-feature
 

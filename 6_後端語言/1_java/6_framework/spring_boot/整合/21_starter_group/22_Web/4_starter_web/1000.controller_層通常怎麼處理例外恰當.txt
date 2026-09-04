@@ -97,3 +97,37 @@ controller 層通常怎麼處理例外恰當
 		* 若是純頁面導向：
 			* 用 @ControllerAdvice + @ExceptionHandler 回傳 ModelAndView 指向錯誤頁
 			* 或使用既有 /error + error page mapping（但你通常仍會想控管顯示內容）
+
+@RestControllerAdvice 
+	* 主要在處理 : Spring MVC Controller 層對外的 HTTP Response，尤其常用來做 REST API 的全域例外回應處理。
+	* 集中處理 Spring MVC Controller request 執行過程中，沒有被其他地方處理掉的 Exception，並決定最後 HTTP Response 怎麼回。
+	* 但有些錯誤不是它的責任
+		Request
+		 ↓
+		Servlet Filter
+		 ↓   ← 這裡就 throw Exception
+		Controller 根本還沒執行
+	* 主要是在 DispatcherServlet / Spring MVC 這一側。
+	* Spring Security 則要自己管理錯誤處理
+	* 通常可以涵蓋：
+		@ExceptionHandler(MethodArgumentNotValidException.class) // validation
+
+		@ExceptionHandler(HttpMessageNotReadableException.class) // JSON/request body
+
+		@ExceptionHandler(BusinessException.class)               // 業務例外
+
+		@ExceptionHandler(Exception.class)                       // 最終 fallback
+
+
+那是不是所有 Spring Exception 都要客製？
+	=> 只有「需要改變對外 API response contract」的才特別處理。
+
+		| Exception                                 | HTTP  | Starter 是否值得統一 |
+		| ----------------------------------------- | ----  | ------------------ |
+		| `HttpRequestMethodNotSupportedException`  |  405  | ✅ 建議            |
+		| `HttpMediaTypeNotSupportedException`      |  415  | ✅ 建議            |
+		| `MethodArgumentNotValidException`         |  400  | ✅ 很建議           |
+		| `HttpMessageNotReadableException`         |  400  | ✅ 很建議           |
+		| `MissingServletRequestParameterException` |  400  | ✅ 建議            |
+		| 各種內部 Spring implementation exception   |  不一定 | ❌ 不用全部處理     |
+		| `Exception`                               |  500  | ✅ 最後 fallback   |

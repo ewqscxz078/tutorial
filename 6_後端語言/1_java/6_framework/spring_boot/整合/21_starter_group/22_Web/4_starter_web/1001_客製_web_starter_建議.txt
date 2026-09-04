@@ -1,0 +1,225 @@
+建議 Web Starter 預設處理範圍
+	| Exception                                     | 典型情境                       | HTTP Status | Starter 建議    | 說明                     |
+	| --------------------------------------------- | ----------------------------- | ----------- | -------------- | ---------------------- |
+	| `MethodArgumentNotValidException`             | `@Valid @RequestBody` 驗證失敗 |         400 | ✅ 強烈建議      | 統一 validation error 格式 |		內建
+	| `HandlerMethodValidationException`            | Controller method 參數驗證失敗  |         400 | ✅ 強烈建議     | Spring 6.1+ 特別值得納入     |		內建
+	| `MissingServletRequestParameterException`     | 缺少 `@RequestParam`           |         400 | ✅             | 可回缺哪個 parameter        |		內建
+	| `MissingRequestHeaderException`               | 缺少必要 Header                |         400 | ✅             | 很適合統一格式                |		內建
+	| `ServletRequestBindingException`              | Request binding 失敗           |         400 | ✅             | 通用 request error       |			內建
+	| `HttpMessageNotReadableException`             | JSON 格式錯誤、型別無法轉換       |         400 | ✅ 強烈建議      | REST API 很常見           |			內建
+	| `HttpRequestMethodNotSupportedException`      | GET 打到只支援 POST 的 API      |         405 | ✅             | **務必保留 405**           |		內建
+	| `HttpMediaTypeNotSupportedException`          | Content-Type 不支援            |         415 | ✅             | 例如送 XML，但只接受 JSON      |		內建
+	| `HttpMediaTypeNotAcceptableException`         | Accept 不支援                  |         406 | ✅             | Content negotiation    |			內建
+	| `NoHandlerFoundException` / 相關 404 exception | URL 找不到 Controller          |         404 | ⚠️ 視 Boot 設定 | 404 流程要另外注意            |		內建
+	| `HttpMessageNotWritableException`             | Response serialization 失敗    |         500 | ✅             | 屬服務端問題                 |		內建
+	| `Exception`                                   | 其他未知異常                    |         500 | ✅ 必須         | 最後一道 fallback          |		需自行定義
+
+
+客製 web starter 推薦主要情境
+	1. Spring 已知 Web Exception
+	   → 保留 Spring 正確 HTTP Status
+			* 第一優先：Request 輸入問題 → 400
+			* 第二優先：HTTP Protocol / Mapping 問題
+			* 第三優先：缺 Request Parameter / Header
+			* 500 類別要特別小心
+
+	2. Starter 只統一 Response Body
+	   → 不任意改變 HTTP semantics
+
+	3. 專案 Business Exception
+	   → 專案自行定義，不進 Web Starter
+
+	4. Security 401 / 403
+	   → Security Starter 處理
+
+	5. Exception.class
+	   → 永遠是最後 fallback，回 500
+
+其中第 1、2 點最重要。
+
+哪些我反而「不建議」放 Web Starter
+	* Security Exception
+		例如:
+			AuthenticationException
+			AccessDeniedException
+			BadCredentialsException
+
+		Spring Security Filter Chain
+				↓
+		AuthenticationEntryPoint
+				→ 401
+
+		AccessDeniedHandler
+				→ 403
+		
+		責任放：
+			my-security-spring-boot-starter
+	
+	* Domain / Business Exception
+		例如:
+			Wso2Exception
+			ExproxyException
+			ExchangeException
+
+
+
+推薦 Starter 最後分成三層
+                    HTTP Request
+                         │
+                         ▼
+              Spring Security Filter
+                         │
+                401 / 403│
+                         ▼
+                 DispatcherServlet
+                         │
+                         ▼
+                    Controller
+                         │
+                         ▼
+                    Service
+                         │
+                     Exception
+                         │
+                         ▼
+        ┌─────────────────────────────────┐
+        │ DefaultRestExceptionHandler     │
+        │ @RestControllerAdvice           │
+        │ extends                         │
+        │ ResponseEntityExceptionHandler  │
+        └─────────────────────────────────┘
+                         │
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+       Spring MVC      Business     Unknown
+       Exception       Exception    Exception
+            │            │            │
+       400/405/...    project       500
+                      handler
+
+	Layer 1：Spring MVC
+		Starter 負責：
+			400 validation
+			400 request body
+			400 missing parameter/header
+			405 method
+			406 accept
+			415 content-type
+			500 response serialization
+			...
+	
+	Layer 2：業務 Exception
+		各專案自己負責：
+			UserNotFoundException
+			ExchangeException
+			ExproxyException
+			Wso2Exception
+			...
+	
+	Layer 3：未知 Exception
+		Starter：
+			@ExceptionHandler(Exception.class)
+			
+			統一：
+				500
+	
+	推薦這個骨架
+		不過我建議繼承 ResponseEntityExceptionHandler 不要 override 十幾個 method
+		第一版 starter 我大概只客製：
+			① MethodArgumentNotValidException
+			② HandlerMethodValidationException
+			③ HttpMessageNotReadableException
+			④ MissingServletRequestParameterException
+			⑤ MissingRequestHeaderException
+			⑥ HttpRequestMethodNotSupportedException
+			⑦ Exception.class
+		
+		其他像：
+			406
+			415
+			HttpMessageNotWritableException
+			...
+		可以先讓：
+			ResponseEntityExceptionHandler
+			照 Spring 原本邏輯處理。
+			=> 等真的有「我們需要統一 code」的需求，再 override。
+		
+		不要以「Exception 數量」設計 Starter，而是以「API contract 是否需要客製」來決定。
+		
+		@RestControllerAdvice
+		public class DefaultRestExceptionHandler
+				extends ResponseEntityExceptionHandler {
+
+			@Override
+			protected ResponseEntity<Object> handleMethodArgumentNotValid(
+					MethodArgumentNotValidException ex,
+					HttpHeaders headers,
+					HttpStatusCode status,
+					WebRequest request) {
+
+				// 統一 validation response
+				...
+			}
+
+			@Override
+			protected ResponseEntity<Object> handleHttpMessageNotReadable(
+					HttpMessageNotReadableException ex,
+					HttpHeaders headers,
+					HttpStatusCode status,
+					WebRequest request) {
+
+				// 統一 malformed JSON response
+				...
+			}
+
+			@Override
+			protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
+					HttpRequestMethodNotSupportedException ex,
+					HttpHeaders headers,
+					HttpStatusCode status,
+					WebRequest request) {
+
+				// 保留 status = 405
+				...
+			}
+
+			@ExceptionHandler(Exception.class)
+			public ResponseEntity<ApiErrorResponse> handleUnknownException(
+					Exception ex) {
+
+				log.error("Unhandled exception", ex);
+
+				return ResponseEntity
+						.status(HttpStatus.INTERNAL_SERVER_ERROR)
+						.body(
+							new ApiErrorResponse(
+								"INTERNAL_SERVER_ERROR",
+								"系統發生異常"
+							)
+						);
+			}
+		}
+
+
+
+結論
+	my-web-spring-boot-starter
+
+			│
+			├─ DefaultRestExceptionHandler
+			│    @RestControllerAdvice
+			│
+			│    Controller exception
+			│    validation
+			│    Spring MVC exception
+			│    generic 500 fallback
+			│
+			└─ DefaultWebErrorAttributes
+				 │
+				 └─ Spring Boot /error fallback
+
+	@RestControllerAdvice
+		+
+	DefaultErrorAttributes customization
+		+
+	必要時才提供 Custom ErrorController

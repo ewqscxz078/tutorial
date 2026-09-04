@@ -10,6 +10,11 @@ https://www.baeldung.com/spring-boot-custom-starter
 	@Configuration 		// 指定這個類是一個配置類
 	@ConditionalOnXXX 	// 在指定條件成立的情況下自動配置類生效
 	@AutoConfigureAfter // 指定自動配置類的順序
+		一般性原則
+			如果自訂設定是「建立 Spring Boot 原生 AutoConfiguration 會使用的東西」→ 通常要 before。
+
+			如果自訂設定是「建立在 Spring Boot 已經完成的基礎設施上，再追加、修改、包裝」→ 通常要 after。
+
 	@Bean 				// 給容器中增加組件
 
 	@ConfigurationProperties // 結合相關 xxxProperties 類來綁定相關的配置
