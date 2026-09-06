@@ -11,7 +11,7 @@
 	當前專案 local
 		git config user.name "Your Name"
 		git config user.email "your-local-project@example.com"
-	
+
 列舉設定
 	git config --list
 

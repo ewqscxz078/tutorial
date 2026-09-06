@@ -109,7 +109,7 @@ https://stackoverflow.com/questions/56867629/how-to-read-file-content-from-git-o
 	git cat-file -p <object name>
 	git ls-tree
 	git ls-files -s
-	
+
 1.確認檔案目前是否已被 Git 追蹤
 	git ls-files -- path/to/file
 		// 若有回應代表有被上到 git 上的紀錄

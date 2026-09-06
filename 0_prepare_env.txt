@@ -1,19 +1,33 @@
-once
+常用工具與設定
+
+once(一次性)
 	1.download tools
 		notepad++
 			https://notepad-plus-plus.org/downloads/
-		jdk
-			https://adoptopenjdk.net/
-		git
-			https://git-scm.com/downloads
-				注意換行設定
-		maven
-			https://maven.apache.org/
-		eclipse
-			https://www.eclipse.org/downloads/
-				Home / Downloads / Packages / Release / Eclipse IDE 2022-06 R
-					Eclipse IDE for Enterprise Java and Web Developers / Windows x86_64
-					// 下載後建議使用 最新的 7zip 解壓縮，已知使用 7zip 22版 以下會有解壓縮超久問題
+
+		開發相關
+			java
+				jdk
+					https://adoptopenjdk.net/
+			CI
+				git
+					https://git-scm.com/downloads
+						注意換行設定
+						windows 路徑預設過長限制取消
+				gradle
+					https://gradle.org/
+				maven
+					https://maven.apache.org/
+			IDE
+				eclipse for java
+					https://www.eclipse.org/downloads/
+						Home / Downloads / Packages / Release / Eclipse IDE 2022-06 R
+							Eclipse IDE for Enterprise Java and Web Developers / Windows x86_64
+							// 下載後建議使用 最新的 7zip 解壓縮，已知使用 7zip 22版 以下會有解壓縮超久問題
+				vscode for 前端 vue
+
+			ai
+				chatgpt codex
 
 		options
 			xmind : 繪製心智圖工具
@@ -21,82 +35,57 @@ once
 			AP server
 				tomcat
 					https://tomcat.apache.org/
-			db
+			db client
+				dbeaver
+				SQuirreL SQL Client
+			rest
+				Postman
+	2.設定
+		1.java home setting
+			新增環境變數
+				set JAVA_HOME=${你的位置}
+			Path 新增路徑
+				export PATH=%JAVA_HOME%\bin:$PATH
+			git bash
+				java -version
+		2.gradle home setting :	for cli
+		3.maven home setting : for cli
+			新增環境變數
+				set MAVEN_HOME=${你的位置}
+			Path 新增路徑
+				export PATH=%MAVEN_HOME%\bin:$PATH
+			git bash
+				mvn -version
 
-	2.java home setting
-		新增環境變數
-			set JAVA_HOME=${你的位置}
-		Path 新增路徑
-			export PATH=%JAVA_HOME%\bin:$PATH
-		git bash
-			java -version
-	3.maven home setting
-		新增環境變數
-			set MAVEN_HOME=${你的位置}
-		Path 新增路徑
-			export PATH=%MAVEN_HOME%\bin:$PATH
-		git bash
-			mvn -version
-	4.eclipse 設定
-		執行連結增加
-			-data ${eclipse_home}\eclipse-workspace
+		4.eclipse 設定
+			執行連結增加
+				-data ${eclipse_home}\eclipse-workspace
 
-		window / Preferences
-			workspace
-				text file encoding
-					UTF-8
-				new text file line delimiter
-					unix
-			java
-				Installed JREs
-					add 開發用的 jdk 位置，預設的eclipse jdk 會有點差別(if want)
-			maven
-				User Settings
-					User Settings 指定自己用的 maven settings(if want)
-			General
-				Appearance
-					Colors and Fonts
-						Basic / Text Font / Edit
-							10 -> 12
-			java/
-				Code syle
-					clean up
-						new / 命名 : my-ccd
-							Code Organizing
-								Formatter
-									Format source code 勾選
+			window / Preferences
+				workspace
+					text file encoding
+						UTF-8
+					new text file line delimiter
+						unix
+				java
+					Installed JREs
+						add 開發用的 jdk 位置，預設的eclipse jdk 會有點差別(if want)
+				maven
+					User Settings
+						User Settings 指定自己用的 maven settings(if want)
+				General
+					Appearance
+						Colors and Fonts
+							Basic / Text Font / Edit
+								10 -> 12
+				java/
+					Code syle
+						clean up
+							new / 命名 : my-ccd
+								Code Organizing
+									Formatter
+										Format source code 勾選
 
-							Code Style
-								Control statments
-									Use blocks in if/while/for/do statements
-										Always
-								Variable declarations
-									Use modifier 'final' where possible
-										Private fields 、 Parameter、 Local variables 皆勾選
-							Member Access
-								Non static access
-									Use 'this' qualifier for field access
-										Always
-									Use 'this' qualifier for method access
-										Always
-					Formatter(Editor)
-						new / 命名 : my-ccd
-							Comments
-								Maxinum width for comments : 80-> 150  #設定一行多久自換行
-								Format line comments on first column 勾選
-								Enable header comment formatting 勾選
-
-
-				Editor
-					save actions
-						Perform the selected actions on save
-							勾選
-						Format source code
-							勾選
-						Organize imports
-							取消勾選，為了單元測試可以 import static *
-						Additional actions
-							勾選
 								Code Style
 									Control statments
 										Use blocks in if/while/for/do statements
@@ -110,28 +99,59 @@ once
 											Always
 										Use 'this' qualifier for method access
 											Always
+						Formatter(Editor)
+							new / 命名 : my-ccd
+								Comments
+									Maxinum width for comments : 80-> 150  #設定一行多久自換行
+									Format line comments on first column 勾選
+									Enable header comment formatting 勾選
 
-		Project
-			Build Automatically
-				cancel
-		Help[options]
-			Eclipse Marketplace
-				in Find input text type spring boot
-					install Spring Tools 4   // Spring Tools (aka Spring Tool Suite) X.X.X RELEASE
-						1.提供 application.properties 輔助資訊
-						2.Spring Initailizr tool
-						3.執行 spring boot 啟動輔助
-			安裝後確認匯入專案且為spring boot 專案
-				對其 main 右鍵 run as
-					應該會有 spring boot app 選項
-	5. 常用語法 alias
-		alias grep="grep --color=always" >> ~/.bashrc
-		alias now='date "+%Y-%m-%d %H:%M:%S.%s"' >> ~/.bashrc
-		alias npp="${你的 notepadd ++ 路徑}" >> ~/.bashrc
-		// alias jq="${你的 jq 路徑}" >> ~/.bashrc ，裝在 C:\Program Files\Git\usr\bin 下即可不用 alias
 
-		重啟置入 alias
-			重新開啟終端機或 source ~/.bashrc
+					Editor
+						save actions
+							Perform the selected actions on save
+								勾選
+							Format source code
+								勾選
+							Organize imports
+								取消勾選，為了單元測試可以 import static *
+							Additional actions
+								勾選
+									Code Style
+										Control statments
+											Use blocks in if/while/for/do statements
+												Always
+										Variable declarations
+											Use modifier 'final' where possible
+												Private fields 、 Parameter、 Local variables 皆勾選
+									Member Access
+										Non static access
+											Use 'this' qualifier for field access
+												Always
+											Use 'this' qualifier for method access
+												Always
+
+			Project
+				Build Automatically
+					cancel
+			Help[options]
+				Eclipse Marketplace
+					in Find input text type spring boot
+						install Spring Tools 4   // Spring Tools (aka Spring Tool Suite) X.X.X RELEASE
+							1.提供 application.properties 輔助資訊
+							2.Spring Initailizr tool
+							3.執行 spring boot 啟動輔助
+				安裝後確認匯入專案且為spring boot 專案
+					對其 main 右鍵 run as
+						應該會有 spring boot app 選項
+		5. 常用語法 alias
+			alias grep="grep --color=always" >> ~/.bashrc
+			alias now='date "+%Y-%m-%d %H:%M:%S.%s"' >> ~/.bashrc
+			alias npp="${你的 notepadd ++ 路徑}" >> ~/.bashrc
+			// alias jq="${你的 jq 路徑}" >> ~/.bashrc ，裝在 C:\Program Files\Git\usr\bin 下即可不用 alias
+
+			重啟置入 alias
+				重新開啟終端機或 source ~/.bashrc
 
 	6. window intall jq
 		https://stackoverflow.com/questions/53967693/how-to-run-jq-from-gitbash-in-windows

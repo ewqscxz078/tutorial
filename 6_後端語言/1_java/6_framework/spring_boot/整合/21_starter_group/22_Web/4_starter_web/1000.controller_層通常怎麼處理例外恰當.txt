@@ -98,7 +98,7 @@ controller 層通常怎麼處理例外恰當
 			* 用 @ControllerAdvice + @ExceptionHandler 回傳 ModelAndView 指向錯誤頁
 			* 或使用既有 /error + error page mapping（但你通常仍會想控管顯示內容）
 
-@RestControllerAdvice 
+@RestControllerAdvice
 	* 主要在處理 : Spring MVC Controller 層對外的 HTTP Response，尤其常用來做 REST API 的全域例外回應處理。
 	* 集中處理 Spring MVC Controller request 執行過程中，沒有被其他地方處理掉的 Exception，並決定最後 HTTP Response 怎麼回。
 	* 但有些錯誤不是它的責任

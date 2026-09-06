@@ -2,7 +2,7 @@ Linux / Unix 用來建立「連結（link）」的指令
 理解成：
 	讓另一個路徑指向同一份檔案或目錄，常用在
 		* 共用設定
-		* 版本切換 
+		* 版本切換
 		* Git hooks
 		* 部署目錄
 	等情境
@@ -13,12 +13,12 @@ Linux / Unix 用來建立「連結（link）」的指令
 
 1. ln -s：Symbolic Link，最常用 // 符號連結 / 軟連結
 	ln -s <來源> <連結名稱>
-	
+
 	之後：
 		/opt/myapp/current/application.yml
 				↓
 		/opt/myapp/config/application.yml
-	
+
 	可以用：
 		ls -l /opt/myapp/current/application.yml
 		看到類似：
@@ -30,7 +30,7 @@ Linux / Unix 用來建立「連結（link）」的指令
 		file-a.txt ─┐
 					├─ 同一個 inode / 同一份實際資料
 		file-b.txt ─┘
-		
+
 		兩個名稱其實指向同一份檔案資料。
 
 		可以這樣觀察：
@@ -47,12 +47,12 @@ Linux / Unix 用來建立「連結（link）」的指令
 3. 常用參數
 	寫 Bash Script 時比較常碰到：
 		ln -s SOURCE LINK
-	
+
 	建立 symbolic link。
 		ln -sf SOURCE LINK
-		
+
 		-f = force，如果目標已存在就強制處理。
-	
+
 	不過 Script 中我更建議：
 		ln -sfn SOURCE LINK
 
@@ -60,32 +60,32 @@ Linux / Unix 用來建立「連結（link）」的指令
 			-s：symbolic link
 			-f：強制覆蓋既有 link
 			-n：如果目的地本身是指向目錄的 symlink，不要把它當成真正目錄處理
-		
+
 		例如部署：
 			ln -sfn /opt/myapp/releases/20260904 /opt/myapp/current
-		
+
 		形成：
 			/opt/myapp/current
 				↓
 			/opt/myapp/releases/20260904
-		
+
 		下一版部署：
 			ln -sfn /opt/myapp/releases/20260905 /opt/myapp/current
-		
+
 		就可以把：
 			current -> releases/20260904
 		切換成：
 			current -> releases/20260905
-		
+
 		這是 ln 在部署 Script 很典型的用途。
 
 4. 來源可以使用絕對路徑或相對路徑
 	例如：
 		ln -s /opt/shared/config.yml config.yml
-	
+
 	這是絕對路徑：
 		config.yml -> /opt/shared/config.yml
-	
+
 	也可以：
 		ln -s ../shared/config.yml config.yml
 	變成：
@@ -98,15 +98,15 @@ Linux / Unix 用來建立「連結（link）」的指令
 5. 怎麼確認 Link？
 	最基本：
 		ls -l
-	
+
 	例如：
 		hooks -> /opt/git-common/hooks
-	
+
 		如果想知道最終實際指到哪裡：
 			readlink hooks
 		或：
 			readlink -f hooks
-	
+
 	例如：
 		$ readlink hooks
 		/opt/git-common/hooks
@@ -122,7 +122,7 @@ Linux / Unix 用來建立「連結（link）」的指令
 			rm hooks
 		或：
 			unlink hooks
-	
+
 	不會刪掉 /opt/git-common/hooks 真正的內容。
 		例如：
 			rm hooks

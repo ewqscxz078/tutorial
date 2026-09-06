@@ -55,7 +55,8 @@ java roadmap
 
 	內功心法
 		design pattern
-
+		clean code
+		TDD
 建構管理
 	maven
 
@@ -63,3 +64,6 @@ java roadmap
 		https://medium.com/learning-from-jhipster/3-%E4%BD%BF%E7%94%A8-maven-wrapper-f4b7e460278
 			在傳統使用 Maven 前，我們都需要到官網下載並安裝，安裝完還要設定環境變數，之後才可以使用 mvn 來執行建置的流程。
 			但如果將一個已存在的 Maven 專案加上 Maven Wrapper，那麼這個專案在只要有 Java 的環境下，就算不安裝 Maven 也可以透過 mvnw 的指令來執行建構流程。
+
+	gradle
+	gradle wrapper

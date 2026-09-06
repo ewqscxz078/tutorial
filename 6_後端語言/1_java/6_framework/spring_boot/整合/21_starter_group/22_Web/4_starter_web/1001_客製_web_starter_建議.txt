@@ -51,10 +51,10 @@
 
 		AccessDeniedHandler
 				→ 403
-		
+
 		責任放：
 			my-security-spring-boot-starter
-	
+
 	* Domain / Business Exception
 		例如:
 			Wso2Exception
@@ -107,7 +107,7 @@
 			415 content-type
 			500 response serialization
 			...
-	
+
 	Layer 2：業務 Exception
 		各專案自己負責：
 			UserNotFoundException
@@ -115,14 +115,14 @@
 			ExproxyException
 			Wso2Exception
 			...
-	
+
 	Layer 3：未知 Exception
 		Starter：
 			@ExceptionHandler(Exception.class)
-			
+
 			統一：
 				500
-	
+
 	推薦這個骨架
 		不過我建議繼承 ResponseEntityExceptionHandler 不要 override 十幾個 method
 		第一版 starter 我大概只客製：
@@ -133,7 +133,7 @@
 			⑤ MissingRequestHeaderException
 			⑥ HttpRequestMethodNotSupportedException
 			⑦ Exception.class
-		
+
 		其他像：
 			406
 			415
@@ -143,9 +143,9 @@
 			ResponseEntityExceptionHandler
 			照 Spring 原本邏輯處理。
 			=> 等真的有「我們需要統一 code」的需求，再 override。
-		
+
 		不要以「Exception 數量」設計 Starter，而是以「API contract 是否需要客製」來決定。
-		
+
 		@RestControllerAdvice
 		public class DefaultRestExceptionHandler
 				extends ResponseEntityExceptionHandler {
