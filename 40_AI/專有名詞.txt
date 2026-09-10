@@ -2,7 +2,8 @@
 初階
 	MCP
 	loop engineering 迴圈工程
-	skill
+	skill 某範圍情境下常用規則組裝後可選套用
+	harness 駕馭系統／馬具系統
 
 進階
 	AI team
