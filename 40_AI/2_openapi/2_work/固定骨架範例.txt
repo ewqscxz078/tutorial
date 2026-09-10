@@ -1,0 +1,53 @@
+ref chatGPT
+
+給 Work 的任務都使用一個固定骨架，例如：
+
+	目標
+		將既有 mydata-backend 翻寫成新的 Java 25 專案。
+
+	現況
+		Java 8
+		Spring Boot 2.7.x
+		PostgreSQL
+		既有 Git repository
+		CI/CD 使用 Jenkins
+
+	必須遵守
+		DB table 不得刪除或改名
+		API contract 儘量保持相容
+		不得直接修改 production
+		不得自行 merge main
+
+	你可以自行執行
+		分析 repository
+		建立 local branch
+		修改程式
+		執行 build / test
+		搜尋官方文件
+
+	遇到以下情況先詢問我
+		DB schema breaking change
+		API breaking change
+		大型架構選擇
+		無法確定既有商業邏輯
+
+	驗收條件
+		Build 成功
+		Unit test 通過
+		Application 可啟動
+		API 相容性檢查完成
+
+	最後交付
+		修改內容
+		測試結果
+		尚未完成項目
+		風險
+		建議人工 Review 項目
+
+這種寫法的重點不是「告訴 AI 每一步怎麼做」，而是：
+
+	Goal + Context + Constraints + Acceptance Criteria + Permission + Deliverables
+
+	然後讓 Work 自己規劃中間步驟。
+
+這點其實也呼應你之前提到的 Astra / 新一代 Agent 模型問題：如果把每一步都規定死，反而可能限制 Agent 自己規劃。 比較好的方式是把「邊界與結果」講清楚，而不是把「做法」全部寫死。

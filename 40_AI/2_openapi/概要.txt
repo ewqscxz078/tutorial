@@ -1,0 +1,338 @@
+openapi 提供的方式
+	| 使用方式             | Web ChatGPT | Desktop ChatGPT | Codex | 適合                                               |
+	| -------------------- | ----------: | --------------: | ----: | -------------------------------------------------- |
+	| **對話 Chat**        |         ✅  |               ✅ |     — | 問問題、討論、設計、分析                           |
+	| **工作 Work**        |         ✅  |               ✅ |     — | 把完整任務交給 AI，讓它研究、操作、產出成果        |
+	| **Coding Agent**     |         —   |               — |     ✅ | 直接對 Git / 程式碼工作，修改、Build、Test、Review |
+
+
+	OpenAI
+	│
+	├─ ChatGPT
+	│   │
+	│   ├─ 對話 Chat
+	│   │    └─「跟 AI 一起思考」
+	│   │
+	│   └─ 工作 Work
+	│        └─「把一件工作交給 AI 完成」
+	│
+	└─ Codex
+		 │
+		 └─ Coding Agent
+			  └─「把程式開發工作交給 AI 完成」
+
+
+	或這樣的對應
+                 你的需求
+                    │
+          ┌─────────┴─────────┐
+          │                   │
+      「我要問事情」       「我要完成事情」
+          │                   │
+        Chat                 Work
+                              │
+                  ┌───────────┴───────────┐
+                  │                       │
+              研究/文件/分析            程式開發
+                  │                       │
+                Work                    Codex
+                                          │
+                               Git / Code / Test / CLI
+
+
+		Chat 適合問答、搜尋與 brainstorming；
+		Work 適合研究、分析與建立成果；
+		Codex 則偏向寫程式、除錯、執行測試/command、Code Review、repository 工作。
+
+
+	例如同一個「Spring Boot 2.7 → 4.x 翻寫」需求：
+
+		ChatGPT 對話：
+			Spring Boot 2.7 升 4.x 有哪些 breaking changes？
+			SecurityFilterChain 要注意什麼？
+			幫我比較 migration strategy。
+
+			這是你跟 AI 討論問題。
+
+		ChatGPT Work：
+			這裡有舊系統文件、RFP、架構圖、弱掃報告與 migration 規格。
+			請分析全部資料，研究 Spring 官方文件，最後產出完整 Migration Plan。
+
+			這是把一件知識工作交出去。
+
+		Codex：
+			這是 repository。
+			建立 worktree/branch → 分析程式 → 升級 Spring Boot → 修改程式 → 執行 ./mvnw test → 修正錯誤 → 再跑測試 → Code Review → 最後產生 migration report。
+			不得 merge main。
+
+			這是把一段Software Engineering workflow交給 Coding Agent。
+
+
+AI 使用方式演進：
+	Level 1
+		人 ──對話模式:問問題──> AI
+			  Chat
+
+	Level 2
+		人 ──工作模式:交付任務──> AI Agent
+				Work
+				  │
+				  ├─ 搜尋
+				  ├─ 讀文件
+				  ├─ 操作工具
+				  └─ 產生成果
+
+	Level 3（Software Engineering）
+		人 ──交付開發任務──> Coding Agent
+							  Codex
+								│
+								├─ 讀 Repository
+								├─ 建 branch/worktree
+								├─ 修改 Code
+								├─ 執行 CLI
+								├─ Build
+								├─ Test
+								├─ Review
+								└─ 交給人決定 Merge
+
+	Level (multi-agent / AI workflow)
+					 人
+					  │
+				 提出 Feature
+					  │
+					  ▼
+			  AI Engineering Workflow
+					  │
+			┌─────────┼─────────┐
+			▼         ▼         ▼
+		 Planner    Coder    Reviewer
+			│         │         │
+			└─────────┼─────────┘
+					  ▼
+				 Build / Test
+					  │
+					  ▼
+				  AI Report
+					  │
+					  ▼
+				 👤 人工審核
+					  │
+				 Approve / Reject
+					  │
+					  ▼
+					Merge
+
+
+
+把 AI 導入你們團隊的軟體開發流程，我會建議不要從「大家學怎麼寫 Prompt」開始。
+	比較值得建立的是：
+
+		① Repository 的 AI.md / architecture docs →
+		② 團隊共通 Task Template →
+		③ Definition of Done →
+		④ AI 權限邊界 →
+		⑤ Git branch/worktree 隔離 →
+		⑥ AI 執行 →
+		⑦ 自動 Build/Test →
+		⑧ 人工 Review/Merge。
+
+	如此即使將來模型從 GPT-5.6 換掉，甚至團隊同時使用 Codex、Claude Code、Gemini，
+	真正留下來的是你們公司的 AI Engineering Workflow，
+	而不是某個模型專用的一大包提示詞。
+
+
+
+
+整體過程
+	* 「Chat → Work → Codex → Human Review」 的開發流程：
+					 ① ChatGPT 對話
+						   │
+				  探索 / 討論 / 腦力激盪
+						   │
+						   ▼
+					 ② ChatGPT Work
+						   │
+				 將討論結果正式文件化
+						   │
+			┌──────────────┼──────────────┐
+			▼              ▼              ▼
+		 AI.md         README.md        docs/
+										  │
+							 architecture.md
+							 development.md
+							 deployment.md
+							 security.md
+							 api-conventions.md
+						   │
+						   ▼
+						Git Repo
+						   │
+						   ▼
+					   ③ Codex
+						   │
+				  讀取 Repo + 文件
+						   │
+				  理解專案 / 規則 / 邊界
+						   │
+						   ▼
+				  執行 Coding Workflow
+						   │
+		   ┌───────────────┼───────────────┐
+		   ▼               ▼               ▼
+		修改 Code        Build/Test      Code Review
+		   │               │               │
+		   └───────────────┼───────────────┘
+						   ▼
+					  執行結果報告
+						   │
+						   ▼
+					 ④ Human Review
+						   │
+					 Accept / Reject
+						   │
+						   ▼
+						 Merge
+
+	* 其中最重要的是：MD 文件不是「寫給 AI 看而已」
+		最好把它們定位成 Human + AI 共用的 Project Knowledge Base。
+
+		例如：
+			README.md
+				↓
+				人類第一次進專案：「這專案是什麼？」
+
+			AGENTS.md =>
+				↓
+				AI 第一次進專案：「我在這個 repo 工作要遵守什麼？」
+
+			docs/architecture.md
+				↓
+				人與 AI：「系統為什麼這樣設計？」
+
+			docs/development.md
+				↓
+				人與 AI：「怎麼開發、build、test？」
+
+			docs/security.md
+				↓
+				人與 AI：「哪些安全規則不能破壞？」
+
+			docs/api-conventions.md
+				↓
+				人與 AI：「新增 API 應遵守什麼規範？」
+
+			docs/deployment.md
+				↓
+				人與 AI：「這東西最後怎麼部署？」
+
+	* 建議再加一層 Task 本身不要塞進 AGENTS.md
+
+		例如
+			今天你要求：把 properties 改成 YAML
+
+			明天：把 context-path 從 /mydata-backend 改 /backend
+
+			後天：Spring Boot 2.7 翻寫
+
+			這些是任務，不是永久性的專案知識。
+
+		可以形成：
+			my-backend/
+			│
+			├── README.md
+			├── AGENTS.md              ← Coding Agent 工作入口
+			│
+			├── docs/
+			│   ├── architecture.md
+			│   ├── development.md
+			│   ├── deployment.md
+			│   ├── security.md
+			│   └── api-conventions.md
+			│
+			├── tasks/
+			│   └── rewrite-springboot.md
+			│
+			├── pom.xml
+			└── src/
+
+
+		tasks/rewrite-springboot.md 可以寫：
+			# Objective
+
+			將既有系統翻寫至新的 Spring Boot 架構。
+
+			# Requirements
+
+			- Java 25
+			- Spring Boot 4.x
+			- properties 改為 YAML
+			- 單一 JAR
+			- 環境設定由 deployment environment 提供
+
+			# Constraints
+
+			- DB table 不得刪除
+			- DB column 不得改名
+			- Public API contract 不得任意改變
+			- 不得直接修改 production
+
+			# Acceptance Criteria
+
+			- Maven build success
+			- Unit tests pass
+			- Application startup success
+			- Existing API compatibility checked
+
+			# Permission
+
+			Codex 可以：
+			- 修改 local working tree
+			- 執行 Maven
+			- 執行 test
+			- 新增 test
+
+			Codex 不可以：
+			- Push production
+			- Merge main
+			- 修改 production credentials
+
+			重大架構變更必須交由人工確認。
+
+			# Deliverables
+
+			- Code changes
+			- Test result
+			- Migration summary
+			- Known issues
+			- Manual review items
+
+		骨架
+			Repo Knowledge
+				  +
+			AGENTS.md
+				  +
+			docs/*.md
+				  +
+			tasks/rewrite-springboot.md
+				  ↓
+				Codex
+				  ↓
+			自己規劃怎麼完成
+
+		關鍵在最後一句：
+
+			你規定「目標、事實、限制、驗收標準、權限」，但不要規定 Codex 每一步一定怎麼做。
+
+			這也正好符合你前面在研究的新型 coding agent 使用方式：給 Agent 足夠 context 與 guardrails，但保留它自行 reasoning / planning 的空間。
+
+
+		團隊把這套方法定義成：
+			AI-Ready Repository
+
+			一個 repository 要準備到「新人或 AI Agent clone 下來後，可以知道這是什麼、怎麼 build、怎麼 test、有哪些限制、架構怎麼運作、什麼叫完成」。
+
+			* 這樣未來你換 Codex、其他 Coding Agent，甚至換模型，Repository 本身仍然保有完整的工程知識與規範。
+
+			* 你現在其實不用急著做 multi-agent。先把：
+
+			* Chat（探索） → Work（知識結構化） → Git（知識保存） → Codex（執行） → CI（驗證） → Human（決策）

@@ -1,0 +1,175 @@
+假設檔案放置狀況，指派 my-backend 為 codex 工作目錄
+	my-backend/
+	│
+	├── README.md
+	├── AGENTS.md	← Coding Agent 工作入口
+	│
+	├── docs/
+	│   ├── architecture.md
+	│   ├── development.md
+	│   ├── deployment.md
+	│   ├── security.md
+	│   └── api-conventions.md
+	│
+	├── tasks/
+	│   └── rewrite-springboot.md
+	│
+	├── pom.xml
+	└── src/
+
+
+把檔案放好 ≠ Codex 就一定知道「你這次要做哪個任務」。
+
+	比較正確的心智模型是：
+		* Repo 裡的文件負責 Context / Rules；
+		* 你這次對 Codex 下的指令負責 Task / Intent。
+
+		=> 即使你的 repo 已經整理得很好，我仍建議每次啟動 Codex 工作時，至少給它一個很短的任務入口。
+
+
+	不需要再寫一大篇 Prompt。可以只交代：
+		請先閱讀這個 repository 的專案文件與開發規範。
+
+		這次要執行的任務是：
+		@tasks/rewrite-springboot.md
+
+		請先分析 repository 與任務需求，提出執行計畫。
+		目前不要修改程式碼。
+
+		如果文件與實際程式碼有衝突，請指出，不要自行假設。
+
+	AGENTS.md 應該扮演 AI 工作入口 / Repository Guide。
+		例如：
+			# AI Repository Guide
+
+			## Project
+
+			This is the My Backend project.
+
+			Before modifying this repository, read:
+
+			1. README.md
+			2. docs/architecture.md
+			3. docs/development.md
+			4. docs/security.md
+			5. docs/api-conventions.md
+
+			Read docs/deployment.md when the task involves deployment or runtime configuration.
+
+			## Development
+
+			Build:
+
+			./mvnw clean verify
+
+			Test:
+
+			./mvnw test
+
+			## Rules
+
+			- Do not change public API contracts without approval.
+			- Do not delete or rename existing database columns.
+			- Do not modify production credentials.
+			- Do not push or merge branches without explicit approval.
+
+			## Task
+
+			Task specifications are stored under:
+
+			tasks/
+
+			When a task file is specified, read it before modifying code.
+
+			## Working Process
+
+			For implementation tasks:
+
+			1. Read the task specification.
+			2. Inspect relevant existing code.
+			3. Identify affected components.
+			4. Propose a plan.
+			5. Implement the change.
+			6. Run relevant tests.
+			7. Run the project build.
+			8. Review the diff.
+			9. Report:
+			   - changed files
+			   - test results
+			   - known issues
+			   - risks
+			   - manual review items
+
+			If requirements conflict with the existing implementation,
+			stop and report the conflict instead of making an assumption.
+
+	這時候你的 Codex Prompt 就可以變得非常短。
+		* 第一次依據任務產製計畫
+			執行 tasks/rewrite-springboot.md。
+
+			先分析並提出計畫，不要開始修改。
+
+		* 確認計畫：
+			計畫 OK，開始執行。
+
+		接下來 Codex 就可以自己：
+			AGENTS.md
+			  │
+			  ├── 告訴它要讀哪些文件
+			  │
+			  ├── docs/*
+			  │     └── 專案知識 / 架構 / 規範
+			  │
+			  ├── tasks/rewrite-springboot.md
+			  │     └── 這一次要完成什麼
+			  │
+			  └── src/
+					└── 實際程式
+						 ↓
+					   分析
+						 ↓
+					   修改
+						 ↓
+					   Test
+						 ↓
+					   Build
+						 ↓
+					 Review Diff
+						 ↓
+					   Report
+
+	其中 AGENTS.md 不需要把所有文件內容複製進去，而是當「索引＋規則」：
+		AGENTS.md
+			│
+			├── 你是什麼專案
+			├── 修改前要讀什麼
+			├── Build/Test 怎麼做
+			├── 哪些事情禁止
+			├── Definition of Done
+			└── 指向 docs/
+					  │
+					  ├── architecture
+					  ├── development
+					  ├── security
+					  └── ...
+
+	「檔案放好就行，不用跟 Codex 說明嗎？」
+		=> Repo 的永久規則 AGENTS.md 可以做到幾乎不用重講；但「這次要它做什麼」還是應該告訴它。
+
+		理想狀態就是你每次只需要下這麼短：
+			=>
+				執行 tasks/rewrite-springboot.md。
+
+				遵循 AGENTS.md。
+				先分析並提出計畫，等我確認後再修改。
+
+		甚至未來熟悉、信任程度提高後，可以變成：
+			=>
+				執行 tasks/rewrite-springboot.md。
+				遵循 AGENTS.md。
+				完成後執行測試並 review diff，不要 push。
+
+		不是每次花 20 分鐘寫 Prompt 教 AI 怎麼開發，而是把「長期知識與規則」版本化放進 Git，每次只交付新的 Task。
+
+
+	把 AGENTS.md + docs/ + tasks/ 的責任邊界與標準模板定下來，之後所有 Java/Spring Boot repo 都可以套同一套骨架。

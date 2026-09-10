@@ -1,0 +1,65 @@
+準備一份「專案 AI 說明書」
+	例如每個 Git repository 根目錄都維護：
+
+		mydata-backend/
+		├── README.md
+		├── AGENTS.md                 ← 給 AI 的專案說明
+		├── docs/
+		│   ├── architecture.md
+		│   ├── development.md
+		│   ├── deployment.md
+		│   ├── security.md
+		│   └── api-conventions.md
+		├── pom.xml
+		└── src/
+
+
+	其中 AGENTS.md 不需要寫成幾千行的超級 prompt，而是告訴 Agent：
+
+AGENTS.md
+	# Project Overview
+
+	MyData Backend
+
+	## Technology
+	- Java 21
+	- Spring Boot 3.5.x
+	- PostgreSQL
+	- Maven Wrapper
+
+	## Architecture
+	Cloudflare -> F5 -> Nginx -> Gateway -> Backend -> DB
+
+	## Development Rules
+	- Use Instant for timestamps
+	- Display timezone: Asia/Taipei
+	- API errors must use unified JSON format
+	- Do not expose stack traces
+	- Do not hardcode credentials
+
+	## Build
+
+	./mvnw clean verify
+
+	## Test
+
+	./mvnw test
+
+	## Important Constraints
+	- Do not delete or rename existing DB columns
+	- Do not change existing public API contracts without approval
+	- Do not modify production configuration
+
+	## Definition of Done
+	- Build passes
+	- Tests pass
+	- No new critical security findings
+	- Document breaking changes
+
+
+這樣你下一次不必重新解釋「我們專案怎麼做」。
+
+而且如果團隊有人用 ChatGPT Work、有人用 Codex、有人用 Claude Code、Gemini CLI，
+這類 repository-level 文件其實比把所有規則綁死在某一個 AI 的 Skill 更有價值：
+	共通的事實、架構、規範與驗收條件放 repository；
+	特定 AI 的 skill / instructions 只保留工具特有的操作方式。
