@@ -1,0 +1,190 @@
+
+建議：
+	不要「一個超大任務一份 MD」，也不要碎到「每個小修改一份 MD」；
+	以「可獨立驗收、可獨立 Review、失敗可回退」作為 Task 的切割單位。
+
+
+以你的 Spring Boot 翻寫案來說，
+	rewrite-springboot.md 如果包含「Java 升版、Boot 升版、properties→YAML、安全重構、context path、DB、API、測試、CI/CD」全部一次交給 Codex，
+	我認為範圍太大。Agent 很容易在長時間工作後累積錯誤，而且你最後也很難 Review。
+
+改成兩層：
+	tasks/
+	├── rewrite-springboot/
+	│   ├── README.md                    # Master Plan，不直接當單次 coding task
+	│   │
+	│   ├── 01-project-baseline.md
+	│   ├── 02-java-spring-upgrade.md
+	│   ├── 03-config-yaml.md
+	│   ├── 04-context-path.md
+	│   ├── 05-security-migration.md
+	│   ├── 06-database-compatibility.md
+	│   ├── 07-api-compatibility.md
+	│   ├── 08-test-migration.md
+	│   └── 09-cicd-deployment.md
+
+
+	其中 README.md 是大任務/總體目標：
+		# Spring Boot Rewrite
+
+		## Goal
+
+		將既有 my-backend 翻寫至新版架構。
+
+		## Target
+
+		- Java 25
+		- Spring Boot 4.x
+		- Maven
+		- PostgreSQL
+
+		## Global Constraints
+
+		- 不得破壞既有 API Contract
+		- DB table/column 不得刪除或改名
+		- 不得修改 production credential
+		- 不得自行 push / merge
+
+		## Work Items
+
+		1. 01-project-baseline.md
+		2. 02-java-spring-upgrade.md
+		3. 03-config-yaml.md
+		4. 04-context-path.md
+		5. 05-security-migration.md
+		6. 06-database-compatibility.md
+		7. 07-api-compatibility.md
+		8. 08-test-migration.md
+		9. 09-cicd-deployment.md
+
+		## Final Definition of Done
+
+		- Build successful
+		- Tests pass
+		- Application starts successfully
+		- API compatibility verified
+		- DB compatibility verified
+		- Deployment verified
+
+
+	真正交給 Codex 一次執行的，則是例如：
+		# 03 Configuration Migration
+
+		## Objective
+
+		將 Spring Boot properties 設定轉換為 YAML。
+
+		## Scope
+
+		- application.properties → application.yml
+		- profile properties → profile YAML
+		- 確認設定 key 相容性
+		- 敏感資訊不得寫入 Git
+
+		## Out of Scope
+
+		- 不修改 Security 架構
+		- 不修改 DB schema
+		- 不修改 API
+		- 不修改 CI/CD
+
+		## Acceptance Criteria
+
+		- application.yml 可正常載入
+		- local profile 可啟動
+		- Maven tests pass
+		- 不遺漏既有設定
+		- Git diff 不包含 credential
+
+		## Deliverables
+
+		- 修改檔案清單
+		- properties → YAML mapping
+		- 測試結果
+		- 發現的問題
+
+	派給 Codex：
+		執行 tasks/rewrite-springboot/03-config-yaml.md，遵循 AGENTS.md。
+		完成後執行驗收與 diff review，不要 push。
+
+
+	判斷 Task 大小，我會用一個很實際的標準
+		這件事情完成後，我能不能單獨說「這項完成了」？
+
+		例如：
+			properties → YAML
+				   ↓
+			可以單獨 Build/Test
+				   ↓
+			可以單獨 Review diff
+				   ↓
+			可以判定 Pass / Fail
+				   ↓
+			適合一個 Task
+
+		相反地：
+			修改 application.yml 第 23 行
+				=>
+					通常太小，因為它不是有意義的工程目標。
+			而
+				整個 Spring Boot 2.7 系統
+				一次翻寫成 Java 25 + Boot 4
+				+ Security
+				+ DB
+				+ API
+				+ CI/CD
+				=>
+					又太大，因為出了問題你很難知道哪一階段開始偏掉。
+
+	還有一個重要差別：Task 不一定等於一次 Prompt
+		例如 02-java-spring-upgrade.md 本身仍然比較複雜。
+
+		你可以先叫 Codex：
+
+			分析 02-java-spring-upgrade.md，先不要修改。請判斷這個 Task 是否適合一次完成；如果過大，提出 implementation plan 與建議拆分方式。
+
+		Codex 可能回：
+			02-java-spring-upgrade
+			│
+			├─ 2.1 Maven / Java 25
+			├─ 2.2 Spring Boot parent
+			├─ 2.3 dependency compatibility
+			├─ 2.4 javax → jakarta
+			├─ 2.5 deprecated APIs
+			└─ 2.6 build / startup verification
+
+		這時候你不需要事先把所有步驟設計死。
+
+
+	結構定義成三層：
+		AGENTS.md
+		│  Repository 永久規則
+		│
+		│
+		├── docs/
+		│     專案長期知識
+		│
+		└── tasks/
+			  │
+			  └── rewrite-springboot/
+					│
+					├── README.md
+					│     Epic / 大目標
+					│
+					├── 01-xxx.md
+					├── 02-xxx.md
+					└── 03-xxx.md
+						  ↑
+						  │
+					 Codex 實際工作單位
+
+
+	熟悉 Redmine / Azure DevOps 的概念，其實很好理解：
+
+		rewrite-springboot/README.md ≈ Epic / Feature
+
+		01~09.md ≈ Issue / User Story / Task
+
+		Codex 自己規劃的修改步驟 ≈ Subtask / implementation steps
+
+		這個粒度我認為最適合你現在想建立的 AI-Ready Repository + Codex workflow
