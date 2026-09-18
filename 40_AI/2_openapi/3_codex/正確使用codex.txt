@@ -12,7 +12,17 @@
 	│   └── api-conventions.md
 	│
 	├── tasks/
-	│   └── rewrite-springboot.md
+	│   ├── README.md                    # Master Plan，不直接當單次 coding task
+	│   │
+	│   ├── 01-project-baseline.md
+	│   ├── 02-java-spring-upgrade.md
+	│   ├── 03-config-yaml.md
+	│   ├── 04-context-path.md
+	│   ├── 05-security-migration.md
+	│   ├── 06-database-compatibility.md
+	│   ├── 07-api-compatibility.md
+	│   ├── 08-test-migration.md
+	│   └── 09-cicd-deployment.md
 	│
 	├── pom.xml
 	└── src/

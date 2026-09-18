@@ -157,9 +157,18 @@ worktree 後
 
 	建立新 Worktree 並建立 Branch（推薦）
 		通常比較常用：
+			# Branch 不存在 → 建立 branch + worktree
+			# 不存在
+			git worktree add -b <branch> <目錄>
 			git worktree add -b feature/login ../my-repo-feature
 
 			等同：git switch -c feature/login + 再建立 worktree。
+
+
+		# Branch 已存在 → 直接建立 worktree
+		# 已存在
+		git worktree add <目錄> <branch>
+		git worktree add ../my-repo-feature feature/login
 
 3. 建立 Tag 的 Worktree（您很常用）
 	git worktree add ../my-repo-stage stage/2026-07-29-R_1

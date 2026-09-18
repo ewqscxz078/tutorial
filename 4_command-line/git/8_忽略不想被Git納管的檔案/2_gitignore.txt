@@ -9,3 +9,24 @@
 		*.tmp
 		xxx.txt
 3. 多層次目錄間的 .gitignore 有傳遞效果
+
+
+
+Q1: git A檔案已經加入 .gitiginore 清單裡時則如何強制 git cli 將 A檔案 git add commit push?
+	情境: 翻寫專案時，已經入庫，後來加入 .gitiginore，當複製到另外一邊的 git 時會少參考到問題
+A1:
+	git add -f path/to/A檔案
+	git commit -m "Add A檔案"
+	git push
+	
+	加入前可先確認是哪一條忽略規則命中：
+		git check-ignore -v path/to/A檔案
+	
+	確認是否已成功加入暫存區：
+		git status
+		git diff --cached -- path/to/A檔案
+
+	注意：一旦強制加入並提交，該檔案就會成為 Git 已追蹤檔案。之後即使仍在 .gitignore 中，修改後通常直接執行以下指令即可，不必再加 -f：
+		git add path/to/A檔案
+		git commit -m "Update A檔案"
+		git push
