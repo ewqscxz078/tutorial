@@ -1,0 +1,268 @@
+組織結構名稱應該沒有一定，就看怎麼規劃組織讓 AI 按照運用
+	真正重要的不是目錄叫什麼，而是三件事：
+		1.職責清楚：AI 能分辨哪些是共通規則、技術規則、專案事實、當次任務。
+		2.優先順序清楚：例如 TASK > Project > Stack > Organization，發生衝突時 AI 知道聽誰的。
+		3.入口清楚：透過 AGENTS.md 告訴 AI「做某類工作時該讀哪些文件」，而不是期待 AI 自己猜。
+
+先定義「文件角色」
+	規則        → AI 必須遵守什麼
+	盤點        → AI 怎麼發現現況
+	文件        → 專案現在是什麼
+	任務        → AI 這次要做什麼
+	流程        → AI 應該怎麼做
+	檢查        → AI 怎麼驗證自己
+	模板        → AI 應該怎麼輸出
+	報告        → AI 最後做了什麼
+
+AI 規格分成 組織共用、技術棧共用、專案特有 三層。
+	ai-engineering-standards/
+	│
+	├── organization/                 # 第一層：公司/團隊共用 : 要求
+	│   │
+	│   ├── rules/						## 必須遵守
+	│   │   ├── security.md
+	│   │   ├── git.md
+	│   │   ├── api.md
+	│   │   └── logging.md
+	│   │
+	│   ├── reviews/					## 怎麼檢查
+	│   │   ├── security-review.md
+	│   │   ├── code-review.md
+	│   │   ├── architecture-review.md
+	│   │   └── api-review.md
+	│   │
+	│   ├── playbooks/					## 怎麼執行工作
+	│   │   ├── feature-development.md
+	│   │   ├── bug-fix.md
+	│   │   ├── vulnerability-fix.md
+	│   │   ├── production-incident.md
+	│   │   └── repository-rewrite.md
+	│   │
+	│   └── templates/					## 產出格式
+	│       ├── task.md
+	│       ├── plan.md
+	│       ├── review-report.md
+	│       └── adr.md
+	│
+	└── stacks/                       # 第二層：技術棧共用 : 怎麼做到(特定技術補充)
+		│
+		├── java/
+		│   ├── coding-rules.md
+		│   ├── testing-rules.md
+		│   └── java-upgrade.md
+		│
+		├── spring-boot/
+		│   ├── coding-rules.md
+		│   ├── security-rules.md
+		│   ├── dependency-review.md
+		│   ├── springboot-upgrade.md
+		│   └── logging.md
+		│
+		├── vue/
+		│   ├── coding-rules.md
+		│   ├── security-rules.md
+		│   ├── testing-rules.md
+		│   └── dependency-review.md
+		│
+		├── postgresql/
+		│   └── database-rules.md
+		│
+		└── nginx/
+			└── security-rules.md
+
+	my-project/						# 第三層：專案特有 : 這個系統實際怎麼做
+	│
+	├── AGENTS.md
+	│
+	├── docs/
+	│   ├── architecture.md
+	│   ├── development.md
+	│   ├── deployment.md
+	│   ├── security.md
+	│   └── adr/
+	│
+	├── inventories/
+	│   ├── repository.md
+	│   ├── dependencies.md
+	│   ├── crypto.md
+	│   └── external-integrations.md
+	│
+	├── tasks/
+	│   └── TASK-XX.md
+	│
+	├── reports/
+	│
+	├── pom.xml
+	└── src/
+	
+	security，其實三層意義完全不同。
+		organization/rules/security.md
+				│
+				│ 「所有專案都不得信任 Client 傳入身分」
+				│ 「Secret 不得進 Git」
+				▼
+		stacks/spring-boot/security-rules.md
+				│
+				│ 「Principal/JWT 如何取得身分」
+				│ 「Spring Security 怎麼實作」
+				▼
+		mydata-backend/docs/security.md
+				│
+				│ 「本系統 Gateway 驗 JWT」
+				│ 「Backend 做 Authorization」
+				│ 「X-User-Id 如何傳遞」
+				▼
+		實際程式碼
+
+		組織層回答「我們要求什麼」；技術棧層回答「這個技術怎麼做到」；Project 層回答「這個系統實際怎麼做」。
+		
+	原本的「盤點 .md」其實也可以再抽一層：盤點方法本身共用，盤點結果留 Project。
+		ai-engineering-standards/
+		└── inventories/
+			├── repository-inventory.md       ← AI 怎麼盤
+			├── dependency-inventory.md
+			├── crypto-inventory.md
+			└── integration-inventory.md
+
+		mydata-backend/
+		└── inventories/
+			├── repository.md                 ← AI 盤出來的結果
+			├── dependencies.md
+			├── crypto.md
+			└── external-integrations.md	
+		
+			「規格/問法集中管理，AI 到不同 Repo 重複執行；產生的事實結果則跟著各 Repo 走。」
+
+運用方式為
+	workspace/
+	├── standards/          ← checkout ai-engineering-standards
+	└── project/            ← checkout my-project
+			AGENTS.md 指向：
+			../standards/rules/security-rules.md
+			../standards/stacks/spring-boot.md
+			../standards/reviews/code-review.md
+
+			這會比在 n 個 repo 裡各自複製一份 security-review.md 好很多。
+
+	不要所有規格都自動餵給 AI	
+		假設共用規格最後有：
+			standards/
+			├── security/
+			├── java/
+			├── spring/
+			├── vue/
+			├── git/
+			├── cicd/
+			├── database/
+			├── logging/
+			├── testing/
+			└── review/
+		不要每次 Codex 工作就全部讀。
+			例如 TASK 是：
+				修正 Controller 越權問題
+					AGENTS 只負責基本規則，Task/Playbook 再指定：
+					tasks
+						TASK
+						 │
+						 ├─ project/docs/security.md
+						 ├─ standards/security/security-rules.md
+						 ├─ standards/spring/spring-security.md
+						 └─ standards/reviews/security-review.md
+				如果 TASK 是：
+					Maven dependency 升級
+						TASK
+						 │
+						 ├─ project/docs/architecture.md
+						 ├─ standards/java/dependency-rules.md
+						 └─ standards/playbooks/dependency-upgrade.md
+				避免AI context 塞了一大堆與當前任務無關的規格。
+
+
+							┌──────────────────────┐
+							│ AI Standards Repo    │
+							│                      │
+							│ rules                │
+							│ reviews              │
+							│ playbooks            │
+							│ templates            │
+							└──────────┬───────────┘
+									   │
+						   團隊共用 / Source of Truth
+									   │
+			  ┌────────────────────────┼──────────────────────┐
+			  │                        │                      │
+			  ▼                        ▼                      ▼
+	   Spring Boot Repo           Vue Repo             Gateway Repo
+	   ────────────────           ────────             ────────────
+	   AGENTS.md                  AGENTS.md            AGENTS.md
+	   docs/                      docs/                docs/
+	   tasks/                     tasks/               tasks/
+	   src/                       src/                 src/
+
+
+若無分層架構扁平化為，但不建議。這牽扯到 AI 規格治理（AI engineering standards governance） 問題
+	project/
+	│
+	├── AGENTS.md                 ← AI 總入口
+	│
+	├── docs/                     ← 系統現在是什麼
+	│   ├── architecture.md
+	│   ├── development.md
+	│   ├── deployment.md
+	│   ├── security.md
+	│   ├── api-conventions.md
+	│   └── adr/
+	│		├── ADR-001-jwt-at-gateway.md
+	│		├── ADR-002-instant-for-datetime.md
+	│		├── ADR-003-json-console-log.md
+	│		├── ADR-004-single-artifact-multi-env.md
+	│		└── ADR-005-custom-starter.md
+	│			ADR（Architecture Decision Record）解決一個很常見的問題：
+	│				AI 知道現在程式怎麼寫，卻不知道「為什麼當初故意這樣設計」。
+	│					這個 AI Constraints 對 coding agent 特別重要，可以防止 AI「熱心地改回你不要的架構」。
+	│
+	├── rules/                    ← AI 必須遵守什麼
+	│   ├── coding-rules.md
+	│   ├── security-rules.md
+	│   ├── api-rules.md
+	│   ├── logging-rules.md
+	│   ├── testing-rules.md
+	│   └── git-rules.md
+	│
+	├── inventories/              ← 現況盤點
+	│   ├── repository.md
+	│   ├── dependencies.md
+	│   ├── crypto.md
+	│   └── external-integrations.md
+	│
+	├── reviews/                  ← 怎麼檢查
+	│   ├── security-review.md
+	│   ├── code-review.md
+	│   ├── architecture-review.md
+	│   ├── dependency-review.md
+	│   └── deployment-review.md
+	│
+	├── playbooks/                ← 工作怎麼執行
+	│   ├── feature-development.md
+	│   ├── vulnerability-fix.md
+	│   ├── dependency-upgrade.md
+	│   ├── release.md
+	│   └── repository-rewrite.md
+	│
+	├── templates/                ← AI 產出格式
+	│   ├── task-template.md
+	│   ├── plan-template.md
+	│   ├── review-template.md
+	│   └── adr-template.md
+	│
+	├── tasks/                    ← 這次要做什麼
+	│   ├── README.md
+	│   ├── TASK-01.md
+	│   └── TASK-02.md
+	│
+	└── reports/                  ← AI 執行結果
+		├── security/
+		├── review/
+		└── migration/
+
+
