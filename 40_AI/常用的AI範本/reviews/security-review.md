@@ -1,8 +1,8 @@
 # AI Source Code Security Review Specification
 
-Specification Version: 2.0  
-Updated: 2026-09-18  
-Default Report: `security-review-report.html`
+Specification Version: 2.1  
+Updated: 2026-09-21  
+Default Report: `reports/ai/security/security-review-report-YYYYMMDD.html`
 
 > 本文件是 Repository 內可版本控管的 AI Source Code Security Review 執行規格。
 >
@@ -72,7 +72,7 @@ Change History
 
 預設執行模式：`READ → ANALYZE → TRACE → COMPARE → REPORT → RECOMMEND`。
 
-只允許建立或更新 Repository 根目錄的 `security-review-report.html`。若既有報告仍引用失效的 Finding，須依本次完整檢視結果更新。除非使用者另外明確要求修正，預設禁止修改 Source Code、Security Configuration、Authorization Rule、Endpoint、Database Query、API Contract 或其他 Repository 檔案。Security Review 與 Security Fix 分為兩個階段。
+只允許在 Repository 相對路徑 `reports/ai/security/` 建立或更新本次執行日期的 `security-review-report-YYYYMMDD.html`；目錄不存在時應先建立。若同日報告仍引用失效的 Finding，須依本次完整檢視結果更新。其他日期的歷史報告不得覆寫或刪除，Repository 根目錄的舊版 `security-review-report.html` 不再視為預設更新目標。除非使用者另外明確要求修正，預設禁止修改 Source Code、Security Configuration、Authorization Rule、Endpoint、Database Query、API Contract 或其他 Repository 檔案。Security Review 與 Security Fix 分為兩個階段。
 
 Attack Simulation 是 Source Code Reasoning；不得對正式系統送出惡意請求、取得真實敏感資料或修改真實資料。
 
@@ -80,9 +80,9 @@ Attack Simulation 是 Source Code Reasoning；不得對正式系統送出惡意�
 
 # 4. Report Language and Output File
 
-正式報告為 Repository 根目錄的 `security-review-report.html`。除非使用者明確要求，不另外產生 Markdown 報告。報告應為單一可離線開啟的 Standalone HTML；具體結構見第 44 節。
+正式報告統一輸出至 Repository 相對路徑 `reports/ai/security/`，檔名格式為 `security-review-report-YYYYMMDD.html`。`YYYYMMDD` 以實際執行 Security Review 當日的執行環境當地日期為準，並須與報告內的 `Review Date` 一致；例如於 2026-09-21 執行時，輸出為 `reports/ai/security/security-review-report-20260921.html`。除非使用者明確要求，不另外產生 Markdown 報告。報告應為單一可離線開啟的 Standalone HTML；具體結構見第 44 節。
 
-若 Repository 已存在該報告，完成本次 Review 時須依實際結果更新，不得保留已失效 Finding。
+若 Repository 已存在同一執行日期的報告，完成本次 Review 時須依實際結果更新，不得保留已失效 Finding。其他日期的歷史報告不得覆寫或刪除；Repository 根目錄既有的 `security-review-report.html` 不視為本次 Review 的預設更新目標。
 
 ## 4.1 Report Language
 
@@ -1574,7 +1574,7 @@ Human Confirmation Questions:
 
 # 44. Required Final HTML Report
 
-Review 完成後建立或更新 `security-review-report.html`，此為唯一預設正式報告。HTML 使用 `<!doctype html>`、`<html lang="zh-TW">`、UTF-8 與內嵌 `<style>`；可直接離線用 Browser 開啟、傳遞、封存、列印並另存 PDF。不得引用外部 CSS、JavaScript、CDN、字型、追蹤腳本、遠端資產或不必要動畫。所有從 Repository 讀取的文字與程式碼片段都必須先 HTML escape，證據以 `<pre><code>…</code></pre>` 表示；不得在報告洩漏憑證或真實機敏值。
+Review 完成後，在 `reports/ai/security/` 建立或更新本次執行日期的 `security-review-report-YYYYMMDD.html`，此為唯一預設正式報告；目錄不存在時應先建立。檔名日期取自實際執行 Security Review 當日的執行環境當地日期，且須與報告內的 `Review Date` 一致。HTML 使用 `<!doctype html>`、`<html lang="zh-TW">`、UTF-8 與內嵌 `<style>`；可直接離線用 Browser 開啟、傳遞、封存、列印並另存 PDF。不得引用外部 CSS、JavaScript、CDN、字型、追蹤腳本、遠端資產或不必要動畫。所有從 Repository 讀取的文字與程式碼片段都必須先 HTML escape，證據以 `<pre><code>…</code></pre>` 表示；不得在報告洩漏憑證或真實機敏值。
 
 Severity 的 CRITICAL／HIGH／MEDIUM／LOW／INFO 與 Classification 的 CONFIRMED／POTENTIAL／NEEDS_REVIEW 都須以**文字及視覺標籤**同時呈現，不能只靠顏色，以支援色弱、黑白列印與 PDF。版面需具清楚層級、可讀表格與程式碼；提供 Table of Contents、章節錨點與每個 Finding 的唯一錨點（如 `#SEC-001`）。優先清單及分類索引須連結至 Finding。使用 `@media print`，讓 Severity、Finding ID、標題、Evidence、Recommendation 列印後仍清楚。
 
@@ -1731,7 +1731,8 @@ AI 不得在以下工作未完成前宣告 Review 完成：
 * [ ] Finding 已分類並標示 Severity Candidate、Confidence
 * [ ] Human Review Items 已列出
 * [ ] Review Limitations 已列出
-* [ ] `security-review-report.html` 已建立或更新，主要內容為繁體中文（zh-TW）
+* [ ] `reports/ai/security/security-review-report-YYYYMMDD.html` 已依本次執行日期建立或更新，主要內容為繁體中文（zh-TW）
+* [ ] 報告檔名中的 `YYYYMMDD` 與報告內的 `Review Date` 一致
 * [ ] 第 44.3 節的 HTML 報告完整性驗證已通過
 
 無法檢視的項目應在報告說明範圍、原因及未能確認的結論；不得把未檢視寫成已完成。
@@ -1843,7 +1844,9 @@ OPTIONAL
 
 # 50. Repository Versioning
 
-本次規格異動：Version 2.0；Date: 2026-09-18；Change: 保留原始 52 節安全檢視規則，整合 Severity Candidate 排序與離線 HTML 正式報告；Reason: 讓資安與開發人員能依初步風險優先檢視，並保留完整原始碼證據。
+本次規格異動：Version 2.1；Date: 2026-09-21；Change: Security Review 報告統一輸出至 `reports/ai/security/`，並以實際執行日期命名為 `security-review-report-YYYYMMDD.html`；Reason: 統一報告位置、保留不同日期的檢視結果，並讓檔名可直接辨識執行日期。
+
+前次規格異動：Version 2.0；Date: 2026-09-18；Change: 保留原始 52 節安全檢視規則，整合 Severity Candidate 排序與離線 HTML 正式報告；Reason: 讓資安與開發人員能依初步風險優先檢視，並保留完整原始碼證據。
 
 本文件應與 Source Code 一起進行版本控制。
 
@@ -1890,7 +1893,7 @@ Cross-tenant access risk identified during manual review.
 請執行 docs/security-review.md
 ```
 
-AI／Coding Agent 應自行讀規格、建立 Repository 與 Security Context、盤點 Endpoint、追蹤 Controller → Service → Repository、執行安全檢查與靜態 Attack Simulation、降低誤報、分類 Finding、評估 Severity Candidate、排序、產生並驗證 `security-review-report.html`。
+AI／Coding Agent 應自行讀規格、建立 Repository 與 Security Context、盤點 Endpoint、追蹤 Controller → Service → Repository、執行安全檢查與靜態 Attack Simulation、降低誤報、分類 Finding、評估 Severity Candidate、排序，並依執行當日日期產生及驗證 `reports/ai/security/security-review-report-YYYYMMDD.html`。
 
 不得要求使用者重新提供本文件已定義的掃描方式、項目、誤報規則、Severity 排序、Finding 格式、HTML 格式、報告檔名與語言；只有專案特定且無法從 Repository 確認的資訊才列為人工確認問題。
 
@@ -1900,6 +1903,6 @@ AI／Coding Agent 應自行讀規格、建立 Repository 與 Security Context、
 
 本 Security Review 的核心是建立足夠的 Source Code Evidence，判斷不可信任的 Client 是否能跨越本應存在的 Security Boundary。AI 應 Discover、Trace、Reason、Verify、Report；不得 Guess、Assume、Over-report。
 
-最終預設產出 `security-review-report.html`，主要內容使用繁體中文（zh-TW）；技術術語、Source Identifier、Endpoint、Class、Method、Field 與程式碼維持原始名稱。
+最終預設產出 `reports/ai/security/security-review-report-YYYYMMDD.html`，其中 `YYYYMMDD` 為實際執行 Security Review 當日日期，並與報告內的 `Review Date` 一致。主要內容使用繁體中文（zh-TW）；技術術語、Source Identifier、Endpoint、Class、Method、Field 與程式碼維持原始名稱。
 
 ---
