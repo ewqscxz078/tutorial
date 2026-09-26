@@ -94,7 +94,7 @@ AI 規格分成 組織共用、技術棧共用、專案特有 三層。
 	│
 	├── pom.xml
 	└── src/
-	
+
 	security，其實三層意義完全不同。
 		organization/rules/security.md
 				│
@@ -115,7 +115,7 @@ AI 規格分成 組織共用、技術棧共用、專案特有 三層。
 		實際程式碼
 
 		組織層回答「我們要求什麼」；技術棧層回答「這個技術怎麼做到」；Project 層回答「這個系統實際怎麼做」。
-		
+
 	原本的「盤點 .md」其實也可以再抽一層：盤點方法本身共用，盤點結果留 Project。
 		ai-engineering-standards/
 		└── inventories/
@@ -129,8 +129,8 @@ AI 規格分成 組織共用、技術棧共用、專案特有 三層。
 			├── repository.md                 ← AI 盤出來的結果
 			├── dependencies.md
 			├── crypto.md
-			└── external-integrations.md	
-		
+			└── external-integrations.md
+
 			「規格/問法集中管理，AI 到不同 Repo 重複執行；產生的事實結果則跟著各 Repo 走。」
 
 運用方式為
@@ -144,7 +144,7 @@ AI 規格分成 組織共用、技術棧共用、專案特有 三層。
 
 			這會比在 n 個 repo 裡各自複製一份 security-review.md 好很多。
 
-	不要所有規格都自動餵給 AI	
+	不要所有規格都自動餵給 AI
 		假設共用規格最後有：
 			standards/
 			├── security/

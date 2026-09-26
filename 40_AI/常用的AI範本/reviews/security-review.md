@@ -1,7 +1,7 @@
 # AI Source Code Security Review Specification
 
-Specification Version: 2.1  
-Updated: 2026-09-21  
+Specification Version: 2.1
+Updated: 2026-09-21
 Default Report: `reports/ai/security/security-review-report-YYYYMMDD.html`
 
 > 本文件是 Repository 內可版本控管的 AI Source Code Security Review 執行規格。

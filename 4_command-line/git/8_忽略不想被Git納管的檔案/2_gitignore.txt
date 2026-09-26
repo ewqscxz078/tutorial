@@ -18,10 +18,10 @@ A1:
 	git add -f path/to/A檔案
 	git commit -m "Add A檔案"
 	git push
-	
+
 	加入前可先確認是哪一條忽略規則命中：
 		git check-ignore -v path/to/A檔案
-	
+
 	確認是否已成功加入暫存區：
 		git status
 		git diff --cached -- path/to/A檔案

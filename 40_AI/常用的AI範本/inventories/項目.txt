@@ -1,0 +1,11 @@
+舊專案盤點
+
+
+依賴-review.md 盤點
+	* java mava/gradle sbom 常用工具掃得出來排除
+
+	* html of
+		js import of ref local project
+		js ref web jars
+
+	* local jar

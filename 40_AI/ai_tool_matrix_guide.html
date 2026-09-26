@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主流 AI 工具生態系與團隊工作流對照矩陣</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+  <!-- Header Section -->
+  <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-500/20 rounded-lg border border-indigo-400/30">
+          <i class="fa-solid me-1 fa-network-wired text-2xl text-indigo-400"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">AI 工具對應矩陣與工作流架構指南</h1>
+          <p class="text-xs text-slate-400">整理時間：2026 年生態系標準對照</p>
+        </div>
+      </div>
+      <button id="downloadBtn" onclick="downloadSelf()" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm hover:shadow">
+        <i class="fa-solid fa-download"></i>
+        下載此 HTML 檔案
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+    <!-- Executive Summary / Core Concept -->
+    <section class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
+      <div class="max-w-3xl">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 mb-3">
+          核心觀念
+        </span>
+        <h2 class="text-2xl font-bold text-slate-900 mb-3">忘記產品名稱，記住「AI 的 4 大層級」</h2>
+        <p class="text-slate-600 leading-relaxed">
+          現今各大 AI 巨頭的產品線已不再是單純的「聊天機器人」，而是朝向「長任務 Agent」與「軟體工程自動化」發展。團隊不應強制限定統一的 AI 廠牌，而是應定義統一的 <strong class="text-indigo-600 font-semibold">AI Role (角色協定)</strong>。
+        </p>
+      </div>
+
+      <!-- Level Flow Visual -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/50 p-5 rounded-xl border border-blue-100 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Level 1</span>
+              <i class="fa-solid fa-comments text-blue-400"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg">Chat 對話/思考</h3>
+            <p class="text-xs text-slate-500 mt-1">問問題、討論架構、發想概念、腦力激盪。</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-blue-100 text-xs font-medium text-slate-600">
+            代表：ChatGPT, Claude.ai, Gemini
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-50 to-purple-50/50 p-5 rounded-xl border border-purple-100 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-600">Level 2</span>
+              <i class="fa-solid fa-brain text-purple-400"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg">Work Agent 知識工作</h3>
+            <p class="text-xs text-slate-500 mt-1">長時間多步驟任務、分析 Repo、產出文件與 Task 清單。</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-purple-100 text-xs font-medium text-slate-600">
+            代表：ChatGPT Work, Claude Cowork
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-50 to-emerald-50/50 p-5 rounded-xl border border-emerald-100 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Level 3</span>
+              <i class="fa-solid fa-code text-emerald-400"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg">Coding Agent 本機實作</h3>
+            <p class="text-xs text-slate-500 mt-1">讀寫本機 Repo、擬定 Plan、修改程式碼、跑 Test。</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-emerald-100 text-xs font-medium text-slate-600">
+            代表：Codex, Claude Code, Copilot Agent Mode
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-50 to-amber-50/50 p-5 rounded-xl border border-amber-100 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Level 4</span>
+              <i class="fa-solid fa-cloud text-amber-400"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg">Background Agent 雲端背景</h3>
+            <p class="text-xs text-slate-500 mt-1">非同步運作、雲端 VM 背景執行任務、主動提交 PR。</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-amber-100 text-xs font-medium text-slate-600">
+            代表：Jules, Copilot Cloud Agent
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Matrix Table Section -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">各大 AI 廠商功能對照矩陣</h2>
+          <p class="text-xs text-slate-500 mt-1">跨四大生態系（OpenAI / Anthropic / Google / Microsoft）完整對照</p>
+        </div>
+
+        <!-- Filter Tools -->
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="searchInput" onkeyup="filterMatrix()" placeholder="搜尋工具或用途..." class="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48">
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left border-collapse" id="matrixTable">
+          <thead>
+            <tr class="bg-slate-50/80 text-slate-600 text-xs font-semibold border-b border-slate-200 uppercase tracking-wider">
+              <th class="py-3.5 px-4 min-w-[160px]">使用層級 / 目的</th>
+              <th class="py-3.5 px-4 min-w-[160px] text-emerald-700 bg-emerald-50/30">OpenAI</th>
+              <th class="py-3.5 px-4 min-w-[160px] text-amber-700 bg-amber-50/30">Anthropic</th>
+              <th class="py-3.5 px-4 min-w-[160px] text-blue-700 bg-blue-50/30">Google</th>
+              <th class="py-3.5 px-4 min-w-[180px] text-purple-700 bg-purple-50/30">Microsoft / GitHub</th>
+              <th class="py-3.5 px-4 min-w-[200px]">典型用途</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-blue-500">💬</span> 對話 / 思考
+              </td>
+              <td class="py-3.5 px-4 font-medium">ChatGPT Chat</td>
+              <td class="py-3.5 px-4 font-medium">Claude (.ai)</td>
+              <td class="py-3.5 px-4 font-medium">Gemini</td>
+              <td class="py-3.5 px-4 font-medium">Microsoft Copilot</td>
+              <td class="py-3.5 px-4 text-slate-500">問問題、討論架構、腦力激盪</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-purple-500">🧠</span> 長任務 / 知識 Agent
+              </td>
+              <td class="py-3.5 px-4 font-medium text-emerald-600">ChatGPT Work</td>
+              <td class="py-3.5 px-4 font-medium text-amber-600">Claude Cowork</td>
+              <td class="py-3.5 px-4 font-medium text-blue-600">Gemini Agent / Workspace 生態</td>
+              <td class="py-3.5 px-4 font-medium text-purple-600">M365 Copilot Agent 類能力</td>
+              <td class="py-3.5 px-4 text-slate-500">分析大量資料、研究、文件、跨工具工作</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-emerald-500">🧑‍💻</span> 本機 Coding Agent
+              </td>
+              <td class="py-3.5 px-4 font-medium">Codex / Codex CLI</td>
+              <td class="py-3.5 px-4 font-medium">Claude Code</td>
+              <td class="py-3.5 px-4 font-medium">Gemini CLI / Code Assist Agent</td>
+              <td class="py-3.5 px-4 font-medium">GitHub Copilot Agent Mode / CLI</td>
+              <td class="py-3.5 px-4 text-slate-500">讀 Repo、修改程式、跑 Command/Test</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-amber-500">☁️</span> 背景 Coding Agent
+              </td>
+              <td class="py-3.5 px-4 font-medium">Codex Remote / Cloud Workflow</td>
+              <td class="py-3.5 px-4 font-medium">Claude Agent Workflow</td>
+              <td class="py-3.5 px-4 font-medium text-blue-700 font-bold">Jules</td>
+              <td class="py-3.5 px-4 font-medium">GitHub Copilot Cloud Agent</td>
+              <td class="py-3.5 px-4 text-slate-500">指派任務後背景執行、產 PR (非同步)</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-indigo-500">📝</span> IDE 即時輔助
+              </td>
+              <td class="py-3.5 px-4">Codex IDE 整合</td>
+              <td class="py-3.5 px-4">Claude Code IDE 整合</td>
+              <td class="py-3.5 px-4">Gemini Code Assist</td>
+              <td class="py-3.5 px-4">GitHub Copilot</td>
+              <td class="py-3.5 px-4 text-slate-500">補程式、解釋、局部修改 (Inline)</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-teal-500">📋</span> Plan → Implement
+              </td>
+              <td class="py-3.5 px-4">Codex</td>
+              <td class="py-3.5 px-4">Claude Code</td>
+              <td class="py-3.5 px-4">Gemini Code Assist Agent / CLI</td>
+              <td class="py-3.5 px-4 font-medium text-purple-700">Copilot Plan Mode → Agent Mode</td>
+              <td class="py-3.5 px-4 text-slate-500">先審藍圖/計畫，確認後再授權 AI 改 Code</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-slate-600">🔧</span> CLI 自動化
+              </td>
+              <td class="py-3.5 px-4">Codex CLI</td>
+              <td class="py-3.5 px-4">Claude Code</td>
+              <td class="py-3.5 px-4">Gemini CLI / Jules Tools</td>
+              <td class="py-3.5 px-4">Copilot CLI</td>
+              <td class="py-3.5 px-4 text-slate-500">Script、CI/CD、終端機自動化工程</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-rose-500">🔌</span> 工具 / 外部系統
+              </td>
+              <td class="py-3.5 px-4">Plugins / MCP</td>
+              <td class="py-3.5 px-4">Connectors / MCP / Plugins</td>
+              <td class="py-3.5 px-4">Extensions / MCP</td>
+              <td class="py-3.5 px-4">MCP / Extensions / GitHub Integrations</td>
+              <td class="py-3.5 px-4 text-slate-500">Jira、GitHub、資料庫、企業系統串接</td>
+            </tr>
+            <tr class="hover:bg-slate-50/60 transition-colors">
+              <td class="py-3.5 px-4 font-semibold text-slate-900 flex items-center gap-1.5">
+                <span class="text-cyan-500">🤖</span> 自訂 Agent / Workflow
+              </td>
+              <td class="py-3.5 px-4">API / Agents</td>
+              <td class="py-3.5 px-4">Claude Platform / Agent SDK</td>
+              <td class="py-3.5 px-4">Gemini API / Vertex AI</td>
+              <td class="py-3.5 px-4">Copilot SDK / GitHub Agentic Workflows</td>
+              <td class="py-3.5 px-4 text-slate-500">建立企業專屬 AI Workflow 與客製化 Agent</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Deep Dive into 4 Major Ecosystems -->
+    <section class="space-y-6">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-layer-group text-indigo-600"></i>
+        四大廠牌生態系拆解與特色分析
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- OpenAI Card -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:border-emerald-300 transition-all">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">1. OpenAI 生態系</h3>
+              <p class="text-xs text-slate-500">定位明確的三階段分工</p>
+            </div>
+          </div>
+          <ul class="space-y-3 text-xs text-slate-600">
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded shrink-0">Chat</span>
+              <span>提問、搜尋、架構發想與腦力激盪。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded shrink-0">Work</span>
+              <span>多步驟研究、資料分析、產出文件（Docs/Tasks）、簡報與報告。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded shrink-0">Codex</span>
+              <span>深度 Coding、Debug、Command 執行、Test 驗證與 Code Review。</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Anthropic Card -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:border-amber-300 transition-all">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg">
+              <i class="fa-solid fa-cube"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">2. Anthropic 生態系</h3>
+              <p class="text-xs text-slate-500">以 "Chat → Code → Cowork" 為演進軸心</p>
+            </div>
+          </div>
+          <ul class="space-y-3 text-xs text-slate-600">
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded shrink-0">Claude.ai</span>
+              <span>邏輯對話與長文字分析（直覺對標 ChatGPT Chat）。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded shrink-0">Claude Cowork</span>
+              <span>接手跨文件、跨工具的多步驟通用知識工作（General Knowledge Work）。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded shrink-0">Claude Code</span>
+              <span>專精於 Software Engineering，理解 Repo、規劃並執行工具。</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Google Card -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:border-blue-300 transition-all">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+              <i class="fa-brands fa-google"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">3. Google 生態系</h3>
+              <p class="text-xs text-slate-500">工具較分散，但包含強大的雲端 Agent</p>
+            </div>
+          </div>
+          <ul class="space-y-3 text-xs text-slate-600">
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded shrink-0">Gemini CLI</span>
+              <span>可閱讀程式碼、操作檔案、執行 Command，並相容 <code class="bg-slate-100 px-1 rounded text-slate-800">GEMINI.md</code> 指示檔。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded shrink-0">Agent Mode</span>
+              <span>提供「建立多步驟執行計畫，失敗時自動修復」之能力。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded shrink-0">Jules</span>
+              <span><strong class="text-slate-800">非同步雲端 Agent：</strong> Clone GitHub Repo 至 Google Cloud VM，背景自主分析、修改程式碼、跑測試並產出 Diff 供 Review。</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Microsoft / GitHub Card -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:border-purple-300 transition-all">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-lg">
+              <i class="fa-brands fa-github"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">4. Microsoft / GitHub</h3>
+              <p class="text-xs text-slate-500">工程團隊最完整的 Workflow 工具鏈</p>
+            </div>
+          </div>
+          <ul class="space-y-3 text-xs text-slate-600">
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded shrink-0">Plan Mode</span>
+              <span>主打「Strategy before code」，先產出藍圖計畫經人工審核 confirmation。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded shrink-0">Agent Mode</span>
+              <span>取得授權後自行決定步驟、跨檔修改 Code、執行 Terminal 指令並驗證 Build/Test。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded shrink-0">開放生態</span>
+              <span>GitHub 現已支援將 <strong class="text-slate-800">Codex</strong> 或 <strong class="text-slate-800">Claude</strong> 當作第三方 Coding Agent 直接派發 Issue 任務。</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Architecture & Standardization Strategy -->
+    <section class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
+      <div class="max-w-3xl mb-8">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-3">
+          團隊 AI 標準化落地建議
+        </span>
+        <h2 class="text-2xl font-bold mb-2">如何統一團隊的 AI 開發流程？</h2>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          不要規範「全公司只能用 ChatGPT」或硬性規定 TASK 必須使用特定品牌。應該<strong class="text-amber-400">規範 AI Role（角色）與 Working Agreement（工作協定）</strong>。
+        </p>
+      </div>
+
+      <!-- Flowchart Visual -->
+      <div class="bg-slate-800/80 backdrop-blur rounded-xl p-6 border border-slate-700/80">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 text-center">Standardized Agent Workflows (角色導向工作流)</h3>
+
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 relative">
+
+          <!-- Step 1 -->
+          <div class="flex-1 w-full bg-slate-900/90 p-4 rounded-lg border border-slate-700 text-center relative">
+            <div class="text-xs font-semibold text-indigo-400 mb-1">Step 1</div>
+            <div class="font-bold text-slate-100 text-sm">Conversation AI</div>
+            <div class="text-[11px] text-slate-400 mt-1">ChatGPT / Claude / Gemini / Copilot</div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-amber-400 font-mono">產出：Requirements</div>
+          </div>
+
+          <i class="fa-solid fa-arrow-down md:fa-arrow-right text-slate-500"></i>
+
+          <!-- Step 2 -->
+          <div class="flex-1 w-full bg-slate-900/90 p-4 rounded-lg border border-slate-700 text-center relative">
+            <div class="text-xs font-semibold text-indigo-400 mb-1">Step 2</div>
+            <div class="font-bold text-slate-100 text-sm">Work / Analysis AI</div>
+            <div class="text-[11px] text-slate-400 mt-1">ChatGPT Work / Claude Cowork / Gemini</div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-amber-400 font-mono">產出：docs/ & tasks/ & AGENTS.md</div>
+          </div>
+
+          <i class="fa-solid fa-arrow-down md:fa-arrow-right text-slate-500"></i>
+
+          <!-- Step 3 -->
+          <div class="flex-1 w-full bg-slate-900/90 p-4 rounded-lg border border-slate-700 text-center relative">
+            <div class="text-xs font-semibold text-indigo-400 mb-1">Step 3</div>
+            <div class="font-bold text-slate-100 text-sm">Coding Agent</div>
+            <div class="text-[11px] text-slate-400 mt-1">Codex / Claude Code / Gemini CLI / Copilot</div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-amber-400 font-mono">執行：Plan → Code → Build / Test</div>
+          </div>
+
+          <i class="fa-solid fa-arrow-down md:fa-arrow-right text-slate-500"></i>
+
+          <!-- Step 4 -->
+          <div class="flex-1 w-full bg-slate-900/90 p-4 rounded-lg border border-slate-700 text-center relative">
+            <div class="text-xs font-semibold text-emerald-400 mb-1">Step 4</div>
+            <div class="font-bold text-slate-100 text-sm">Human Review</div>
+            <div class="text-[11px] text-slate-400 mt-1">工程師人工 Review Git Diff / PR</div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-emerald-400 font-mono">完成：Merge & Deploy</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Protocol Explanation -->
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+          <h4 class="font-bold text-slate-200 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            團隊應統一的「AI 工作協定」
+          </h4>
+          <p class="text-slate-400 leading-relaxed">
+            要求不論使用哪一家 Coding Agent，都必須遵守專案根目錄下的：
+            <code class="text-indigo-300">AGENTS.md</code>、
+            <code class="text-indigo-300">coding conventions</code>、
+            <code class="text-indigo-300">security rules</code> 與
+            <code class="text-indigo-300">definition of done (DoD)</code>。
+          </p>
+        </div>
+        <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+          <h4 class="font-bold text-slate-200 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-amber-400"></i>
+            任務指派寫法建議
+          </h4>
+          <p class="text-slate-400 leading-relaxed">
+            <span class="text-rose-400 line-through">錯誤寫法：「TASK-03 必須用 Codex 執行。」</span><br>
+            <span class="text-emerald-400 font-semibold">正確寫法：「TASK-03 交由 Coding Agent 執行（任選 Codex / Claude Code / Copilot Agent Mode / Gemini CLI）。」</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+      <p>AI Tools Ecosystem Matrix & Alignment Architecture Guide &copy; 2026</p>
+    </div>
+  </footer>
+
+  <!-- Filter & Download Script -->
+  <script>
+    function filterMatrix() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById('matrixTable');
+      const trs = table.getElementsByTagName('tr');
+
+      for (let i = 1; i < trs.length; i++) {
+        let match = false;
+        const tds = trs[i].getElementsByTagName('td');
+        for (let j = 0; j < tds.length; j++) {
+          if (tds[j]) {
+            if (tds[j].textContent.toLowerCase().indexOf(filter) > -1) {
+              match = true;
+              break;
+            }
+          }
+        }
+        trs[i].style.display = match ? '' : 'none';
+      }
+    }
+
+    function downloadSelf() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'AI_Tool_Matrix_Guide.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
