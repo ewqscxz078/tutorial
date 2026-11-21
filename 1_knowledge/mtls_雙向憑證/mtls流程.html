@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>mTLS 流程與設定備忘</title><style>
+*{box-sizing:border-box}body{margin:0;background:#eef3f8;color:#20334b;font-family:"Microsoft JhengHei",sans-serif;line-height:1.85}main{max-width:1100px;margin:32px auto;padding:42px;background:white;border-radius:16px}h1{font-size:30px;margin:8px 0}h2{font-size:23px;margin-top:38px;border-bottom:2px solid #dce6f0;padding-bottom:9px}h3{font-size:18px;margin:0 0 10px}.meta,small{color:#53677e}.lead{background:#edf5ff;border-left:5px solid #326da7;padding:20px;margin:22px 0}.warn{background:#fff5e6;border-left:5px solid #bd7b22;padding:18px;margin:20px 0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}.box{border:1px solid #cfdae7;border-radius:10px;padding:20px;min-width:0}.role{font-weight:bold;color:#28659c}.material{background:#f3f6fa;padding:14px;margin:12px 0;border-radius:6px}.arrow{text-align:center;font-size:22px;color:#376b9e;margin:10px}.flow{margin:18px 0}.step{display:grid;grid-template-columns:48px 1fr;gap:12px;padding:18px;border:1px solid #d8e3ed;border-radius:8px}.num{background:#285e91;color:white;border-radius:50%;width:36px;height:36px;text-align:center;line-height:36px}.direction{font-weight:bold;color:#285e91}.tag{font-size:13px;display:inline-block;background:#e8f3eb;color:#216441;border-radius:4px;padding:0 8px;margin-left:7px}.setup{background:#fff0d8;color:#805014}.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #d5e0eb;text-align:left;vertical-align:top;padding:12px}th{background:#eff4fa}code{font-family:Consolas,"Microsoft JhengHei",monospace;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#182b42;color:#edf5ff;padding:16px;border-radius:7px;line-height:1.7;font-size:13px}li{margin:7px 0}a{color:#23649d}.ok{color:#237044}.bad{color:#af3733}footer{margin-top:32px;border-top:1px solid #d5e0eb;padding-top:16px;color:#53677e;font-size:13px}@media(max-width:700px){main{margin:0;padding:22px;border-radius:0}.pair{grid-template-columns:1fr}h1{font-size:25px}.step{grid-template-columns:36px 1fr;padding:12px}}@media print{body{background:white}main{margin:0;padding:0;max-width:none}h2,h3{break-after:avoid}.box,.step,pre,tr{break-inside:avoid}pre{background:#f3f6fa;color:#20334b;border:1px solid #ccd7e3}.pair{gap:12px}}
+.sequence-scroll{overflow-x:auto;margin:22px 0}.sequence{display:block;width:100%;min-width:780px;height:auto;font-family:"Microsoft JhengHei",sans-serif;font-size:16px;fill:#20334b}.sequence .seq-small{font-size:14px}@media print{.sequence{min-width:0}.sequence-scroll{overflow:visible;break-before:page}}</style></head><body><main>
+<header><div class="role">MYDATA → 中信 API｜學習與維運備忘</div><h1>mTLS 流程：誰出示、誰驗證、誰設定？</h1><p class="meta">整理日期：2026/11/06（臺灣時間）</p></header>
+<div class="lead"><strong>mTLS＝TLS 連線的兩端，都以憑證驗證彼此身分。</strong><br>放好 keystore、truststore 是準備材料；接收端還要啟用用戶端憑證驗證。若要求「沒有用戶端憑證也不能連入」，就必須設為強制要求。標準底層負責執行檢查，不需 API 業務程式逐項重寫。</div>
+<p>以下以<strong>完整新 TLS 握手、標準憑證驗證、以 CA 為信任來源</strong>說明。實際 TLS 訊息順序依協定版本而異；既有連線或 session 恢復不一定重新交換完整憑證。</p>
+<h2>① 雙方先準備什麼？</h2>
+<div class="pair"><section class="box"><h3>來源：MyData（TLS 用戶端）</h3><div class="material"><strong>我方 keystore：我是誰</strong><ul><li>我方私鑰：留在我方，不交給中信。</li><li>我方用戶端憑證：本案須允許 <code>clientAuth</code>。</li><li>該憑證的對應中繼鏈。</li></ul></div><div class="material"><strong>我方 truststore：我信任誰</strong><p>用來驗證中信伺服器憑證的信任來源，例如適當的根 CA。</p></div><p><strong>我方設定：</strong>讓 HttpClient 的 SSLContext 載入這些材料，使用正常的伺服器憑證及主機名稱驗證。</p></section>
+<section class="box"><h3>目的：中信（TLS 接收端）</h3><div class="material"><strong>中信 keystore：中信是誰</strong><ul><li>中信伺服器私鑰：留在中信。</li><li>中信伺服器憑證：允許 <code>serverAuth</code>。</li><li>該憑證的對應中繼鏈。</li></ul></div><div class="material"><strong>中信 truststore：中信信任誰</strong><p>用來驗證我方用戶端憑證的信任來源，例如經雙方確認的根 CA。</p></div><p><strong>中信設定：</strong>啟用並強制用戶端憑證驗證，且使用正常的憑證驗證機制。</p></section></div>
+<p><strong>材料對應：</strong>我方 keystore 的憑證 → 中信以自己的 truststore 驗證；中信 keystore 的憑證 → 我方以自己的 truststore 驗證。</p>
+<p class="meta">keystore／truststore 在此表示用途；不同產品可能使用 PEM 檔、JKS、PKCS12、雲端憑證服務等。通常由出示方送中繼鏈，驗證方保存信任根；不必把所有中繼都匯入成獨立信任錨點。若直接信任終端憑證，驗證路徑可能不同。</p>
+<h2>② 一次呼叫，誰驗誰？</h2>
+<div class="sequence-scroll"><svg class="sequence" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1170" role="img" aria-labelledby="seq-title seq-desc">
+<title id="seq-title">MyData 呼叫中信 API 的 mTLS 循序圖</title><desc id="seq-desc">時間由上往下。MyData 先驗證中信，中信要求並驗證 MyData 用戶端憑證。失敗則中止；成功才傳送 HTTP API 請求。</desc>
+<defs><marker id="seq-arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#326da7"/></marker></defs>
+<g fill="#edf5ff" stroke="#b8ccdf"><rect x="45" y="15" width="220" height="65" rx="8"/><rect x="390" y="15" width="220" height="65" rx="8"/><rect x="735" y="15" width="220" height="65" rx="8"/></g>
+<g text-anchor="middle" font-weight="bold"><text x="155" y="42">來源：MyData</text><text x="155" y="65">HttpClient／TLS 底層</text><text x="500" y="42">目的：中信</text><text x="500" y="65">TLS 元件／閘道</text><text x="845" y="42">中信 API</text><text x="845" y="65">業務程式</text></g>
+<g stroke="#a8b9ca" stroke-dasharray="6 6"><line x1="155" y1="80" x2="155" y2="1140"/><line x1="500" y1="80" x2="500" y2="1140"/><line x1="845" y1="80" x2="845" y2="1140"/></g>
+<g stroke="#326da7" stroke-width="2" marker-end="url(#seq-arrow)"><line x1="155" y1="125" x2="500" y2="125"/><line x1="500" y1="195" x2="155" y2="195"/><line x1="500" y1="385" x2="155" y2="385"/><line x1="155" y1="545" x2="500" y2="545"/></g>
+<g text-anchor="middle"><text x="328" y="112">1. 發起 TLS 連線</text><text x="328" y="172">2. 出示中信伺服器憑證及鏈</text><text x="328" y="220" class="seq-small">材料：中信 keystore；私鑰不傳出</text><text x="328" y="362">3. 要求我方提供用戶端憑證</text><text x="328" y="522">4. 出示我方憑證及鏈＋私鑰持有證明</text><text x="328" y="570" class="seq-small">材料：我方 keystore；私鑰不傳出</text></g>
+<rect x="20" y="245" width="330" height="90" rx="7" fill="#edf6ef" stroke="#bad3c1"/><g text-anchor="middle"><text x="185" y="270" font-weight="bold">我方底層自動驗證中信</text><text x="185" y="295">使用我方 truststore</text><text x="185" y="318" class="seq-small">信任鏈、簽章、有效期、serverAuth 等</text></g>
+<rect x="385" y="410" width="370" height="80" rx="7" fill="#fff3df" stroke="#dfc295"/><g text-anchor="middle"><text x="570" y="437" font-weight="bold">中信須啟用「強制用戶端驗證」</text><text x="570" y="465">例如 setNeedClientAuth(true)</text></g>
+<rect x="335" y="600" width="420" height="110" rx="7" fill="#edf6ef" stroke="#bad3c1"/><g text-anchor="middle"><text x="545" y="628" font-weight="bold">中信底層自動驗證 MyData</text><text x="545" y="654">使用中信 truststore</text><text x="545" y="679" class="seq-small">信任鏈、簽章、有效期、clientAuth 等</text><text x="545" y="700" class="seq-small">握手同時驗證我方私鑰持有證明</text></g>
+<rect x="20" y="740" width="960" height="115" rx="5" fill="#fff6f4" stroke="#d4aaa2"/><text x="38" y="766" font-weight="bold">分支 A｜TLS 驗證失敗</text><line x1="500" y1="805" x2="155" y2="805" stroke="#326da7" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#seq-arrow)"/><text x="328" y="792" text-anchor="middle">中止連線，尚未進入 API</text>
+<rect x="20" y="875" width="960" height="240" rx="5" fill="#f4f8fc" stroke="#b8ccdf"/><text x="38" y="902" font-weight="bold">分支 B｜TLS 雙向驗證成功</text><line x1="155" y1="950" x2="845" y2="950" stroke="#326da7" stroke-width="2" marker-end="url(#seq-arrow)"/><text x="500" y="936" text-anchor="middle">5. 完成 mTLS 後，傳送 HTTP API 請求</text><rect x="700" y="970" width="265" height="60" rx="6" fill="#fff3df" stroke="#dfc295"/><text x="832" y="995" text-anchor="middle">API 另行檢查授權、Token、資料</text><text x="832" y="1018" text-anchor="middle" class="seq-small">TLS 驗證成功不等於取得所有權限</text><line x1="845" y1="1080" x2="155" y2="1080" stroke="#326da7" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#seq-arrow)"/><text x="500" y="1065" text-anchor="middle">6. 回覆 HTTP 結果，例如 200</text>
+<text x="500" y="1160" text-anchor="middle" class="seq-small">時間由上往下｜此為概念順序，省略 TLS 協定細節；兩個分支擇一發生</text>
+</svg></div>
+<p class="meta">圖中「底層自動」指使用標準驗證機制；CRL／OCSP 廢止檢查仍須另外確認設定。我方也應核對中信主機名稱；本案現有 NoopHostnameVerifier 關閉此項核對。</p><div class="warn"><strong>沒有要求用戶端憑證會怎樣？</strong><br>即使我方 keystore 裡有憑證與私鑰，中信未要求，我方通常不會主動出示用戶端憑證；可能只完成一般單向 HTTPS。<br><strong>選填與強制：</strong><code>setWantClientAuth(true)</code> 會要求但允許不提供；若此次有提供且雙方驗證成功，此次連線仍可有雙向驗證，但服務未強制所有連線使用 mTLS。</div>
+<h2>③ 哪些自動做，哪些要設定或另外寫？</h2><div class="wrap"><table><thead><tr><th>動作</th><th>負責方</th><th>處理方式</th></tr></thead><tbody>
+<tr><td>備妥並載入自己的私鑰、憑證鏈及信任來源</td><td>雙方工程師／維運</td><td><strong>需設定</strong>檔案、密碼、格式、載入位置；不是檔案放在目錄就會生效。</td></tr>
+<tr><td>強制要求用戶端憑證</td><td>中信 TLS 接收端</td><td><strong>需啟用設定</strong>，例如 need／require／verify 等產品選項。</td></tr>
+<tr><td>憑證出示、私鑰持有證明</td><td>雙方 TLS 元件</td><td><strong>底層自動</strong>執行握手。</td></tr>
+<tr><td>憑證鏈、簽章、有效期、CA 限制與演算法限制</td><td>接收憑證的一方</td><td><strong>標準底層自動</strong>；直接信任項目與自訂驗證可能有差異。</td></tr>
+<tr><td>serverAuth／clientAuth 用途檢查</td><td>我方驗中信／中信驗我方</td><td><strong>標準底層自動</strong>；不需業務程式再手寫一次。用途欄位缺省的規則不同於「明確只有 serverAuth」；本案新憑證屬後者。</td></tr>
+<tr><td>中信網址與伺服器憑證名稱核對</td><td>我方 HTTPS 用戶端</td><td>一般 HTTPS 由函式庫處理；原生 TLS 需確認設定。<strong>本案現有 NoopHostnameVerifier 關閉了這項核對。</strong></td></tr>
+<tr><td>憑證是否廢止：CRL／OCSP</td><td>接收憑證的一方</td><td><strong>需另確認／啟用</strong>。標準 Java PKIX 以 keystore 初始化時預設停用；通常用內建機制，不需自寫整套查詢。</td></tr>
+<tr><td>只允許 MyData 身分、憑證或公開金鑰綁定</td><td>中信</td><td><strong>額外授權設定或程式</strong>；信任某個 CA 不等於只授權 MyData。</td></tr>
+<tr><td>API Token、參數、業務權限</td><td>API 程式</td><td><strong>另行設定或撰寫業務邏輯</strong>，與 TLS 驗證分開。</td></tr>
+</tbody></table></div>
+<h2>④ 接收端在哪裡啟用 mTLS？</h2><p><strong>先找「外部 TLS 連線在哪裡終止」。就在那個元件設定用戶端驗證。</strong>不一定是 API 的 Java 程式；以下是選擇之一，無須每一種都設定。</p>
+<div class="wrap"><table><thead><tr><th>接收方式</th><th>設定位置／方法</th><th>誰驗證我方？</th></tr></thead><tbody>
+<tr><td>Java 原生 TLS</td><td><code>SSLServerSocket.setNeedClientAuth(true)</code>；也可用伺服器模式的 <code>SSLSocket</code>、<code>SSLEngine</code>，或將已設 needClientAuth 的 <code>SSLParameters</code> 套用到實際接收元件。搭配正確 SSLContext／TrustManager。</td><td>Java JSSE／TrustManager。</td></tr>
+<tr><td>Java Web Server／應用伺服器</td><td>在 HTTPS Connector／SSL 設定中選擇「要求用戶端憑證」，載入伺服器身分與用戶端信任來源。設定名稱依產品與版本不同。</td><td>Tomcat、Jetty 等伺服器使用的 TLS 元件。</td></tr>
+<tr><td>Nginx 反向代理</td><td><code>ssl_verify_client on;</code> 並設定 <code>ssl_client_certificate</code>；搭配伺服器憑證、私鑰與適當鏈深度。</td><td>Nginx／OpenSSL。</td></tr>
+<tr><td>API Gateway</td><td>在對外網域／Listener 啟用 mTLS，指定用戶端 CA 信任材料。例：AWS API Gateway 的自訂網域 mutual TLS 與 truststore。另須避免可繞過 mTLS 的其他入口。</td><td>Gateway，後端可專注 API 授權。</td></tr>
+<tr><td>負載平衡器</td><td>在 HTTPS Listener／SSL Profile 啟用用戶端驗證並設定信任材料。例：AWS ALB 的 mTLS <strong>verify</strong> 模式。</td><td>負載平衡器的 TLS 元件。</td></tr>
+</tbody></table></div>
+<h3 style="margin-top:24px">兩種常見架構</h3><pre>架構 A：Java 直接接收 TLS
+MyData ── mTLS ──→ 中信 Java／HTTPS Server ──→ API 業務邏輯
+                       ↑ 在這裡要求、驗證我方憑證
+
+架構 B：前方設備接收 TLS
+MyData ── mTLS ──→ 中信 Gateway／負載平衡器 ── HTTP 或另一條 TLS ──→ Java API
+                       ↑ 在這裡要求、驗證我方憑證
+                         後端不一定再寫 setNeedClientAuth(true)</pre>
+<p>架構 B 的前後兩段是不同連線。前端驗證成功的用戶端身分可由受信任的轉送機制交給後端，後端不能任意相信外部可偽造的身分 Header。若設備只做 TCP/TLS 透傳，TLS 仍由後端終止，就應在後端啟用驗證。</p>
+<p class="meta">注意產品術語：AWS ALB 的「mTLS passthrough」是將用戶端憑證鏈轉交後端、不由 ALB 驗證；與一般 TCP/TLS 原封不動透傳不同。不要只看到 passthrough 就認定憑證已驗證。</p>
+<h3 style="margin-top:24px">Java：關鍵設定示意</h3><pre>// context 已載入：接收端自己的私鑰／憑證，以及標準 TrustManager
+SSLServerSocket server = (SSLServerSocket)
+    context.getServerSocketFactory().createServerSocket(8443);
+
+server.setNeedClientAuth(true); // 強制要求用戶端憑證驗證
+
+// 收到連線後：
+SSLSocket socket = (SSLSocket) server.accept();
+socket.startHandshake();       // 底層執行握手與驗證；失敗則丟例外
+// 成功後才處理 HTTP／API；資源關閉與錯誤處理另行實作。</pre>
+<h3>Nginx：關鍵設定示意</h3><pre>server {
+    listen 443 ssl;
+    ssl_certificate     /certs/server-fullchain.pem;
+    ssl_certificate_key /certs/server-key.pem;
+
+    ssl_client_certificate /certs/trusted-client-ca.pem;
+    ssl_verify_client on;   # 強制驗證用戶端憑證
+    ssl_verify_depth 5;      # 示意值，依實際 CA 鏈設定
+
+    # 後端轉送、授權及 CRL／OCSP 等另行設定
+}</pre>
+<h2>⑤ 套回 MyData 本次 TWCA 憑證問題</h2><div class="pair"><section class="box"><h3>目前舊憑證</h3><pre>ExtendedKeyUsages [
+  serverAuth
+  clientAuth
+]</pre><p>若程式讀取的 keystore 未更新，完整握手仍可能送出這張舊憑證。今天 HTTP 200，可能表示它仍被接受；但須看收到的序號與 TLS 驗證紀錄確認。</p></section><section class="box"><h3>新網站憑證</h3><pre>ExtendedKeyUsages [
+  serverAuth
+]</pre><p>明確缺少 clientAuth。若用它替換用戶端憑證，標準用戶端用途驗證應拒絕。不能以舊憑證目前成功，推論新憑證也可用。</p></section></div>
+<div class="warn"><strong>未到期 ≠ 未廢止；公私鑰相同 ≠ 所有驗證都通過。</strong><br>目前成功不能證明中信沒驗 clientAuth，因為舊憑證本來就有；也不能證明已查過中繼廢止。需請中信確認實際收到的我方序號、TLS 驗證位置、信任規則及 CRL／OCSP 設定。</div>
+<p><strong>本案後續：</strong>向 TWCA 取得適用 clientAuth 的我方憑證及完整對應鏈，確認與私鑰相符，再更新我方 keystore；中信同步確認信任與授權設定，最後以新連線實測。</p>
+<h2>⑥ 回想時只問這四題</h2><ol><li><strong>誰連誰？</strong>MyData 是用戶端，中信是接收端。</li><li><strong>身分材料在哪？</strong>自己的私鑰與憑證在自己的 keystore；驗對方的信任依據在自己的 truststore。</li><li><strong>哪裡要求雙向驗證？</strong>中信對外 TLS 終止點必須啟用用戶端憑證驗證；要禁止單向連線就設強制。</li><li><strong>額外確認什麼？</strong>廢止檢查、身分授權、憑證綁定、實際收到的憑證，以及是否有其他可繞過入口。</li></ol>
+<h2>官方參考</h2><ul><li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/net/ssl/SSLServerSocket.html">Java SSLServerSocket：need 與 want client authentication</a></li><li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/net/ssl/SSLParameters.html">Java SSLParameters：參數須套用至實際接收元件</a></li><li><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/net/ssl/X509TrustManager.html">Java X509TrustManager：用戶端與伺服器信任驗證</a></li><li><a href="https://docs.oracle.com/en/java/javase/21/security/java-secure-socket-extension-jsse-reference-guide.html">Oracle JSSE：信任管理與廢止檢查</a></li><li><a href="https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_verify_client">Nginx：ssl_verify_client</a></li><li><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/rest-api-mutual-tls.html">AWS API Gateway：mTLS</a></li><li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/mutual-authentication.html">AWS ALB：mTLS verify／passthrough</a></li></ul>
+<footer>本文件為流程備忘；不代表已查明中信實際架構或設定。範例為設定概念，部署前須依產品版本確認。未修改任何 keystore、truststore 或正式服務。此檔使用內嵌樣式，不需連網即可閱讀；參考連結需網路。</footer>
+</main></body></html>
+

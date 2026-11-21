@@ -185,3 +185,9 @@ A2: 若 C:\Users\你的帳號\.gradle\gradle.properties
 		放到 Git Bash 啟動檔
 		在 ~/.bashrc(windows上我沒設定成功) 或 ~/.bash_profile(windows 成功) 加：
 			chcp.com 65001 >/dev/null
+
+Q3 如何知道某 lib 實際引用的 version?
+A3 以下以查詢 janino 為例
+	./gradlew dependencyInsight \
+	  --dependency janino \
+	  --configuration runtimeClasspath

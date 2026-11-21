@@ -1,0 +1,124 @@
+單一repo java spring boot 盤點方式
+	Phase 0  Repo 盤點 docs/repository-inventory-draft.md
+		範例詢問生成
+			參考別的專案 repository-inventory-draft.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso/docs 下生成對應 repository-inventory-draft.md 內容
+	   ↓
+	Phase 1  docs/architecture.md  // 架構
+		範例詢問生成
+			參考別的專案 architecture.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso/docs 下生成對應 architecture.md 內容
+	   ↓
+	Phase 2  docs/development.md + deployment.md	// 開發、佈署
+		範例詢問生成
+			參考別的專案 development.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso/docs 下生成對應 development.md 內容
+			
+		範例詢問生成
+			參考別的專案 deployment.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso/docs 下生成對應 deployment.md 內容
+
+	   ↓
+	Phase 3  docs/security.md + api-conventions.md	// 資安、api慣例
+		範例詢問生成
+			參考別的專案 security.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso/docs 下生成對應 security.md 內容
+
+		範例詢問生成
+			參考別的專案 api-conventions.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso/docs 下生成對應 api-conventions.md 內容
+
+	   ↓
+	Phase 4  README.md
+		範例詢問生成
+			參考別的專案 README.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso 下生成對應 README.md 內容
+
+	   ↓
+	Phase 5  AGENTS.md
+		範例詢問生成
+			參考別的專案 AGENTS.md 生成出來的，請依據 mydata-backend-sso/docs/repository-inventory-draft.md
+			根據當前專案 mydata-backend-sso 於 mydata-backend-sso 下生成對應 AGENTS.md 內容
+
+	   ↓
+	   開分支修改時
+		Phase 6  tasks/xxxx.md
+
+
+單一repo 前後端專案再一起盤點模式
+	第一階段：只盤點
+		請先不要建立正式架構、開發與維運文件。
+
+		請完整盤點 mydata-routine-jobs，建立：
+
+		- docs/README.md
+		- docs/inventory/repository-inventory.md
+		- docs/inventory/app-core-inventory.md
+		- docs/inventory/backend-web-inventory.md
+
+		盤點必須涵蓋：
+
+		- repository 根層建置與部署
+		- app-core Spring Boot
+		- backend-web Vue
+		- 前後端 API 與部署整合
+		- security
+		- configuration
+		- observability
+		- tests
+		- legacy 與風險
+
+		所有發現分成 Confirmed、Needs verification、Unknown 與 Recommendation。
+		每項重要結論列出程式碼或設定檔證據。
+		不得輸出 secret。
+
+		完成盤點後先停止，不要根據未確認項目生成正式文件。
+
+
+第二階段：正式化文件
+	請根據已確認的三份 inventory，以及目前 repository 程式碼，建立先前約定的完整 docs、README.md 與 AGENTS.md 結構。
+		├─ README.md
+		├─ AGENTS.md
+		├─ docs/
+		│  ├─ README.md
+		│  ├─ architecture/
+		│  │  ├─ overview.md
+		│  │  ├─ app-core.md
+		│  │  ├─ backend-web.md
+		│  │  └─ integration.md
+		│  ├─ inventory/
+		│  │  ├─ repository-inventory.md
+		│  │  ├─ app-core-inventory.md
+		│  │  └─ backend-web-inventory.md
+		│  ├─ development/
+		│  │  ├─ getting-started.md
+		│  │  ├─ app-core.md
+		│  │  └─ backend-web.md
+		│  ├─ operations/
+		│  │  ├─ deployment.md
+		│  │  ├─ configuration.md
+		│  │  ├─ observability.md
+		│  │  └─ runbooks/
+		│  ├─ security.md
+		│  ├─ api-conventions.md
+		│  ├─ decisions/
+		│  │  └─ README.md
+		│  └─ archive/
+		├─ app-core/
+		│  ├─ AGENTS.md
+		│  └─ README.md
+		└─ backend-web/
+		   ├─ AGENTS.md
+		   └─ README.md
+
+	正式文件只能把 Confirmed 項目描述成目前實作。
+	Needs verification 與 Unknown 必須繼續保留標記。
+	Recommendation 必須與現況清楚分開。
+
+	完成後檢查：
+
+	- 文件之間是否互相矛盾
+	- Markdown 相對連結
+	- Mermaid 圖與程式碼是否一致
+	- README 與 AGENTS.md 是否只作為入口和工作規則
+	- 是否有重複的 canonical content
